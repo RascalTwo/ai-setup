@@ -197,25 +197,38 @@ When all Test Plan behaviors are green:
 
 Tier 2 does not run until Tier 1 is clean.
 
-## Phase 6 — Review Tier 2 (parallel quality gates)
+## Phase 6 — Review Tier 2 (quality gates via the gauntlet)
 
-**Goal:** confirm the code is good — not just correct.
+**Goal:** confirm the code is good — not just correct. This phase runs the FULL quality
+panel, not a hardcoded five — it delegates to `r2-gauntlet`, so there is a single source of
+truth for "the quality review roster" and this pipeline automatically inherits every
+reviewer the gauntlet gains.
 
 ### Steps
 
-1. **Spawn all five reviewers in parallel, as isolated subagents** (Claude Code: five Agent-tool calls in one message; Codex: spawn the five matching `.codex/agents` subagents):
-   - `test-reviewer` (loads `r2-sdlc-testing-paradigm` skill)
-   - `code-reviewer` (loads `r2-sdlc-documentation-philosophy` skill)
-   - `docs-currency-reviewer` (loads `r2-sdlc-documentation-philosophy` skill)
-   - `security-reviewer`
-   - `reuse-reviewer`
-2. **Synthesize findings.**
+1. **Run the gauntlet, quality-only, scoped to the change.**
+   - **Claude Code:** invoke the `r2-gauntlet` skill with `--quality-only` (Tier-1 already
+     gated correctness, so the gauntlet skips `fidelity-reviewer`/`qa-validator`) and scope =
+     the feature's working changes. `git add -N` any untracked new files first so they show
+     up in the diff, then pass scope = `unstaged`. The gauntlet fans out the full roster
+     (test/code/docs-currency/reuse/security reviewers + the whole ln-* auditor family +
+     ponytail-review/audit + code-review + built-in /security-review), dedups overlapping
+     findings, and returns ONE consensus-ranked report.
+   - **Codex:** the gauntlet isn't ported to Codex yet — fall back to spawning the five
+     `.codex/agents` quality reviewers directly (`test-reviewer`, `code-reviewer`,
+     `docs-currency-reviewer`, `security-reviewer`, `reuse-reviewer`) and synthesize their
+     findings yourself. (Porting the gauntlet roster to `.codex/` is a tracked follow-up.)
+2. **Read the ranked report.** The gauntlet already deduped and scored consensus — a finding
+   several reviewers independently raised is high-confidence; act on those first.
 3. **Decide per-finding:**
-   - No blockers across all four → Phase 7.
-   - Blockers → fix in code, **re-run only the reviewers whose concerns were touched** (e.g. edits to test files → re-run test-reviewer + fidelity-reviewer). Cap at 2 iterations. Increment `tier2`.
+   - No blockers → Phase 7.
+   - Blockers → fix in code, then **re-run only the touched reviewers** via the gauntlet's
+     subset mode: `r2-gauntlet --only <reviewers-whose-concerns-you-touched>` scoped to the
+     change (e.g. edited test files → `--only test-reviewer,ln-23-test-suite-auditor`). Cap at
+     2 iterations. Increment `tier2`.
    - Suggestions → decide: apply now (cheap, worthwhile) or include in the summary for the user to triage.
    - FYIs → include in summary.
-4. **If tier2 iterations hit 2 and still failing** → escalate to user with outstanding findings.
+4. **If tier2 iterations hit 2 and still failing** → escalate to user with the outstanding findings from the gauntlet report.
 
 ## Phase 7 — Done
 
