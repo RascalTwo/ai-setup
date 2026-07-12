@@ -1,5 +1,5 @@
 ---
-name: azure-container-app-logs
+name: diagnose-azure-container-app
 description: Diagnose why an Azure Container App is failing to start by retrieving system events and application console logs. Use when a deploy fails due to a health check timeout, startup probe failure, or the container app is crash-looping.
 ---
 

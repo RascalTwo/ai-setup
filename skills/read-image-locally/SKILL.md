@@ -1,5 +1,5 @@
 ---
-name: local-vision
+name: read-image-locally
 description: Read an image with a LOCAL Ollama vision model (~0 Claude vision tokens) instead of a native image Read, for STRUCTURED extraction — HUD/dashboard values, table contents, log/screenshot text, error messages, reading specific labeled fields, "what does this say/show". Use when you need known information out of an image, or when the user says "read/vision-recognize this image locally". Do NOT use for holistic visual judgment (layout, aesthetics, "does this look right") — read those natively.
 ---
 
@@ -22,7 +22,7 @@ python3 vision_judge.py <image> --prompt "<the specific extraction intent>" [--j
 - Pass `--json` when you expect a structured shape; the engine validates the output is real JSON.
 - Models are tried in tier order, cheap/fast first. Default `gemma4:e4b,gemma4:12b`.
 
-On success it prints a header line `[local-vision OK] model=… <latency>` followed by the answer.
+On success it prints a header line `[read-image-locally OK] model=… <latency>` followed by the answer.
 
 ```bash
 # Read HUD values out of a screenshot
@@ -37,7 +37,7 @@ python3 vision_judge.py /tmp/dash.png --json \
 
 If every local tier fails (Ollama down, model missing, empty/invalid output), the engine prints
 `LOCAL_VISION_FAILED …` and exits non-zero. When that happens, **read the image natively with the
-`Read` tool** — local-vision is an optimization, never a hard dependency.
+`Read` tool** — read-image-locally is an optimization, never a hard dependency.
 
 Tier order: `gemma4:e4b` → `gemma4:12b` → native Claude.
 
@@ -48,7 +48,7 @@ Tier order: `gemma4:e4b` → `gemma4:12b` → native Claude.
 
 ## Policy
 
-The authoritative local-vision-first policy lives in `AGENTS.md §9` — read by both Claude Code and
+The authoritative read-image-locally-first policy lives in `AGENTS.md §9` — read by both Claude Code and
 Codex, so the routing guidance reaches any agent by prompting (no hook).
 
 ## Tests

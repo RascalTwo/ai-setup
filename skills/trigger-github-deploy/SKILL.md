@@ -63,4 +63,4 @@ gh workflow run <workflow-file> --ref <current-branch>
 sleep 15 && gh run list --limit 1 --workflow <workflow-file> --json databaseId -q '.[0].databaseId'
 ```
 
-Report the run ID, then use `/github-workflow-wait <run-id>` to monitor it.
+Report the run ID, then use `/wait-for-github-workflow <run-id>` to monitor it.

@@ -159,10 +159,10 @@ A native image `Read` adds ~1–2k vision tokens to context **every turn**, and 
 
 **Route by intent before reading an image:**
 
-- **Structured / known extraction → use the `local-vision` skill.** HUD/dashboard values, table contents, log/screenshot text, error messages, reading specific labeled fields, "what does this say/show". The skill wraps a tiered local reader (`gemma4:e4b` → `gemma4:12b`); on `LOCAL_VISION_FAILED` it tells you to read natively.
+- **Structured / known extraction → use the `read-image-locally` skill.** HUD/dashboard values, table contents, log/screenshot text, error messages, reading specific labeled fields, "what does this say/show". The skill wraps a tiered local reader (`gemma4:e4b` → `gemma4:12b`); on `LOCAL_VISION_FAILED` it tells you to read natively.
 - **Holistic visual judgment → read natively with `Read`.** Layout/aesthetics, "does this look right", subtle/ambiguous scenes, dense unfamiliar UIs, "why does this look off". A small local model gives a generic caption that silently misses these.
 
-The intent lives in the prompt: local-vision is only as good as the specific extraction instruction handed to it — never ask it for a generic caption. This policy applies to any agent that reads this file (Claude Code, Codex) and is delivered by prompting (this section), not a hook. It never blocks — routing is your call.
+The intent lives in the prompt: read-image-locally is only as good as the specific extraction instruction handed to it — never ask it for a generic caption. This policy applies to any agent that reads this file (Claude Code, Codex) and is delivered by prompting (this section), not a hook. It never blocks — routing is your call.
 
 ## 10. Hard-won gotchas (cross-project)
 

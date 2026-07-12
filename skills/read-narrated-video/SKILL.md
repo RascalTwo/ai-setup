@@ -1,6 +1,6 @@
 ---
 name: read-narrated-video
-description: Understand a video LOCALLY and get back TEXT (~0 Claude vision tokens) — the video sibling of local-vision. Whisper hears the English voice track, Qwen3-VL sees the picture, joined on one timeline. Use when you have a video with English narration to verify ("does what they SAID match what's on screen?"), or when an agent records its OWN silent clip to check motion-over-time it can't judge from a single screenshot ("did the ingredient animate onto the plate, or teleport?"). Trigger on "read this video", "what happens in this clip", "verify this narrated recording", "check the recording", or self-verifying a captured gameplay/UI clip. NOT for a single still image (use local-vision) and NOT for holistic aesthetic judgment.
+description: Understand a video LOCALLY and get back TEXT (~0 Claude vision tokens) — the video sibling of read-image-locally. Whisper hears the English voice track, Qwen3-VL sees the picture, joined on one timeline. Use when you have a video with English narration to verify ("does what they SAID match what's on screen?"), or when an agent records its OWN silent clip to check motion-over-time it can't judge from a single screenshot ("did the ingredient animate onto the plate, or teleport?"). Trigger on "read this video", "what happens in this clip", "verify this narrated recording", "check the recording", or self-verifying a captured gameplay/UI clip. NOT for a single still image (use read-image-locally) and NOT for holistic aesthetic judgment.
 ---
 
 Offload **video** understanding to local models so it costs ~0 Claude vision tokens instead of the
@@ -38,7 +38,7 @@ python3 narrate_video.py <video> [--question "..."] [--timeline] \
 
 On success it prints `[read-narrated-video OK] mode=… model=… words=…` then the text answer.
 
-**Always pass a specific intent.** Like local-vision, a video model is only as good as the prompt —
+**Always pass a specific intent.** Like read-image-locally, a video model is only as good as the prompt —
 never expect a useful answer from a vague request. Narrated mode supplies the intent from speech;
 silent mode needs your `--question` (or `--timeline` for dense captioning).
 
@@ -111,7 +111,7 @@ The Whisper step is best-effort: if it fails, the engine continues in silent mod
   verdicts — use it only when speed matters and the question is coarse. Don't bother with bf16: 8-bit
   is near-lossless vs full precision and faster on Apple Silicon (inference is bandwidth-bound).
 - **ollama's `qwen3-vl:8b` is image-only** — its runner does no temporal video encoding. Don't route
-  video through ollama; mlx-vlm is the video path. (ollama stays fine for single images / local-vision.)
+  video through ollama; mlx-vlm is the video path. (ollama stays fine for single images / read-image-locally.)
 
 ### Whisper model
 - `large-v3-turbo` (default) is fast and accurate enough. Use `--whisper-model large-v3` for the
@@ -137,9 +137,9 @@ near a 0:42 frame. Densify around narrated moments if grounding is too coarse (t
   default — the upgrade pays off *in combination with* the framing, not on its own.
 - Subjective calls ("is the easing/juice right") still belong to a human.
 
-## Relationship to local-vision
+## Relationship to read-image-locally
 
-`local-vision` is the **image** sibling (single still → text via Ollama). `read-narrated-video` is the
+`read-image-locally` is the **image** sibling (single still → text via Ollama). `read-narrated-video` is the
 **video** sibling (motion + speech → text via Whisper + Qwen3-VL). Same philosophy: local model
 returns text, ~0 Claude vision tokens, never ask for a generic caption.
 

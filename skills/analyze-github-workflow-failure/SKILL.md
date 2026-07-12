@@ -1,5 +1,5 @@
 ---
-name: github-workflow-analyze-failure
+name: analyze-github-workflow-failure
 description: Analyze the failure logs of a GitHub Actions workflow run to identify the root cause. Use when the user asks "why did my workflow/CI/Actions run fail", "analyze run <id>", or says "the deploy/build failed, what broke".
 ---
 

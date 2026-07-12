@@ -15,7 +15,7 @@ TWO modes, auto-detected from the audio track:
      motion-over-time it can't judge from a single screenshot.
 
 On any hard failure prints 'RNV_FAILED ...' and exits non-zero — the caller should then extract
-frames with ffmpeg and read them natively (the local-vision sibling policy).
+frames with ffmpeg and read them natively (the read-image-locally sibling policy).
 """
 import argparse, json, subprocess, sys, tempfile, os, re
 

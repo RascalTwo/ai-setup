@@ -1,5 +1,5 @@
 ---
-name: terraform-debug-unknown-error
+name: diagnose-terraform-unknown-error
 description: Investigate a Terraform provider "unknown error" or opaque API error by adding temporary debug logging to the failing workflow step, triggering a run, and extracting the actual HTTP request/response.
 ---
 
@@ -60,4 +60,4 @@ Never leave TF_LOG=DEBUG in the workflow — it exposes secrets (API keys, token
 ## See also
 
 - To kick off the workflow run (steps 2–3), use the `trigger-github-deploy` skill.
-- To wait for the run to finish before pulling logs, use the `github-workflow-wait` skill.
+- To wait for the run to finish before pulling logs, use the `wait-for-github-workflow` skill.

@@ -1,5 +1,5 @@
 ---
-name: testing-paradigm
+name: r2-sdlc-testing-paradigm
 description: The opinionated testing philosophy used by the r2-sdlc pipeline. BDD-first (behavior over units), minimum mocks, fakes over mocks, Given/When/Then formatting. Use when writing new tests OR when reviewing tests for adherence to the paradigm. Covers the mock-vs-fake decision, unit-vs-behavior tradeoffs, and the black-box testing philosophy.
 ---
 

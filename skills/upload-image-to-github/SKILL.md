@@ -1,5 +1,5 @@
 ---
-name: github-image-upload
+name: upload-image-to-github
 description: >
   Upload a local image to GitHub and get back a renderable user-attachments CDN URL to embed
   in a PR description, issue, comment, or Projects card — works for PRIVATE repos. Use whenever

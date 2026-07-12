@@ -5,7 +5,7 @@
       "code-review", "codebase-design", "diagnosing-bugs", "domain-modeling",
       "grill-with-docs", "grilling", "handoff", "implement",
       "improve-codebase-architecture", "prototype", "research",
-      "setup-matt-pocock-skills", "tdd", "to-spec", "to-tickets", "triage", "wayfinder"
+      "tdd", "to-spec", "to-tickets", "triage", "wayfinder"
     ],
     "anthropics/skills": ["skill-creator"],
     "vercel-labs/skills": ["find-skills"],

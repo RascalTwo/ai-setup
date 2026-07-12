@@ -1,5 +1,5 @@
 ---
-name: documentation-philosophy
+name: r2-sdlc-documentation-philosophy
 description: The opinionated documentation philosophy used by the r2-sdlc pipeline. Goldilocks rule — docs where they add signal, nothing where they don't. Covers inline comments, doc strings on exported APIs, and project-level docs (READMEs, markdown) currency. Use when writing or reviewing documentation of any kind. The code-reviewer and docs-currency-reviewer both enforce this.
 ---
 

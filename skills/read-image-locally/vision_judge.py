@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tiered local-vision reader: try local Ollama vision models first; signal fallback to native Claude.
+"""Tiered read-image-locally reader: try local Ollama vision models first; signal fallback to native Claude.
 
 Lets an agent offload image reading (expensive in vision tokens) to a local model when a local
 model can do the job, and fall back to native image reading when it can't.
@@ -7,7 +7,7 @@ model can do the job, and fall back to native image reading when it can't.
 Usage:
   vision_judge.py <image> [--prompt "what to extract"] [--models gemma4:e4b,gemma4:12b] [--json]
 
-Prints a header line ([local-vision OK] model=... <latency>) then the model's answer.
+Prints a header line ([read-image-locally OK] model=... <latency>) then the model's answer.
 On total local failure prints 'LOCAL_VISION_FAILED ...' and exits non-zero — the caller should
 then read the image natively. Tiers are tried in order (cheap/fast first).
 """
@@ -60,11 +60,11 @@ def main() -> None:
     for model in [m.strip() for m in a.models.split(",") if m.strip()]:
         try:
             txt, dt = call(model, b64, a.prompt, a.json)
-            print(f"[local-vision OK] model={model} {dt:.1f}s")
+            print(f"[read-image-locally OK] model={model} {dt:.1f}s")
             print(txt)
             return
         except Exception as e:
-            print(f"[local-vision tier failed] model={model}: {e}", file=sys.stderr)
+            print(f"[read-image-locally tier failed] model={model}: {e}", file=sys.stderr)
 
     print("LOCAL_VISION_FAILED: all local tiers failed — fall back to native image reading")
     sys.exit(3)

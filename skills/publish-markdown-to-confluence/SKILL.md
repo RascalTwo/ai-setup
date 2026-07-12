@@ -1,5 +1,5 @@
 ---
-name: markdown-to-confluence
+name: publish-markdown-to-confluence
 description: Publish a local markdown file to a Confluence page, replacing the page body. Converts markdown → ADF (Atlassian Document Format), preserves tables/links/headings, renders date pills inside table cells, and supports dropping specific table rows (e.g. provenance rows that only matter locally). Use when the user asks to "push this markdown to Confluence", "publish X to Confluence", "sync this doc to the wiki page", or similar.
 ---
 

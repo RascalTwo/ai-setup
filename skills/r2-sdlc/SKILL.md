@@ -1,6 +1,6 @@
 ---
 name: r2-sdlc
-description: Joseph's end-to-end story-to-PR development pipeline (Rascal-2 Software Development Life Cycle). Takes a raw idea (sentence, blurb, story) and walks through Understand → Design → Implement (strict TDD) → Simplify → Tier-1 correctness review → Tier-2 quality review, producing a ready-to-PR change. Inference-first (never interview-heavy), taste-aware (invokes testing-paradigm and documentation-philosophy skills at the right phases), with review-driven iteration. Use when the user invokes `/r2-sdlc <story>` or explicitly asks to run the r2-sdlc pipeline.
+description: Joseph's end-to-end story-to-PR development pipeline (Rascal-2 Software Development Life Cycle). Takes a raw idea (sentence, blurb, story) and walks through Understand → Design → Implement (strict TDD) → Simplify → Tier-1 correctness review → Tier-2 quality review, producing a ready-to-PR change. Inference-first (never interview-heavy), taste-aware (invokes r2-sdlc-testing-paradigm and r2-sdlc-documentation-philosophy skills at the right phases), with review-driven iteration. Use when the user invokes `/r2-sdlc <story>` or explicitly asks to run the r2-sdlc pipeline.
 ---
 
 # r2-sdlc — Rascal-2 Software Development Life Cycle
@@ -15,7 +15,7 @@ An opinionated pipeline that takes a raw idea and drives it through to a review-
 4. **Each phase has gates.** Don't proceed to the next phase until the current phase's gate is cleared.
 5. **Three human escalation points — and only three.** (a) `understood.md` approval, (b) `design.md` approval, (c) design pivot when reviewers surface a needed re-plan. No other stops.
 6. **Strict TDD.** One test at a time, easiest test first. Watch it fail for the right reason before writing implementation. The skill-level assertion is inviolable; the hook is a backstop.
-7. **Invoke taste skills at the right phases.** `testing-paradigm` when writing tests (Implement) and reviewing tests. `documentation-philosophy` when writing code (Implement) and reviewing code/docs.
+7. **Invoke taste skills at the right phases.** `r2-sdlc-testing-paradigm` when writing tests (Implement) and reviewing tests. `r2-sdlc-documentation-philosophy` when writing code (Implement) and reviewing code/docs.
 8. **Reviewers are read-only truth-tellers.** You synthesize their findings and act; they don't modify code.
 
 ## Phase 0 — Setup
@@ -129,10 +129,10 @@ Do NOT proceed to Phase 3 until the user approves. Human escalation point #2.
 
 ### Cardinal rules for this phase
 
-- **Invoke `testing-paradigm` skill before writing any test.** Load its rules into your context.
-- **Invoke `documentation-philosophy` skill before writing production code.** Load its rules into your context.
+- **Invoke `r2-sdlc-testing-paradigm` skill before writing any test.** Load its rules into your context.
+- **Invoke `r2-sdlc-documentation-philosophy` skill before writing production code.** Load its rules into your context.
 - **Strict red-green-refactor, one behavior at a time.** Order = Test Plan order (easiest first).
-- **Vertical, not horizontal.** This is the testing-paradigm default — see that skill's "Vertical slices, not horizontal" section. Don't bulk-generate tests then bulk-implement.
+- **Vertical, not horizontal.** This is the r2-sdlc-testing-paradigm default — see that skill's "Vertical slices, not horizontal" section. Don't bulk-generate tests then bulk-implement.
 - **Watch tests fail for the right reason before writing impl.** This is the inviolable rule. If a test doesn't fail, or fails for the wrong reason (syntax error, missing dependency), fix the test before touching impl.
 - **Minimal impl.** Write just enough to make the test pass. No speculative code, no extra features.
 - **Prefer inline over single-use extraction.** Don't pull a helper function, constant, or type out of the usage site when it's used exactly once and inlining reads cleanly. Extract only when the logic is dense (≥20 lines), the thing is used 2+ times, the name documents a non-obvious concept, or isolated testability is a real current need. "Functions are good practice" is not a reason.
@@ -142,7 +142,7 @@ Do NOT proceed to Phase 3 until the user approves. Human escalation point #2.
 
 For each behavior in Test Plan order:
 
-1. **Write the test.** GWT format, following `testing-paradigm`. Commit to a layer (behavior-level vs unit) per the Test Plan.
+1. **Write the test.** GWT format, following `r2-sdlc-testing-paradigm`. Commit to a layer (behavior-level vs unit) per the Test Plan.
 2. **Run the test.** Confirm it fails, and confirm it fails for the **right reason** (not a missing import, not a syntax error — an actual assertion failure on the behavior you're testing). If it fails for the wrong reason, fix the test.
 3. **Write the implementation.** Minimum code to pass. If you find yourself writing speculative cases, stop.
 4. **Run the test.** Confirm it passes.
@@ -204,9 +204,9 @@ Tier 2 does not run until Tier 1 is clean.
 ### Steps
 
 1. **Spawn all five reviewers in parallel, as isolated subagents** (Claude Code: five Agent-tool calls in one message; Codex: spawn the five matching `.codex/agents` subagents):
-   - `test-reviewer` (loads `testing-paradigm` skill)
-   - `code-reviewer` (loads `documentation-philosophy` skill)
-   - `docs-currency-reviewer` (loads `documentation-philosophy` skill)
+   - `test-reviewer` (loads `r2-sdlc-testing-paradigm` skill)
+   - `code-reviewer` (loads `r2-sdlc-documentation-philosophy` skill)
+   - `docs-currency-reviewer` (loads `r2-sdlc-documentation-philosophy` skill)
    - `security-reviewer`
    - `reuse-reviewer`
 2. **Synthesize findings.**

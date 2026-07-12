@@ -77,7 +77,7 @@ if [[ -n "$TARGET_JOB" ]]; then
         echo "URL: $URL"
         if [[ "$JOB_CONCLUSION" != "success" ]]; then
           echo ""
-          echo "Job did not succeed. Suggest: /github-workflow-analyze-failure $RUN_ID"
+          echo "Job did not succeed. Suggest: /analyze-github-workflow-failure $RUN_ID"
           exit 1
         fi
         exit 0
@@ -106,7 +106,7 @@ else
 
   if [[ "$CONCLUSION" != "success" ]]; then
     echo ""
-    echo "Run did not succeed. Suggest: /github-workflow-analyze-failure $RUN_ID"
+    echo "Run did not succeed. Suggest: /analyze-github-workflow-failure $RUN_ID"
     exit 1
   fi
 fi

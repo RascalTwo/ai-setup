@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verification harness for the local-vision skill engine.
+# Verification harness for the read-image-locally skill engine.
 # Run from anywhere:  bash tests/run-tests.sh
 # Env: LV_MODELS (default gemma4:e4b).
 set -uo pipefail
@@ -17,7 +17,7 @@ hdr()  { printf '\n=== %s ===\n' "$1"; }
 
 hdr "1. Engine — success path (structured extraction)"
 if out="$(python3 "$ENGINE" "$ASSET" --prompt 'Extract the SCORE and LIVES numbers.' --models "$MODELS" 2>/dev/null)"; then
-  printf '%s\n' "$out" | grep -q '\[local-vision OK\]' && ok "emits OK header" || no "missing OK header"
+  printf '%s\n' "$out" | grep -q '\[read-image-locally OK\]' && ok "emits OK header" || no "missing OK header"
   printf '%s\n' "$out" | grep -q '42' && ok "extracted SCORE 42" || no "did not extract 42 (got: $(printf '%s' "$out" | tail -1))"
 else
   no "engine exited non-zero on a valid image"

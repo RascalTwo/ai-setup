@@ -41,7 +41,7 @@ Some capabilities need manual / OAuth setup. Here's the Claude Code ↔ Codex eq
 | Google (Calendar/Drive/Gmail) | claude.ai connectors | ChatGPT connectors |
 | Atlassian | claude.ai Atlassian connector | ChatGPT/Codex connector |
 | Persistent memory | basic-memory (`uvx`) | basic-memory (`uvx`) — installer wires it |
-| **Shared** | Ollama + models (`gemma4:e4b`, `qwen2.5-coder:7b`) for local-vision & graphify | same |
+| **Shared** | Ollama + models (`gemma4:e4b`, `qwen2.5-coder:7b`) for read-image-locally & graphify | same |
 
 Google / Atlassian / browser / desktop are enabled by clicking through each agent's
 **connector/plugin UI** (claude.ai or ChatGPT settings), not local config.
