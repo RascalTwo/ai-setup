@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # usage-report.sh — Claude Code usage report from local session transcripts.
 #
-# Replaces the retired Prometheus/Loki/OTEL monitoring stack for claude-audit
+# Replaces the retired Prometheus/Loki/OTEL monitoring stack for ai-setup-audit
 # Phase 0. Every field comes from ~/.claude/projects/**/*.jsonl, which Claude
 # Code writes unconditionally — so there is no always-on collector to keep up
 # and no collection gap (the stack only had data while it was running; this
@@ -17,7 +17,7 @@
 # Phase 0 should launch this in the background and read the result during the
 # Phase 1 discovery step.
 #
-# Answers the claude-audit telemetry questions:
+# Answers the ai-setup-audit telemetry questions:
 #   - Skill invocation counts (most / least used)   -> Phase 0, Phase 3
 #   - MCP server/tool call distribution             -> Phase 0, Phase 4
 #   - Tool error signal                             -> Phase 0, Phase 3/4
