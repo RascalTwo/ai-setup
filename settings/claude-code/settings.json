@@ -2,7 +2,14 @@
   "cleanupPeriodDays": 99999,
   "env": {},
   "hooks": {
-    "PreToolUse": [],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "rtk hook claude" }
+        ]
+      }
+    ],
     "PostToolUse": [],
     "Stop": [
       {

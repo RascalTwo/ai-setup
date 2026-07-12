@@ -165,6 +165,37 @@ if (haveCodex) {
   }
 }
 
+console.log("== RTK (token compression) ==");
+// Deterministic command-output compression via a PreToolUse hook on BOTH agents.
+// Claude Code: the hook lives in settings.json (symlinked above) → `rtk hook claude`.
+// Codex has no rtk built-in, so we symlink an adapter and register it in config.toml.
+// The adapter wraps `rtk hook claude` and adds permissionDecision="allow" — Codex needs
+// that to apply the rewrite (rtk emits Claude-style output without it). If rtk isn't
+// installed, both hooks no-op and commands run raw, so this degrades safely.
+{
+  const haveRtk = spawnSync("rtk", ["--version"]).status === 0;
+  if (haveRtk) console.log("  rtk already installed");
+  else if (spawnSync("brew", ["--version"]).status === 0) {
+    console.log("  installing rtk via brew…");
+    spawnSync("brew", ["install", "rtk"], { stdio: "inherit" });
+  } else console.warn("  rtk missing and brew unavailable — install manually: https://github.com/rtk-ai/rtk");
+
+  if (haveCodex) {
+    link(join(REPO, "settings", "codex", "rtk-hook.sh"), join(CODEX_DIR, "rtk-hook.sh"));
+    const cfg = join(CODEX_DIR, "config.toml");
+    const body = existsSync(cfg) ? readFileSync(cfg, "utf8") : "";
+    if (/rtk-hook\.sh/.test(body)) {
+      console.log(`  Codex hook already registered in ${cfg}`);
+    } else {
+      appendFileSync(cfg,
+        `\n# RTK token-compression hook (managed by install.ts). No-op if rtk is absent.\n` +
+        `[[hooks.PreToolUse]]\nmatcher = "^Bash$"\n\n` +
+        `[[hooks.PreToolUse.hooks]]\ntype = "command"\ncommand = "~/.codex/rtk-hook.sh"\n`);
+      console.log(`  appended [[hooks.PreToolUse]] to ${cfg}`);
+    }
+  }
+}
+
 console.log("Done. Restart Claude Code / Codex to pick up changes.");
 console.log("Manual extras (not scripted): browser extension, computer-use, and Atlassian/Google");
 console.log("connectors — enable in each agent's connector/plugin UI. Plus Ollama models. See README.");
