@@ -85,3 +85,21 @@ tests, waits for health, points the suite at it, and reports per-version N/N.
 The container the harness spins is the ONLY supported target — no dual-path
 remote-instance logic (the target being env vars means anyone can override it
 in one line anyway; that's the entirety of the "remote" story).
+
+Bootstrap the service account inside the `up` script, not by hand and not from
+stale remote credentials. Use the target's admin bootstrap user to create a
+machine client, set a deterministic test secret, grant the smallest admin role
+that can exercise the acceptance surface, then print `export` lines for the
+suite. Expect admin-role shapes to move between target versions; discover the
+role/client live during bootstrap and document that choice in the effort
+ledger.
+
+Treat target env vars as all-or-none. If only the URL or only the credentials
+are set, fail fast instead of mixing a stale remote URL with default local
+credentials. When printing shell exports from the bootstrap script, use
+Bash-safe quoting (`printf %q`) so generated secrets remain valid shell input.
+
+Before claiming a test denominator, count the provider's test files at the
+pinned tag (`git ls-tree -r <tag> -- '*_test.go'` or the hosting API). Do not
+carry over counts from a handoff or release note without re-measuring; the
+matrix and test count are part of the parity evidence.
