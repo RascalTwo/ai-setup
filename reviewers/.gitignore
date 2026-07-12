@@ -1,0 +1,17 @@
+# Ruler workspace artifacts we don't use (rules are managed elsewhere)
+*.bak
+/AGENTS.md
+/CLAUDE.md
+node_modules/
+# NOTE: .claude/agents/ and .codex/agents/ ARE committed on purpose,
+# so `install.ts` can symlink them without requiring Ruler at install time.
+
+
+# START Ruler Generated Files
+/.claude/agents
+/.codex/agents
+/.codex/config.toml
+/.codex/config.toml.bak
+/AGENTS.md.bak
+/CLAUDE.md.bak
+# END Ruler Generated Files
