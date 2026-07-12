@@ -1,6 +1,6 @@
 ---
 name: retro-catchup
-description: Show the user which Claude Code sessions have not yet been retro'd, as a copy-pasteable list of `/retro <session-id>` commands. Use ONLY when the user explicitly invokes this skill by name — e.g., "/retro-catchup", "run retro-catchup", or "what retros am I behind on". Do NOT auto-trigger on generic requests to "check my retros" or "what did I miss". Takes no arguments. This skill is a printer, not a dispatcher — it does not run the retro skill on the user's behalf, because subagent environments can't reliably spawn further subagents. It reports the work and the user runs each command themselves. Pairs with a user-maintained skiplist for flagging sessions as not-retro-worthy.
+description: Show which Claude Code sessions have not yet been retro'd, as copy-pasteable /retro <session-id> commands. Use ONLY when explicitly invoked by name — /retro-catchup, run retro-catchup, what retros am I behind on. Do NOT auto-trigger on generic check my retros or what did I miss. A printer, not a dispatcher — it lists pending retros; the user runs them. Pairs with a user skiplist for not-retro-worthy sessions.
 ---
 
 # retro-catchup

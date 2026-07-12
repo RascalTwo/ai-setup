@@ -1,7 +1,7 @@
 ---
 name: extract-gdrive-transcript
 version: 1.0.0
-description: "Extract the full transcript from a Google Meet (or other) video recording hosted on Google Drive, using Chrome MCP. Use this skill when the user wants to get a transcript from a Google Drive recording URL, extract meeting captions, download meeting notes as text, or convert a recorded meeting to a readable transcript. Also use this when the user mentions Google Meet recordings, Drive video links, or wants speaker-attributed text from a recorded meeting — even if they don't say 'transcript' explicitly."
+description: "Extract the full transcript from a Google Meet or other video recording on Google Drive, via Chrome MCP. Use when the user wants a transcript from a Google Drive recording URL, mentions Google Meet recordings or Drive video links, wants to extract meeting captions, download meeting notes as text, convert a recorded meeting to readable text, or get speaker-attributed text — even if they don't say 'transcript'."
 ---
 
 # Google Drive Video Transcript Extractor

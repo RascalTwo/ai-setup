@@ -1,13 +1,6 @@
 ---
 name: upload-image-to-github
-description: >
-  Upload a local image to GitHub and get back a renderable user-attachments CDN URL to embed
-  in a PR description, issue, comment, or Projects card — works for PRIVATE repos. Use whenever
-  the user wants to "attach/embed an image or screenshot in a PR/issue", "put this image at the
-  top of the PR", "add a picture to the GitHub description", "get a GitHub user-attachments URL",
-  or when a PR/issue body needs a hosted image and there is no public URL for it. Solves the fact
-  that GitHub has NO attachment API and raw.githubusercontent links from private repos do not
-  render (camo can't auth).
+description: Attach or embed an image or screenshot in a GitHub PR, issue, comment, or Projects card — including PRIVATE repos — by uploading it for a renderable user-attachments CDN URL. Use when putting an image at the top of a PR, adding a picture to a GitHub description, getting a GitHub user-attachments URL, or a PR/issue body needs a hosted image with no public URL. GitHub has no attachment API and raw.githubusercontent from private repos won't render (camo can't auth).
 ---
 
 # GitHub image upload (→ user-attachments CDN URL)

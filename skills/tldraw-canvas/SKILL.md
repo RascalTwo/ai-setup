@@ -1,6 +1,6 @@
 ---
 name: tldraw-canvas
-description: Drive tldraw.com programmatically via the Chrome browser MCP — read the user's canvas, create shapes (boxes, sticky notes, arrows, frames, text), edit existing shapes, and clean up. Use this skill WHENEVER the user wants to draw, diagram, sketch, or whiteboard something on tldraw — phrases like "draw X on tldraw", "add a box labeled Y to my tldraw", "diagram this flow in tldraw", "make a tldraw of this", "put a sticky on my tldraw canvas", "on the tldraw canvas show me...", "tldraw this out". Also trigger when the user asks to modify, re-color, re-label, or clean up shapes on a tldraw canvas. Assume homophones: "teal draw", "tealdraw", "tl draw", "td draw" all mean tldraw.
+description: Drive tldraw.com via the Chrome browser MCP — read the user's canvas, create shapes (boxes, sticky notes, arrows, frames, text), edit, and clean up. Use WHENEVER the user wants to draw, diagram, sketch, or whiteboard on tldraw — draw X on tldraw, add a box labeled Y, tldraw this out. Also modify, re-color, re-label, or clean up shapes. Homophones teal draw, tealdraw, tl draw, td draw all mean tldraw.
 ---
 
 # tldraw-canvas

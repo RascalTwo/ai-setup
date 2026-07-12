@@ -1,6 +1,6 @@
 ---
 name: retro
-description: Analyze a Claude Code conversation — the current one by default, or a past one — for mistakes, inefficiencies, and missed opportunities, then propose concrete self-improvements. Use this skill whenever the user says "retro", "retrospective", "what went wrong", "how could we improve", "analyze this session", "review this conversation", or asks you to reflect on your performance. Also trigger when the user asks you to identify mistakes, learn from errors, or improve your approach for next time — even if they don't use the word "retro". Also trigger for retroactive framings like "retro yesterday's session", "retro my work from last Tuesday", "go back and retro that debugging session", or when a scheduled/batch retro pass needs to run over prior sessions.
+description: Analyze a Claude Code conversation (current or past) for mistakes, inefficiencies, and missed opportunities, then propose self-improvements. Use when the user says retro, retrospective, what went wrong, analyze this session, or asks to identify mistakes / learn from errors — even without the word retro. Also retroactive framings like retro yesterday's session or scheduled/batch passes over prior sessions.
 ---
 
 # Retro — Conversation Retrospective & Self-Improvement

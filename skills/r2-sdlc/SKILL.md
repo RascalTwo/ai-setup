@@ -1,6 +1,6 @@
 ---
 name: r2-sdlc
-description: Joseph's end-to-end story-to-PR development pipeline (Rascal-2 Software Development Life Cycle). Takes a raw idea (sentence, blurb, story) and walks through Understand → Design → Implement (strict TDD) → Simplify → Tier-1 correctness review → Tier-2 quality review, producing a ready-to-PR change. Inference-first (never interview-heavy), taste-aware (invokes r2-sdlc-testing-paradigm and r2-sdlc-documentation-philosophy skills at the right phases), with review-driven iteration. Use when the user invokes `/r2-sdlc <story>` or explicitly asks to run the r2-sdlc pipeline.
+description: Joseph's end-to-end story-to-PR development pipeline (Rascal-2 Software Development Life Cycle). Takes a raw idea — sentence, blurb, story — through Understand → Design → Implement (strict TDD) → Simplify → Tier-1 correctness review → Tier-2 quality review into a ready-to-PR change. Inference-first, taste-aware, review-driven. Use when the user invokes `/r2-sdlc <story>` or asks to run the r2-sdlc pipeline.
 ---
 
 # r2-sdlc — Rascal-2 Software Development Life Cycle

@@ -1,6 +1,6 @@
 ---
 name: read-narrated-video
-description: Understand a video LOCALLY and get back TEXT (~0 Claude vision tokens) — the video sibling of read-image-locally. Whisper hears the English voice track, Qwen3-VL sees the picture, joined on one timeline. Use when you have a video with English narration to verify ("does what they SAID match what's on screen?"), or when an agent records its OWN silent clip to check motion-over-time it can't judge from a single screenshot ("did the ingredient animate onto the plate, or teleport?"). Trigger on "read this video", "what happens in this clip", "verify this narrated recording", "check the recording", or self-verifying a captured gameplay/UI clip. NOT for a single still image (use read-image-locally) and NOT for holistic aesthetic judgment.
+description: Understand a video LOCALLY, get back TEXT (~0 vision tokens). Use to verify a narrated video (did what they SAID match the screen?), or when an agent records its OWN silent clip to check motion-over-time (animate or teleport?). Trigger on read this video, verify this narrated recording, or self-verifying a captured clip. Not a single still image (use read-image-locally) or aesthetic judgment.
 ---
 
 Offload **video** understanding to local models so it costs ~0 Claude vision tokens instead of the

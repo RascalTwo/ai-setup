@@ -1,5 +1,5 @@
 ---
-description: "Weekly interactive audit of the entire AI-agent setup shared across Claude Code and OpenAI Codex — the AGENTS.md rules file, skills, MCP servers, settings, subagents, and basic-memory. Use when the user asks to audit, optimize, clean up, or review their agent setup, mentions wanting to keep their config fresh, or says something like 'run the weekly audit'. Also use when the user mentions stale skills, unused MCP servers, orphaned skills, drift in external-skills.json, or wants to check what's changed in their setup."
+description: "Weekly interactive audit of the AI-agent setup shared across Claude Code and OpenAI Codex — AGENTS.md rules, skills, MCP servers, settings, subagents, basic-memory. Use when the user asks to audit, optimize, clean up, or review their agent setup, keep their config fresh, or says 'run the weekly audit'. Also for stale skills, unused MCP servers, orphaned skills, drift in external-skills.json, or checking what's changed."
 ---
 
 # AI Agent Setup Audit

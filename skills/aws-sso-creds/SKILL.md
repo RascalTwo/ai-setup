@@ -1,6 +1,6 @@
 ---
 name: aws-sso-creds
-description: Obtain short-lived AWS credentials from any AWS IAM Identity Center (SSO) access portal via Chrome, and write them to a dotenv file the shell can source. Use whenever the user asks to "get AWS credentials", "log into AWS", "get me AWS access", names an AWS account or org, or when another task needs AWS CLI access to an account that isn't authenticated. Also use proactively whenever an `aws` CLI call fails with ExpiredToken, InvalidClientTokenId, UnrecognizedClientException, or "Unable to locate credentials". Portal facts live in `portals.md` (or in a per-org wrapper skill); add a new portal there rather than hardcoding a URL.
+description: Obtain short-lived AWS credentials from any IAM Identity Center (SSO) portal via Chrome, into a shell-sourced dotenv. Use when the user asks for AWS credentials, to log into AWS, names an account or org, or a task needs AWS CLI access to an unauthenticated account. Also proactively when an aws CLI call fails with ExpiredToken, InvalidClientTokenId, UnrecognizedClientException, or Unable to locate credentials.
 ---
 
 # AWS SSO credentials (any portal)

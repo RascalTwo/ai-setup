@@ -1,12 +1,6 @@
 ---
 name: reorder-github-project-board-by-depth
-description: >
-  Reorder issues in a GitHub Projects board column by their longest-path dependency depth,
-  computed from blocking/blocked-by relationships. Use this skill whenever the user asks to
-  sort, order, prioritize, or organize a GitHub project board column by dependencies,
-  blocking depth, readiness, or pickup order. Also use when the user says things like
-  "order the board by what can be picked up first", "sort by dependency depth",
-  "put the most blocked items at the bottom", or "prioritize the backlog by readiness."
+description: Reorder issues in a GitHub Projects board column by longest-path dependency depth from blocking/blocked-by relationships. Use whenever the user asks to sort, order, prioritize, or organize a project board column by dependencies, blocking depth, readiness, or pickup order — e.g. order the board by what can be picked up first, sort by dependency depth, put the most blocked items at the bottom, or prioritize the backlog by readiness.
 ---
 
 # Reorder GitHub Project Board by Dependency Depth
