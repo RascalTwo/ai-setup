@@ -12,11 +12,13 @@ OpenAI Codex, GitHub Copilot, Cursor, Gemini Antigravity/CLI, and others.
 ## Install
 
 ```bash
-npx skills add RascalTwo/explorables
+npx skills add RascalTwo/ai-setup -s viz
 ```
 
 That's [Vercel's `skills` CLI](https://github.com/vercel-labs/skills): it detects whichever
-agents you have installed and drops `/viz` into each one's skills directory. Then, in your agent:
+agents you have installed and drops `/viz` into each one's skills directory. `-s viz` pulls
+just this skill out of my [ai-setup](https://github.com/RascalTwo/ai-setup) repo (not the
+whole setup). Then, in your agent:
 
 ```
 /viz a force-directed graph of this repo's imports, edges weighted by call count
@@ -60,8 +62,8 @@ The skill develops **in place** — no reinstall loop. Clone the repo and symlin
 your agent's skills dir, so edits are live on the next invocation:
 
 ```bash
-git clone https://github.com/RascalTwo/explorables
-ln -s "$PWD/explorables/skills/viz" ~/.claude/skills/viz   # or your agent's skills dir
+git clone https://github.com/RascalTwo/ai-setup
+ln -s "$PWD/ai-setup/skills/viz" ~/.claude/skills/viz   # or your agent's skills dir
 ```
 
 `npx skills` ignores a hand-made symlink (it isn't in any lockfile), so the dev symlink and the
@@ -71,7 +73,7 @@ consumer install/update flow, do it in a throwaway **project** dir instead:
 
 ```bash
 mkdir /tmp/viz-consumer && cd /tmp/viz-consumer
-npx skills add RascalTwo/explorables   # stays local (./.agents/skills/viz + skills-lock.json) — never touches your global symlink
+npx skills add RascalTwo/ai-setup -s viz   # stays local (./.agents/skills/viz + skills-lock.json) — never touches your global symlink
 npx skills update
 rm -rf /tmp/viz-consumer               # done
 ```

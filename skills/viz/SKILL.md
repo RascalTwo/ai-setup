@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires Bun (bun.sh). Pure Bun, no shell utils — runs on macOS/Linux/Windows.
 metadata:
   author: RascalTwo
-  source: https://github.com/RascalTwo/explorables
+  source: https://github.com/RascalTwo/ai-setup
 ---
 
 # /viz — ad-hoc HTML visualizations
