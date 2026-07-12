@@ -51,6 +51,17 @@
         "type": "custom-command",
         "commandPath": "$HOME/.claude/statusline-wk.sh",
         "preserveColors": true
+      },
+      {
+        "id": "sep-cost",
+        "type": "separator",
+        "character": " │ "
+      },
+      {
+        "id": "w-cost",
+        "type": "custom-command",
+        "commandPath": "$HOME/.claude/statusline-cost.sh",
+        "preserveColors": true
       }
     ],
     [],
