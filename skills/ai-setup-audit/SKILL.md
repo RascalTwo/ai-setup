@@ -183,25 +183,22 @@ Present each recommendation one at a time. Wait for the user's decision before m
 
 **Every entry in `~/.agents/skills` is EITHER a symlink into one of the repos (owned) OR listed in `external-skills.json` (third-party). Any real dir not in the manifest is an orphan.** This is the single most important skills check — run it every audit:
 
-A skill passes the invariant if it is a symlink (owned), OR its name is explicitly listed in the manifest, OR it was installed from a repo the manifest lists with a `"*"` wildcard. That last case (e.g. a whole-catalog install) means the individual skill name is NOT in the manifest, so a name-only grep gives false orphans — use the on-machine install record `~/.agents/.skill-lock.json` to map a real dir back to its source repo and accept it if that repo is a manifest key.
+`external-skills.json` is the **single, manually-maintained source of truth** for third-party skills. (There is an `npx`-managed lock file on disk, but it silently fails to update, so do NOT trust it for provenance — the manifest is authoritative.) A real dir is accounted for **only** if its name is explicitly listed in the manifest. This means a repo entry of `"*"` (whole-catalog wildcard) defeats the check — its individual skill names aren't in the manifest, so they can't be verified by name. **Prefer enumerating a repo's skills explicitly over `"*"`**; that's the whole point of maintaining the manifest by hand, and it makes this check exact.
 
 ```bash
 DOC=$HOME/Desktop/Desktop/Code/ai-setup/external-skills.json
-LOCK=$HOME/.agents/.skill-lock.json
-manifest_repos=$(jq -r '.repos | keys[]' "$DOC")
 
-echo "--- Orphans: real dirs neither owned nor traceable to a manifest repo ---"
+# Repos documented with a "*" wildcard — their skills can't be name-verified.
+wildcard_repos=$(jq -r '.repos | to_entries[] | select(.value | index("*")) | .key' "$DOC")
+
+echo "--- Unaccounted: real dirs whose name is not explicitly in the manifest ---"
 for d in ~/.agents/skills/*; do
   name=$(basename "$d")
   [ -L "$d" ] && continue                        # symlink into a repo = owned, fine
   grep -qF "\"$name\"" "$DOC" && continue         # explicitly named third-party, fine
-  # Wildcard-repo install: trace dir -> source repo via the lock file.
-  src=$(jq -r --arg n "$name" \
-    '.skills|to_entries[]|select((.value.skillPath//"")|test("/"+$n+"/"))|.value.source' \
-    "$LOCK" 2>/dev/null | head -1)
-  { [ -n "$src" ] && echo "$manifest_repos" | grep -qxF "$src"; } && continue
-  echo "ORPHAN: $name (real dir, not owned, not traceable to a manifest repo)"
+  echo "UNACCOUNTED: $name"
 done
+[ -n "$wildcard_repos" ] && echo "(note: these repos use \"*\" — their skills appear above until enumerated: $wildcard_repos)"
 
 echo "--- Documented but not installed (manifest names it, disk doesn't have it) ---"
 jq -r '.repos | to_entries[] | .value[]' "$DOC" | grep -v '^\*$' | sort -u | while read s; do
@@ -215,8 +212,8 @@ done
 ```
 
 For each finding:
-- **ORPHAN** — a real dir that's neither owned nor traceable to a documented repo. Either it should be an owned skill (move it into `ai-setup/skills/` or an overlay and let `install.ts` symlink it) or it's a third-party install missing from `external-skills.json` (add `owner/repo: [skill]` under `repos`). Ask the user which.
-- **MISSING on disk** — the manifest promises it but it isn't installed. Re-install via `install.ts --externals` (or `npx skills add <repo> -s <skill> -g -a claude-code -a codex --yes`), or drop the manifest entry. (Wildcard `"*"` repos are skipped by this direction — their catalog isn't enumerable offline; verify those by inspection.)
+- **UNACCOUNTED** — a real dir whose name isn't in the manifest. Two cases: (a) it belongs to a `"*"` wildcard repo listed in the note — the real fix is to replace that repo's `"*"` with its explicit skill list so the check goes quiet and precise; or (b) it's a genuine orphan — either promote it to an owned skill (move into `ai-setup/skills/` or an overlay so `install.ts` symlinks it) or document it (`owner/repo: ["skill"]` under `repos`). Ask the user which.
+- **MISSING on disk** — the manifest promises it but it isn't installed. Re-install via `install.ts --externals` (or `npx skills add <repo> -s <skill> -g -a claude-code -a codex --yes`), or drop the manifest entry.
 - **BROKEN** — an owned symlink whose repo target vanished. Re-point or re-run `install.ts`.
 
 `external-skills.json` shape, for reference:
