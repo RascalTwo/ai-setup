@@ -78,6 +78,7 @@ A native image `Read` adds ~1–2k vision tokens every turn and accumulates; a l
 - **Never run parallel browser-automation agents.** There is one shared browser instance — concurrent browser/desktop-control agents collide. Serialize browser work.
 - **Don't pipe a long-running/background command through `head`/`tail -f`.** The reader closes early and the producer dies on SIGPIPE. Redirect to a file and read that instead.
 - **I use several GitHub accounts under one `gh` login.** The active account may not have access to a given repo — a push/clone/API call fails with "Repository not found" or a GraphQL "Could not resolve to a Repository" even though the repo exists. On any such access error, run `gh auth status` to see the logged-in accounts and `gh auth switch -u <account>` to the one that owns/can-reach the repo, then retry. Don't assume the repo is missing.
+- **macOS keychain reads can hang headlessly.** `security find-internet-password`/`find-generic-password` may block forever on a keychain approval prompt. For git-host credentials (e.g. a GitLab PAT), use `git credential fill` instead (`printf 'protocol=https\nhost=<host>\n\n' | git -C <repo> credential fill`) — the osxkeychain helper is already approved for git and returns instantly. Cache to a 0600 scratchpad file rather than re-reading.
 
 ## ponytail — always-on (coding tasks)
 
