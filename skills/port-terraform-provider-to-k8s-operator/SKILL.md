@@ -24,10 +24,13 @@ Get these from the user or the conversation; ask only for what's genuinely
 undecidable:
 
 1. **Provider**: the GitHub repo (e.g. `<org>/terraform-provider-<name>`).
-2. **Target API + auth**: base URL of a LIVE instance to test against, and a
-   service-account credential (client-credentials or token). No live target =
-   stop and get one (a dockerized instance is fine; the provider's own CI
-   usually shows how to run one).
+2. **Target API + auth**: something real to test against. **Default to a
+   LOCAL dockerized instance of the service** (the provider's own CI shows
+   how to run one) — reproducible on anyone's machine, faster, and
+   version-matrixable; write the `up` script as part of the harness. A shared
+   live instance is an optional extra target (worth one run for real-TLS/real-
+   latency confidence), never the default the suite depends on. Either way you
+   need a service-account credential (client-credentials or token).
 3. **Language/runtime**: default Java 21 + Quarkus + JOSDK/QOSDK (the proven
    chassis in `references/chassis.md`). Honor an explicit Go/kubebuilder ask,
    but the chassis reference is Java-shaped.
