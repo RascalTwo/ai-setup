@@ -9,7 +9,10 @@
     ],
     "anthropics/skills": ["skill-creator"],
     "vercel-labs/skills": ["find-skills"],
-    "dietrichgebert/ponytail": ["*"],
+    "dietrichgebert/ponytail": [
+      "ponytail", "ponytail-audit", "ponytail-debt",
+      "ponytail-gain", "ponytail-help", "ponytail-review"
+    ],
     "safishamsi/graphify": ["graphify"],
     "levnikolaevich/claude-code-skills": [
       "ln-11-plan-reviewer", "ln-12-delivery-reviewer",
