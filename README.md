@@ -1,18 +1,16 @@
 # ai-setup
 
-My personal AI coding-agent setup — global behavior rules, skills, MCP servers,
-and plugins — shared across **Claude Code** and **OpenAI Codex**. One repo is the
-source of truth; a deterministic installer symlinks it into place for both agents.
+My personal AI coding-agent setup — global behavior rules, skills, MCP servers, and
+a dev pipeline — shared across **Claude Code** and **OpenAI Codex**. One repo is the
+source of truth; a deterministic installer symlinks it into place for both.
 
 > [!NOTE]
-> This is my personal config, published so others can borrow from it. It's
-> opinionated and macOS-flavored. Take what's useful.
+> Personal config, published so others can borrow from it. Opinionated and
+> macOS-flavored. Take what's useful.
 
-## Prerequisites
-
-- [Bun](https://bun.sh) (runs the installer)
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and/or [Codex](https://developers.openai.com/codex) installed
-- Optional per-skill: `uv`/`uvx` (basic-memory), Ollama (local-vision), Azure/AWS/Okta CLIs, etc.
+I drive my agents largely by voice via [handy.computer](https://handy.computer) (not
+a built-in `/voice`), which is why `AGENTS.md` §1 leads with homophone/ambiguity
+guardrails.
 
 ## Install
 
@@ -22,48 +20,40 @@ cd ai-setup
 bun install.ts
 ```
 
-That's it. The installer is **idempotent, deterministic, and safe to re-run** — it
-never overwrites a real file, only manages its own symlinks, and self-heals if you
-move the repo (just re-run it). It:
+Requires [Bun](https://bun.sh) + [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and/or [Codex](https://developers.openai.com/codex).
 
-- symlinks `CLAUDE.md`/`AGENTS.md` (the rules) into `~/.claude` and `~/.codex`
-- symlinks every skill into `~/.claude/skills` **and** `~/.agents/skills` (Codex's path)
-- links the status-line scripts, seeds `settings.json` on a fresh machine (never clobbers an existing one)
-- registers the `basic-memory` MCP server with Codex
+The installer is **idempotent, deterministic, and safe to re-run** — it never
+overwrites a real file, only manages its own symlinks, and self-heals if you move the
+repo. It links the rules (`AGENTS.md`/`CLAUDE.md`), every skill (into both agents'
+paths), the status line, and registers `basic-memory` with Codex.
 
-A few things genuinely need a human/AI and aren't scripted: the Chrome extension,
-computer-use, Atlassian OAuth, and pulling Ollama models. See `integrations/` and
-`setup-prompt.md` (an optional AI-assisted walkthrough for those bits).
+- **Private overlays:** `bun install.ts --overlay <dir>` layers another repo's `skills/` on top — company/personal skills stay in a private repo. Repeatable.
+- **Third-party skills:** `bun install.ts --externals` installs the `npx skills` packages in [`external-skills.json`](external-skills.json) (Matt-Pocock, etc.) — tracked by reference, not vendored.
 
-## What's included
+## The bits an installer can't do (per agent)
 
-| Component | Description |
-|---|---|
-| **AGENTS.md** | Canonical global behavior rules (evidence-based claims, plan verification, subagent delegation, tool hierarchy, memory). `CLAUDE.md` is a symlink to it, so Claude Code and Codex read the same file. |
-| **Skills** | 19 skills in [`skills/`](skills/) — e.g. `claude-audit`, `retro`/`retro-catchup`, `local-vision` (local-vision-first image reading, via AGENTS.md §9 prompting), `read-narrated-video`, `markdown-to-confluence`, `github-workflow-*`, `okta-api`, `ping-api`, `terraform-debug-unknown-error`, `tldraw-canvas`. Some depend on Claude-Code-only tools (Chrome/computer-use); those degrade to no-ops under other agents. |
-| **r2-sdlc** | Story-to-PR dev pipeline, cross-agent: orchestrator + `testing-paradigm` + `documentation-philosophy` skills, 7 reviewer subagents (authored once in `.ruler/agents/` and compiled to Claude + Codex native formats via [Ruler](https://github.com/intellectronica/ruler)), and a dual-wired TDD red-gate hook. |
-| **Integrations** | Setup guides for computer-use, Chrome, basic-memory, Atlassian Confluence. |
-| **External Skills** | Recommended third-party skills + install commands ([external-skills.json](external-skills.json)). |
+Some capabilities need manual / OAuth setup. Here's the Claude Code ↔ Codex equivalence:
 
-For the reasoning behind each piece, see [PHILOSOPHY.md](PHILOSOPHY.md).
+| Capability | Claude Code | Codex |
+|---|---|---|
+| Browser control | Claude-in-Chrome extension | `chrome` / `browser` bundled plugins |
+| Desktop control | computer-use (enable in settings) | `computer-use` bundled plugin |
+| Google (Calendar/Drive/Gmail) | claude.ai connectors | ChatGPT connectors |
+| Atlassian | claude.ai Atlassian connector | ChatGPT/Codex connector |
+| Persistent memory | basic-memory (`uvx`) | basic-memory (`uvx`) — installer wires it |
+| **Shared** | Ollama + models (`gemma4:e4b`, `qwen2.5-coder:7b`) for local-vision & graphify | same |
 
-## Memory
+Google / Atlassian / browser / desktop are enabled by clicking through each agent's
+**connector/plugin UI** (claude.ai or ChatGPT settings), not local config.
 
-Persistent memory is [basic-memory](https://github.com/basicmachines-co/basic-memory)
-— an MCP server storing plain Markdown in `~/basic-memory/`. Because it's MCP, it's
-already agent-agnostic: the same notes are visible from Claude Code and Codex. The
-installer registers it for Codex; Claude Code has it via `~/.claude.json`.
+## Structure
 
-## Sync model (write-through)
+- **`AGENTS.md`** — global behavior rules (evidence-based claims, plan verification, subagent delegation, tool hierarchy, memory); `CLAUDE.md` symlinks to it so both agents read the same file.
+- **`skills/`** — general-purpose skills.
+- **`subagents/`** — the r2-sdlc pipeline's reviewer subagents, authored once in `.ruler/agents/` and compiled to Claude + Codex native formats via [Ruler](https://github.com/intellectronica/ruler).
+- **`install.ts`** · **`external-skills.json`** · **`settings/`** (per-agent: `claude-code/`, `codex/`).
 
-Everything is a **symlink into this repo**, so editing a live file edits the repo
-directly and `git status` here surfaces the drift to commit. The one exception is
-`~/.claude/settings.json` (machine-specific absolute paths + per-machine plugins) —
-it's seeded once and thereafter synced via the `claude-audit` skill, not symlinked.
+## Sync model
 
-## Public core + private overlay
-
-This repo is the **public core**. Company/personal skills live in a separate private
-overlay repo with its own `install.ts` that links only its skills on top of this core.
-Full setup = run both installers (order doesn't matter). That keeps this repo clean
-and shareable while private skills stay private.
+Everything is a **symlink into this repo** — edit a live file and you've edited the
+repo; `git status` here surfaces the drift to commit. No build step, no copy-back.

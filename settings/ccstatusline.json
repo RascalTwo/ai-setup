@@ -3,54 +3,36 @@
   "lines": [
     [
       {
-        "id": "06837110-8c11-46f8-9c58-4f0f949b90bb",
-        "type": "context-bar",
-        "metadata": {
-          "display": "progress-short"
-        }
+        "id": "1",
+        "type": "model",
+        "color": "cyan"
+      },
+      {
+        "id": "2",
+        "type": "separator"
+      },
+      {
+        "id": "3",
+        "type": "context-length",
+        "color": "brightBlack"
+      },
+      {
+        "id": "4",
+        "type": "separator"
+      },
+      {
+        "id": "5",
+        "type": "git-branch",
+        "color": "magenta"
       },
       {
         "id": "6",
-        "type": "separator",
-        "character": " │ "
+        "type": "separator"
       },
       {
         "id": "7",
         "type": "git-changes",
         "color": "yellow"
-      },
-      {
-        "id": "sep-cache",
-        "type": "separator",
-        "character": " │ "
-      },
-      {
-        "id": "w-cache",
-        "type": "custom-command",
-        "commandPath": "$HOME/.claude/statusline-cache.sh",
-        "preserveColors": true
-      },
-      {
-        "id": "sep-5h",
-        "type": "separator",
-        "character": " │ "
-      },
-      {
-        "id": "w-5h",
-        "type": "custom-command",
-        "commandPath": "$HOME/.claude/statusline-5h.sh",
-        "preserveColors": true
-      },
-      {
-        "id": "sep-wk",
-        "type": "separator",
-        "character": " │ "
-      },
-      {
-        "id": "w-wk",
-        "type": "custom-command",
-        "commandPath": "$HOME/.claude/statusline-wk.sh",
-        "preserveColors": true
       }
     ],
     [],
@@ -61,6 +43,8 @@
   "colorLevel": 2,
   "inheritSeparatorColors": false,
   "globalBold": false,
+  "gitCacheTtlSeconds": 5,
+  "minimalistMode": false,
   "powerline": {
     "enabled": false,
     "separators": [
@@ -71,6 +55,7 @@
     ],
     "startCaps": [],
     "endCaps": [],
-    "autoAlign": false
+    "autoAlign": false,
+    "continueThemeAcrossLines": false
   }
 }

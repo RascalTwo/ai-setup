@@ -1,4 +1,4 @@
-# reviewers — cross-agent subagents (r2-sdlc)
+ # reviewers — cross-agent subagents (r2-sdlc)
 
 **Source of truth:** `.ruler/agents/*.md` (one file per reviewer, Claude-style
 frontmatter). Everything else here is **generated and committed**.

@@ -35,29 +35,12 @@
     "refreshInterval": 30
   },
   "enabledPlugins": {
-    "swift-lsp@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
-    "jdtls-lsp@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
-    "code-modernization@claude-plugins-official": false,
-    "ponytail@ponytail": true,
-    "codebase-audit-suite@levnikolaevich-skills-marketplace": true
+    "code-modernization@claude-plugins-official": false
   },
-  "extraKnownMarketplaces": {
-    "ponytail": {
-      "source": {
-        "source": "github",
-        "repo": "DietrichGebert/ponytail"
-      }
-    },
-    "levnikolaevich-skills-marketplace": {
-      "source": {
-        "source": "github",
-        "repo": "levnikolaevich/claude-code-skills"
-      }
-    }
-  },
+  "extraKnownMarketplaces": {},
   "effortLevel": "xhigh",
   "awaySummaryEnabled": false,
   "tui": "fullscreen",

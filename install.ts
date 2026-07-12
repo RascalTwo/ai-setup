@@ -79,24 +79,27 @@ if (process.argv.includes("--externals")) {
   }
 }
 
-console.log("== Subagents (r2-sdlc reviewers) ==");
-// Authored once in reviewers/.ruler/agents/, compiled by Ruler to each native
-// format (committed), symlinked here. Editing reviewers needs Ruler; installing does not.
-const claudeAgents = join(REPO, "reviewers", ".claude", "agents");
+console.log("== Subagents ==");
+// Authored once in subagents/.ruler/agents/, compiled by Ruler to each native
+// format (committed), symlinked here. Editing them needs Ruler; installing does not.
+const claudeAgents = join(REPO, "subagents", ".claude", "agents");
 for (const f of existsSync(claudeAgents) ? readdirSync(claudeAgents) : [])
   if (f.endsWith(".md")) link(join(claudeAgents, f), join(CLAUDE_DIR, "agents", f));
 if (haveCodex) {
-  const codexAgents = join(REPO, "reviewers", ".codex", "agents");
+  const codexAgents = join(REPO, "subagents", ".codex", "agents");
   for (const f of existsSync(codexAgents) ? readdirSync(codexAgents) : [])
     if (f.endsWith(".toml")) link(join(codexAgents, f), join(CODEX_DIR, "agents", f));
 }
 
 console.log("== Statusline (Claude Code) ==");
-const settingsDir = join(REPO, "settings");
+const settingsDir = join(REPO, "settings", "claude-code");
 for (const f of existsSync(settingsDir) ? readdirSync(settingsDir) : []) {
   if (/^statusline-.*\.sh$/.test(f) || f === "ccstatusline.json")
     link(join(settingsDir, f), join(CLAUDE_DIR, f));
 }
+// ccstatusline reads its ACTIVE config from ~/.config/ccstatusline/settings.json
+if (existsSync(join(settingsDir, "ccstatusline.json")))
+  link(join(settingsDir, "ccstatusline.json"), join(HOME, ".config", "ccstatusline", "settings.json"));
 
 console.log("== settings.json (Claude Code) ==");
 // No machine-specific paths remain (marketplace removed) → symlink for write-through,
@@ -121,5 +124,5 @@ if (haveCodex) {
 }
 
 console.log("Done. Restart Claude Code / Codex to pick up changes.");
-console.log("Manual/AI-assisted extras (not scripted): Chrome extension, computer-use,");
-console.log("Atlassian OAuth, Ollama models for local-vision. See integrations/ and setup-prompt.md.");
+console.log("Manual extras (not scripted): browser extension, computer-use, and Atlassian/Google");
+console.log("connectors — enable in each agent's connector/plugin UI. Plus Ollama models. See README.");

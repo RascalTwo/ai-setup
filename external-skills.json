@@ -1,22 +1,14 @@
 {
   "_comment": "Third-party skills installed via `npx skills`. install.ts --externals reproduces these deterministically (npx skills add <repo> -s <skills>). Owned skills live in skills/; these are NOT vendored.",
   "repos": {
-    "heygen-com/hyperframes": [
-      "embedded-captions", "faceless-explainer", "figma", "general-video",
-      "hyperframes", "hyperframes-animation", "hyperframes-cli", "hyperframes-core",
-      "hyperframes-creative", "hyperframes-keyframes", "hyperframes-registry",
-      "media-use", "motion-graphics", "music-to-video", "pr-to-video",
-      "product-launch-video", "remotion-to-hyperframes", "slideshow",
-      "talking-head-recut", "website-to-video"
-    ],
     "mattpocock/skills": [
       "code-review", "codebase-design", "diagnosing-bugs", "domain-modeling",
-      "grill-with-docs", "handoff", "implement", "improve-codebase-architecture",
-      "prototype", "research", "setup-matt-pocock-skills", "tdd", "to-spec",
-      "to-tickets", "triage", "wayfinder"
+      "grill-with-docs", "grilling", "handoff", "implement",
+      "improve-codebase-architecture", "prototype", "research",
+      "setup-matt-pocock-skills", "tdd", "to-spec", "to-tickets", "triage", "wayfinder"
     ],
     "anthropics/skills": ["skill-creator"],
-    "remotion-dev/skills": ["remotion-best-practices"],
-    "vercel-labs/skills": ["find-skills"]
+    "vercel-labs/skills": ["find-skills"],
+    "dietrichgebert/ponytail": ["*"]
   }
 }

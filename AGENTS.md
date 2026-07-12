@@ -1,11 +1,5 @@
 # Global AI Agent Preferences
 
-> These are my global working preferences for any AI coding agent (Claude Code, Codex, etc.).
-> This file is the canonical source; `CLAUDE.md` is a symlink to it so Claude Code reads it too.
-> Some sections reference tools that only exist under Claude Code (e.g. the Chrome/computer-use
-> MCPs, `local-vision`, `graphify`, the ponytail hook). If you are a different agent, apply the
-> underlying principle and ignore the Claude-Code-specific mechanics.
-
 ## 1.  Text-to-Speech Input
 
 I often use voice/text-to-speech to give commands. This means:
@@ -53,7 +47,7 @@ Every plan, action, or deliverable — code or otherwise — must include a veri
 
 ### Stress-Test Plans with Grilling
 
-Before finalizing a plan, invoke the `grill-with-docs` skill to stress-test it with the user. The grilling phase surfaces assumptions, edge cases, and gaps that are cheaper to find before implementation than during it.
+Before finalizing a plan, invoke the `grilling` skill to stress-test it with the user. The grilling phase surfaces assumptions, edge cases, and gaps that are cheaper to find before implementation than during it.
 
 ### Grilling-to-Plan Bridge
 
@@ -105,40 +99,40 @@ Most subagent failures are invocation failures, not execution failures. Every su
 Before attempting any task ad-hoc, check two things:
 
 1. **Skills** — scan the available skills list (shown in system reminders) for a match.
-2. **MCP servers & tools** — scan the available `mcp__*` tools (shown in system reminders or loadable via `ToolSearch`) for a server that already handles the domain.
+2. **MCP servers & tools** — scan the available MCP tools (shown in system reminders; load any deferred ones your agent supports) for a server that already handles the domain.
 
 ### Skills Priority
 
-- **Meta/ecosystem skills** like `find-skills`, `skill-creator`, `update-config`, `hook-development` — these handle Claude Code's own configuration and should be the first resort for any "how do I set up / install / configure X in Claude Code" question.
+- **Meta/ecosystem skills** like `find-skills`, `skill-creator`, `update-config` — these handle the agent's own configuration and should be the first resort for any "how do I set up / install / configure X" question.
 - **Domain skills** that match the task domain.
 
 ### MCP Priority
 
 - **Domain MCP servers** — if an MCP server exists for the service or domain, use it before writing custom API calls, scripts, or browser workarounds. The session's available-MCP list (in system reminders) is the source of truth for what's loaded.
-- **Discovery** — MCP tools may be deferred. Use `ToolSearch` to check for available MCP tools matching the domain before falling back to ad-hoc approaches.
+- **Discovery** — MCP tools may be deferred. Load any deferred tools matching the domain before falling back to ad-hoc approaches.
 
 ### General Rule
 
 If a skill or MCP tool exists that covers the task, invoke it before writing any custom solution. A purpose-built skill or MCP integration will almost always outperform ad-hoc improvisation.
 
-**Trip-wire:** if you're about to write ad-hoc code to interact with an external service — a bash script, a `curl`, an `npx`, a `gh` command, a Python one-off — stop and grep skills (or `find-skills`) and `ToolSearch` for MCP tools owning that domain first. Ad-hoc code is a last resort, not a first resort. If you find yourself writing a 20-line shell script to do what a skill could do in one invocation, that's a policy violation — back up and use the skill.
+**Trip-wire:** if you're about to write ad-hoc code to interact with an external service — a bash script, a `curl`, an `npx`, a `gh` command, a Python one-off — stop and use the `find-skills` skill and check for MCP tools owning that domain first. Ad-hoc code is a last resort, not a first resort. If you find yourself writing a 20-line shell script to do what a skill could do in one invocation, that's a policy violation — back up and use the skill.
 
 ### Documentation Pre-flight
 
 Before using a skill or MCP tool for the first time in a session, do a quick reconnaissance:
 - **Skills** — if a skill references other skills in "See Also" or "Prerequisites", read the referenced docs before attempting ad-hoc commands.
-- **MCP tools** — if an MCP server offers multiple related tools, use `ToolSearch` to load their schemas and understand the available operations before guessing at parameters or inventing workarounds.
+- **MCP tools** — if an MCP server offers multiple related tools, load their schemas and understand the available operations before guessing at parameters or inventing workarounds.
 
-One Read or ToolSearch call is cheaper than 4+ failed attempts from guessing syntax.
+One reconnaissance step is cheaper than 4+ failed attempts from guessing syntax.
 
 ## 6. Tool Hierarchy
 
 When automating tasks, always follow this priority order:
 
 1. **CLI first** — if a command line tool exists for the task, use it.
-2. **Browser tasks -> Chrome MCP tools** — for anything browser-based, use the `mcp__claude-in-chrome__*` tools first.
-3. **Non-browser GUI tasks -> computer-use** — if it's a GUI but not a browser, use the `mcp__computer-use__computer` tool.
-4. **Fallback** — if Chrome MCP tools fail or are insufficient, fall back to computer-use.
+2. **Browser tasks → browser-automation tools** — for anything browser-based, use your agent's browser-control tools first.
+3. **Non-browser GUI tasks → desktop-control** — if it's a GUI but not a browser, use your agent's desktop/computer-use tools.
+4. **Fallback** — if browser tools fail or are insufficient, fall back to desktop-control.
 
 ## 7. Global Memory
 
@@ -155,9 +149,9 @@ If no results come back, proceed normally. The cost of an empty search is one to
 
 ## 8. Research / Web Fetch Failures
 
-If `WebSearch` or `WebFetch` fail (e.g. 403, bot blocking, access denied), do **not** give up. Instead:
-- Use the Chrome MCP tools to navigate to the site or perform the search directly in the browser.
-- Fall back to computer-use if Chrome MCP tools also fail.
+If web search or fetching a URL fails (e.g. 403, bot blocking, access denied), do **not** give up. Instead:
+- Use browser-automation tools to navigate to the site or perform the search directly in the browser.
+- Fall back to desktop-control if browser tools also fail.
 
 ## 9. Image Reading — Local-Vision-First
 
@@ -172,22 +166,13 @@ The intent lives in the prompt: local-vision is only as good as the specific ext
 
 ## 10. Hard-won gotchas (cross-project)
 
-One-line rules promoted from basic-memory because they prevent repeated, real mistakes. Full detail in the linked notes.
-
-- **Never run parallel browser-automation agents.** There is one shared browser instance — concurrent Chrome-MCP/computer-use agents collide. Serialize browser work. (memory: `browser-automation`)
-- **Don't pipe a long-running/background command through `head`/`tail -f`.** The reader closes early and the producer dies on SIGPIPE. Redirect to a file and read that instead. (memory: `shell-gotchas`)
-- **`claude -p` can't nest.** A subagent can't shell out to another `claude -p`; use the Agent tool for nested delegation. (memory: `claude-code-tips`)
+- **Never run parallel browser-automation agents.** There is one shared browser instance — concurrent browser/desktop-control agents collide. Serialize browser work.
+- **Don't pipe a long-running/background command through `head`/`tail -f`.** The reader closes early and the producer dies on SIGPIPE. Redirect to a file and read that instead.
 - **I use several GitHub accounts under one `gh` login.** The active account may not have access to a given repo — a push/clone/API call fails with "Repository not found" or a GraphQL "Could not resolve to a Repository" even though the repo exists. On any such access error, run `gh auth status` to see the logged-in accounts and `gh auth switch -u <account>` to the one that owns/can-reach the repo, then retry. Don't assume the repo is missing.
 
-# graphify
-- **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
-When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
+## graphify
 
-## graphify: always-on for codebases
-- **On a codebase/architecture question** (how does X work, what calls Y, trace data flow through Z): if `graphify-out/graph.json` exists in the repo, treat the question as a graph query first — run `graphify query "<question>"` and answer from the graph, citing `source_location`. Do not rebuild to answer a question.
-- **If `graphify-out/` does NOT exist** and the question would benefit from the graph, **offer to build it — ask first, never auto-run** (a first build can take minutes). Only offer for real code repos, not arbitrary folders.
-- **Backend = local ollama + `qwen2.5-coder:7b`.** When graphify runs semantic extraction (docs/images), use the ollama backend with `qwen2.5-coder:7b` — i.e. `extract_corpus_parallel(files, backend="ollama", model="qwen2.5-coder:7b")` — instead of dispatching Claude subagents or Gemini. Rationale (measured): on a 36GB Mac it reliably completes with default settings, lightest footprint (~6.6GB), and code-heavy repos need no LLM at all (AST covers ~90%). Do NOT reach for a "middle" model (14b dense / gemma) — dense compute makes them slower than both the 7b and the 30b-MoE.
-- **Keeping it fresh:** code-only changes → `/graphify . --update` re-runs AST only (no LLM, seconds), or install the post-commit hook (`graphify hook install`). Doc/image changes need a manual `/graphify . --update`.
+When using the `graphify` skill (any input → knowledge graph; trigger `/graphify`), run its backend on **local ollama with `qwen2.5-coder:7b`** — not Claude subagents or Gemini.
 
 # Agent skills (Matt Pocock engineering pipeline) — global config
 
