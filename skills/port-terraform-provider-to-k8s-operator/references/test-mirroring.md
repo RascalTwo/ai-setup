@@ -82,6 +82,6 @@ resource's UPDATE line count before/after a 2×interval sleep.
 
 A loop script that `podman run`s the target service at each version their CI
 tests, waits for health, points the suite at it, and reports per-version N/N.
-Also future-proofs the suite against any shared/ephemeral test instance
-disappearing. Keep the live-instance run too when one exists — real TLS, real
-latency, real data.
+The container the harness spins is the ONLY supported target — no dual-path
+remote-instance logic (the target being env vars means anyone can override it
+in one line anyway; that's the entirety of the "remote" story).
