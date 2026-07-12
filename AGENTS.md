@@ -9,121 +9,40 @@ I often use voice/text-to-speech to give commands. This means:
 
 ## 2. Evidence-Based Claims
 
-All claims that are non-obvious, consequential, or could be wrong — especially version-specific behavior, API details, configuration, or anything that may have changed since training — must be backed by evidence.
+Back any claim that's non-obvious, consequential, or could be wrong (version behavior, API details, config, anything post-training) with evidence — even when you "already know" it. High training-data confidence is 🔴 tertiary, not a reason to skip.
 
-### Sourcing
+**Pipeline (in order):** 1) basic-memory 2) domain MCP tools 3) web/other sources 4) training data — fallback/synthesis only, never sole source when primary exists.
 
-- **Default: active-light** — do a quick verification before stating.
-- **High-stakes claims** — escalate to active-heavy: dig through official docs, changelogs, GitHub releases.
-- **When verification tools fail** — fall back to passive: state the claim with explicit uncertainty language.
+**Effort:** default active-light (quick verify before stating); high-stakes → active-heavy (official docs, changelogs, releases); tools fail → passive (state with explicit uncertainty, "I believe…").
 
-### Confidence & Citation
-
-- When confidence is high and the source is primary, keep the text clean — no citation clutter.
-- When uncertain or the source is weak, lead with uncertainty language ("I believe...", "As of my training data...").
-- When citing a source, use this format:
-
-  📎 [`Source Name`](url) 🟢 `wayfinding: Ctrl+F term, section name, or heading ` 📎
-
-- Evidence quality tiers:
-  - 🟢 **Primary** — official docs, source code, API responses, changelogs
-  - 🟡 **Secondary** — blog posts, articles citing primary sources, well-evidenced Stack Overflow answers
-  - 🔴 **Tertiary** — forum posts, unverified comments, training data recall
-
-### No Confidence Shortcut
-
-High confidence from training data is not a reason to skip sourcing. When answering knowledge questions (how does X work, what does Y do, etc.), always run the evidence pipeline even if you "already know" the answer:
-
-1. **basic-memory** — check for prior research on the topic.
-2. **Domain MCP tools** — if a relevant source exists, query it.
-3. **Web/other sources** — if the above don't cover it.
-4. **Training data** — use as fallback or to synthesize/contextualize results from above, never as the sole source when primary sources are available.
-
-Training recall feels authoritative but it's 🔴 tertiary. Don't let familiarity with a topic bypass the pipeline.
+**Citation:** high confidence + primary → clean, no clutter; weak/uncertain → lead with uncertainty. When citing:
+  📎 [`Source Name`](url) 🟢 `wayfinding: Ctrl+F term or heading` 📎
+  🟢 primary (docs, source, API, changelogs) · 🟡 secondary (blogs citing primary, good SO, memory) · 🔴 tertiary (forums, unverified, training recall)
 
 ## 3. Planning & Verification
 
-Every plan, action, or deliverable — code or otherwise — must include a verification phase before it can be considered done. Verification is proportional to the action: a one-liner change gets a one-liner check.
+Every plan/action/deliverable needs a verification phase before "done," proportional to the change (one-liner change → one-liner check).
 
-### Stress-Test Plans with Grilling
-
-Before finalizing a plan, invoke the `grilling` skill to stress-test it with the user. The grilling phase surfaces assumptions, edge cases, and gaps that are cheaper to find before implementation than during it.
-
-### Grilling-to-Plan Bridge
-
-When a grilling or review phase surfaces a behavioral gap or edge case in existing code, immediately evaluate whether it blocks or changes the implementation plan. Don't defer it as "interesting finding" — ask: "Does this affect any code I'm about to write or any test I'm about to depend on?" If yes, address it in the plan before starting implementation.
-
-### Verify Current State Before Changing It
-
-Before modifying behavior, verify the current state empirically — run the service, hit the endpoint, observe the response. This establishes a "before" baseline so the "after" verification is meaningful, not assumed.
-
-### Verification Format
-
-Present verification as a Given/When/Then checklist with markdown checkboxes:
-
-- [ ] **Given** [precondition], **when** [action], **then** [expected outcome]
-
-### Execution
-
-1. **Auto-execute** what can be automated (run commands, hit endpoints, check output).
-2. **AI-assisted** — for subjective or qualitative checks, spawn a subagent to review/critique the output against stated criteria.
-3. **Human** — only when it truly requires human eyes, judgment, or physical access. Present these as unchecked items for the user.
-4. **Empirical first** — when a verification can be tested by simply triggering the condition and observing the result, do that before researching configuration or internals. Run the experiment, then investigate only if the result is ambiguous.
-
-Track verification steps using the harness's task-tracking tools during execution.
-
-### When Verification Fails
-
-- If the fix is **within the scope and spirit of the original plan**, fix it and re-verify.
-- If the fix would **change scope, direction, or significantly increase complexity**, stop and escalate to the user for approval.
+- **Grill first:** before finalizing a plan, invoke the `grilling` skill to surface assumptions/edge cases/gaps cheaply.
+- **Grilling→plan bridge:** if grilling/review surfaces a gap in existing code, immediately ask "does this affect code I'm about to write or a test I'll depend on?" If yes, fix the plan before implementing — don't file it as "interesting finding."
+- **Baseline before changing:** verify current behavior empirically (run it, hit the endpoint, observe) so the "after" check is real. Empirical first — trigger the condition and observe before researching internals.
+- **Format:** `- [ ] **Given** X, **when** Y, **then** Z`. Track steps with the harness task tools.
+- **Execute:** auto-run the automatable; subagent for subjective/qualitative checks; leave true human-only items unchecked for me.
+- **On failure:** in-scope → fix and re-verify; scope/direction/complexity change → stop and escalate.
 
 ## 4. Subagent Delegation
 
-Delegate to subagents when output would be lengthy and you don't need line-by-line, or when 3+ independent tasks can run in parallel. Keep work inline when it's quick/targeted or the output directly feeds your next action.
+Delegate when output is lengthy and you need the answer not the detail, or 3+ independent tasks can run in parallel. Keep inline when quick/targeted or the output directly feeds your next step. Before reading a file/running a command inline, ask "do I need this in working memory, or just the answer?" — if just the answer, delegate (use Grep/Explore, never read large files inline for one fact).
 
-### Context Protection
-
-Before reading a file or running a command inline, ask: "Do I need this in my working memory, or just the answer?" If just the answer, delegate to a subagent. Never read large files inline when you only need specific information — use Grep or an Explore agent instead.
-
-### Subagent Invocation Quality
-
-Most subagent failures are invocation failures, not execution failures. Every subagent dispatch MUST include:
-- **Specific scope** — not "fix auth" but "fix OAuth redirect loop in `src/auth/callback.ts`"
-- **File references** — include paths to relevant code
-- **Success criteria** — what "done" looks like
-- **Full context** — subagents cannot ask clarifying questions mid-task; give them everything they need upfront
-- **Whether to write code or just research** — be explicit about expected output
+Most subagent failures are invocation failures. Every dispatch includes: specific scope (not "fix auth" but "fix OAuth redirect loop in `src/auth/callback.ts`"), file paths, success criteria, full upfront context (they can't ask mid-task), and whether to write code or just research.
 
 ## 5. Skill & MCP-First Resolution
 
-Before attempting any task ad-hoc, check two things:
+Before any ad-hoc approach, check the system-reminder lists — **skills** first, then **MCP servers/tools** (load deferred ones). If a skill or MCP tool covers the task, invoke it before writing any custom solution — it almost always beats improvisation.
 
-1. **Skills** — scan the available skills list (shown in system reminders) for a match.
-2. **MCP servers & tools** — scan the available MCP tools (shown in system reminders; load any deferred ones your agent supports) for a server that already handles the domain.
+**Trip-wire:** about to write ad-hoc code against an external service (bash, `curl`, `npx`, `gh`, a Python one-off)? Stop — use `find-skills` and check for an owning MCP tool first. A 20-line shell script doing what a skill does in one call is a policy violation.
 
-### Skills Priority
-
-- **Meta/ecosystem skills** like `find-skills`, `skill-creator`, `update-config` — these handle the agent's own configuration and should be the first resort for any "how do I set up / install / configure X" question.
-- **Domain skills** that match the task domain.
-
-### MCP Priority
-
-- **Domain MCP servers** — if an MCP server exists for the service or domain, use it before writing custom API calls, scripts, or browser workarounds. The session's available-MCP list (in system reminders) is the source of truth for what's loaded.
-- **Discovery** — MCP tools may be deferred. Load any deferred tools matching the domain before falling back to ad-hoc approaches.
-
-### General Rule
-
-If a skill or MCP tool exists that covers the task, invoke it before writing any custom solution. A purpose-built skill or MCP integration will almost always outperform ad-hoc improvisation.
-
-**Trip-wire:** if you're about to write ad-hoc code to interact with an external service — a bash script, a `curl`, an `npx`, a `gh` command, a Python one-off — stop and use the `find-skills` skill and check for MCP tools owning that domain first. Ad-hoc code is a last resort, not a first resort. If you find yourself writing a 20-line shell script to do what a skill could do in one invocation, that's a policy violation — back up and use the skill.
-
-### Documentation Pre-flight
-
-Before using a skill or MCP tool for the first time in a session, do a quick reconnaissance:
-- **Skills** — if a skill references other skills in "See Also" or "Prerequisites", read the referenced docs before attempting ad-hoc commands.
-- **MCP tools** — if an MCP server offers multiple related tools, load their schemas and understand the available operations before guessing at parameters or inventing workarounds.
-
-One reconnaissance step is cheaper than 4+ failed attempts from guessing syntax.
+**First use in a session:** recon before guessing — read a skill's "See Also"/"Prerequisites"; load an MCP server's related tool schemas. One recon step beats 4+ failed guesses.
 
 ## 6. Tool Hierarchy
 
@@ -136,16 +55,11 @@ When automating tasks, always follow this priority order:
 
 ## 7. Global Memory
 
-Persistent memory is managed by **basic-memory** (MCP server). Use its MCP tools (`write_note`, `search`, `build_context`, etc.) for all memory operations — save, read, update, and forget. Memory files live in `~/basic-memory/`.
-
-### Proactive Retrieval
-
-Memory is never injected automatically — it must be actively searched. Basic-memory is step 1 of the §2 evidence pipeline; this section adds basic-memory-specific triggers on top of that. Triggers for a memory search:
-- **Session start (MANDATORY)** — on the very first user message, before any other tool call, run `mcp__basic-memory__search` with the project name or topic. This is not optional even if the task seems simple — it's one tool call and prevents redundant research.
-- **Before configuring or debugging tools/infra** — prior troubleshooting notes may exist.
-- **When a subagent would otherwise be needed for knowledge lookup** — memory is faster.
-
-If no results come back, proceed normally. The cost of an empty search is one tool call; the cost of missing existing knowledge is a wasted subagent or repeated mistakes.
+**basic-memory** (MCP) manages all persistent memory — `write_note`, `search`, `build_context`, etc.; files in `~/basic-memory/`. Never auto-injected — search it. It's step 1 of the §2 pipeline; extra triggers:
+- **Session start (MANDATORY)** — first user message, before any other tool call, `mcp__basic-memory__search` the project/topic. Not optional even for simple tasks.
+- **Before configuring/debugging tools/infra** — prior notes may exist.
+- **When you'd otherwise spawn a subagent for a knowledge lookup** — memory is faster.
+Empty result → proceed normally.
 
 ## 8. Research / Web Fetch Failures
 
@@ -155,14 +69,9 @@ If web search or fetching a URL fails (e.g. 403, bot blocking, access denied), d
 
 ## 9. Image Reading — Local-Vision-First
 
-A native image `Read` adds ~1–2k vision tokens to context **every turn**, and they accumulate across a session. A local Ollama vision model returns small text/JSON instead, at ~0 Claude vision tokens — on hardware already owned.
-
-**Route by intent before reading an image:**
-
-- **Structured / known extraction → use the `read-image-locally` skill.** HUD/dashboard values, table contents, log/screenshot text, error messages, reading specific labeled fields, "what does this say/show". The skill wraps a tiered local reader (`gemma4:e4b` → `gemma4:12b`); on `LOCAL_VISION_FAILED` it tells you to read natively.
-- **Holistic visual judgment → read natively with `Read`.** Layout/aesthetics, "does this look right", subtle/ambiguous scenes, dense unfamiliar UIs, "why does this look off". A small local model gives a generic caption that silently misses these.
-
-The intent lives in the prompt: read-image-locally is only as good as the specific extraction instruction handed to it — never ask it for a generic caption. This policy applies to any agent that reads this file (Claude Code, Codex) and is delivered by prompting (this section), not a hook. It never blocks — routing is your call.
+A native image `Read` adds ~1–2k vision tokens every turn and accumulates; a local Ollama model returns text/JSON at ~0 Claude vision tokens. Route by intent:
+- **Structured/known extraction → `read-image-locally` skill** — HUD/dashboard values, tables, log/screenshot text, errors, specific labeled fields. Tiered reader (`gemma4:e4b`→`gemma4:12b`); on `LOCAL_VISION_FAILED` read natively. Give it a specific instruction, never a generic caption.
+- **Holistic visual judgment → native `Read`** — layout/aesthetics, "does this look right", ambiguous scenes, dense UIs. A local model's generic caption silently misses these.
 
 ## 10. Hard-won gotchas (cross-project)
 
@@ -170,9 +79,9 @@ The intent lives in the prompt: read-image-locally is only as good as the specif
 - **Don't pipe a long-running/background command through `head`/`tail -f`.** The reader closes early and the producer dies on SIGPIPE. Redirect to a file and read that instead.
 - **I use several GitHub accounts under one `gh` login.** The active account may not have access to a given repo — a push/clone/API call fails with "Repository not found" or a GraphQL "Could not resolve to a Repository" even though the repo exists. On any such access error, run `gh auth status` to see the logged-in accounts and `gh auth switch -u <account>` to the one that owns/can-reach the repo, then retry. Don't assume the repo is missing.
 
-## ponytail — always-on lazy mode (coding tasks)
+## ponytail — always-on (coding tasks)
 
-**For any coding task — writing, adding, refactoring, fixing, reviewing, or choosing libraries/dependencies — ponytail mode is the standing default, no invocation needed.** Before writing code, reach for the laziest solution that actually works: question whether the task needs to exist at all (YAGNI), prefer the standard library over custom code, native platform features over dependencies, one line over fifty. Push back on over-engineering, bloat, boilerplate, and speculative abstraction. This makes the `ponytail` skill's **`full`** intensity the default — see that skill for the full method and the `lite`/`ultra` levels. Does NOT apply to non-coding work (prose, research, knowledge questions), and yields to explicit thoroughness when a task genuinely needs defensive depth.
+Ponytail `full` is the standing default for all coding work (write/add/refactor/fix/review/choose deps), no invocation — laziest working solution, YAGNI, stdlib over custom, native over deps. NOT for prose/research/knowledge; yields to explicit thoroughness. See the `ponytail` skill for method + lite/ultra.
 
 ## graphify
 
