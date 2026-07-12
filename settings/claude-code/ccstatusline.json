@@ -53,6 +53,17 @@
         "preserveColors": true
       },
       {
+        "id": "sep-dur",
+        "type": "separator",
+        "character": " │ "
+      },
+      {
+        "id": "w-dur",
+        "type": "custom-command",
+        "commandPath": "$HOME/.claude/statusline-duration.sh",
+        "preserveColors": true
+      },
+      {
         "id": "sep-cost",
         "type": "separator",
         "character": " │ "
