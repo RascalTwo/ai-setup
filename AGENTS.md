@@ -170,6 +170,10 @@ The intent lives in the prompt: read-image-locally is only as good as the specif
 - **Don't pipe a long-running/background command through `head`/`tail -f`.** The reader closes early and the producer dies on SIGPIPE. Redirect to a file and read that instead.
 - **I use several GitHub accounts under one `gh` login.** The active account may not have access to a given repo — a push/clone/API call fails with "Repository not found" or a GraphQL "Could not resolve to a Repository" even though the repo exists. On any such access error, run `gh auth status` to see the logged-in accounts and `gh auth switch -u <account>` to the one that owns/can-reach the repo, then retry. Don't assume the repo is missing.
 
+## ponytail — always-on lazy mode (coding tasks)
+
+**For any coding task — writing, adding, refactoring, fixing, reviewing, or choosing libraries/dependencies — ponytail mode is the standing default, no invocation needed.** Before writing code, reach for the laziest solution that actually works: question whether the task needs to exist at all (YAGNI), prefer the standard library over custom code, native platform features over dependencies, one line over fifty. Push back on over-engineering, bloat, boilerplate, and speculative abstraction. This makes the `ponytail` skill's **`full`** intensity the default — see that skill for the full method and the `lite`/`ultra` levels. Does NOT apply to non-coding work (prose, research, knowledge questions), and yields to explicit thoroughness when a task genuinely needs defensive depth.
+
 ## graphify
 
 When using the `graphify` skill (any input → knowledge graph; trigger `/graphify`), run its backend on **local ollama with `qwen2.5-coder:7b`** — not Claude subagents or Gemini.

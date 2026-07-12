@@ -12,7 +12,7 @@
 // overlay's. Each links its own skills; order doesn't matter.
 
 import { existsSync, lstatSync, statSync, rmSync, mkdirSync, readdirSync, symlinkSync,
-         readFileSync, appendFileSync } from "node:fs";
+         readFileSync, writeFileSync, appendFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -124,6 +124,44 @@ if (haveCodex) {
   } else {
     appendFileSync(cfg, `\n[mcp_servers.basic-memory]\ncommand = "uvx"\nargs = ["basic-memory", "mcp"]\n`);
     console.log(`  appended [mcp_servers.basic-memory] to ${cfg}`);
+  }
+}
+
+console.log("== Codex prefs (config.toml) ==");
+// config.toml mixes user prefs (top-level scalars) with Codex-managed tables
+// ([plugins], [projects], ...). We can't symlink it, so we merge the desired scalars
+// into the region ABOVE the first [table] — a bare TOML key after a table header
+// would bind to that table. Machine-managed tables are copied through untouched.
+// Prefs come from settings/codex/config-prefs.toml in the core AND each overlay
+// (overlay wins), so personal/dangerous values stay out of the public installer.
+if (haveCodex) {
+  const desired: Record<string, unknown> = {};
+  for (const root of [REPO, ...overlays]) {
+    const pf = join(root, "settings", "codex", "config-prefs.toml");
+    if (existsSync(pf)) Object.assign(desired, parseToml(readFileSync(pf, "utf8")));
+  }
+  const keys = Object.keys(desired);
+  if (keys.length) {
+    const cfg = join(CODEX_DIR, "config.toml");
+    const fmt = (v: unknown) => (typeof v === "string" ? JSON.stringify(v) : String(v));
+    const lines = (existsSync(cfg) ? readFileSync(cfg, "utf8") : "").split("\n");
+    let firstTable = lines.findIndex((l) => /^\s*\[/.test(l));
+    if (firstTable === -1) firstTable = lines.length;
+    const head = lines.slice(0, firstTable);
+    const tail = lines.slice(firstTable);
+    let changed = false;
+    for (const k of keys) {
+      const line = `${k} = ${fmt(desired[k])}`;
+      const idx = head.findIndex((l) => new RegExp(`^\\s*${k}\\s*=`).test(l));
+      if (idx === -1) { head.unshift(line); changed = true; }
+      else if (head[idx] !== line) { head[idx] = line; changed = true; }
+    }
+    if (changed) {
+      writeFileSync(cfg, [...head, ...tail].join("\n"));
+      console.log(`  merged into ${cfg}: ${keys.join(", ")}`);
+    } else {
+      console.log(`  already current: ${keys.join(", ")}`);
+    }
   }
 }
 

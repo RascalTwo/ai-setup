@@ -15,9 +15,22 @@ Settings have **no shared cross-agent format**, so they're hand-maintained per t
 | basic-memory MCP | shared persistent memory | `[mcp_servers.basic-memory]` | ✅ set by `install.ts` |
 | `voiceEnabled`, `awaySummaryEnabled`, `agentPushNotifEnabled` | Claude-specific | *(no equivalent)* | Claude-only |
 
-## Not auto-applied
+## Auto-applied
 
-`install.ts` only manages `[mcp_servers.basic-memory]` in `config.toml` (a discrete,
-safe-to-append table). The preference keys above are top-level scalars that are
-easy to duplicate/clobber and reflect deliberate choices, so they're documented
-here rather than machine-edited. On a fresh machine, set them by hand once.
+`install.ts` now merges top-level preference scalars into `config.toml` from
+`settings/codex/config-prefs.toml` in the **core** and **each `--overlay`** (overlay
+wins). Keys are written into the region ABOVE the first `[table]` (a bare TOML key
+after a table header would bind to that table); Codex's machine-managed tables
+(`[plugins]`, `[projects]`, `[mcp_servers]`, `[tui]`, …) are copied through untouched.
+The merge is idempotent — unchanged keys are a no-op.
+
+Split by safety:
+- **Public core** (`settings/codex/config-prefs.toml`): only safe, portable prefs —
+  currently `model_reasoning_effort = "high"`.
+- **Private overlay** (`ai-setup-private/settings/codex/config-prefs.toml`): personal /
+  aggressive prefs — `approval_policy = "never"`, `sandbox_mode = "danger-full-access"`.
+  Applied on my machines via `--overlay`, never by the bare public installer.
+
+`[mcp_servers.basic-memory]` is still appended separately (a discrete table, not a
+top-level scalar). To add a new pref, put the key in the appropriate config-prefs.toml
+and re-run install.
