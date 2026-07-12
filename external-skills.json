@@ -1,0 +1,27 @@
+{
+  "_comment": "Third-party skills installed via `npx skills`. install.ts --externals reproduces these deterministically (npx skills add <repo> -s <skills>). Owned skills live in skills/; these are NOT vendored.",
+  "repos": {
+    "mattpocock/skills": [
+      "code-review", "codebase-design", "diagnosing-bugs", "domain-modeling",
+      "grill-with-docs", "grilling", "handoff", "implement",
+      "improve-codebase-architecture", "prototype", "research",
+      "setup-matt-pocock-skills", "tdd", "to-spec", "to-tickets", "triage", "wayfinder"
+    ],
+    "anthropics/skills": ["skill-creator"],
+    "vercel-labs/skills": ["find-skills"],
+    "dietrichgebert/ponytail": [
+      "ponytail", "ponytail-audit", "ponytail-debt",
+      "ponytail-gain", "ponytail-help", "ponytail-review"
+    ],
+    "safishamsi/graphify": ["graphify"],
+    "levnikolaevich/claude-code-skills": [
+      "ln-11-plan-reviewer", "ln-12-delivery-reviewer",
+      "ln-21-documentation-auditor", "ln-22-codebase-auditor",
+      "ln-23-test-suite-auditor", "ln-24-architecture-auditor",
+      "ln-25-persistence-auditor", "ln-31-performance-optimizer",
+      "ln-32-dependency-upgrader", "ln-33-code-modernizer",
+      "ln-34-benchmark-comparator", "ln-41-test-strategy-planner",
+      "ln-42-acceptance-test-builder", "ln-51-opportunity-evaluator"
+    ]
+  }
+}

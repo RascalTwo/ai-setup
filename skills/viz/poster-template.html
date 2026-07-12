@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__SLUG__</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="local">
+<meta name="viz:listed" content="unlisted">
+<meta name="viz:kind" content="explanatory">
+<meta name="viz:title" content="__SLUG__">
+<meta name="viz:description" content="">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<style>
+  /* The only mechanics: scale the fixed 1200×630 .og-card to fill any viewport (scale 1 at a
+     1200×630 viewport — the size verify.ts --og shoots, so the OG image is pixel-native).
+     Everything visual is yours — give .og-card a background and author its contents. */
+  html,body{overflow:hidden}
+  #fit{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden}
+  .og-card{position:relative;width:1200px;height:630px;overflow:hidden;
+           transform:scale(var(--s,1));transform-origin:center}
+</style>
+</head>
+<body>
+<div id="fit">
+  <div class="og-card">
+    <!-- Author your 1200×630 card here. Keep key content inside the center ~1080×565 safe zone
+         (link platforms crop ~60px off the sides / 32px top-bottom when unfurling). -->
+  </div>
+</div>
+<script>
+  const card = document.querySelector('.og-card');
+  const fit = () => card.style.setProperty('--s', Math.min(innerWidth / 1200, innerHeight / 630));
+  addEventListener('resize', fit); fit();
+</script>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__SLUG__</title>
+<!-- Publish posture — safe defaults (see SKILL.md Step 4). Flip only to share. -->
+<meta name="viz:posture" content="local">
+<meta name="viz:listed" content="unlisted">
+<meta name="viz:kind" content="explanatory">
+<meta name="viz:title" content="__SLUG__">
+<meta name="viz:description" content="Arrow-key slide deck.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Deck resolution — the ONE place to set the design canvas + aspect ratio.
+     Everything is built to these exact pixels, then scaled to fit any screen
+     (letterboxed on the mismatched axis). 16:9 → 1280×720 / 1920×1080;
+     16:10 → 1280×800; 3:2 → 1280×853; 4:3 → 1280×960. Change these two only. */
+  --deck-w:1280; --deck-h:720;
+  --navy-0:#081428; --navy-1:#0a1a35; --navy-2:#0d2247; --navy-3:#123059;
+  --ink:#eef4ff; --muted:#9ab0cf; --faint:#5f7699;
+  --accent:#37d9a0; --accent-dim:#1f9e77;
+  --t-teal:#4bad9e; --t-blue:#3f8fd4; --t-green:#57b85b; --t-lime:#9bcf3f; --t-red:#d0453a; --t-amber:#e6902e;
+  --good:#57b85b; --warn:#e6902e; --danger:#d0453a;
+  --panel:rgba(18,40,78,.55); --panel-brd:rgba(120,160,230,.22);
+  --sans:'Lato','Segoe UI',system-ui,-apple-system,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--sans);background:#050d1c;color:var(--ink);-webkit-font-smoothing:antialiased}
+
+/* fixed 16:9 canvas that scales to fill any screen */
+#viewport{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden;background:#050d1c}
+#deck{position:relative;width:calc(var(--deck-w)*1px);height:calc(var(--deck-h)*1px);overflow:hidden;transform:scale(var(--s,1));transform-origin:center;
+  box-shadow:0 40px 120px rgba(0,0,0,.6)}
+
+/* Zero-asset background. Drop a bg.jpg beside this file and swap the gradient for
+   background:#0f2a5c url("bg.jpg") center/cover no-repeat; if you want a photo. */
+.bg{position:absolute;inset:0;z-index:0;background:
+  radial-gradient(1100px 700px at 70% 20%, rgba(55,217,160,.10), transparent 60%),
+  linear-gradient(160deg,#0a1a35,#081428 55%,#050d1c)}
+.vignette{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(900px 620px at 50% 46%, rgba(9,20,40,.24), transparent 70%);
+  box-shadow:inset 0 0 180px 34px rgba(6,14,30,.5)}
+
+/* chrome — positioned within the canvas */
+.masthead{position:absolute;top:26px;left:40px;z-index:7;font-size:14px;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.masthead b{color:var(--ink);font-weight:900}
+/* Brand logo (optional): drop a logo.png beside this file and uncomment.
+.brand{position:absolute;top:22px;right:36px;z-index:7;width:58px;height:58px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
+.brand img{width:100%;height:100%;object-fit:contain;display:block} */
+.segbar{position:absolute;left:40px;right:40px;bottom:22px;z-index:6;display:flex;gap:5px}
+.segbar b{flex:1;height:4px;border-radius:3px;background:rgba(150,180,230,.17);cursor:pointer;transition:.35s}
+.segbar b.done{background:linear-gradient(90deg,var(--accent),var(--t-blue))}
+.segbar b.cur{background:var(--accent);box-shadow:0 0 12px var(--accent);height:5px;margin-top:-.5px}
+.segbar b.cur.split{background:transparent;box-shadow:none;display:flex;gap:2px}
+.segbar b.cur.split i{flex:1;height:100%;border-radius:2px;background:rgba(150,180,230,.3);transition:.3s}
+.segbar b.cur.split i.lit{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.hint{position:absolute;left:50%;transform:translateX(-50%);bottom:40px;z-index:6;color:var(--faint);
+  font-size:12px;letter-spacing:.06em;opacity:.85;transition:opacity .6s}
+.hint.hide{opacity:0}
+.hint kbd{font-family:var(--mono);background:rgba(120,160,230,.12);border:1px solid var(--panel-brd);border-radius:5px;padding:1px 7px;color:var(--muted)}
+
+/* slides — title pinned top (.head), content fills below (.body) */
+.stage{position:absolute;inset:0;z-index:3}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;padding:74px 60px 58px;
+  opacity:0;visibility:hidden;transform:translateY(12px) scale(.995);
+  transition:opacity .45s ease,transform .5s cubic-bezier(.2,.7,.2,1),visibility 0s .45s}
+.slide.active{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+.slide.past{transform:translateY(-12px) scale(.995)}
+.slide.hero{justify-content:center;align-items:center;text-align:center}
+.head{flex:none;text-align:center}
+.body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center}
+
+.eyebrow{display:flex;align-items:center;gap:10px;color:var(--accent);font-weight:700;
+  font-size:14px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:14px;justify-content:center}
+.eyebrow::before{content:"";width:26px;height:2px;background:currentColor;box-shadow:0 0 8px currentColor}
+h1.big{font-weight:900;font-size:86px;line-height:1;letter-spacing:-.02em}
+h2.title{font-weight:900;font-size:52px;line-height:1.05;letter-spacing:-.015em;margin-left:auto;margin-right:auto}
+.titlebox{border:1.5px solid rgba(55,217,160,.45);border-radius:18px;padding:24px 40px;
+  background:rgba(10,26,53,.42);box-shadow:0 0 0 1px rgba(55,217,160,.08),0 0 44px rgba(55,217,160,.14) inset;
+  display:inline-flex;align-items:center;gap:26px;flex-wrap:wrap;justify-content:center}
+.lead{color:var(--muted);font-size:22px;line-height:1.55;max-width:90ch;margin-top:18px;font-weight:400}
+.lead.narrow{max-width:62ch}
+.lead .hi{color:var(--ink);font-weight:700}
+.accent{color:var(--accent)}
+.grad{background:linear-gradient(92deg,var(--accent),var(--t-blue) 60%,var(--t-lime));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* .reveal — auto stagger-cascade on slide entry (order by --i) */
+.reveal{opacity:0}
+.slide.active .reveal{animation:rise .58s cubic-bezier(.2,.75,.25,1) both;animation-delay:calc(var(--i,0)*95ms + 100ms)}
+@keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* .frag — arrow-stepped build WITHIN a slide (reversible). Opt-in per element. */
+.frag{opacity:0;transform:translateY(20px);transition:opacity .5s cubic-bezier(.2,.75,.25,1),transform .5s cubic-bezier(.2,.75,.25,1)}
+.frag.in{opacity:1;transform:none}
+
+/* ---- generic content primitives (use, remix, or delete) ---- */
+.cards{display:flex;gap:20px;flex-wrap:wrap}
+.card{background:var(--panel);border:1px solid var(--panel-brd);border-radius:16px;padding:24px 26px;
+  backdrop-filter:blur(4px);min-width:210px;flex:1;box-shadow:0 10px 30px rgba(2,8,20,.35)}
+.card h3{font-size:20px;font-weight:700;margin-bottom:9px;display:flex;align-items:center;gap:11px}
+.card p{color:var(--muted);font-size:16px;line-height:1.5}
+.card .ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:19px;flex:none}
+.chip{display:inline-block;font-family:var(--mono);font-size:14px;border:1px solid var(--panel-brd);border-radius:999px;padding:6px 15px;color:var(--muted)}
+.mono{font-family:var(--mono)}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;width:100%}
+.two.wide{grid-template-columns:1.1fr .9fr}
+.two .lead:first-child{margin-top:0}
+
+.code{font-family:var(--mono);font-size:16px;line-height:1.75;background:rgba(5,14,30,.72);
+  border:1px solid var(--panel-brd);border-radius:14px;padding:26px 28px;white-space:pre;
+  box-shadow:0 14px 40px rgba(2,8,20,.5);overflow:auto}
+.code .k{color:var(--t-lime)} .code .s{color:var(--accent)} .code .c{color:var(--faint)}
+
+/* stat board — .num[data-to] count-ups animate on slide entry (see countUp) */
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;width:100%}
+.stat{background:var(--panel);border:1px solid var(--panel-brd);border-radius:16px;padding:26px 18px;text-align:center;box-shadow:0 10px 30px rgba(2,8,20,.35)}
+.stat .num{font-size:56px;font-weight:900;line-height:1;background:linear-gradient(180deg,var(--ink),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat .lab{color:var(--muted);font-size:14.5px;margin-top:11px;line-height:1.35}
+
+/* process pipeline */
+.pipe{display:flex;align-items:stretch;gap:0;flex-wrap:nowrap;width:100%}
+.step{position:relative;flex:1;min-width:0;padding:16px 12px;text-align:center}
+.step .b{width:62px;height:62px;margin:0 auto 14px;border-radius:16px;display:grid;place-items:center;font-size:26px;background:var(--panel);border:1px solid var(--panel-brd)}
+.step .t{font-weight:700;font-size:17px} .step .d{color:var(--faint);font-size:13.5px;margin-top:5px;font-family:var(--mono)}
+.step:not(:last-child)::after{content:"";position:absolute;top:47px;right:-8px;width:26px;height:2px;background:linear-gradient(90deg,var(--accent),transparent);opacity:.7}
+.step.gate .b{border-color:var(--warn);color:var(--warn);box-shadow:0 0 20px rgba(230,144,46,.25)}
+
+.benefits{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;width:100%}
+.ben{background:var(--panel);border:1px solid var(--panel-brd);border-radius:14px;padding:22px 24px}
+.ben h3{font-size:19px;font-weight:700;margin-bottom:8px}
+.ben p{color:var(--muted);font-size:15px;line-height:1.45}
+.ben .tag{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:9px}
+
+.quote{border-left:3px solid var(--accent);padding-left:24px;font-size:27px;font-weight:700;line-height:1.4;max-width:44ch;color:var(--ink)}
+.quote small{display:block;color:var(--faint);font-size:15px;font-weight:400;margin-top:12px;font-family:var(--mono);line-height:1.55}
+.quote.center{border-left:none;padding-left:0;text-align:center;margin-left:auto;margin-right:auto}
+
+.links{display:flex;gap:18px;flex-wrap:wrap;width:100%}
+.lnk{display:flex;flex-direction:column;gap:7px;background:var(--panel);border:1px solid var(--panel-brd);border-radius:14px;padding:22px 26px;text-decoration:none;color:var(--ink);transition:.25s;min-width:230px;flex:1}
+.lnk:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 14px 40px rgba(2,8,20,.5)}
+.lnk b{font-size:18px;font-weight:700} .lnk small{color:var(--muted);font-size:14px;line-height:1.4}
+.lnk .go{color:var(--accent);font-family:var(--mono);font-size:13px;margin-top:2px}
+</style>
+</head>
+<body>
+<div id="viewport">
+<div id="deck">
+<div class="bg"></div>
+<div class="vignette"></div>
+<div class="masthead">Track · <b>Deck Title</b></div>
+<!-- <div class="brand"><img src="logo.png" alt=""></div> -->
+
+<div class="stage" id="stage">
+
+  <!-- ============================================================
+       AUTHORING GUIDE
+       - Each <section class="slide"> is one slide. Order = deck order.
+       - Add class "hero" for a centered title/closing slide.
+       - .reveal auto-cascades on slide entry; stagger with style="--i:N".
+       - .frag builds on arrow press WITHIN a slide (reversible). Right
+         arrow reveals the next .frag, then advances to the next slide;
+         left arrow un-reveals, then goes back. Order .frag with --i too.
+       - The segbar (bottom) and progress are wired automatically — just
+         add/remove <section class="slide"> blocks.
+       ============================================================ -->
+
+  <!-- 1 · TITLE (hero). Plain/.reveal so it's populated on load; save .frag
+       builds for content slides (see slide 2). -->
+  <section class="slide hero">
+    <div class="titlebox reveal" style="--i:0">
+      <h1 class="big">Your Big <span class="grad">Title</span></h1>
+    </div>
+    <p class="lead reveal narrow" style="--i:1;margin-top:30px">
+      One-line framing of what this deck is about and who it's for.
+    </p>
+    <p class="lead reveal narrow" style="--i:2;margin-top:16px">
+      A second beat — the promise, or the question you'll answer.
+    </p>
+  </section>
+
+  <!-- 2 · CONTENT (two-column: prose builds on the left, visual on the right) -->
+  <section class="slide">
+    <div class="head">
+      <div class="eyebrow reveal" style="--i:0">Section eyebrow</div>
+      <h2 class="title reveal" style="--i:1">A claim worth <span class="accent">a whole slide</span></h2>
+    </div>
+    <div class="body">
+      <div class="two">
+        <div>
+          <p class="lead frag" style="--i:2">
+            First point. <span class="hi">Bold the words</span> that carry the idea.
+          </p>
+          <p class="lead frag" style="--i:3">
+            Second point, revealed on the next arrow press.
+          </p>
+          <div class="chip frag" style="--i:4;margin-top:20px">a punchy aside in mono</div>
+        </div>
+        <div class="reveal" style="--i:2">
+          <div class="code"><span class="c"># swap in whatever visual fits — code, cards, a diagram</span>
+<span class="k">resource</span> <span class="s">"example"</span> <span class="s">"thing"</span> {
+  name = <span class="s">"described as code"</span>
+}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · CLOSING (hero) -->
+  <section class="slide hero">
+    <h2 class="title reveal">Questions?</h2>
+  </section>
+
+</div>
+
+<div class="hint" id="hint">Use <kbd>&larr;</kbd> <kbd>&rarr;</kbd> to navigate · <kbd>F</kbd> fullscreen</div>
+<div class="segbar" id="segbar"></div>
+</div>
+</div>
+
+<script>
+const deck=document.getElementById('deck');
+// Derive scale from the canvas's own resolved size (set by --deck-w/--deck-h),
+// so the resolution lives in exactly one place — the :root vars above.
+function fit(){const c=getComputedStyle(deck);deck.style.setProperty('--s', Math.min(innerWidth/parseFloat(c.width), innerHeight/parseFloat(c.height)));}
+addEventListener('resize',fit); fit();
+
+const slides=[...document.querySelectorAll('.slide')];
+const segWrap=document.getElementById('segbar');
+let i=0;
+slides.forEach((_,n)=>{const b=document.createElement('b');b.onclick=(e)=>{e.stopPropagation();go(n);};segWrap.appendChild(b);});
+const segs=[...segWrap.children];
+// count-up any .num[data-to] on slide entry (used by the stat board)
+function countUp(slide){
+  slide.querySelectorAll('.num[data-to]').forEach(el=>{
+    const to=+el.dataset.to, suf=el.dataset.suffix||'', dur=900, t0=performance.now();
+    (function tick(t){const p=Math.min(1,(t-t0)/dur), v=Math.round(to*(1-Math.pow(1-p,3)));el.textContent=v+suf;if(p<1)requestAnimationFrame(tick);})(t0);
+  });
+}
+function setFrags(slide,showAll){slide.querySelectorAll('.frag').forEach(f=>f.classList.toggle('in',showAll));}
+function updateFragBar(){
+  segs.forEach(s=>{s.classList.remove('split');s.replaceChildren();});
+  const frags=[...slides[i].querySelectorAll('.frag')];
+  if(!frags.length)return;
+  segs[i].classList.add('split');
+  frags.forEach(f=>{const t=document.createElement('i');if(f.classList.contains('in'))t.classList.add('lit');segs[i].appendChild(t);});
+}
+function go(n,showFrags){
+  n=Math.max(0,Math.min(slides.length-1,n));
+  const back=n<i;
+  if(n===i && slides[i].classList.contains('active'))return;
+  slides.forEach((s,k)=>{s.classList.toggle('active',k===n);s.classList.toggle('past',k<n);});
+  i=n;
+  segs.forEach((d,k)=>{d.classList.toggle('done',k<=n);d.classList.toggle('cur',k===n);});
+  setFrags(slides[n], showFrags!==undefined?showFrags:back);
+  updateFragBar();
+  if(slides[n].querySelector('.num[data-to]'))setTimeout(()=>countUp(slides[n]),340);
+}
+document.addEventListener('keydown',e=>{
+  const k=e.key;
+  if(k==='ArrowRight'||k==='ArrowDown'||k===' '||k==='PageDown'){e.preventDefault();
+    const next=[...slides[i].querySelectorAll('.frag')].find(f=>!f.classList.contains('in'));
+    if(next){next.classList.add('in');updateFragBar();} else go(i+1,false);
+    document.getElementById('hint').classList.add('hide');}
+  else if(k==='ArrowLeft'||k==='ArrowUp'||k==='PageUp'){e.preventDefault();
+    const shown=[...slides[i].querySelectorAll('.frag')].filter(f=>f.classList.contains('in'));
+    if(shown.length){shown[shown.length-1].classList.remove('in');updateFragBar();} else go(i-1,true);}
+  else if(k==='Home')go(0); else if(k==='End')go(slides.length-1);
+  else if(k==='f'||k==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+});
+window.focus();
+go(0);
+</script>
+</body>
+</html>
