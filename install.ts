@@ -74,8 +74,12 @@ if (process.argv.includes("--externals")) {
     ? (JSON.parse(readFileSync(mf, "utf8")).repos ?? {}) : {};
   for (const [repo, skills] of Object.entries(repos)) {
     console.log(`  ${repo}: ${skills.length} skills`);
-    spawnSync("npx", ["-y", "skills", "add", repo, "-s", skills.join(","),
-      "-g", "-a", "claude-code", "-a", "codex", "--yes"], { stdio: "inherit" });
+    // One `add` per skill: a comma-list silently no-ops for repos that nest
+    // skills under plugins/*/skills/ (e.g. levnikolaevich). Single names always
+    // resolve, and "*" as the sole entry still installs the whole repo.
+    for (const skill of skills)
+      spawnSync("npx", ["-y", "skills", "add", repo, "-s", skill,
+        "-g", "-a", "claude-code", "-a", "codex", "--yes"], { stdio: "inherit" });
   }
 }
 
