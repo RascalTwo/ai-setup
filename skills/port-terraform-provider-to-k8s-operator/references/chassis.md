@@ -163,3 +163,24 @@ PoC images). Production note: narrow the Secrets grant to per-namespace Roles.
 9. **Quarkus dev mode does not reliably hot-reload operators** — no HTTP
    traffic to trigger it. Restart `quarkus:dev` after code changes;
    it's seconds.
+10. **Component/plugin-style APIs are their own chassis ground — but the same
+    lever fits.** Many providers expose a whole family (LDAP federation + its
+    mappers, realm keystores, key providers) not as dedicated endpoints but as
+    one generic "component" endpoint where a `providerType` + `providerId`
+    selects behavior and config is a free-form map. Model each *family* as ONE
+    CRD with a `providerId` type field + a config map (exactly like the
+    protocol-mapper many-to-one), reconciled through the components endpoint.
+    Three gotchas that cost time: (a) the component's `parentId` is the
+    resource's **internal id**, not its human name — a created realm's id is a
+    UUID ≠ the realm string, so resolve it (`realm().toRepresentation().getId()`)
+    and use it for both the write and the list-by-parent query; (b) component
+    config is **list-valued** (`MultivaluedHashMap<String,List<String>>`),
+    so a flat CRD `Map<String,String>` must be wrapped one value per key — the
+    subset-diff's scalar-array handling then compares them cleanly; (c) child
+    components (mappers) carry `parentId` = the *parent component's* id, so a
+    mapper CRD must resolve its parent by name first and fail loudly if absent
+    (create ordering: parent before children). The masked-secret exclusion
+    (#6) applies verbatim to component credentials (LDAP `bindCredential`).
+    A component with an unreachable backend (e.g. a bogus LDAP URL) still
+    **creates fine** — connection is tested lazily — so lifecycle e2e needs no
+    real backing server.
