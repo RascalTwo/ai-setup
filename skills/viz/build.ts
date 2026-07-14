@@ -209,7 +209,7 @@ async function ensureOgImage(vizDir: string, warnings: string[]): Promise<void> 
   if (OG_NAMES.slice(0, 2).some((n) => existsSync(path.join(vizDir, n)))) return; // og.png/og.jpg = hand-made, keep it
   const auto = path.join(vizDir, "og.auto.png");
   const hero = path.join(vizDir, "hero.html");
-  const selfHero = /<meta[^>]+name=["']viz:card["'][^>]+content=["']self["']/i.test(readFileSync(path.join(vizDir, "index.html"), "utf8"));
+  const selfHero = /<meta[^>]+name=["']viz:card["'][^>]+content=["']self["']/i.test(stripComments(readFileSync(path.join(vizDir, "index.html"), "utf8")));
   const cardSrc = existsSync(hero) ? hero : selfHero ? path.join(vizDir, "index.html") : "";
   if (existsSync(auto) && (!cardSrc || statSync(cardSrc).mtimeMs <= statSync(auto).mtimeMs)) return; // fresh enough
   if (!(await ensureDevServer())) {
@@ -237,7 +237,7 @@ function ogTagsFor(
   // 1200×630 card. `verify --og` renders either into og.auto.png.
   const hero = path.join(vizDir, "hero.html");
   const haveHero = existsSync(hero);
-  const selfHero = /<meta[^>]+name=["']viz:card["'][^>]+content=["']self["']/i.test(html);
+  const selfHero = /<meta[^>]+name=["']viz:card["'][^>]+content=["']self["']/i.test(stripComments(html));
   const cardSrc = haveHero ? hero : selfHero ? path.join(vizDir, "index.html") : "";
   // Provenance flag: nudge toward a hand-made image (the filename is the fingerprint).
   if (!found) warnings.push(cardSrc
@@ -451,9 +451,13 @@ function decodeEntities(s: string): string {
 // The content value is delimited by whichever quote opened it (captured group 1) and
 // read lazily up to that SAME quote — so an apostrophe inside a double-quoted value
 // (e.g. content="Beta's blurb") doesn't truncate the match. Returns DECODED plain text.
+// Commented-out metas are disabled, not live: strip HTML comments before matching so a
+// scaffold's <!-- <meta name="viz:spoiler" …> --> example isn't parsed as a real declaration.
+const stripComments = (html: string) => html.replace(/<!--[\s\S]*?-->/g, "");
+
 export function grabMeta(html: string, name: string): string {
   const re = new RegExp(`<meta\\s+name=["']${name}["']\\s+content=(["'])(.*?)\\1`, "i");
-  return decodeEntities((html.match(re)?.[2] ?? "").trim());
+  return decodeEntities((stripComments(html).match(re)?.[2] ?? "").trim());
 }
 
 // Like grabMeta but returns EVERY matching meta's content — repeated elements with
@@ -461,7 +465,7 @@ export function grabMeta(html: string, name: string): string {
 // like viz:tag. Empties are dropped; order follows document order.
 function grabMetaAll(html: string, name: string): string[] {
   const re = new RegExp(`<meta\\s+name=["']${name}["']\\s+content=(["'])(.*?)\\1`, "ig");
-  return [...html.matchAll(re)].map((m) => decodeEntities(m[2].trim())).filter(Boolean);
+  return [...stripComments(html).matchAll(re)].map((m) => decodeEntities(m[2].trim())).filter(Boolean);
 }
 
 function vizCardMeta(html: string): { title: string; description: string; tags: string[]; kind: "explanatory" | "operational" } {
@@ -824,11 +828,11 @@ ${preamble ? `    <div class="preamble">\n${preamble}\n    </div>\n` : ""}    <d
         <button type="button" class="segdir" id="viz-sortdir" data-dir="desc" aria-label="Sort direction" title="Toggle ascending / descending">&#8595;</button>
       </div>
       <div class="segmented" role="group" aria-label="View" id="viz-view">
-        <button type="button" class="seg on" data-view="list" aria-pressed="true">List</button>
-        <button type="button" class="seg" data-view="cards" aria-pressed="false">Grid</button>
+        <button type="button" class="seg" data-view="list" aria-pressed="false">List</button>
+        <button type="button" class="seg on" data-view="cards" aria-pressed="true">Grid</button>
       </div>
     </div>
-    <div class="grid">
+    <div class="grid grid--cards">
 ${cards}
     </div>
     <div class="viz-empty" id="viz-empty" hidden>No visualizations match your filters.</div>
