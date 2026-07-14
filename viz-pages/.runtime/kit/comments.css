@@ -1,0 +1,270 @@
+/* comments.css — styling for the /viz anchored review layer (kit/comments.js).
+   Injected live-only by the server next to the hot-reload script; absent from
+   frozen/published builds. Reuses the viz-kit intent tokens (--accent open,
+   --good resolved, --danger destructive) so it stays dark-theme consistent.
+
+   All chrome lives inside #viz-comments (a fixed full-viewport layer that is
+   pointer-events:none, so it never eats the viz's own clicks); only the actual
+   widgets re-enable pointer events. Heavy z-index keeps pins above any viz. */
+
+#viz-comments {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000; /* above essentially any viz, below nothing of ours */
+  pointer-events: none;
+  font: 13px/1.4
+    var(--sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  color: var(--text, #e6edf3);
+}
+#viz-comments * {
+  box-sizing: border-box;
+}
+
+/* ---- Pins: a numbered dot that the rAF loop parks over its anchor's top edge. */
+.vc-pin {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 2px;
+  background: var(--accent, #58a6ff);
+  border: 2px solid #0d1117;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  color: #0d1117;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  will-change: left, top;
+  transition: background 0.15s ease;
+}
+.vc-pin.resolved {
+  background: var(--good, #3fb950);
+}
+.vc-pin.detached {
+  background: var(--muted, #8b949e);
+  opacity: 0.6;
+}
+.vc-pin.active {
+  outline: 2px solid var(--text, #e6edf3);
+  outline-offset: 2px;
+}
+
+/* ---- The capture/edit bubble: a small composer anchored near the click. ---- */
+.vc-bubble,
+.vc-card {
+  position: fixed;
+  pointer-events: auto;
+  background: var(--panel, #161b22);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+  padding: 10px;
+  width: 280px;
+}
+.vc-bubble textarea {
+  width: 100%;
+  min-height: 64px;
+  resize: vertical;
+  background: var(--bg, #0d1117);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 6px;
+  color: var(--text, #e6edf3);
+  font: inherit;
+  padding: 7px 8px;
+}
+.vc-bubble textarea:focus {
+  outline: none;
+  border-color: var(--accent, #58a6ff);
+}
+.vc-anchor-hint {
+  margin: 6px 2px 2px;
+  font-size: 11px;
+  color: var(--muted, #8b949e);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vc-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.vc-row .spacer {
+  flex: 1;
+}
+
+/* Buttons — neutral, with intent variants. */
+.vc-btn {
+  pointer-events: auto;
+  background: var(--panel-2, #21262d);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 6px;
+  color: var(--text, #e6edf3);
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.vc-btn:hover {
+  border-color: var(--muted, #8b949e);
+}
+.vc-btn.primary {
+  background: var(--accent, #58a6ff);
+  border-color: var(--accent, #58a6ff);
+  color: #0d1117;
+  font-weight: 600;
+}
+.vc-btn.good {
+  color: var(--good, #3fb950);
+}
+.vc-btn.danger {
+  color: var(--danger, #f85149);
+}
+.vc-btn.icon {
+  width: 30px;
+  padding: 5px 0;
+  text-align: center;
+  font-size: 14px;
+}
+.vc-btn.icon.recording {
+  background: var(--danger, #f85149);
+  border-color: var(--danger, #f85149);
+  color: #fff;
+  animation: vc-pulse 1s ease-in-out infinite;
+}
+@keyframes vc-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---- Corner toggle + the browse panel listing every comment. ---- */
+.vc-toggle {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  pointer-events: auto;
+  background: var(--panel, #161b22);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 20px;
+  color: var(--text, #e6edf3);
+  font: inherit;
+  font-size: 12px;
+  padding: 7px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+.vc-toggle .count {
+  background: var(--accent, #58a6ff);
+  color: #0d1117;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 0 6px;
+  min-width: 18px;
+  text-align: center;
+}
+.vc-toggle .count.zero {
+  display: none;
+}
+
+.vc-panel {
+  position: fixed;
+  right: 14px;
+  bottom: 54px;
+  pointer-events: auto;
+  width: 320px;
+  max-height: 70vh;
+  overflow: auto;
+  background: var(--panel, #161b22);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 10px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+  padding: 10px;
+}
+.vc-panel h3 {
+  margin: 2px 4px 8px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--muted, #8b949e);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.vc-empty {
+  color: var(--muted, #8b949e);
+  font-size: 12px;
+  padding: 8px 4px 4px;
+}
+
+/* A single comment row in the panel. */
+.vc-item {
+  border: 1px solid var(--border, #30363d);
+  border-left: 3px solid var(--accent, #58a6ff);
+  border-radius: 6px;
+  padding: 8px 9px;
+  margin-bottom: 8px;
+  background: var(--bg, #0d1117);
+  cursor: pointer;
+}
+.vc-item.resolved {
+  border-left-color: var(--good, #3fb950);
+  opacity: 0.92;
+}
+.vc-item.detached {
+  border-left-color: var(--muted, #8b949e);
+}
+.vc-item .vc-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.vc-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: 9px;
+  border: 1px solid currentColor;
+}
+.vc-badge.open {
+  color: var(--accent, #58a6ff);
+}
+.vc-badge.resolved {
+  color: var(--good, #3fb950);
+}
+.vc-badge.detached {
+  color: var(--muted, #8b949e);
+}
+.vc-item .vc-text {
+  color: var(--text, #e6edf3);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.vc-item .vc-resolution {
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px dashed var(--border, #30363d);
+  font-size: 11.5px;
+  color: var(--good, #3fb950);
+}
+.vc-item .vc-resolution b {
+  color: var(--muted, #8b949e);
+  font-weight: 600;
+}
+.vc-item .vc-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 7px;
+}

@@ -4,6 +4,11 @@ My personal AI coding-agent setup — global behavior rules, skills, MCP servers
 a dev pipeline — shared across **Claude Code** and **OpenAI Codex**. One repo is the
 source of truth; a deterministic installer symlinks it into place for both.
 
+> [!TIP]
+> 🧭 **[Take the interactive tour →](https://rascaltwo.github.io/ai-setup/rascal-ai-setup-tour/)** — a
+> ten-stop map of how the installer wires this repo into both agents and where the leverage lives.
+> (Built with this repo's own [`/viz`](skills/viz) skill.)
+
 > [!NOTE]
 > Personal config, published so others can borrow from it. Opinionated and
 > macOS-flavored. Take what's useful.
