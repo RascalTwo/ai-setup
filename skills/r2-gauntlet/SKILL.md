@@ -1,6 +1,6 @@
 ---
 name: r2-gauntlet
-description: Joseph's one-command mega-review — runs the ENTIRE review/audit panel on a code change at once (every r2-sdlc reviewer subagent, the whole ln-* auditor family, ponytail, code-review, and the built-in /review + /security-review), then synthesizes ONE deduped, consensus-ranked report instead of twenty overlapping ones. Use when the user says "run the gauntlet", "/r2-gauntlet", "mega review", "review this with everything", "throw all the reviewers at it", "full audit of my changes", "kitchen-sink review", or wants every code-quality reviewer on their machine run in a single pass. This is the "all of them at once" reviewer — for a single targeted review use /code-review instead.
+description: Rascal's one-command mega-review — runs the ENTIRE review/audit panel on a code change at once (every r2-sdlc reviewer subagent, the whole ln-* auditor family, ponytail, code-review, and the built-in /review + /security-review), then synthesizes ONE deduped, consensus-ranked report instead of twenty overlapping ones. Use when the user says "run the gauntlet", "/r2-gauntlet", "mega review", "review this with everything", "throw all the reviewers at it", "full audit of my changes", "kitchen-sink review", or wants every code-quality reviewer on their machine run in a single pass. This is the "all of them at once" reviewer — for a single targeted review use /code-review instead.
 ---
 
 # r2-gauntlet — run every reviewer, get one report

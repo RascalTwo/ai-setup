@@ -1,12 +1,16 @@
 {
   "cleanupPeriodDays": 99999,
   "env": {},
+  "model": "opus[1m]",
   "hooks": {
     "PreToolUse": [
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "rtk hook claude" }
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
         ]
       }
     ],
@@ -48,7 +52,7 @@
     "code-modernization@claude-plugins-official": false
   },
   "extraKnownMarketplaces": {},
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
   "awaySummaryEnabled": false,
   "tui": "fullscreen",
   "autoMemoryEnabled": false,
