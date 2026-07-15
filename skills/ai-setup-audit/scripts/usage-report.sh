@@ -19,9 +19,10 @@
 #
 # Answers the ai-setup-audit telemetry questions:
 #   - Skill invocation counts (most / least used)   -> Phase 0, Phase 3
-#   - MCP server/tool call distribution             -> Phase 0, Phase 4
-#   - Tool error signal                             -> Phase 0, Phase 3/4
-#   - basic-memory retrieval frequency              -> Phase 2, Phase 5
+#   - Subagent invocation counts (owned reviewers)  -> Phase 0, Phase 4
+#   - MCP server/tool call distribution             -> Phase 0, Phase 5
+#   - Tool error signal                             -> Phase 0, Phase 3/4/5
+#   - basic-memory retrieval frequency              -> Phase 2, Phase 6
 #   - Token totals                                  -> holistic
 # "Least-used / dormant" = names in the Phase-1 inventory that DON'T appear
 # below (zero calls in the window). The audit does that diff; this just reports
@@ -53,6 +54,17 @@ echo
 echo "## Skill invocations (via Skill tool)"
 printf '%s\n' "$NS" | grep '^"skill"' | sed -E 's/"skill":"([^"]+)"/\1/' | sort | uniq -c | sort -rn
 echo "  (skills installed but absent above = 0 calls this window)"
+
+echo
+echo "## Subagent invocations (via Task/Agent tool)"
+# subagent_type is the dispatch record on the parent side. Fold a namespaced
+# reviewer (r2-sdlc:code-reviewer) into its bare name (code-reviewer) so an owned
+# subagent counts once however it was addressed. Built-in agents (general-purpose,
+# Explore, Plan) show up here too — the owned reviewers are the audit's concern.
+grep -hoE '"subagent_type":"[^"]+"' "$TMP" 2>/dev/null \
+  | sed -E 's/"subagent_type":"([^"]+)"/\1/; s/^[A-Za-z0-9_-]+://' \
+  | sort | uniq -c | sort -rn
+echo "  (owned reviewers absent above = 0 calls this window)"
 
 echo
 echo "## MCP calls by server"
