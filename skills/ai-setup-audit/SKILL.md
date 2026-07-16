@@ -1,5 +1,5 @@
 ---
-description: "Weekly interactive audit of the AI-agent setup shared across Claude Code and OpenAI Codex — AGENTS.md rules, skills, MCP servers, settings, subagents, basic-memory. Use when the user asks to audit, optimize, clean up, or review their agent setup, keep their config fresh, or says 'run the weekly audit'. Also for stale skills, unused MCP servers, orphaned skills, drift in external-skills.json, or checking what's changed."
+description: "Weekly interactive audit of the AI-agent setup shared across Claude Code and OpenAI Codex — AGENTS.md rules, skills, MCP servers, settings, subagents, basic-memory. Use when the user asks to audit, optimize, clean up, or review their agent setup, keep their config fresh, or says 'run the weekly audit'. Also for stale skills, unused MCP servers, orphaned skills, drift in external-skills.json, or checking what's changed. Also refreshes the published AI-setup tour viz (viz-pages/rascal-ai-setup-tour) so the public map of the setup doesn't drift from reality."
 ---
 
 # AI Agent Setup Audit
@@ -56,12 +56,12 @@ for d in ~/.agents/skills/*; do printf '%s\t' "$(basename "$d")"; classify "$d";
 ⚠️ **Trailing-slash gotcha:** `ls -ld ~/.agents/skills/foo/` shows `d` (drwx...) even when `foo` is a symlink, because the trailing slash makes `ls` follow the link. Always test with `[ -L ]` or `readlink`, NEVER infer "real directory" from `ls -ld`. Same trap for `stat -f '%i'` — it follows symlinks by default.
 
 How to use the classification:
-- **SYMLINK → repo** — healthy. Do not flag as "duplicate" or "stale snapshot." A symlinked file is one file on disk; there is no token doubling. Phase 8 does not `cp` these.
+- **SYMLINK → repo** — healthy. Do not flag as "duplicate" or "stale snapshot." A symlinked file is one file on disk; there is no token doubling. Phase 9 does not `cp` these.
 - **BROKEN** — the link's target is gone (a source dir was deleted/moved). This is real work: re-point or re-install. Sweep `~/.claude`, `~/.codex`, `~/.agents`, `~/.config/ccstatusline`, `~/.local/bin` for other links to the same vanished target.
 - **REAL_DIR** — a real directory, not a link. For skills this is EITHER a legitimate third-party install (must be in `external-skills.json`) OR an **orphan** (Phase 3 invariant). For the rules file, a real (non-symlink) `CLAUDE.md`/`AGENTS.md` means the install broke — the repo copy is canonical.
 - **ABSENT** — expected entry missing; re-run `install.ts`.
 
-**Phase 8 corollary:** for healthy SYMLINK entries there is nothing to copy — you edit the repo file directly and the live link already reflects it. Never `cp` over a symlink — it replaces the link with a regular file and silently breaks the setup.
+**Phase 9 corollary:** for healthy SYMLINK entries there is nothing to copy — you edit the repo file directly and the live link already reflects it. Never `cp` over a symlink — it replaces the link with a regular file and silently breaks the setup.
 
 ## Phase 0: Usage Snapshot (from session transcripts)
 
@@ -267,7 +267,7 @@ for d in "$SUB"/.claude/agents/*.md; do
 done
 ```
 
-- **MISSING compiled / LINK broken** — Ruler hasn't run since a source changed, or `install.ts` hasn't re-linked. Fix in Phase 8 (recompile + re-install).
+- **MISSING compiled / LINK broken** — Ruler hasn't run since a source changed, or `install.ts` hasn't re-linked. Fix in Phase 9 (recompile + re-install).
 - **ORPHAN compiled** — a reviewer was renamed/removed at the source but its compiled output and live links survive. Delete the stale `.claude/*.md` + `.codex/*.toml` + both live links by hand, then recompile.
 
 ### Per-subagent review (read each `.ruler/agents/*.md`)
@@ -280,7 +280,7 @@ Review the **source** file, never the compiled output — edits must land in `.r
 4. **Scope boundaries** — each reviewer declares what it does NOT check and which sibling owns that ("test-reviewer handles tests"). Across the whole set, confirm the boundaries are mutually exclusive (no two reviewers claim the same job) and complete (no quality dimension falls through the cracks).
 5. **Usage** — from the Phase 0 subagent-invocation counts. Zero Claude calls this window is subject to the Codex-blind caveat **and** the pipeline caveat (reviewers are dispatched by the r2-sdlc pipeline and the gauntlet, so a quiet window usually means the pipeline was idle). Confirm before treating as a removal signal.
 6. **Overlay placement** — the reviewers are generic and public-safe by design. Flag any company/client specifics that crept into a definition; those belong in a private overlay, not the public core.
-7. **Compiled parity** — after any edit to a source file, the `.md` and `.toml` must be recompiled together (Phase 8) so both agents see the same reviewer.
+7. **Compiled parity** — after any edit to a source file, the `.md` and `.toml` must be recompiled together (Phase 9) so both agents see the same reviewer.
 
 Present recommendations one at a time.
 
@@ -347,7 +347,75 @@ Final cross-cutting pass. You've reviewed everything individually — now look a
 
 Present recommendations one at a time.
 
-## Phase 8: Sync & Publish
+## Phase 8: Refresh the Setup Tour Viz
+
+The **AI setup tour** (`ai-setup/viz-pages/rascal-ai-setup-tour/index.html`) is the public
+onboarding map for this entire setup — linked from the README and published to GitHub Pages. It
+is **hand-authored HTML**, built with this repo's own `/viz` skill: nothing regenerates it, so it
+drifts silently every time a skill, MCP server, or subagent changes. **This audit is the only
+cadence that catches that.** Treat the tour as a deliverable of the audit, not a static page — a
+tour that lies about the setup is worse than no tour.
+
+Run this after Phases 1–7, so the refresh reflects both the real inventory and every decision made
+this session.
+
+### Find the drift (mechanical check)
+
+The tour names skills inline as `<strong>skill-name</strong>`, grouped into district sections
+(`Owned core and setup operations`, `Media and local AI`, `Cloud, API, and delivery`,
+`External community packs`), plus prose/summary strings that re-enumerate the owned set.
+
+```bash
+TOUR=$HOME/Desktop/Desktop/Code/ai-setup/viz-pages/rascal-ai-setup-tour/index.html
+
+echo "--- Owned skills MISSING from the tour (added since the last refresh) ---"
+for d in "$HOME"/Desktop/Desktop/Code/ai-setup/skills/*/; do
+  n=$(basename "$d"); grep -qF "$n" "$TOUR" || echo "MISSING from tour: $n"
+done
+
+echo "--- Names the tour still claims that aren't installed (removed/renamed) ---"
+grep -oE '<strong>[a-z0-9][a-z0-9-]{3,}</strong>' "$TOUR" | sed -E 's#</?strong>##g' | sort -u |
+while read -r n; do [ -e "$HOME/.agents/skills/$n" ] || echo "possibly STALE in tour: $n"; done
+```
+
+The first list is **exact** — act on it. The second is a **heuristic**: the tour uses `<strong>`
+for ordinary emphasis too, so eyeball the hits before treating one as stale.
+
+### What to reconcile
+
+Walk each finding against the Phase 1 inventory and this session's decisions:
+
+1. **Skills** — every owned skill added / removed / renamed must be reflected, and a new one placed
+   in the **right district** (a local-media skill belongs under "Media and local AI", not "Cloud,
+   API, and delivery"). Third-party changes land in "External community packs".
+2. **Summary / narration strings** — the tour repeats the owned set in prose (e.g. the
+   `"Owned set: …"` line). A skill added to a district but missed here leaves the page
+   self-contradictory — grep the skill name and fix **every** hit, not just the first.
+3. **MCP servers, subagents, settings, install flow** — if Phase 4/5 changed any of these, the
+   stops describing them are stale.
+4. **Counts and shape** — the tour advertises "ten stops". If a stop is added or removed, fix the
+   count everywhere it appears (headline, map, nav).
+5. **Prose accuracy** — a stop describing a workflow that changed this session (a new AGENTS.md
+   rule, a retired MCP server, a skill that now delegates to another) needs its *words* updated,
+   not just its lists.
+
+### Verify the render before moving on
+
+The tour is a live page — a broken edit is invisible in a diff. Always re-render:
+
+```bash
+bun "$HOME/.claude/skills/viz/verify.ts" \
+  "http://127.0.0.1:5180/Desktop/Desktop/Code/ai-setup/viz-pages/rascal-ai-setup-tour/"
+```
+
+Require **`✓ 0 error(s)`**, then read `.verify/latest.png` to confirm the layout still holds (no
+overflowing labels, no orphaned arrows). Fix anything you find before Phase 9 — the tour is
+committed and deployed there.
+
+**Golden rule still applies:** present each tour change individually. Don't rewrite the page
+wholesale, and don't auto-apply.
+
+## Phase 9: Sync & Publish
 
 Because every live entry is a symlink into a repo, edits made during the audit already live in the repo — there is nothing to `cp` back. This phase commits them and, if the public core changed, publishes safely.
 
@@ -372,7 +440,9 @@ Because every live entry is a symlink into a repo, edits made during the audit a
 
 5. **README** — if owned skills were added/removed/renamed, ask whether the README skill table needs updating.
 
-6. **Commit to `r2-main`.** Show `git status` and `git diff` in `ai-setup`, then offer a descriptive commit **on `r2-main`** (never commit the public snapshot directly).
+6. **Setup tour** — confirm Phase 8's refresh is reflected on disk (`viz-pages/rascal-ai-setup-tour/`) and rendered clean. Its edits are committed with everything else in the next step, and deployed below.
+
+7. **Commit to `r2-main`.** Show `git status` and `git diff` in `ai-setup`, then offer a descriptive commit **on `r2-main`** (never commit the public snapshot directly).
 
 ### Publishing the public core (only if `ai-setup` changed)
 
@@ -394,6 +464,20 @@ If clean, publish and verify (reuse the same `$ORG`):
 ./squash-to-main.sh    # switches to the repo-owner gh account, force-pushes main, restores active account
 gh api repos/RascalTwo/ai-setup/git/trees/main?recursive=1 --jq '.tree[].path' | grep -iE "$ORG"'|private' || echo "clean"
 ```
+**Deploy the tour** (only if Phase 8 changed it). The tour publishes to GitHub Pages from
+`viz-pages/`, on its own path — **not** via `squash-to-main.sh`:
+
+```bash
+DRY_RUN=1 ~/Desktop/Desktop/Code/ai-setup/viz-pages/deploy.sh   # build only, sanity-check first
+~/Desktop/Desktop/Code/ai-setup/viz-pages/deploy.sh              # deploy (exit 0 = deployed)
+```
+
+It reads `viz-pages/` off disk (works from any branch/state), auto-detects the host from `origin`,
+and auto-switches to a `gh` account with push access — no manual `gh auth switch`. Afterwards,
+confirm the live page actually renders the refresh:
+<https://rascaltwo.github.io/ai-setup/rascal-ai-setup-tour/>. A tour refreshed in Phase 8 but never
+deployed leaves the *public* map stale — which is the exact failure this phase exists to prevent.
+
 If a `gh` call fails with "Repository not found" / "Could not resolve to a Repository," the wrong account is active — `gh auth status`, then `gh auth switch -u <repo-owner-account>`, and retry. Restore your usual active account when done. **Private overlay repos publish through their own normal git flow, not `squash-to-main.sh`.**
 
 **Golden rule still applies:** present every change individually. Don't auto-commit or auto-publish.
