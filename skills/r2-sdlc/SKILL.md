@@ -115,9 +115,10 @@ Do NOT proceed to Phase 2 until the user explicitly approves. This is human esca
 <Narrow only. Usually zero.>
 ```
 
-4. **Show the draft to the user.** Same redline/approve cycle as Phase 1.
-5. **Iterate until agreed.** The user said they'll probably not heavily review this — that's fine. Approval can be terse.
-6. **Persist** final. Update `pipeline-state.md`: `design=approved@<timestamp>`, phase=implement.
+4. **Steelman consequential designs.** If the approach rests on a hard-to-reverse or high-stakes choice (architectural pattern, a new dependency, a data migration, a direction with expensive alternatives), invoke the `steelman` skill on it *before* showing the user — argue the strongest case for *and* against the approach and surface the cruxes, so the design that reaches the redline is already pressure-tested. Skip for small/mechanical changes.
+5. **Show the draft to the user.** Same redline/approve cycle as Phase 1.
+6. **Iterate until agreed.** The user said they'll probably not heavily review this — that's fine. Approval can be terse.
+7. **Persist** final. Update `pipeline-state.md`: `design=approved@<timestamp>`, phase=implement.
 
 ### Gate
 

@@ -24,6 +24,7 @@ Back any claim that's non-obvious, consequential, or could be wrong (version beh
 Every plan/action/deliverable needs a verification phase before "done," proportional to the change (one-liner change → one-liner check).
 
 - **Grill first:** before finalizing a plan, invoke the `grilling` skill to surface assumptions/edge cases/gaps cheaply.
+- **Steelman consequential calls:** before committing to a hard-to-reverse or high-stakes decision (architecture, dependency choice, delete/migrate, picking a direction over expensive alternatives), invoke the `steelman` skill — it argues the strongest case *for* and *against*, surfaces the cruxes, then I judge. Grilling shapes the plan; steelman pressure-tests the decision. Skip trivial/reversible calls (proportionality, as above). A steelman won't self-invoke — that's why it lives here as a standing rule.
 - **Grilling→plan bridge:** if grilling/review surfaces a gap in existing code, immediately ask "does this affect code I'm about to write or a test I'll depend on?" If yes, fix the plan before implementing — don't file it as "interesting finding."
 - **Baseline before changing:** verify current behavior empirically (run it, hit the endpoint, observe) so the "after" check is real. Empirical first — trigger the condition and observe before researching internals.
 - **Format:** `- [ ] **Given** X, **when** Y, **then** Z`. Track steps with the harness task tools.
