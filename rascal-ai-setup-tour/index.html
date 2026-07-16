@@ -1,0 +1,1685 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script type="importmap">{"imports":{"/_kit/viz.js":"data:text/javascript;base64,Ly8gdml6LmpzIOKAlCBzaGFyZWQgaGVscGVycyBmb3IgL3ZpeiBwYWdlcy4gTG9hZCB3aXRoOgovLyAgIDxzY3JpcHQgdHlwZT0ibW9kdWxlIj4KLy8gICAgIGltcG9ydCB7IGFycm93TWFya2VycywgY29ubmVjdCwgc2lkZSwgbGFiZWxCb3gsIHZpekF1ZGl0LCAkLCAkJCwgZXNjLCBzYXZlSGFzaCwgbG9hZEhhc2gsIHZpekVudiB9IGZyb20gIi9fa2l0L3Zpei5qcyI7Ci8vICAgPC9zY3JpcHQ+Ci8vIFNlcnZlZCBieSB0aGUgdml6IHNlcnZlciBhdCAvX2tpdC92aXouanMgZnJvbSB0aGUgc2tpbGwncyBvd24ga2l0LyBkaXIsIHNvIGl0J3MKLy8gb25lIHNvdXJjZSBvZiB0cnV0aCBhY3Jvc3MgZXZlcnkgdml6LiBQYWlycyB3aXRoIC9fa2l0L3Zpei1raXQuY3NzLgoKZXhwb3J0IGNvbnN0IFNWR05TID0gImh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIjsKCi8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQovLyBTVkcgZGlhZ3JhbXMg4oCUIGdlb21ldHJ5IGZpcnN0LgovLwovLyBUaGUgcmVjdXJyaW5nIHJld29yayBpbiBib3hlcy1hbmQtYXJyb3dzIGRpYWdyYW1zIGNvbWVzIGZyb20gdHlwaW5nIGxhYmVsIGFuZAovLyBhcnJvdyBjb29yZGluYXRlcyBhcyBpbmRlcGVuZGVudCBsaXRlcmFsczogYSBib3ggZ2V0cyByZXNpemVkIG9yIG1vdmVkLCBidXQgdGhlCi8vIGFycm93IGVuZHBvaW50IGFuZCB0aGUgbGFiZWwgcG9zaXRpb24gd2VyZSBndWVzc2VkIGFnYWluc3QgdGhlICpvbGQqIGdlb21ldHJ5LAovLyBzbyB0aGUgYXJyb3cgbm93IHBvaW50cyBhdCBlbXB0eSBzcGFjZSAob3IgdGhlIHdyb25nIGJveCkgYW5kIHRoZSBsYWJlbCBzcGlsbHMKLy8gb3V0LiBUaGUgZml4IGlzIHRvIG5ldmVyIGhhbmQtcGxhY2UgdGhvc2U6IGRlZmluZSBlYWNoIG5vZGUgT05DRSBhcyB7eCx5LHcsaH0KLy8gYW5kIGNvbXB1dGUgZXZlcnl0aGluZyBlbHNlIGZyb20gaXQuCi8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQoKLy8gRGVmYXVsdCBhcnJvd2hlYWQgcGFsZXR0ZSwga2V5ZWQgdG8gdGhlIHZpei1raXQgaW50ZW50IHRva2Vucy4gU1ZHIG1hcmtlcnMgY2FuJ3QKLy8gaW5oZXJpdCB0aGUgc3Ryb2tlIGNvbG9yIG9mIHRoZSBsaW5lIHRoYXQgdXNlcyB0aGVtLCBzbyB5b3UgZ2VudWluZWx5IG5lZWQgb25lCi8vIG1hcmtlciBwZXIgY29sb3Ig4oCUIHRoaXMgZW1pdHMgdGhlbSBhbGwgd2l0aCBzdGFibGUgaWRzIHNvIHlvdSBzdG9wIHJlLWRlcml2aW5nCi8vIHRoZSBzYW1lIDxtYXJrZXI+IGJsb2NrIHBlciBkaWFncmFtLiBSZWZlcmVuY2UgYXMgbWFya2VyLWVuZD0idXJsKCNhaC1hY2NlbnQpIi4KY29uc3QgREVGQVVMVF9NQVJLRVJTID0gewogIGFoOiAiIzhiOTQ5ZSIsIC8vIG11dGVkIOKAlCB0aGUgZGVmYXVsdCBlZGdlCiAgImFoLWFjY2VudCI6ICIjNThhNmZmIiwKICAiYWgtZ29vZCI6ICIjM2ZiOTUwIiwKICAiYWgtd2FybiI6ICIjZDI5OTIyIiwKICAiYWgtZGFuZ2VyIjogIiNmODUxNDkiLAp9OwoKLy8gUmV0dXJucyBhIDxkZWZzPuKApjwvZGVmcz4gc3RyaW5nLiBEcm9wIGl0IG9uY2UgYXQgdGhlIHRvcCBvZiB5b3VyIDxzdmc+LgpleHBvcnQgZnVuY3Rpb24gYXJyb3dNYXJrZXJzKHBhbGV0dGUgPSBERUZBVUxUX01BUktFUlMpIHsKICBjb25zdCBtYXJrZXJzID0gT2JqZWN0LmVudHJpZXMocGFsZXR0ZSkKICAgIC5tYXAoCiAgICAgIChbaWQsIGZpbGxdKSA9PgogICAgICAgIGA8bWFya2VyIGlkPSIke2lkfSIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZYPSI5IiByZWZZPSI1IiBgICsKICAgICAgICBgbWFya2VyV2lkdGg9IjciIG1hcmtlckhlaWdodD0iNyIgb3JpZW50PSJhdXRvLXN0YXJ0LXJldmVyc2UiPmAgKwogICAgICAgIGA8cGF0aCBkPSJNMCwwIEwxMCw1IEwwLDEwIHoiIGZpbGw9IiR7ZmlsbH0iLz48L21hcmtlcj5gLAogICAgKQogICAgLmpvaW4oIiIpOwogIHJldHVybiBgPGRlZnM+JHttYXJrZXJzfTwvZGVmcz5gOwp9CgovLyBBIG5vZGUgaXMganVzdCB7eCwgeSwgdywgaH0uIGNlbnRlcigpIGFuZCBzaWRlKCkgZGVyaXZlIGNvbm5lY3Rpb24gcG9pbnRzIGZyb20KLy8gaXQsIHNvIGFuIGVkZ2Ugc3RheXMgYXR0YWNoZWQgdG8gdGhlIGJveCBubyBtYXR0ZXIgaG93IHRoZSBib3ggY2hhbmdlcy4KZXhwb3J0IGNvbnN0IGNlbnRlciA9IChuKSA9PiAoeyB4OiBuLnggKyBuLncgLyAyLCB5OiBuLnkgKyBuLmggLyAyIH0pOwoKZXhwb3J0IGNvbnN0IHNpZGUgPSAobiwgd2hlcmUpID0+CiAgKHsKICAgIHRvcDogeyB4OiBuLnggKyBuLncgLyAyLCB5OiBuLnkgfSwKICAgIGJvdHRvbTogeyB4OiBuLnggKyBuLncgLyAyLCB5OiBuLnkgKyBuLmggfSwKICAgIGxlZnQ6IHsgeDogbi54LCB5OiBuLnkgKyBuLmggLyAyIH0sCiAgICByaWdodDogeyB4OiBuLnggKyBuLncsIHk6IG4ueSArIG4uaCAvIDIgfSwKICB9KVt3aGVyZV07CgovLyBTdHJhaWdodCBlZGdlIGJldHdlZW4gdHdvIG5vZGVzLCBhdXRvLXBpY2tpbmcgdGhlIGZhY2luZyBzaWRlcyBiYXNlZCBvbiB0aGVpcgovLyByZWxhdGl2ZSBwb3NpdGlvbi4gUmV0dXJucyBhbiBTVkcgcGF0aCAiZCIgc3RyaW5nOyBzZXQgdGhlIG1hcmtlciB5b3Vyc2VsZiB2aWEKLy8gdGhlIGVsZW1lbnQncyBtYXJrZXItZW5kIGF0dHJpYnV0ZS4gRm9yID41IG5vZGVzIHdpdGggY3Jvc3NpbmcgZWRnZXMsIHJlYWNoIGZvcgovLyBhIGxheW91dCBlbmdpbmUgKGRhZ3JlIC8gZDMtZGFnIC8gbWVybWFpZCkgaW5zdGVhZCBvZiBwbGFjaW5nIG5vZGVzIGJ5IGhhbmQg4oCUCi8vIHRoYXQncyB0aGUgcG9pbnQgd2hlcmUgbWFudWFsIGNvb3JkaW5hdGVzIHN0b3AgYmVpbmcgd29ydGggaXQuCmV4cG9ydCBmdW5jdGlvbiBjb25uZWN0KGEsIGIpIHsKICBjb25zdCBjYSA9IGNlbnRlcihhKSwKICAgIGNiID0gY2VudGVyKGIpOwogIGNvbnN0IGhvcml6ID0gTWF0aC5hYnMoY2IueCAtIGNhLngpID4gTWF0aC5hYnMoY2IueSAtIGNhLnkpOwogIGNvbnN0IHBhID0gaG9yaXoKICAgID8gc2lkZShhLCBjYi54ID4gY2EueCA/ICJyaWdodCIgOiAibGVmdCIpCiAgICA6IHNpZGUoYSwgY2IueSA+IGNhLnkgPyAiYm90dG9tIiA6ICJ0b3AiKTsKICBjb25zdCBwYiA9IGhvcml6CiAgICA/IHNpZGUoYiwgY2IueCA+IGNhLnggPyAibGVmdCIgOiAicmlnaHQiKQogICAgOiBzaWRlKGIsIGNiLnkgPiBjYS55ID8gInRvcCIgOiAiYm90dG9tIik7CiAgcmV0dXJuIGBNICR7cGEueH0gJHtwYS55fSBMICR7cGIueH0gJHtwYi55fWA7Cn0KCi8vIEEgbGFiZWwgdGhhdCBDQU5OT1Qgb3ZlcmZsb3cgaXRzIGJveC4gPGZvcmVpZ25PYmplY3Q+IGxldHMgdGhlIGJyb3dzZXIgd3JhcCBhbmQKLy8gZWxsaXBzaXplIEhUTUwgbmF0aXZlbHksIHVubGlrZSByYXcgPHRleHQ+IHdoaWNoIHlvdSdkIGhhdmUgdG8gbWVhc3VyZSBieSBoYW5kCi8vIChhbmQgaGlzdG9yaWNhbGx5IGd1ZXNzZWQgd3JvbmcpLiBVc2UgdGhpcyBmb3IgYW55IG11bHRpLXdvcmQgbGFiZWwgaW5zaWRlIGEKLy8gZml4ZWQtd2lkdGggYm94LiBTdHlsZSB2aWEgdGhlIC52c3ZnLWxhYmVsIGNsYXNzIGluIHZpei1raXQuY3NzLgpleHBvcnQgZnVuY3Rpb24gbGFiZWxCb3gobm9kZSwgaHRtbCwgY2xzID0gIiIpIHsKICByZXR1cm4gKAogICAgYDxmb3JlaWduT2JqZWN0IHg9IiR7bm9kZS54fSIgeT0iJHtub2RlLnl9IiB3aWR0aD0iJHtub2RlLnd9IiBoZWlnaHQ9IiR7bm9kZS5ofSI+YCArCiAgICBgPGRpdiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94aHRtbCIgY2xhc3M9InZzdmctbGFiZWwgJHtjbHN9Ij4ke2h0bWx9PC9kaXY+YCArCiAgICBgPC9mb3JlaWduT2JqZWN0PmAKICApOwp9CgovLyBWZXJpZmljYXRpb24gYmFja3N0b3AuIElmIHlvdSBETyBoYW5kLXJvbGwgPHRleHQ+LCBjYWxsIHRoaXMgb25jZSBhZnRlciByZW5kZXI6Ci8vIGl0IG91dGxpbmVzIChpbiByZWQpIGFueSA8dGV4dD4gd2hvc2UgYm91bmRpbmcgYm94IHNwaWxscyBwYXN0IHRoZSA8cmVjdD4gaW4gaXRzCi8vIGdyb3VwLCBhbmQgZHJvcHMgYSBmaXhlZCBiYW5uZXIgc28gYW4gb3ZlcmZsb3cgaXMgaW1wb3NzaWJsZSB0byBtaXNzIGluIHRoZSBvcGVuCi8vIGJyb3dzZXIg4oCUIG9yIGluIGFueSBzY3JlZW5zaG90IHlvdSB0YWtlIHRvIHZlcmlmeSB0aGUgcGFnZS4gUmV0dXJucyB0aGUgbGlzdCBvZgovLyBvZmZlbmRpbmcgc3RyaW5ncyAoZW1wdHkgPSBjbGVhbikuIFRoZSByZWN0LWluLXNhbWUtPGc+IHBhaXJpbmcgaXMgYSBoZXVyaXN0aWM7Ci8vIGl0IGNhdGNoZXMgdGhlIGNvbW1vbiBjYXNlIHdoZXJlIGVhY2ggYm94K2xhYmVsIGxpdmUgaW4gb25lIDxnPi4KZXhwb3J0IGZ1bmN0aW9uIHZpekF1ZGl0KHJvb3QgPSBkb2N1bWVudCkgewogIGNvbnN0IGJhZCA9IFtdOwogIGZvciAoY29uc3QgdCBvZiByb290LnF1ZXJ5U2VsZWN0b3JBbGwoInRleHQiKSkgewogICAgY29uc3QgcmVjdCA9IHQuY2xvc2VzdCgiZyIpPy5xdWVyeVNlbGVjdG9yKCJyZWN0Iik7CiAgICBpZiAoIXJlY3QpIGNvbnRpbnVlOwogICAgY29uc3QgdGIgPSB0LmdldEJCb3goKTsKICAgIGNvbnN0IHJiID0gcmVjdC5nZXRCQm94KCk7CiAgICBjb25zdCBzcGlsbHMgPQogICAgICB0Yi54IDwgcmIueCAtIDEgfHwKICAgICAgdGIueSA8IHJiLnkgLSAxIHx8CiAgICAgIHRiLnggKyB0Yi53aWR0aCA+IHJiLnggKyByYi53aWR0aCArIDEgfHwKICAgICAgdGIueSArIHRiLmhlaWdodCA+IHJiLnkgKyByYi5oZWlnaHQgKyAxOwogICAgaWYgKHNwaWxscykgewogICAgICB0LnN0eWxlLm91dGxpbmUgPSAiMXB4IHNvbGlkICNmODUxNDkiOwogICAgICBiYWQucHVzaCh0LnRleHRDb250ZW50KTsKICAgIH0KICB9CiAgaWYgKGJhZC5sZW5ndGgpIHsKICAgIGNvbnNvbGUuZXJyb3IoIlt2aXpBdWRpdF0gdGV4dCBvdmVyZmxvdzoiLCBiYWQpOwogICAgY29uc3QgYmFubmVyID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgiZGl2Iik7CiAgICBiYW5uZXIudGV4dENvbnRlbnQgPSBg4pqgICR7YmFkLmxlbmd0aH0gdGV4dCBvdmVyZmxvdyhzKSDigJQgc2VlIHJlZCBvdXRsaW5lc2A7CiAgICBiYW5uZXIuc3R5bGUuY3NzVGV4dCA9CiAgICAgICJwb3NpdGlvbjpmaXhlZDtsZWZ0OjhweDtib3R0b206OHB4O3otaW5kZXg6OTk5OTtiYWNrZ3JvdW5kOiNmODUxNDk7Y29sb3I6I2ZmZjsiICsKICAgICAgImZvbnQ6MTJweC8xIHNhbnMtc2VyaWY7cGFkZGluZzo2cHggMTBweDtib3JkZXItcmFkaXVzOjZweCI7CiAgICBkb2N1bWVudC5ib2R5LmFwcGVuZENoaWxkKGJhbm5lcik7CiAgfQogIHJldHVybiBiYWQ7Cn0KCi8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQovLyBTbWFsbCB1dGlsaXRpZXMgdGhhdCBldmVyeSB2aXogcmUtZGVyaXZlcy4KLy8gLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCgpleHBvcnQgY29uc3QgJCA9IChzZWwsIHJvb3QgPSBkb2N1bWVudCkgPT4gcm9vdC5xdWVyeVNlbGVjdG9yKHNlbCk7CmV4cG9ydCBjb25zdCAkJCA9IChzZWwsIHJvb3QgPSBkb2N1bWVudCkgPT4gWy4uLnJvb3QucXVlcnlTZWxlY3RvckFsbChzZWwpXTsKCi8vIEVzY2FwZSBiZWZvcmUgaW5qZWN0aW5nIHRleHQgaW50byBpbm5lckhUTUwuCmV4cG9ydCBjb25zdCBlc2MgPSAocykgPT4KICBTdHJpbmcocykucmVwbGFjZSgKICAgIC9bJjw+IiddL2csCiAgICAoYykgPT4gKHsgIiYiOiAiJmFtcDsiLCAiPCI6ICImbHQ7IiwgIj4iOiAiJmd0OyIsICciJzogIiZxdW90OyIsICInIjogIiYjMzk7IiB9KVtjXSwKICApOwoKLy8gSG90LXJlbG9hZCAoYW5kIGV2ZXJ5IHNhdmUpIGRvZXMgYSBmdWxsIHBhZ2UgcmVmcmVzaCwgc28gaW4tcGFnZSBzdGF0ZSBpcyB3aXBlZC4KLy8gUGVyc2lzdCBhbnl0aGluZyB5b3Ugd2FudCB0byBzdXJ2aXZlIOKAlCBvcGVuIHBhbmVsLCBzZWxlY3RlZCBzdGVwLCBhY3RpdmUgZmlsdGVycyDigJQKLy8gdG8gdGhlIFVSTCBoYXNoLiBCb251czogdGhlIFVSTCBiZWNvbWVzIHNoYXJlYWJsZS9kZWVwLWxpbmthYmxlIGZvciBmcmVlLgovLyBSb3VuZC10cmlwcyBhIHBsYWluIG9iamVjdC4KZXhwb3J0IGNvbnN0IHNhdmVIYXNoID0gKG9iaikgPT4KICBsb2NhdGlvbi5yZXBsYWNlKCIjIiArIGVuY29kZVVSSUNvbXBvbmVudChKU09OLnN0cmluZ2lmeShvYmopKSk7CgpleHBvcnQgY29uc3QgbG9hZEhhc2ggPSAoKSA9PiB7CiAgdHJ5IHsKICAgIHJldHVybiBKU09OLnBhcnNlKGRlY29kZVVSSUNvbXBvbmVudChsb2NhdGlvbi5oYXNoLnNsaWNlKDEpKSB8fCAie30iKTsKICB9IGNhdGNoIHsKICAgIHJldHVybiB7fTsKICB9Cn07CgovLyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KLy8gUnVudGltZSBlbnZpcm9ubWVudCDigJQgaXMgdGhlcmUgYSBsaXZlIHZpeiBzZXJ2ZXIgYmVoaW5kIHRoaXMgcGFnZT8KLy8KLy8gQSB2aXogY2FuIHJ1biBpbiB0aHJlZSB3b3JsZHMsIGFuZCBsaXZlLWRhdGEgVUkgbmVlZHMgdG8ga25vdyB3aGljaDoKLy8gICAic3RhdGljIiAg4oCUIGEgcHVibGlzaGVkL2lubGluZWQgYnVpbGQuIFRoZXJlIGlzIE5PIHNlcnZlciBhbmQgbmV2ZXIgd2lsbCBiZQovLyAgICAgICAgICAgICAgIG9uZSB0aGlzIHNlc3Npb247IGJ1aWxkLnRzIHN0YW1wcyB3aW5kb3cuX19WSVpfU1RBVElDX18gaW50byB0aGUKLy8gICAgICAgICAgICAgICBzZWxmLWNvbnRhaW5lZCBIVE1MIGl0IGVtaXRzLgovLyAgICJsaXZlIiAgICDigJQgc2VydmVkIGJ5IHRoZSB2aXogZGV2IHNlcnZlciwgYW5kIGl0IGFuc3dlcnMgKGZldGNoIGFwaS8qIHdpbGwgd29yaykuCi8vICAgIm9mZmxpbmUiIOKAlCBzZXJ2ZWQgYXMgaWYgYnkgYSBzZXJ2ZXIsIGJ1dCBpdCBpc24ndCBhbnN3ZXJpbmcgcmlnaHQgbm93IChkZXYKLy8gICAgICAgICAgICAgICBzZXJ2ZXIgc3RvcHBlZCwgb3BlbmVkIGZyb20gZGlzaywgZXRjLikg4oCUIHRyZWF0IGxpa2Ugc3RhdGljLgovLwovLyBQcm9iZXMgdGhlIHNlcnZlci1nbG9iYWwgL19oZWFsdGggb25jZSBhbmQgY2FjaGVzIHRoZSBwcm9taXNlLiBVc2UgaXQgdG8gZ2F0ZQovLyBhbnl0aGluZyB0aGF0IGZldGNoZXMgYXBpLyo6IHJlbmRlciByZWFsIGRhdGEgb25seSBvbiAibGl2ZSIsIG90aGVyd2lzZSBzaG93IGEKLy8gInJ1biBtZSBsb2NhbGx5IGZvciBsaXZlIGRhdGEiIHBsYWNlaG9sZGVyIGluc3RlYWQgb2Ygc3Bpbm5pbmcgZm9yZXZlci4KLy8gICBjb25zdCBlbnYgPSBhd2FpdCB2aXpFbnYoKTsKLy8gICBpZiAoZW52ICE9PSAibGl2ZSIpIHsgc2hvd1BsYWNlaG9sZGVyKCk7IHJldHVybjsgfQpsZXQgX3ZpekVudlA7CmV4cG9ydCBmdW5jdGlvbiB2aXpFbnYoKSB7CiAgcmV0dXJuIChfdml6RW52UCA/Pz0gKGFzeW5jICgpID0+IHsKICAgIGlmICh0eXBlb2Ygd2luZG93ICE9PSAidW5kZWZpbmVkIiAmJiB3aW5kb3cuX19WSVpfU1RBVElDX18pIHJldHVybiAic3RhdGljIjsKICAgIHRyeSB7CiAgICAgIGNvbnN0IHIgPSBhd2FpdCBmZXRjaCgiL19oZWFsdGgiLCB7IGNhY2hlOiAibm8tc3RvcmUiIH0pOwogICAgICByZXR1cm4gci5vayA/ICJsaXZlIiA6ICJvZmZsaW5lIjsKICAgIH0gY2F0Y2ggewogICAgICByZXR1cm4gIm9mZmxpbmUiOwogICAgfQogIH0pKCkpOwp9Cg=="}}</script>
+<script>window.__VIZ_STATIC__=true;</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rascal's AI setup tour</title>
+<!-- Publish posture — the SOLE source of truth for build.ts. Default "local" = stays
+     on this machine, never published. Change to "public" (open web) or "private"
+     (magic-link sealed) ONLY when you intend to share this viz. -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<!-- Kind — what sort of viz this is. "explanatory" (default) = a timeless diagram/illustration;
+     freezing it loses nothing. "operational" = a live-monitoring tool whose truth has a shelf
+     life (queues, run status, live metrics); a frozen copy is an illustration, NOT current state.
+     The only effect: an "operational" viz shows a louder banner when viewed frozen, and an
+     "Operational" badge on the published index. Set it to "operational" by hand when it fits. -->
+<meta name="viz:kind" content="explanatory">
+<meta name="viz:title" content="Rascal's AI setup tour">
+<meta name="viz:description" content="An onboarding map for Rascal's agent-agnostic AI setup across Claude Code and Codex.">
+<link rel="icon" href="data:,">
+<!-- Safe defaults on BOTH axes: local = never published; unlisted = off the index even once
+     published (still reachable by direct URL). When you publish, set posture to public/private,
+     and set listed to "listed" to advertise it on the public index. -->
+<style>
+/* viz-kit.css — the /viz house style. Load with:
+     <link rel="stylesheet" href="/_kit/viz-kit.css">
+   Served by the viz server at /_kit/viz-kit.css from the skill's own kit/ dir.
+
+   Why this exists: nearly every viz independently re-derived the same dark theme
+   (a GitHub-dark palette), re-guessed the exact hexes (so the "same" background
+   drifted across files), and invented its own variable names (--txt vs --text vs
+   --ink) for identical concepts. This file fixes the palette and the names ONCE so
+   you can reach for var(--accent) / var(--good) instead of re-picking colors. The
+   house style is dark-only on purpose — it's the look these vizzes converge on. */
+
+:root {
+  /* Surfaces, back to front */
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel-2: #21262d;
+  --border: #30363d;
+
+  /* Text */
+  --text: #e6edf3;
+  --muted: #8b949e;
+
+  /* Intent — accents that carry meaning */
+  --accent: #58a6ff; /* primary / links / selection */
+  --good: #3fb950; /* success / healthy / "yes" */
+  --warn: #d29922; /* caution / pending */
+  --danger: #f85149; /* error / blocked / "no" */
+
+  /* Categorical ramp — distinct hues for diagram categories / series.
+     Use these when you need N visually separable colors, not meaning. */
+  --c1: #58a6ff; /* blue */
+  --c2: #3fb950; /* green */
+  --c3: #d29922; /* amber */
+  --c4: #bc8cff; /* purple */
+  --c5: #4ec9b0; /* teal */
+  --c6: #f85149; /* red */
+
+  /* Type */
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Spacing rhythm */
+  --r: 8px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+html {
+  /* Paint the canvas itself. body is height:100% (one viewport), so on a page taller
+     than the viewport the area BELOW the body box would otherwise reveal the browser's
+     default (lighter) canvas when scrolled — showing as a horizontal "line" mid-page
+     where body's --bg ends. Putting --bg on the root keeps the whole canvas dark. */
+  background-color: var(--bg);
+}
+
+body {
+  /* A faint top-glow over the flat background — the recurring "radial-gradient at
+     60% 0%" idiom, standardized. Sized large and faded to transparent well past the
+     fold (color-mix dilutes --panel) so the glow→--bg transition never forms a
+     visible edge mid-page — the earlier tight 600px gradient left a "boundary" band. */
+  background:
+    radial-gradient(1600px 1000px at 50% -30%, color-mix(in srgb, var(--panel) 55%, transparent), transparent 75%),
+    var(--bg);
+  color: var(--text);
+  font: 14px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Header: title + one-line muted subtitle — the chrome ~19/22 vizzes open with. */
+.viz-header {
+  padding: 20px 24px;
+}
+.viz-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.viz-header .sub,
+.sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* Panels / cards */
+.panel,
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--r) * 1.5);
+  padding: 16px;
+}
+
+/* Slide-in detail drawer (click a node → details). Toggle .open. */
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(420px, 90vw);
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  transform: translateX(100%);
+  transition: transform 0.2s ease;
+  overflow: auto;
+  padding: 20px;
+  z-index: 50;
+}
+.drawer.open {
+  transform: none;
+}
+
+/* Legend: the single most common component (~16/22), reinvented differently each
+   time. Two swatch shapes: a filled square for nodes, a short rule for edge types. */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex: none;
+  background: var(--accent);
+}
+.swatch.line {
+  width: 16px;
+  height: 0;
+  border-radius: 0;
+  border-top: 2px solid var(--accent);
+}
+
+/* Animated "flow" edge — dashed line whose dashes drift along the path. The
+   @keyframes was identical everywhere but for the offset magnitude; here it's one
+   class. Apply to an SVG <path>/<line>: <path class="flow" .../>. */
+@keyframes viz-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+.flow {
+  stroke-dasharray: 6 4;
+  animation: viz-dash 1s linear infinite;
+}
+
+/* Auto-wrapping SVG label (see labelBox() in viz.js). Fills its <foreignObject>
+   and centers; overflow is clipped, never spilled. */
+.vsvg-label {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text);
+  font: 12px/1.25 var(--sans);
+  overflow: hidden;
+  padding: 2px 6px;
+}
+
+</style>
+<style>
+  :root {
+    --bg0: #08090d;
+    --bg1: #11141c;
+    --panel2: #151923;
+    --ink: #f5f7fb;
+    --muted2: #9aa7bd;
+    --line: rgba(255, 255, 255, 0.15);
+    --amber: #f6bd60;
+    --mint: #84dcc6;
+    --rose: #ff6b6b;
+    --blue: #70a1ff;
+    --violet: #b28dff;
+    --green: #7bd88f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 20% 0%, rgba(246, 189, 96, 0.12), transparent 30%),
+      radial-gradient(circle at 85% 8%, rgba(132, 220, 198, 0.10), transparent 28%),
+      linear-gradient(135deg, var(--bg0), #101116 46%, #141018);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    letter-spacing: 0;
+  }
+
+  button, a { font: inherit; }
+
+  code {
+    padding: 0.08em 0.34em;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.07);
+    color: #eef3ff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9em;
+  }
+
+  .shell {
+    width: min(1480px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 26px 0 30px;
+  }
+
+  .viz-header {
+    padding: 0 0 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .viz-header h1 {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 4.8rem);
+    line-height: 0.95;
+    letter-spacing: 0;
+  }
+
+  .viz-header .sub {
+    max-width: 980px;
+    margin-top: 12px;
+    color: var(--muted2);
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+
+  .tour-cta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 18px;
+  }
+
+  .tour-cta .sub {
+    margin-top: 0;
+  }
+
+  .primary-action,
+  .tour-nav button {
+    min-height: 42px;
+    padding: 0 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: #12151b;
+    background: var(--amber);
+    cursor: pointer;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(760px, 1fr) minmax(360px, 400px);
+    gap: 18px;
+    margin-top: 18px;
+    align-items: start;
+  }
+
+  .layout > *,
+  .sections > * {
+    min-width: 0;
+  }
+
+  .map-panel,
+  .detail-panel,
+  .section {
+    border: 1px solid var(--line);
+    background: rgba(17, 20, 28, 0.84);
+    box-shadow: 0 18px 70px rgba(0, 0, 0, 0.34);
+    backdrop-filter: blur(18px);
+  }
+
+  .map-panel {
+    padding: 16px;
+    min-height: 760px;
+    min-width: 0;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .toolbar h2,
+  .detail-panel h2,
+  .section h2 {
+    margin: 0;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+  }
+
+  .toolbar .hint {
+    color: var(--muted2);
+    font-size: 0.86rem;
+  }
+
+  .route-key {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    color: var(--muted2);
+    font-size: 0.82rem;
+  }
+
+  .route-key span {
+    padding: 5px 8px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  .node-button {
+    border: 0;
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .map-wrap {
+    position: relative;
+    min-height: 680px;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      rgba(3, 5, 9, 0.38);
+    background-size: 32px 32px;
+  }
+
+  .map-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 680px;
+  }
+
+  .zone {
+    fill: rgba(255, 255, 255, 0.028);
+    stroke: rgba(255, 255, 255, 0.10);
+  }
+
+  .zone-title {
+    fill: #dfe7f7;
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .zone-note {
+    fill: #94a0b5;
+    font-size: 12px;
+  }
+
+  .node-card {
+    width: 154px;
+    min-height: 82px;
+    padding: 10px 11px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-left: 5px solid var(--node-color);
+    border-radius: 8px;
+    background: rgba(15, 18, 26, 0.96);
+    color: var(--ink);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+    transition: border-color 140ms ease, transform 140ms ease, background 140ms ease;
+  }
+
+  .node-card:hover,
+  .node-card.active {
+    transform: translateY(-2px);
+    border-color: var(--node-color);
+    background: rgba(23, 27, 38, 0.98);
+  }
+
+  .node-kicker {
+    color: var(--node-color);
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .node-title {
+    margin-top: 5px;
+    font-size: 0.92rem;
+    font-weight: 800;
+    line-height: 1.14;
+  }
+
+  .node-note {
+    display: none;
+  }
+
+  .node-button {
+    width: 100%;
+    padding: 0;
+    text-align: left;
+    background: transparent;
+  }
+
+  .detail-panel {
+    position: sticky;
+    top: 18px;
+    display: flex;
+    flex-direction: column;
+    min-height: 540px;
+    padding: 18px;
+  }
+
+  .detail-head {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .detail-index {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    background: var(--active-color);
+    color: #101217;
+    font-weight: 900;
+  }
+
+  .detail-title {
+    margin: 0;
+    font-size: 1.45rem;
+    line-height: 1.1;
+  }
+
+  .detail-tag {
+    display: inline-flex;
+    margin-top: 8px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    color: var(--active-color);
+    background: color-mix(in srgb, var(--active-color) 14%, transparent);
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .detail-copy {
+    color: #d7deed;
+    line-height: 1.58;
+    min-height: 126px;
+    margin: 14px 0;
+  }
+
+  .detail-list {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+    min-height: 150px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .detail-list li {
+    display: grid;
+    grid-template-columns: 10px 1fr;
+    gap: 10px;
+    align-items: start;
+    color: #c7d2e6;
+    line-height: 1.45;
+    font-size: 0.93rem;
+  }
+
+  .detail-list li::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    margin-top: 7px;
+    border-radius: 2px;
+    background: var(--active-color);
+  }
+
+  .tour-progress {
+    margin-top: auto;
+    color: var(--muted2);
+    font-size: 0.88rem;
+  }
+
+  .tour-nav {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .tour-nav button {
+    flex: 1;
+    color: #dce4f2;
+    background: rgba(255, 255, 255, 0.055);
+  }
+
+  .tour-nav button:hover {
+    border-color: var(--active-color);
+    color: var(--ink);
+  }
+
+  .tour-nav button:disabled {
+    cursor: default;
+    opacity: 0.42;
+    border-color: var(--line);
+    color: var(--muted2);
+  }
+
+  .sections {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 18px;
+  }
+
+  .section {
+    padding: 18px;
+  }
+
+  .section.install-summary {
+    grid-column: 1 / -1;
+  }
+
+  .section h2 {
+    margin-bottom: 12px;
+    font-size: 1.1rem;
+  }
+
+  .flow-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .flow-item {
+    display: grid;
+    gap: 5px;
+    min-height: 94px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 4px solid var(--card-color);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .flow-item strong {
+    font-size: 0.96rem;
+  }
+
+  .flow-item span {
+    color: var(--muted2);
+    font-size: 0.86rem;
+    line-height: 1.42;
+  }
+
+  .deep-section {
+    margin-top: 18px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    background: rgba(17, 20, 28, 0.84);
+    box-shadow: 0 18px 70px rgba(0, 0, 0, 0.28);
+  }
+
+  .chapter-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .chapter-head h2 {
+    margin: 0;
+    font-size: 1.35rem;
+  }
+
+  .chapter-head p {
+    max-width: 760px;
+    margin: 6px 0 0;
+    color: var(--muted2);
+    line-height: 1.5;
+  }
+
+  .chapter-tag {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: #dce5f6;
+    background: rgba(255, 255, 255, 0.045);
+    font-size: 0.82rem;
+  }
+
+  .agents-board {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr 1fr;
+    gap: 16px;
+  }
+
+  .agents-lane {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    min-height: 460px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .agents-lane h3,
+  .skill-district h3 {
+    margin: 0 0 2px;
+    color: #f2f5fb;
+    font-size: 1rem;
+  }
+
+  .lane-note,
+  .district-note {
+    margin: 0 0 8px;
+    color: var(--muted2);
+    font-size: 0.84rem;
+    line-height: 1.4;
+  }
+
+  .rule-card {
+    min-height: 92px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 4px solid var(--rule-color);
+    border-radius: 8px;
+    background: rgba(8, 10, 14, 0.42);
+  }
+
+  .rule-card strong {
+    display: block;
+    color: #eef3ff;
+    font-size: 0.95rem;
+  }
+
+  .rule-card span {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted2);
+    font-size: 0.84rem;
+    line-height: 1.38;
+  }
+
+  .impact-stack {
+    display: grid;
+    gap: 10px;
+  }
+
+  .impact-card {
+    min-height: 98px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--impact-color) 18%, transparent), transparent),
+      rgba(255, 255, 255, 0.035);
+  }
+
+  .impact-card strong {
+    display: block;
+    color: var(--impact-color);
+    font-size: 0.92rem;
+    text-transform: uppercase;
+  }
+
+  .impact-card span {
+    display: block;
+    margin-top: 6px;
+    color: #d5deef;
+    line-height: 1.45;
+  }
+
+  .skills-map {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 14px;
+  }
+
+  .skill-district {
+    min-height: 220px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 4px solid var(--district-color);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .skill-district.core { grid-column: span 4; }
+  .skill-district.media { grid-column: span 4; }
+  .skill-district.delivery { grid-column: span 4; }
+  .skill-district.external { grid-column: span 8; }
+  .skill-district.private { grid-column: span 4; }
+
+  .skill-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .skill-card-grid.single {
+    grid-template-columns: 1fr;
+  }
+
+  .skill-card {
+    min-height: 132px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 4px solid var(--district-color);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.20);
+  }
+
+  .skill-card strong {
+    display: block;
+    color: #f2f5fb;
+    font-size: 0.95rem;
+  }
+
+  .skill-card span {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted2);
+    font-size: 0.84rem;
+    line-height: 1.42;
+  }
+
+  .skill-card .why {
+    color: #d7deed;
+  }
+
+  .skill-group {
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.18);
+  }
+
+  .skill-group + .skill-group {
+    margin-top: 10px;
+  }
+
+  .skill-group h4 {
+    margin: 0;
+    color: #f2f5fb;
+    font-size: 0.95rem;
+  }
+
+  .skill-group p {
+    margin: 5px 0 10px;
+    color: var(--muted2);
+    font-size: 0.84rem;
+    line-height: 1.42;
+  }
+
+  .skill-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .skill-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 5px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-radius: 8px;
+    color: #dfe7f7;
+    background: rgba(0, 0, 0, 0.24);
+    font-size: 0.8rem;
+  }
+
+  .district-flow {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .flow-node {
+    min-height: 74px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.20);
+  }
+
+  .flow-node strong {
+    display: block;
+    font-size: 0.86rem;
+  }
+
+  .flow-node span {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted2);
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  @media (max-width: 1120px) {
+    .layout,
+    .sections,
+    .agents-board,
+    .skills-map {
+      grid-template-columns: 1fr;
+    }
+
+    .skill-district.core,
+    .skill-district.media,
+    .skill-district.delivery,
+    .skill-district.external,
+    .skill-district.private {
+      grid-column: auto;
+    }
+
+    .detail-panel {
+      position: static;
+      min-height: 0;
+    }
+
+    .detail-copy,
+    .detail-list {
+      min-height: 0;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .shell {
+      width: min(100vw - 20px, 1480px);
+      padding-top: 16px;
+    }
+
+    .toolbar {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .chapter-head {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .map-panel,
+    .detail-panel,
+    .section,
+    .deep-section {
+      padding: 12px;
+    }
+
+    .map-wrap {
+      min-height: 620px;
+      overflow-x: auto;
+    }
+
+    .map-svg {
+      width: 1120px;
+      max-width: none;
+    }
+
+    .district-flow {
+      grid-template-columns: 1fr;
+    }
+
+    .skill-card-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  /* poster links — an atom with its own self-hero card lives one click away */
+  .poster-link{ color:inherit; text-decoration:none; border-bottom:1px dashed color-mix(in srgb, var(--district-color, #58a6ff) 55%, transparent); }
+  .poster-link:hover{ border-bottom-style:solid; }
+  /* `.skill-card span` is display:block (it styles the card's description spans),
+     so this pill MUST re-assert inline-block or it becomes a full-width row. */
+  .poster-link .pl-mark{ display:inline-block; margin-top:0;
+    font-family:var(--mono); font-size:10px; font-weight:500; letter-spacing:.06em;
+    color:var(--district-color, #58a6ff); border:1px solid color-mix(in srgb, var(--district-color, #58a6ff) 40%, transparent);
+    border-radius:5px; padding:1px 5px; margin-left:7px; vertical-align:middle; white-space:nowrap; }
+  a.skill-chip.has-poster{ text-decoration:none; border-color:color-mix(in srgb, var(--district-color, #58a6ff) 45%, transparent); }
+  a.skill-chip.has-poster:hover{ background:color-mix(in srgb, var(--district-color, #58a6ff) 16%, transparent); }
+</style>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Rascal's AI setup tour">
+<meta property="og:description" content="An onboarding map for Rascal's agent-agnostic AI setup across Claude Code and Codex.">
+<meta property="og:url" content="https://rascaltwo.github.io/ai-setup/rascal-ai-setup-tour/">
+<meta property="og:image" content="https://rascaltwo.github.io/ai-setup/rascal-ai-setup-tour/og.auto.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+  <main class="shell">
+    <header class="viz-header">
+      <h1>Rascal's AI setup tour</h1>
+      <div class="sub">
+        A first-pass onboarding map for the public `ai-setup` repo: how the installer wires one source of truth into Claude Code and Codex, and where the personal leverage actually lives.
+      </div>
+      <div class="sub" style="margin-top:8px">
+        Source: <a href="https://github.com/RascalTwo/ai-setup" target="_blank" rel="noopener">github.com/RascalTwo/ai-setup</a>
+        · more interactive explainers at <a href="https://rascaltwo.github.io/explorables/" target="_blank" rel="noopener">rascaltwo.github.io/explorables</a>
+      </div>
+      <div class="tour-cta">
+        <button type="button" class="primary-action" data-start-tour>Start the tour</button>
+        <span class="sub">Follow stops 1-10 with Next, or click any numbered stop on the map.</span>
+      </div>
+    </header>
+
+    <section class="layout" aria-label="AI setup tour map">
+      <div class="map-panel">
+        <div class="toolbar">
+          <div>
+            <h2>One route, ten stops</h2>
+            <div class="hint">The top row explains install and parity. The bottom row explains the secret sauce.</div>
+          </div>
+          <div class="route-key" aria-label="Route sections">
+            <span>1-5 install path</span>
+            <span>6-10 secret sauce</span>
+          </div>
+        </div>
+
+        <div class="map-wrap" id="mapWrap">
+          <svg class="map-svg" viewBox="0 0 1120 700" role="img" aria-labelledby="mapTitle mapDesc">
+            <title id="mapTitle">Rascal AI setup onboarding map</title>
+            <desc id="mapDesc">A routed map of the setup repo from source files through installation into Claude Code, Codex, shared skills, memory, local models, and review workflows.</desc>
+            <defs id="markers"></defs>
+            <rect class="zone" x="30" y="50" width="1060" height="245" rx="18"></rect>
+            <text class="zone-title" x="58" y="86">Install path</text>
+            <text class="zone-note" x="58" y="108">Stops 1-5: source repo, installer, agent parity, shared skills, reviewer subagents.</text>
+            <rect class="zone" x="30" y="380" width="1060" height="245" rx="18"></rect>
+            <text class="zone-title" x="58" y="416">Secret sauce</text>
+            <text class="zone-note" x="58" y="438">Stops 6-10: memory, local models, rules, delivery pipeline, operating system.</text>
+            <g id="edges"></g>
+            <g id="nodes"></g>
+          </svg>
+        </div>
+      </div>
+
+      <aside class="detail-panel" aria-live="polite">
+        <div class="detail-head">
+          <div>
+            <h2 class="detail-title" id="detailTitle"></h2>
+            <div class="detail-tag" id="detailTag"></div>
+          </div>
+          <div class="detail-index" id="detailIndex"></div>
+        </div>
+        <p class="detail-copy" id="detailCopy"></p>
+        <ul class="detail-list" id="detailList"></ul>
+        <div class="tour-progress" id="tourProgress"></div>
+        <div class="tour-nav" aria-label="Tour navigation">
+          <button type="button" data-prev-stop>Previous</button>
+          <button type="button" data-next-stop>Next</button>
+        </div>
+      </aside>
+    </section>
+
+    <section class="sections" aria-label="Installation and secret sauce details">
+      <div class="section install-summary">
+        <h2>How it gets installed</h2>
+        <div class="flow-list" id="installFlow"></div>
+      </div>
+    </section>
+
+    <section class="deep-section" aria-labelledby="agentsTitle">
+      <div class="chapter-head">
+        <div>
+          <h2 id="agentsTitle">What AGENTS.md does</h2>
+          <p>Rascal's rules file is less a style guide and more an operating contract: protect voice-driven input, force evidence before claims, route work through the right tools, and make every deliverable prove itself before "done."</p>
+        </div>
+        <span class="chapter-tag">agent behavior control room</span>
+      </div>
+
+      <div class="agents-board">
+        <div class="agents-lane">
+          <h3>Inputs get cleaned up</h3>
+          <p class="lane-note">Before the agent acts, the rules reduce ambiguity and force the right evidence source.</p>
+          <div class="rule-card" style="--rule-color: var(--amber)" data-viz-id="agents-voice" data-label="Voice and homophones">
+            <strong>Voice-safe commands</strong>
+            <span>Assume homophones may be wrong, confirm weird commands, and prefer the interpretation that fits current context.</span>
+          </div>
+          <div class="rule-card" style="--rule-color: var(--mint)" data-viz-id="agents-evidence" data-label="Evidence ladder">
+            <strong>Evidence ladder</strong>
+            <span>Use basic-memory first, then domain tools, then web/docs, and only then model recall for consequential claims.</span>
+          </div>
+          <div class="rule-card" style="--rule-color: var(--green)" data-viz-id="agents-memory" data-label="Persistent memory">
+            <strong>Memory-first context</strong>
+            <span>Search persistent notes at session start and before setup/debugging work, so prior decisions are not rediscovered badly.</span>
+          </div>
+        </div>
+
+        <div class="agents-lane">
+          <h3>Work gets routed</h3>
+          <p class="lane-note">The middle of the contract decides whether to plan, delegate, invoke skills, use MCP tools, or inspect a UI.</p>
+          <div class="rule-card" style="--rule-color: var(--blue)" data-viz-id="agents-plan" data-label="Plan and verify">
+            <strong>Plan plus verification</strong>
+            <span>Every change has a proportional Given/When/Then check; failures either get fixed or escalated if the scope changed.</span>
+          </div>
+          <div class="rule-card" style="--rule-color: var(--violet)" data-viz-id="agents-skills-first" data-label="Skills and MCP first">
+            <strong>Skills and MCP first</strong>
+            <span>Before ad-hoc scripts against services, check owning skills and loaded tools so repeatable workflows stay encoded.</span>
+          </div>
+          <div class="rule-card" style="--rule-color: var(--rose)" data-viz-id="agents-tool-hierarchy" data-label="Tool hierarchy">
+            <strong>Tool hierarchy</strong>
+            <span>CLI first, browser automation for browser work, desktop control for non-browser UI, then fallback only when needed.</span>
+          </div>
+          <div class="rule-card" style="--rule-color: var(--amber)" data-viz-id="agents-delegation" data-label="Subagent delegation">
+            <strong>Delegation threshold</strong>
+            <span>Delegate broad independent research or long output, but keep targeted facts inline when they directly feed the next edit.</span>
+          </div>
+        </div>
+
+        <div class="agents-lane">
+          <h3>Outputs get safer</h3>
+          <p class="lane-note">The last layer constrains risky behavior and makes repeated shortcuts intentional.</p>
+          <div class="rule-card" style="--rule-color: var(--green)" data-viz-id="agents-local-vision" data-label="Local vision first">
+            <strong>Local vision first</strong>
+            <span>Structured screenshot extraction goes to local Ollama models before expensive native vision reads.</span>
+          </div>
+          <div class="rule-card" style="--rule-color: var(--rose)" data-viz-id="agents-gotchas" data-label="Hard-won gotchas">
+            <strong>Hard-won gotchas</strong>
+            <span>No parallel browser agents, no SIGPIPE-prone long pipes, and check `gh auth` before assuming repo access is missing.</span>
+          </div>
+          <div class="rule-card" style="--rule-color: var(--amber)" data-viz-id="agents-ponytail" data-label="Ponytail">
+            <strong>Ponytail default</strong>
+            <span>For coding work, prefer the laziest correct solution: reuse local patterns, native features, and the smallest diff that works.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="impact-stack" style="margin-top: 16px">
+        <div class="impact-card" style="--impact-color: var(--mint)" data-viz-id="agents-impact-reliability" data-label="Reliability impact">
+          <strong>Impact: fewer confident wrong turns</strong>
+          <span>Voice ambiguity, memory search, evidence tiers, and skill-first routing all attack the same failure mode: an agent acting fast from stale or guessed context.</span>
+        </div>
+        <div class="impact-card" style="--impact-color: var(--amber)" data-viz-id="agents-impact-speed" data-label="Speed impact">
+          <strong>Impact: faster repeat work</strong>
+          <span>The rules bias the agent toward installed capability, local CLIs, repo conventions, and prebuilt skills instead of re-solving common tasks in one-off shell.</span>
+        </div>
+        <div class="impact-card" style="--impact-color: var(--rose)" data-viz-id="agents-impact-safety" data-label="Safety impact">
+          <strong>Impact: safer autonomy</strong>
+          <span>Verification, dirty-worktree caution, destructive-command limits, and explicit escalation rules let the agent keep moving without silently widening blast radius.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="deep-section" aria-labelledby="skillsTitle">
+      <div class="chapter-head">
+        <div>
+          <h2 id="skillsTitle">Skills ecosystem map</h2>
+          <p>The setup has two kinds of rides: homegrown skills that encode Rascal's repeated work, and external skill packs installed by reference. The installer links owned skills, layers private overlays, and reproduces third-party packs from `external-skills.json`.</p>
+        </div>
+        <span class="chapter-tag">24 owned skills + external packs</span>
+      </div>
+
+      <div class="skills-map">
+        <div class="skill-district core" style="--district-color: var(--mint)" data-viz-id="skills-owned-core" data-label="Owned core skills">
+          <h3>Owned core and setup operations</h3>
+          <p class="district-note">Skills that explain, audit, publish, or visualize the setup itself — plus the thinking tools that pressure-test a decision and route work across agents.</p>
+          <div class="skill-card-grid single">
+            <div class="skill-card">
+              <strong>viz</strong>
+              <span>Builds live HTML/CSS/JS visualizations inside the repo, with a local server, screenshots, and review anchors.</span>
+              <span class="why">Why it matters: turns architecture and process explanations into browsable artifacts instead of README walls.</span>
+            </div>
+            <div class="skill-card">
+              <strong>ai-setup-audit</strong>
+              <span>Runs the recurring health check for this whole setup: symlinks, skills, MCP servers, settings, subagents, and usage.</span>
+              <span class="why">Why it matters: keeps the public core and private overlays from silently drifting.</span>
+            </div>
+            <div class="skill-card">
+              <strong><a class="poster-link" href="../skill-publish-markdown-to-confluence/">publish-markdown-to-confluence <span class="pl-mark">poster ↗</span></a></strong>
+              <span>Converts local Markdown to Atlassian document format and updates Confluence while preserving page extensions.</span>
+            </div>
+            <div class="skill-card">
+              <strong><a class="poster-link" href="../skill-delegate-to-codex/">delegate-to-codex <span class="pl-mark">poster ↗</span></a></strong>
+              <span>Hands a scoped task to the OpenAI Codex CLI headless, so the work bills to the ChatGPT subscription instead of spending Claude tokens.</span>
+              <span class="why">Why it matters: the agnostic setup's escape hatch — fan work out cheaply, and stay ready for the day the free lunch ends.</span>
+            </div>
+          </div>
+          <div class="skill-chips" style="margin-top: 10px">
+            <a class="skill-chip has-poster" href="../skill-steelman/">steelman ↗</a>
+            <span class="skill-chip">retro</span>
+            <span class="skill-chip">retro-catchup</span>
+            <span class="skill-chip">tldraw-canvas</span>
+          </div>
+        </div>
+
+        <div class="skill-district media" style="--district-color: var(--green)" data-viz-id="skills-media-local" data-label="Media and local AI skills">
+          <h3>Media and local AI</h3>
+          <p class="district-note">Local-first tools for images, speech-to-text, narrated video, subtitles, browser capture, and Drive recordings.</p>
+          <div class="skill-card-grid single">
+            <div class="skill-card">
+              <strong>read-image-locally</strong>
+              <span>Uses local Ollama vision models for structured screenshot extraction before spending native vision tokens.</span>
+              <span class="why">Best for HUD values, tables, error screenshots, and labeled fields.</span>
+            </div>
+            <div class="skill-card">
+              <strong>read-narrated-video</strong>
+              <span>Summarizes local narrated videos into text so screen recordings can be verified without repeated vision reads. Delegates its transcription to transcribe-media.</span>
+            </div>
+            <div class="skill-card">
+              <strong><a class="poster-link" href="../skill-transcribe-media/">transcribe-media <span class="pl-mark">poster ↗</span></a></strong>
+              <span>Speech-to-text for any local audio or video file, through the Mac-optimized MLX Whisper build (GPU, not the CPU fallback).</span>
+              <span class="why">Why it matters: the one speech-to-text engine — the subtitle, Drive, and narrated-video skills all route through it instead of re-deriving the command.</span>
+            </div>
+            <div class="skill-card">
+              <strong>browser-capture</strong>
+              <span>Gets screenshots, GIFs, and smooth 30fps video out of headless Chrome and onto disk, ready to embed in a doc or PR.</span>
+              <span class="why">Why it matters: the obvious paths silently write no file — this carries the route that actually works.</span>
+            </div>
+          </div>
+          <div class="skill-chips" style="margin-top: 10px">
+            <span class="skill-chip">extract-video-subtitles</span>
+            <span class="skill-chip">extract-gdrive-transcript</span>
+          </div>
+        </div>
+
+        <div class="skill-district delivery" style="--district-color: var(--rose)" data-viz-id="skills-cloud-delivery" data-label="Cloud delivery skills">
+          <h3>Cloud, API, and delivery</h3>
+          <p class="district-note">Operational helpers grouped by workflow instead of pretending they belong to one parent skill.</p>
+          <div class="skill-card-grid single">
+            <div class="skill-card">
+              <strong>r2-sdlc</strong>
+              <span>Rascal's story-to-PR pipeline: understand, design, implement with TDD, simplify, and run layered review.</span>
+            </div>
+            <div class="skill-card">
+              <strong>r2-gauntlet</strong>
+              <span>One-command mega-review that aggregates the review/audit panel into a single ranked report.</span>
+            </div>
+            <div class="skill-card">
+              <strong>workflow and deploy helpers</strong>
+              <span>Trigger, wait for, diagnose, and explain CI/CD failures without retyping the same GitHub/Azure/Terraform routines.</span>
+            </div>
+            <div class="skill-card">
+              <strong>provider API wrappers</strong>
+              <span>Okta, Ping, AWS SSO, GitHub image upload, and project-board ordering are packaged as named operations.</span>
+            </div>
+            <div class="skill-card">
+              <strong>provider porting</strong>
+              <span>Ports a Terraform provider's whole resource surface to an Ansible collection or a Kubernetes operator — with parity that's measured against the provider, not assumed.</span>
+            </div>
+          </div>
+          <div class="skill-chips" style="margin-top: 10px">
+            <span class="skill-chip">port-terraform-provider-to-ansible</span>
+            <span class="skill-chip">port-terraform-provider-to-k8s-operator</span>
+            <span class="skill-chip">r2-sdlc-documentation-philosophy</span>
+            <span class="skill-chip">r2-sdlc-testing-paradigm</span>
+            <a class="skill-chip has-poster" href="../skill-aws-sso-creds/">aws-sso-creds ↗</a>
+            <span class="skill-chip">trigger-github-deploy</span>
+            <span class="skill-chip">wait-for-github-workflow</span>
+            <span class="skill-chip">analyze-github-workflow-failure</span>
+            <span class="skill-chip">diagnose-azure-container-app</span>
+            <span class="skill-chip">diagnose-terraform-unknown-error</span>
+            <span class="skill-chip">okta-api</span>
+            <span class="skill-chip">ping-api</span>
+            <a class="skill-chip has-poster" href="../skill-upload-image-to-github/">upload-image-to-github ↗</a>
+            <span class="skill-chip">reorder-github-project-board-by-depth</span>
+          </div>
+        </div>
+
+        <div class="skill-district external" style="--district-color: var(--violet)" data-viz-id="skills-external" data-label="External skill packs">
+          <h3>External community packs</h3>
+          <p class="district-note">Installed by reference with `bun install.ts --externals`; grouped by how Rascal actually uses them.</p>
+          <div class="skill-group">
+            <h4>Matt Pocock pipeline skills</h4>
+            <p>The standouts are the planning/conversation tools: handoff, grilling, grill-with-docs, and wayfinder. The rest are available when a repo needs a more formal SDLC path.</p>
+            <div class="skill-card-grid">
+              <div class="skill-card">
+                <strong>handoff</strong>
+                <span>Turns active context into a pickup document for another agent or later session.</span>
+              </div>
+              <div class="skill-card">
+                <strong>grilling / grill-with-docs</strong>
+                <span>Stress-tests a design through hard questions; the docs variant captures decisions as it goes.</span>
+              </div>
+              <div class="skill-card">
+                <strong>wayfinder</strong>
+                <span>Maps work too large for one session into investigation tickets and dependency structure.</span>
+              </div>
+            </div>
+            <div class="skill-chips" style="margin-top: 10px">
+            <span class="skill-chip">code-review</span>
+            <span class="skill-chip">codebase-design</span>
+            <span class="skill-chip">diagnosing-bugs</span>
+            <span class="skill-chip">domain-modeling</span>
+            <span class="skill-chip">implement</span>
+            <span class="skill-chip">improve-codebase-architecture</span>
+            <span class="skill-chip">prototype</span>
+            <span class="skill-chip">research</span>
+            <span class="skill-chip">setup-matt-pocock-skills</span>
+            <span class="skill-chip">tdd</span>
+            <span class="skill-chip">to-spec</span>
+            <span class="skill-chip">to-tickets</span>
+            <span class="skill-chip">triage</span>
+            </div>
+          </div>
+          <div class="skill-group">
+            <h4>Ponytail</h4>
+            <p>The always-on coding bias: simplest working solution, native tools first, no speculative abstractions.</p>
+            <div class="skill-chips">
+            <span class="skill-chip">ponytail</span>
+            <span class="skill-chip">ponytail-audit</span>
+            <span class="skill-chip">ponytail-debt</span>
+            <span class="skill-chip">ponytail-gain</span>
+            <span class="skill-chip">ponytail-help</span>
+            <span class="skill-chip">ponytail-review</span>
+            </div>
+          </div>
+          <div class="skill-group">
+            <h4>Discovery and knowledge tools</h4>
+            <p>These are important standalone utilities, not members of another family.</p>
+            <div class="skill-card-grid">
+              <div class="skill-card">
+                <strong>graphify</strong>
+                <span>Turns input into a knowledge graph, configured here to run on local Ollama with `qwen2.5-coder:7b`.</span>
+              </div>
+              <div class="skill-card">
+                <strong>find-skills</strong>
+                <span>Finds and installs capability before the agent invents a one-off workflow.</span>
+              </div>
+            </div>
+            <div class="skill-chips" style="margin-top: 10px">
+              <span class="skill-chip">skill-creator</span>
+            </div>
+          </div>
+          <div class="skill-group">
+            <h4>LN auditors</h4>
+            <p>Background review lenses. Rascal does not usually invoke these directly; they matter because larger review workflows can pull them in.</p>
+            <div class="skill-chips">
+            <span class="skill-chip">ln-11-plan-reviewer</span>
+            <span class="skill-chip">ln-12-delivery-reviewer</span>
+            <span class="skill-chip">ln-21-documentation-auditor</span>
+            <span class="skill-chip">ln-22-codebase-auditor</span>
+            <span class="skill-chip">ln-23-test-suite-auditor</span>
+            <span class="skill-chip">ln-24-architecture-auditor</span>
+            <span class="skill-chip">ln-25-persistence-auditor</span>
+            <span class="skill-chip">ln-31-performance-optimizer</span>
+            <span class="skill-chip">ln-32-dependency-upgrader</span>
+            <span class="skill-chip">ln-33-code-modernizer</span>
+            <span class="skill-chip">ln-34-benchmark-comparator</span>
+            <span class="skill-chip">ln-41-test-strategy-planner</span>
+            <span class="skill-chip">ln-42-acceptance-test-builder</span>
+            <span class="skill-chip">ln-51-opportunity-evaluator</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="skill-district private" style="--district-color: var(--amber)" data-viz-id="skills-how-they-connect" data-label="How skills connect">
+          <h3>How the districts connect</h3>
+          <p class="district-note">The important bit is not the count. It is that recurring work becomes named, installed capability.</p>
+          <div class="district-flow">
+            <div class="flow-node">
+              <strong>Rules choose</strong>
+              <span>AGENTS.md tells the agent to check skills before ad-hoc work.</span>
+            </div>
+            <div class="flow-node">
+              <strong>Installer links</strong>
+              <span>Owned skills become live in both Claude Code and Codex paths.</span>
+            </div>
+            <div class="flow-node">
+              <strong>Manifest imports</strong>
+              <span>External packs are reproducible without copying their source.</span>
+            </div>
+            <div class="flow-node">
+              <strong>Overlays extend</strong>
+              <span>Private/company skills layer on top without entering the public repo.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script type="module">
+  import { arrowMarkers, connect, labelBox, saveHash, loadHash, vizAudit, esc } from "/_kit/viz.js";
+
+  const colors = {
+    repo: "#84dcc6",
+    install: "#f6bd60",
+    agent: "#70a1ff",
+    skill: "#b28dff",
+    violet: "#b28dff",
+    sauce: "#ff6b6b",
+    model: "#7bd88f"
+  };
+
+  const nodes = [
+    {
+      id: "repo",
+      index: "01",
+      tag: "source of truth",
+      title: "Public core repo",
+      note: "Rules, skills, settings, subagents, and installer live together.",
+      color: colors.repo,
+      cls: "main-only",
+      x: 70, y: 150, w: 154, h: 86,
+      copy: "The `ai-setup` repo is the public, borrowable core. It keeps the agent rules, owned skills, external skill manifest, settings notes, and installer in one place so the live setup does not drift from source control.",
+      bullets: [
+        "`AGENTS.md` is the canonical rules file.",
+        "`CLAUDE.md` points to the same bytes for Claude Code.",
+        "`settings/`, `skills/`, `subagents/`, and `external-skills.json` describe the rest of the system."
+      ]
+    },
+    {
+      id: "installer",
+      index: "02",
+      tag: "bootstrap",
+      title: "Deterministic installer",
+      note: "`bun install.ts` links the repo into every live path.",
+      color: colors.install,
+      cls: "main-only",
+      x: 290, y: 150, w: 154, h: 86,
+      copy: "`install.ts` is the small boring engine. It is idempotent, refuses to overwrite real files, repairs stale symlinks, layers private overlays, and optionally installs third-party skills from a manifest.",
+      bullets: [
+        "Rules go to `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`.",
+        "Owned skills link into both agents' skill paths.",
+        "Codex gets `basic-memory`, preferences, and the RTK hook merged into config."
+      ]
+    },
+    {
+      id: "agents",
+      index: "03",
+      tag: "two runtimes",
+      title: "Claude Code plus Codex",
+      note: "Claude Code is primary; Codex gets the closest equivalent surface.",
+      color: colors.agent,
+      cls: "main-only",
+      x: 510, y: 150, w: 154, h: 86,
+      copy: "The setup is agent-agnostic by design, but not pretending the two tools are identical. Claude Code is the main daily driver; Codex is maintained as a parity path and backup with equivalent rules, skills, MCP memory, browser tooling, and settings where possible.",
+      bullets: [
+        "Manual connector/plugin setup covers browser, desktop, Google, and Atlassian access.",
+        "Settings differences are documented instead of mirrored blindly.",
+        "The same repo explains what cannot be automated."
+      ]
+    },
+    {
+      id: "skills",
+      index: "04",
+      tag: "capability layer",
+      title: "Skills catalog",
+      note: "Owned skills, external skills, and private overlays share one catalog.",
+      color: colors.skill,
+      cls: "main-only secret-only",
+      x: 730, y: 150, w: 154, h: 86,
+      copy: "Skills are the main capability layer. The repo ships owned skills such as `/viz`, audit helpers, local vision, speech-to-text, browser capture, deployment helpers, API wrappers, provider porting, and video/transcript tools. `external-skills.json` reproduces community skills through `npx skills`.",
+      bullets: [
+        "Community set: Matt Pocock pipeline, ponytail, graphify, find-skills, and LN auditors.",
+        "Owned set: `/viz`, ai-setup-audit, steelman, local image/video reading, transcribe-media, browser-capture, delegate-to-codex, deploy/log helpers, API wrappers, provider porting.",
+        "Private overlays add company or personal skills without publishing secrets."
+      ]
+    },
+    {
+      id: "subagents",
+      index: "05",
+      tag: "review team",
+      title: "Subagents and Ruler",
+      note: "Reviewer agents are authored once and compiled for both surfaces.",
+      color: colors.violet,
+      cls: "main-only secret-only",
+      x: 950, y: 150, w: 154, h: 86,
+      copy: "The r2-sdlc reviewer subagents are authored once in Ruler and committed in Claude and Codex native formats. Install only needs Bun; Ruler is reserved for author-time edits.",
+      bullets: [
+        "`subagents/.claude/agents/*.md` feeds Claude Code.",
+        "`subagents/.codex/agents/*.toml` feeds Codex.",
+        "The installer symlinks both generated outputs into place."
+      ]
+    },
+    {
+      id: "memory",
+      index: "06",
+      tag: "shared recall",
+      title: "Basic-memory first",
+      note: "Persistent memory sits outside either agent and both can query it.",
+      color: colors.model,
+      cls: "secret-only",
+      x: 950, y: 480, w: 154, h: 86,
+      copy: "Persistent notes live in `basic-memory`, not in one agent's proprietary memory feature. The rule is explicit: search memory before guessing about project history or prior setup decisions.",
+      bullets: [
+        "Codex registration is managed by the installer.",
+        "Claude Code already has the MCP server in the live setup.",
+        "Memory becomes the first evidence source before docs, web, or recall."
+      ]
+    },
+    {
+      id: "local-models",
+      index: "07",
+      tag: "local compute",
+      title: "Ollama helpers",
+      note: "Local models handle structured image reading and graphify.",
+      color: colors.model,
+      cls: "secret-only",
+      x: 730, y: 480, w: 154, h: 86,
+      copy: "Ollama supplies cheap local model calls for tasks where cloud vision or heavyweight model tokens are wasteful. The repo documents `gemma4:e4b` for local vision and `qwen2.5-coder:7b` for graphify.",
+      bullets: [
+        "`read-image-locally` extracts structured screenshot data first.",
+        "`graphify` is pinned to local Ollama in the global rules.",
+        "Both agents can use the same daemon once models are pulled."
+      ]
+    },
+    {
+      id: "rules",
+      index: "08",
+      tag: "operating doctrine",
+      title: "Rules that steer behavior",
+      note: "Voice ambiguity, evidence, planning, tools, and verification.",
+      color: colors.sauce,
+      cls: "secret-only",
+      x: 510, y: 480, w: 154, h: 86,
+      copy: "`AGENTS.md` carries the behavioral defaults: handle voice homophones, make evidence-based claims, prefer skills and MCP tools, verify before done, avoid destructive git operations, and use ponytail for minimal working code.",
+      bullets: [
+        "Voice input means ambiguous commands get confirmed instead of guessed.",
+        "Non-obvious claims need evidence, starting with memory.",
+        "Every deliverable gets a verification phase proportional to risk."
+      ]
+    },
+    {
+      id: "pipeline",
+      index: "09",
+      tag: "delivery loop",
+      title: "Rascal-2 pipeline",
+      note: "Spec, tickets, TDD, simplification, and review are codified.",
+      color: colors.sauce,
+      cls: "secret-only",
+      x: 290, y: 480, w: 154, h: 86,
+      copy: "The r2-sdlc path turns a rough idea into scoped work, implementation, simplification, and layered review. The gauntlet can run the whole review panel and produce one ranked report.",
+      bullets: [
+        "Local markdown is the configured issue tracker.",
+        "BDD-first tests and documentation philosophy are encoded as skills.",
+        "Gauntlet aggregates specialist reviewers instead of reading twenty reports."
+      ]
+    },
+    {
+      id: "sauce",
+      index: "10",
+      tag: "tour exit",
+      title: "Secret sauce",
+      note: "The win is not one tool; it is the connected operating system.",
+      color: colors.install,
+      cls: "secret-only",
+      x: 70, y: 480, w: 154, h: 86,
+      copy: "The leverage comes from making defaults executable: a shared rulebook, installable capability catalog, memory-first evidence, local-model shortcuts, and review pipelines that Claude Code and Codex can both reach.",
+      bullets: [
+        "Use Claude Code primarily, keep Codex close enough to substitute.",
+        "Keep public core and private overlays separate.",
+        "Favor small deterministic install steps over a hidden machine-local setup."
+      ]
+    }
+  ];
+
+  const installFlow = [
+    ["Clone core", "`github.com/RascalTwo/ai-setup` is the public source of truth.", colors.repo],
+    ["Run Bun installer", "`bun install.ts` creates or repairs symlinks and appends safe config.", colors.install],
+    ["Layer overlays", "`--overlay <dir>` adds private skills without leaking them into the public repo.", colors.skill],
+    ["Install externals", "`--externals` reproduces third-party skills from `external-skills.json`.", colors.violet],
+    ["Wire runtimes", "Rules, skills, subagents, statusline, Codex prefs, basic-memory, and RTK land in the right live paths.", colors.agent]
+  ];
+
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  const svg = document.querySelector(".map-svg");
+  const defs = document.querySelector("#markers");
+  const nodeLayer = document.querySelector("#nodes");
+  const edgeLayer = document.querySelector("#edges");
+  const detailTitle = document.querySelector("#detailTitle");
+  const detailTag = document.querySelector("#detailTag");
+  const detailIndex = document.querySelector("#detailIndex");
+  const detailCopy = document.querySelector("#detailCopy");
+  const detailList = document.querySelector("#detailList");
+  const tourProgress = document.querySelector("#tourProgress");
+  const installFlowEl = document.querySelector("#installFlow");
+  const startButton = document.querySelector("[data-start-tour]");
+  const prevButton = document.querySelector("[data-prev-stop]");
+  const nextButton = document.querySelector("[data-next-stop]");
+  const tourOrder = nodes.map((node) => node.id);
+  const routePairs = [
+    ["repo", "installer"],
+    ["installer", "agents"],
+    ["agents", "skills"],
+    ["skills", "subagents"],
+    ["subagents", "memory"],
+    ["memory", "local-models"],
+    ["local-models", "rules"],
+    ["rules", "pipeline"],
+    ["pipeline", "sauce"]
+  ];
+
+  let activeId = loadHash().stop || "repo";
+  if (!nodeById.has(activeId)) activeId = "repo";
+
+  function inlineCode(value) {
+    return esc(value).replace(/`([^`]+)`/g, "<code>$1</code>");
+  }
+
+  function renderEdges() {
+    defs.innerHTML = arrowMarkers({
+      "ah-accent": colors.repo,
+      "ah-warn": colors.install,
+      "ah-danger": colors.sauce
+    }).replace(/^<defs>|<\/defs>$/g, "");
+    edgeLayer.innerHTML = "";
+
+    for (const [from, to] of routePairs) {
+      const a = nodeById.get(from);
+      const b = nodeById.get(to);
+      const edge = connect(a, b);
+      const color = tourOrder.indexOf(from) < 4 ? colors.install : colors.sauce;
+      const route = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      route.setAttribute("d", edge);
+      route.setAttribute("fill", "none");
+      route.setAttribute("stroke", color);
+      route.setAttribute("stroke-width", "2.5");
+      route.setAttribute("stroke-opacity", "0.72");
+      route.setAttribute("marker-end", `url(#ah-${color === colors.sauce ? "danger" : color === colors.install ? "warn" : "accent"})`);
+      route.dataset.vizId = `edge-${from}-${to}`;
+      edgeLayer.append(route);
+    }
+  }
+
+  function renderNodes() {
+    nodeLayer.innerHTML = "";
+    for (const node of nodes) {
+      const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      group.dataset.vizId = `node-${node.id}`;
+      group.dataset.label = node.title;
+      group.classList.add(...node.cls.split(" ").filter(Boolean));
+
+      const html = `
+        <button type="button" class="node-button" data-node-id="${node.id}" aria-label="Open ${node.title}">
+          <div class="node-card ${node.id === activeId ? "active" : ""}" style="--node-color:${node.color}">
+            <div class="node-kicker">${node.index}</div>
+            <div class="node-title">${node.title}</div>
+            <div class="node-note">${node.note}</div>
+          </div>
+        </button>
+      `;
+      group.insertAdjacentHTML("beforeend", labelBox(node, html));
+      nodeLayer.append(group);
+    }
+
+    nodeLayer.querySelectorAll("[data-node-id]").forEach((button) => {
+      button.addEventListener("click", () => setActive(button.dataset.nodeId));
+    });
+  }
+
+  function renderDetail() {
+    const node = nodeById.get(activeId) || nodes[0];
+    document.documentElement.style.setProperty("--active-color", node.color);
+    detailTitle.textContent = node.title;
+    detailTag.textContent = node.tag;
+    detailIndex.textContent = node.index;
+    detailCopy.textContent = node.copy;
+    detailList.innerHTML = node.bullets.map((item) => `<li><span>${inlineCode(item)}</span></li>`).join("");
+    const currentIndex = tourOrder.indexOf(node.id);
+    const nextNode = nodeById.get(tourOrder[Math.min(currentIndex + 1, tourOrder.length - 1)]);
+    tourProgress.textContent = currentIndex === tourOrder.length - 1
+      ? "Stop 10 of 10. End of the tour."
+      : `Stop ${currentIndex + 1} of 10. Next: ${nextNode.title}.`;
+    prevButton.disabled = currentIndex === 0;
+    nextButton.disabled = currentIndex === tourOrder.length - 1;
+    document.querySelectorAll(".node-card").forEach((card) => card.classList.remove("active"));
+    document.querySelector(`[data-node-id="${node.id}"] .node-card`)?.classList.add("active");
+  }
+
+  function renderLists() {
+    installFlowEl.innerHTML = installFlow.map(([title, copy, color], i) => `
+      <div class="flow-item" style="--card-color:${color}" data-viz-id="install-${i + 1}" data-label="${title}">
+        <strong>${i + 1}. ${title}</strong>
+        <span>${inlineCode(copy)}</span>
+      </div>
+    `).join("");
+
+  }
+
+  function setActive(id) {
+    activeId = id;
+    saveHash({ stop: activeId });
+    renderDetail();
+  }
+
+  function move(delta) {
+    const currentIndex = tourOrder.indexOf(activeId);
+    const nextIndex = Math.max(0, Math.min(tourOrder.length - 1, currentIndex + delta));
+    setActive(tourOrder[nextIndex]);
+  }
+
+  startButton.addEventListener("click", () => setActive("repo"));
+  prevButton.addEventListener("click", () => move(-1));
+  nextButton.addEventListener("click", () => move(1));
+
+  renderEdges();
+  renderNodes();
+  renderLists();
+  renderDetail();
+  requestAnimationFrame(() => vizAudit(svg));
+</script>
+<a id="__viz_dl" href="#" role="button" aria-label="Save a copy of this page"
+title="Save a copy" style="position:fixed;bottom:14px;right:14px;z-index:2147483646;
+width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+border-radius:8px;background:rgba(20,20,22,.55);color:#fff;opacity:.35;
+backdrop-filter:blur(4px);transition:opacity .15s;text-decoration:none"
+onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.35">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/>
+<line x1="12" y1="15" x2="12" y2="3"/></svg></a>
+<script>(function(){
+  var a=document.getElementById("__viz_dl");
+  var name=(document.title||"visualization").toLowerCase()
+    .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60)||"visualization";
+  function save(text){
+    var url=URL.createObjectURL(new Blob([text],{type:"text/html"}));
+    var t=document.createElement("a"); t.href=url; t.download=name+".html";
+    document.body.appendChild(t); t.click(); t.remove();
+    setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  }
+  a.addEventListener("click",function(e){
+    e.preventDefault();
+    fetch(location.href).then(function(r){return r.text();}).then(save)
+      .catch(function(){ save("<!DOCTYPE html>\n"+document.documentElement.outerHTML); });
+  });
+})();</script>
+</body>
+</html>

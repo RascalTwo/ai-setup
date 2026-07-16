@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script type="importmap">{"imports":{"/_kit/viz.js":"data:text/javascript;base64,Ly8gdml6LmpzIOKAlCBzaGFyZWQgaGVscGVycyBmb3IgL3ZpeiBwYWdlcy4gTG9hZCB3aXRoOgovLyAgIDxzY3JpcHQgdHlwZT0ibW9kdWxlIj4KLy8gICAgIGltcG9ydCB7IGFycm93TWFya2VycywgY29ubmVjdCwgc2lkZSwgbGFiZWxCb3gsIHZpekF1ZGl0LCAkLCAkJCwgZXNjLCBzYXZlSGFzaCwgbG9hZEhhc2gsIHZpekVudiB9IGZyb20gIi9fa2l0L3Zpei5qcyI7Ci8vICAgPC9zY3JpcHQ+Ci8vIFNlcnZlZCBieSB0aGUgdml6IHNlcnZlciBhdCAvX2tpdC92aXouanMgZnJvbSB0aGUgc2tpbGwncyBvd24ga2l0LyBkaXIsIHNvIGl0J3MKLy8gb25lIHNvdXJjZSBvZiB0cnV0aCBhY3Jvc3MgZXZlcnkgdml6LiBQYWlycyB3aXRoIC9fa2l0L3Zpei1raXQuY3NzLgoKZXhwb3J0IGNvbnN0IFNWR05TID0gImh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIjsKCi8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQovLyBTVkcgZGlhZ3JhbXMg4oCUIGdlb21ldHJ5IGZpcnN0LgovLwovLyBUaGUgcmVjdXJyaW5nIHJld29yayBpbiBib3hlcy1hbmQtYXJyb3dzIGRpYWdyYW1zIGNvbWVzIGZyb20gdHlwaW5nIGxhYmVsIGFuZAovLyBhcnJvdyBjb29yZGluYXRlcyBhcyBpbmRlcGVuZGVudCBsaXRlcmFsczogYSBib3ggZ2V0cyByZXNpemVkIG9yIG1vdmVkLCBidXQgdGhlCi8vIGFycm93IGVuZHBvaW50IGFuZCB0aGUgbGFiZWwgcG9zaXRpb24gd2VyZSBndWVzc2VkIGFnYWluc3QgdGhlICpvbGQqIGdlb21ldHJ5LAovLyBzbyB0aGUgYXJyb3cgbm93IHBvaW50cyBhdCBlbXB0eSBzcGFjZSAob3IgdGhlIHdyb25nIGJveCkgYW5kIHRoZSBsYWJlbCBzcGlsbHMKLy8gb3V0LiBUaGUgZml4IGlzIHRvIG5ldmVyIGhhbmQtcGxhY2UgdGhvc2U6IGRlZmluZSBlYWNoIG5vZGUgT05DRSBhcyB7eCx5LHcsaH0KLy8gYW5kIGNvbXB1dGUgZXZlcnl0aGluZyBlbHNlIGZyb20gaXQuCi8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQoKLy8gRGVmYXVsdCBhcnJvd2hlYWQgcGFsZXR0ZSwga2V5ZWQgdG8gdGhlIHZpei1raXQgaW50ZW50IHRva2Vucy4gU1ZHIG1hcmtlcnMgY2FuJ3QKLy8gaW5oZXJpdCB0aGUgc3Ryb2tlIGNvbG9yIG9mIHRoZSBsaW5lIHRoYXQgdXNlcyB0aGVtLCBzbyB5b3UgZ2VudWluZWx5IG5lZWQgb25lCi8vIG1hcmtlciBwZXIgY29sb3Ig4oCUIHRoaXMgZW1pdHMgdGhlbSBhbGwgd2l0aCBzdGFibGUgaWRzIHNvIHlvdSBzdG9wIHJlLWRlcml2aW5nCi8vIHRoZSBzYW1lIDxtYXJrZXI+IGJsb2NrIHBlciBkaWFncmFtLiBSZWZlcmVuY2UgYXMgbWFya2VyLWVuZD0idXJsKCNhaC1hY2NlbnQpIi4KY29uc3QgREVGQVVMVF9NQVJLRVJTID0gewogIGFoOiAiIzhiOTQ5ZSIsIC8vIG11dGVkIOKAlCB0aGUgZGVmYXVsdCBlZGdlCiAgImFoLWFjY2VudCI6ICIjNThhNmZmIiwKICAiYWgtZ29vZCI6ICIjM2ZiOTUwIiwKICAiYWgtd2FybiI6ICIjZDI5OTIyIiwKICAiYWgtZGFuZ2VyIjogIiNmODUxNDkiLAp9OwoKLy8gUmV0dXJucyBhIDxkZWZzPuKApjwvZGVmcz4gc3RyaW5nLiBEcm9wIGl0IG9uY2UgYXQgdGhlIHRvcCBvZiB5b3VyIDxzdmc+LgpleHBvcnQgZnVuY3Rpb24gYXJyb3dNYXJrZXJzKHBhbGV0dGUgPSBERUZBVUxUX01BUktFUlMpIHsKICBjb25zdCBtYXJrZXJzID0gT2JqZWN0LmVudHJpZXMocGFsZXR0ZSkKICAgIC5tYXAoCiAgICAgIChbaWQsIGZpbGxdKSA9PgogICAgICAgIGA8bWFya2VyIGlkPSIke2lkfSIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZYPSI5IiByZWZZPSI1IiBgICsKICAgICAgICBgbWFya2VyV2lkdGg9IjciIG1hcmtlckhlaWdodD0iNyIgb3JpZW50PSJhdXRvLXN0YXJ0LXJldmVyc2UiPmAgKwogICAgICAgIGA8cGF0aCBkPSJNMCwwIEwxMCw1IEwwLDEwIHoiIGZpbGw9IiR7ZmlsbH0iLz48L21hcmtlcj5gLAogICAgKQogICAgLmpvaW4oIiIpOwogIHJldHVybiBgPGRlZnM+JHttYXJrZXJzfTwvZGVmcz5gOwp9CgovLyBBIG5vZGUgaXMganVzdCB7eCwgeSwgdywgaH0uIGNlbnRlcigpIGFuZCBzaWRlKCkgZGVyaXZlIGNvbm5lY3Rpb24gcG9pbnRzIGZyb20KLy8gaXQsIHNvIGFuIGVkZ2Ugc3RheXMgYXR0YWNoZWQgdG8gdGhlIGJveCBubyBtYXR0ZXIgaG93IHRoZSBib3ggY2hhbmdlcy4KZXhwb3J0IGNvbnN0IGNlbnRlciA9IChuKSA9PiAoeyB4OiBuLnggKyBuLncgLyAyLCB5OiBuLnkgKyBuLmggLyAyIH0pOwoKZXhwb3J0IGNvbnN0IHNpZGUgPSAobiwgd2hlcmUpID0+CiAgKHsKICAgIHRvcDogeyB4OiBuLnggKyBuLncgLyAyLCB5OiBuLnkgfSwKICAgIGJvdHRvbTogeyB4OiBuLnggKyBuLncgLyAyLCB5OiBuLnkgKyBuLmggfSwKICAgIGxlZnQ6IHsgeDogbi54LCB5OiBuLnkgKyBuLmggLyAyIH0sCiAgICByaWdodDogeyB4OiBuLnggKyBuLncsIHk6IG4ueSArIG4uaCAvIDIgfSwKICB9KVt3aGVyZV07CgovLyBTdHJhaWdodCBlZGdlIGJldHdlZW4gdHdvIG5vZGVzLCBhdXRvLXBpY2tpbmcgdGhlIGZhY2luZyBzaWRlcyBiYXNlZCBvbiB0aGVpcgovLyByZWxhdGl2ZSBwb3NpdGlvbi4gUmV0dXJucyBhbiBTVkcgcGF0aCAiZCIgc3RyaW5nOyBzZXQgdGhlIG1hcmtlciB5b3Vyc2VsZiB2aWEKLy8gdGhlIGVsZW1lbnQncyBtYXJrZXItZW5kIGF0dHJpYnV0ZS4gRm9yID41IG5vZGVzIHdpdGggY3Jvc3NpbmcgZWRnZXMsIHJlYWNoIGZvcgovLyBhIGxheW91dCBlbmdpbmUgKGRhZ3JlIC8gZDMtZGFnIC8gbWVybWFpZCkgaW5zdGVhZCBvZiBwbGFjaW5nIG5vZGVzIGJ5IGhhbmQg4oCUCi8vIHRoYXQncyB0aGUgcG9pbnQgd2hlcmUgbWFudWFsIGNvb3JkaW5hdGVzIHN0b3AgYmVpbmcgd29ydGggaXQuCmV4cG9ydCBmdW5jdGlvbiBjb25uZWN0KGEsIGIpIHsKICBjb25zdCBjYSA9IGNlbnRlcihhKSwKICAgIGNiID0gY2VudGVyKGIpOwogIGNvbnN0IGhvcml6ID0gTWF0aC5hYnMoY2IueCAtIGNhLngpID4gTWF0aC5hYnMoY2IueSAtIGNhLnkpOwogIGNvbnN0IHBhID0gaG9yaXoKICAgID8gc2lkZShhLCBjYi54ID4gY2EueCA/ICJyaWdodCIgOiAibGVmdCIpCiAgICA6IHNpZGUoYSwgY2IueSA+IGNhLnkgPyAiYm90dG9tIiA6ICJ0b3AiKTsKICBjb25zdCBwYiA9IGhvcml6CiAgICA/IHNpZGUoYiwgY2IueCA+IGNhLnggPyAibGVmdCIgOiAicmlnaHQiKQogICAgOiBzaWRlKGIsIGNiLnkgPiBjYS55ID8gInRvcCIgOiAiYm90dG9tIik7CiAgcmV0dXJuIGBNICR7cGEueH0gJHtwYS55fSBMICR7cGIueH0gJHtwYi55fWA7Cn0KCi8vIEEgbGFiZWwgdGhhdCBDQU5OT1Qgb3ZlcmZsb3cgaXRzIGJveC4gPGZvcmVpZ25PYmplY3Q+IGxldHMgdGhlIGJyb3dzZXIgd3JhcCBhbmQKLy8gZWxsaXBzaXplIEhUTUwgbmF0aXZlbHksIHVubGlrZSByYXcgPHRleHQ+IHdoaWNoIHlvdSdkIGhhdmUgdG8gbWVhc3VyZSBieSBoYW5kCi8vIChhbmQgaGlzdG9yaWNhbGx5IGd1ZXNzZWQgd3JvbmcpLiBVc2UgdGhpcyBmb3IgYW55IG11bHRpLXdvcmQgbGFiZWwgaW5zaWRlIGEKLy8gZml4ZWQtd2lkdGggYm94LiBTdHlsZSB2aWEgdGhlIC52c3ZnLWxhYmVsIGNsYXNzIGluIHZpei1raXQuY3NzLgpleHBvcnQgZnVuY3Rpb24gbGFiZWxCb3gobm9kZSwgaHRtbCwgY2xzID0gIiIpIHsKICByZXR1cm4gKAogICAgYDxmb3JlaWduT2JqZWN0IHg9IiR7bm9kZS54fSIgeT0iJHtub2RlLnl9IiB3aWR0aD0iJHtub2RlLnd9IiBoZWlnaHQ9IiR7bm9kZS5ofSI+YCArCiAgICBgPGRpdiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94aHRtbCIgY2xhc3M9InZzdmctbGFiZWwgJHtjbHN9Ij4ke2h0bWx9PC9kaXY+YCArCiAgICBgPC9mb3JlaWduT2JqZWN0PmAKICApOwp9CgovLyBWZXJpZmljYXRpb24gYmFja3N0b3AuIElmIHlvdSBETyBoYW5kLXJvbGwgPHRleHQ+LCBjYWxsIHRoaXMgb25jZSBhZnRlciByZW5kZXI6Ci8vIGl0IG91dGxpbmVzIChpbiByZWQpIGFueSA8dGV4dD4gd2hvc2UgYm91bmRpbmcgYm94IHNwaWxscyBwYXN0IHRoZSA8cmVjdD4gaW4gaXRzCi8vIGdyb3VwLCBhbmQgZHJvcHMgYSBmaXhlZCBiYW5uZXIgc28gYW4gb3ZlcmZsb3cgaXMgaW1wb3NzaWJsZSB0byBtaXNzIGluIHRoZSBvcGVuCi8vIGJyb3dzZXIg4oCUIG9yIGluIGFueSBzY3JlZW5zaG90IHlvdSB0YWtlIHRvIHZlcmlmeSB0aGUgcGFnZS4gUmV0dXJucyB0aGUgbGlzdCBvZgovLyBvZmZlbmRpbmcgc3RyaW5ncyAoZW1wdHkgPSBjbGVhbikuIFRoZSByZWN0LWluLXNhbWUtPGc+IHBhaXJpbmcgaXMgYSBoZXVyaXN0aWM7Ci8vIGl0IGNhdGNoZXMgdGhlIGNvbW1vbiBjYXNlIHdoZXJlIGVhY2ggYm94K2xhYmVsIGxpdmUgaW4gb25lIDxnPi4KZXhwb3J0IGZ1bmN0aW9uIHZpekF1ZGl0KHJvb3QgPSBkb2N1bWVudCkgewogIGNvbnN0IGJhZCA9IFtdOwogIGZvciAoY29uc3QgdCBvZiByb290LnF1ZXJ5U2VsZWN0b3JBbGwoInRleHQiKSkgewogICAgY29uc3QgcmVjdCA9IHQuY2xvc2VzdCgiZyIpPy5xdWVyeVNlbGVjdG9yKCJyZWN0Iik7CiAgICBpZiAoIXJlY3QpIGNvbnRpbnVlOwogICAgY29uc3QgdGIgPSB0LmdldEJCb3goKTsKICAgIGNvbnN0IHJiID0gcmVjdC5nZXRCQm94KCk7CiAgICBjb25zdCBzcGlsbHMgPQogICAgICB0Yi54IDwgcmIueCAtIDEgfHwKICAgICAgdGIueSA8IHJiLnkgLSAxIHx8CiAgICAgIHRiLnggKyB0Yi53aWR0aCA+IHJiLnggKyByYi53aWR0aCArIDEgfHwKICAgICAgdGIueSArIHRiLmhlaWdodCA+IHJiLnkgKyByYi5oZWlnaHQgKyAxOwogICAgaWYgKHNwaWxscykgewogICAgICB0LnN0eWxlLm91dGxpbmUgPSAiMXB4IHNvbGlkICNmODUxNDkiOwogICAgICBiYWQucHVzaCh0LnRleHRDb250ZW50KTsKICAgIH0KICB9CiAgaWYgKGJhZC5sZW5ndGgpIHsKICAgIGNvbnNvbGUuZXJyb3IoIlt2aXpBdWRpdF0gdGV4dCBvdmVyZmxvdzoiLCBiYWQpOwogICAgY29uc3QgYmFubmVyID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgiZGl2Iik7CiAgICBiYW5uZXIudGV4dENvbnRlbnQgPSBg4pqgICR7YmFkLmxlbmd0aH0gdGV4dCBvdmVyZmxvdyhzKSDigJQgc2VlIHJlZCBvdXRsaW5lc2A7CiAgICBiYW5uZXIuc3R5bGUuY3NzVGV4dCA9CiAgICAgICJwb3NpdGlvbjpmaXhlZDtsZWZ0OjhweDtib3R0b206OHB4O3otaW5kZXg6OTk5OTtiYWNrZ3JvdW5kOiNmODUxNDk7Y29sb3I6I2ZmZjsiICsKICAgICAgImZvbnQ6MTJweC8xIHNhbnMtc2VyaWY7cGFkZGluZzo2cHggMTBweDtib3JkZXItcmFkaXVzOjZweCI7CiAgICBkb2N1bWVudC5ib2R5LmFwcGVuZENoaWxkKGJhbm5lcik7CiAgfQogIHJldHVybiBiYWQ7Cn0KCi8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQovLyBTbWFsbCB1dGlsaXRpZXMgdGhhdCBldmVyeSB2aXogcmUtZGVyaXZlcy4KLy8gLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCgpleHBvcnQgY29uc3QgJCA9IChzZWwsIHJvb3QgPSBkb2N1bWVudCkgPT4gcm9vdC5xdWVyeVNlbGVjdG9yKHNlbCk7CmV4cG9ydCBjb25zdCAkJCA9IChzZWwsIHJvb3QgPSBkb2N1bWVudCkgPT4gWy4uLnJvb3QucXVlcnlTZWxlY3RvckFsbChzZWwpXTsKCi8vIEVzY2FwZSBiZWZvcmUgaW5qZWN0aW5nIHRleHQgaW50byBpbm5lckhUTUwuCmV4cG9ydCBjb25zdCBlc2MgPSAocykgPT4KICBTdHJpbmcocykucmVwbGFjZSgKICAgIC9bJjw+IiddL2csCiAgICAoYykgPT4gKHsgIiYiOiAiJmFtcDsiLCAiPCI6ICImbHQ7IiwgIj4iOiAiJmd0OyIsICciJzogIiZxdW90OyIsICInIjogIiYjMzk7IiB9KVtjXSwKICApOwoKLy8gSG90LXJlbG9hZCAoYW5kIGV2ZXJ5IHNhdmUpIGRvZXMgYSBmdWxsIHBhZ2UgcmVmcmVzaCwgc28gaW4tcGFnZSBzdGF0ZSBpcyB3aXBlZC4KLy8gUGVyc2lzdCBhbnl0aGluZyB5b3Ugd2FudCB0byBzdXJ2aXZlIOKAlCBvcGVuIHBhbmVsLCBzZWxlY3RlZCBzdGVwLCBhY3RpdmUgZmlsdGVycyDigJQKLy8gdG8gdGhlIFVSTCBoYXNoLiBCb251czogdGhlIFVSTCBiZWNvbWVzIHNoYXJlYWJsZS9kZWVwLWxpbmthYmxlIGZvciBmcmVlLgovLyBSb3VuZC10cmlwcyBhIHBsYWluIG9iamVjdC4KZXhwb3J0IGNvbnN0IHNhdmVIYXNoID0gKG9iaikgPT4KICBsb2NhdGlvbi5yZXBsYWNlKCIjIiArIGVuY29kZVVSSUNvbXBvbmVudChKU09OLnN0cmluZ2lmeShvYmopKSk7CgpleHBvcnQgY29uc3QgbG9hZEhhc2ggPSAoKSA9PiB7CiAgdHJ5IHsKICAgIHJldHVybiBKU09OLnBhcnNlKGRlY29kZVVSSUNvbXBvbmVudChsb2NhdGlvbi5oYXNoLnNsaWNlKDEpKSB8fCAie30iKTsKICB9IGNhdGNoIHsKICAgIHJldHVybiB7fTsKICB9Cn07CgovLyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KLy8gUnVudGltZSBlbnZpcm9ubWVudCDigJQgaXMgdGhlcmUgYSBsaXZlIHZpeiBzZXJ2ZXIgYmVoaW5kIHRoaXMgcGFnZT8KLy8KLy8gQSB2aXogY2FuIHJ1biBpbiB0aHJlZSB3b3JsZHMsIGFuZCBsaXZlLWRhdGEgVUkgbmVlZHMgdG8ga25vdyB3aGljaDoKLy8gICAic3RhdGljIiAg4oCUIGEgcHVibGlzaGVkL2lubGluZWQgYnVpbGQuIFRoZXJlIGlzIE5PIHNlcnZlciBhbmQgbmV2ZXIgd2lsbCBiZQovLyAgICAgICAgICAgICAgIG9uZSB0aGlzIHNlc3Npb247IGJ1aWxkLnRzIHN0YW1wcyB3aW5kb3cuX19WSVpfU1RBVElDX18gaW50byB0aGUKLy8gICAgICAgICAgICAgICBzZWxmLWNvbnRhaW5lZCBIVE1MIGl0IGVtaXRzLgovLyAgICJsaXZlIiAgICDigJQgc2VydmVkIGJ5IHRoZSB2aXogZGV2IHNlcnZlciwgYW5kIGl0IGFuc3dlcnMgKGZldGNoIGFwaS8qIHdpbGwgd29yaykuCi8vICAgIm9mZmxpbmUiIOKAlCBzZXJ2ZWQgYXMgaWYgYnkgYSBzZXJ2ZXIsIGJ1dCBpdCBpc24ndCBhbnN3ZXJpbmcgcmlnaHQgbm93IChkZXYKLy8gICAgICAgICAgICAgICBzZXJ2ZXIgc3RvcHBlZCwgb3BlbmVkIGZyb20gZGlzaywgZXRjLikg4oCUIHRyZWF0IGxpa2Ugc3RhdGljLgovLwovLyBQcm9iZXMgdGhlIHNlcnZlci1nbG9iYWwgL19oZWFsdGggb25jZSBhbmQgY2FjaGVzIHRoZSBwcm9taXNlLiBVc2UgaXQgdG8gZ2F0ZQovLyBhbnl0aGluZyB0aGF0IGZldGNoZXMgYXBpLyo6IHJlbmRlciByZWFsIGRhdGEgb25seSBvbiAibGl2ZSIsIG90aGVyd2lzZSBzaG93IGEKLy8gInJ1biBtZSBsb2NhbGx5IGZvciBsaXZlIGRhdGEiIHBsYWNlaG9sZGVyIGluc3RlYWQgb2Ygc3Bpbm5pbmcgZm9yZXZlci4KLy8gICBjb25zdCBlbnYgPSBhd2FpdCB2aXpFbnYoKTsKLy8gICBpZiAoZW52ICE9PSAibGl2ZSIpIHsgc2hvd1BsYWNlaG9sZGVyKCk7IHJldHVybjsgfQpsZXQgX3ZpekVudlA7CmV4cG9ydCBmdW5jdGlvbiB2aXpFbnYoKSB7CiAgcmV0dXJuIChfdml6RW52UCA/Pz0gKGFzeW5jICgpID0+IHsKICAgIGlmICh0eXBlb2Ygd2luZG93ICE9PSAidW5kZWZpbmVkIiAmJiB3aW5kb3cuX19WSVpfU1RBVElDX18pIHJldHVybiAic3RhdGljIjsKICAgIHRyeSB7CiAgICAgIGNvbnN0IHIgPSBhd2FpdCBmZXRjaCgiL19oZWFsdGgiLCB7IGNhY2hlOiAibm8tc3RvcmUiIH0pOwogICAgICByZXR1cm4gci5vayA/ICJsaXZlIiA6ICJvZmZsaW5lIjsKICAgIH0gY2F0Y2ggewogICAgICByZXR1cm4gIm9mZmxpbmUiOwogICAgfQogIH0pKCkpOwp9Cg=="}}</script>
+<script>window.__VIZ_STATIC__=true;</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>steelman — your AI agrees with you, and that's worthless</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:kind" content="explanatory">
+<meta name="viz:title" content="steelman">
+<meta name="viz:description" content="Argues the strongest case both for and against your decision at full strength, surfaces the cruxes, and hands you the verdict.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<style>
+/* viz-kit.css — the /viz house style. Load with:
+     <link rel="stylesheet" href="/_kit/viz-kit.css">
+   Served by the viz server at /_kit/viz-kit.css from the skill's own kit/ dir.
+
+   Why this exists: nearly every viz independently re-derived the same dark theme
+   (a GitHub-dark palette), re-guessed the exact hexes (so the "same" background
+   drifted across files), and invented its own variable names (--txt vs --text vs
+   --ink) for identical concepts. This file fixes the palette and the names ONCE so
+   you can reach for var(--accent) / var(--good) instead of re-picking colors. The
+   house style is dark-only on purpose — it's the look these vizzes converge on. */
+
+:root {
+  /* Surfaces, back to front */
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel-2: #21262d;
+  --border: #30363d;
+
+  /* Text */
+  --text: #e6edf3;
+  --muted: #8b949e;
+
+  /* Intent — accents that carry meaning */
+  --accent: #58a6ff; /* primary / links / selection */
+  --good: #3fb950; /* success / healthy / "yes" */
+  --warn: #d29922; /* caution / pending */
+  --danger: #f85149; /* error / blocked / "no" */
+
+  /* Categorical ramp — distinct hues for diagram categories / series.
+     Use these when you need N visually separable colors, not meaning. */
+  --c1: #58a6ff; /* blue */
+  --c2: #3fb950; /* green */
+  --c3: #d29922; /* amber */
+  --c4: #bc8cff; /* purple */
+  --c5: #4ec9b0; /* teal */
+  --c6: #f85149; /* red */
+
+  /* Type */
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Spacing rhythm */
+  --r: 8px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+html {
+  /* Paint the canvas itself. body is height:100% (one viewport), so on a page taller
+     than the viewport the area BELOW the body box would otherwise reveal the browser's
+     default (lighter) canvas when scrolled — showing as a horizontal "line" mid-page
+     where body's --bg ends. Putting --bg on the root keeps the whole canvas dark. */
+  background-color: var(--bg);
+}
+
+body {
+  /* A faint top-glow over the flat background — the recurring "radial-gradient at
+     60% 0%" idiom, standardized. Sized large and faded to transparent well past the
+     fold (color-mix dilutes --panel) so the glow→--bg transition never forms a
+     visible edge mid-page — the earlier tight 600px gradient left a "boundary" band. */
+  background:
+    radial-gradient(1600px 1000px at 50% -30%, color-mix(in srgb, var(--panel) 55%, transparent), transparent 75%),
+    var(--bg);
+  color: var(--text);
+  font: 14px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Header: title + one-line muted subtitle — the chrome ~19/22 vizzes open with. */
+.viz-header {
+  padding: 20px 24px;
+}
+.viz-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.viz-header .sub,
+.sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* Panels / cards */
+.panel,
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--r) * 1.5);
+  padding: 16px;
+}
+
+/* Slide-in detail drawer (click a node → details). Toggle .open. */
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(420px, 90vw);
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  transform: translateX(100%);
+  transition: transform 0.2s ease;
+  overflow: auto;
+  padding: 20px;
+  z-index: 50;
+}
+.drawer.open {
+  transform: none;
+}
+
+/* Legend: the single most common component (~16/22), reinvented differently each
+   time. Two swatch shapes: a filled square for nodes, a short rule for edge types. */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex: none;
+  background: var(--accent);
+}
+.swatch.line {
+  width: 16px;
+  height: 0;
+  border-radius: 0;
+  border-top: 2px solid var(--accent);
+}
+
+/* Animated "flow" edge — dashed line whose dashes drift along the path. The
+   @keyframes was identical everywhere but for the offset magnitude; here it's one
+   class. Apply to an SVG <path>/<line>: <path class="flow" .../>. */
+@keyframes viz-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+.flow {
+  stroke-dasharray: 6 4;
+  animation: viz-dash 1s linear infinite;
+}
+
+/* Auto-wrapping SVG label (see labelBox() in viz.js). Fills its <foreignObject>
+   and centers; overflow is clipped, never spilled. */
+.vsvg-label {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text);
+  font: 12px/1.25 var(--sans);
+  overflow: hidden;
+  padding: 2px 6px;
+}
+
+</style>
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card stays a fixed 1200×630 clip target (verify.ts --og shoots a 1200×630
+     viewport => --s resolves to 1 => the OG image is pixel-native). The page
+     SCROLLS, so a deep dive lives below.
+
+     The gotcha this solves: transform:scale() does NOT shrink an element's layout
+     box, so a scaled card still reserves 630px of flow and leaves a dead gap.
+     Fix: scale from `top center` and drive #fit's height off the same --s.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{ margin:0; overflow-x:hidden; background:var(--bg); }
+  #fit{ height:calc(630px * var(--s)); display:flex; justify-content:center; overflow:hidden; }
+  .og-card{ position:relative; width:1200px; height:630px; flex:none; overflow:hidden;
+            transform:scale(var(--s)); transform-origin:top center; }
+
+  /* ── the card ── */
+  .og-card{
+    background:
+      radial-gradient(820px 480px at 92% -8%, color-mix(in srgb, var(--danger) 18%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 110%, color-mix(in srgb, var(--good) 14%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%);
+    color:var(--text); font-family:var(--sans);
+    display:grid; grid-template-columns:1fr 430px; gap:40px; align-items:center;
+    padding:60px 70px;
+  }
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:56px; line-height:1.04; margin:0 0 20px; letter-spacing:-1.5px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--danger); }
+  p.sub{ font-size:19px; line-height:1.45; color:var(--muted); margin:0 0 22px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 22px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the two-sided argument = the "proof" slot */
+  /* stretch (not start) so CASE FOR / CASE AGAINST are always equal height —
+     the two sides argue at equal strength; the panels should look it. */
+  .arena{ display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:stretch; }
+  .side{ background:color-mix(in srgb, var(--panel) 78%, transparent); border:1px solid var(--border);
+         border-radius:14px; padding:16px 16px 18px; }
+  .side .lbl{ font-family:var(--mono); font-size:12.5px; letter-spacing:.12em; margin-bottom:10px; }
+  .side .arg{ font-size:14px; line-height:1.45; color:var(--muted); margin:0 0 8px; }
+  .side .arg:last-child{ margin-bottom:0; }
+  .side .bar{ height:8px; border-radius:99px; margin-bottom:12px; }
+  .side.for{ border-top:2px solid var(--good); }
+  .side.for .lbl{ color:var(--good); }
+  .side.for .bar{ background:linear-gradient(90deg, color-mix(in srgb, var(--good) 40%, transparent), var(--good)); }
+  .side.against{ border-top:2px solid var(--danger); }
+  .side.against .lbl{ color:var(--danger); }
+  .side.against .bar{ background:linear-gradient(90deg, var(--danger), color-mix(in srgb, var(--danger) 40%, transparent)); }
+  .crux{ grid-column:1 / -1; text-align:center; background:color-mix(in srgb, var(--warn) 10%, transparent);
+         border:1px solid color-mix(in srgb, var(--warn) 40%, transparent); border-radius:12px; padding:12px 14px; }
+  .crux .k{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; color:var(--warn); margin-bottom:6px; }
+  .crux .v{ font-size:14.5px; color:var(--text); line-height:1.4; }
+  .verdict{ grid-column:1 / -1; text-align:center; font-family:var(--mono); font-size:13px;
+            letter-spacing:.1em; color:var(--muted); }
+  .verdict b{ color:var(--text); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+<meta property="og:type" content="website">
+<meta property="og:title" content="steelman">
+<meta property="og:description" content="Argues the strongest case both for and against your decision at full strength, surfaces the cruxes, and hands you the verdict.">
+<meta property="og:url" content="https://rascaltwo.github.io/ai-setup/skill-steelman/">
+<meta property="og:image" content="https://rascaltwo.github.io/ai-setup/skill-steelman/og.auto.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+<div id="fit">
+  <div class="og-card" data-atom="steelman" data-viz-id="poster-card" data-label="steelman poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · STEELMAN</div>
+      <h1 class="hook">Your AI agrees<br>with you. <em>That's<br>worthless.</em></h1>
+      <p class="sub">Once you've decided you want something, you're the <b>worst-positioned person alive</b> to build the case against it. So the AI does what you can't: it argues <b>both sides at full strength</b>, with zero ego in the outcome.</p>
+      <p class="not">The AI argues. <b>You</b> judge.<br>No ego in the outcome — that's the point.</p>
+      <div class="trigger"><span>say</span>&nbsp;"steelman this"</div>
+    </div>
+    <div class="arena">
+      <div class="side for">
+        <div class="lbl">CASE FOR</div>
+        <div class="bar"></div>
+        <p class="arg">Argued as its most capable proponent would.</p>
+        <p class="arg">The real upside. The cost of <em>not</em> doing it.</p>
+        <p class="arg">No faint praise.</p>
+      </div>
+      <div class="side against">
+        <div class="lbl">CASE AGAINST</div>
+        <div class="bar"></div>
+        <p class="arg">Equal strength. <b>No strawmen.</b></p>
+        <p class="arg">The best objection. The failure mode.</p>
+        <p class="arg">The thing you're motivated not to see.</p>
+      </div>
+      <div class="crux">
+        <div class="k">↓&nbsp; THE CRUXES</div>
+        <div class="v">The few load-bearing assumptions that, if flipped, flip the answer.</div>
+      </div>
+      <div class="verdict">THE AI IS THE ADVOCATE. <b>YOU ARE THE JUDGE.</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>The problem</h2>
+  <p>Ask an AI whether your plan is good and it will tell you your plan is good. That agreement is cheapest exactly when the stakes are highest — you've already decided, you're invested in the conclusion, and now the one thing in the room that could talk you out of it is nodding along. That's not a flaw in you; it's how minds work. It's just useless.</p>
+
+  <h2>The turn</h2>
+  <p>Steelman flips the role. <b>The AI is the advocate; you are the judge.</b> It builds the case <b>for</b> the way its most capable proponent would, then the case <b>against</b> at equal strength — the best objection, the failure mode, the thing you're motivated not to see. No strawmen. Then it names the <b>cruxes</b>: the load-bearing assumptions that, if flipped, flip the answer.</p>
+  <p class="m">It resolves every fact it can itself — codebase, web, memory — and only taps you where <b>your</b> private knowledge, risk tolerance, or values are the deciding factor. One crux at a time, not a barrage. Then it stops and hands you the verdict. It may offer a labeled tentative lean; it never substitutes that for your call.</p>
+
+  <div class="callout"><b>When the opposition feels soft:</b> one mind arguing with itself can produce a polite, symmetric both-sides where nothing lands. On calls that matter, it escalates — spawning an <b>independent subagent whose only mandate is to kill the idea</b>. A prosecutor with no obligation to be fair. Its independence is the whole value.</div>
+
+  <h2>When to fire it</h2>
+  <p class="m">Hard-to-reverse or high-stakes calls:</p>
+  <ul>
+    <li>An <b>architectural</b> pattern you'll live inside for a year.</li>
+    <li>A <b>dependency choice</b>.</li>
+    <li>A <b>delete or migrate</b> — the things you can't take back.</li>
+    <li>Picking a <b>direction</b> over expensive alternatives.</li>
+  </ul>
+  <p>Works in both directions: <b>before</b> a decision it's a pre-mortem (catch it before you pay for it); <b>after</b> something's built it's a red-team. Skip trivial and reversible calls — proportionality. For small ones, the in-context pass is the right amount of effort.</p>
+
+  <h2>How it's wired in</h2>
+  <p>A steelman <b>won't self-invoke</b> — which is exactly <em>why</em> it's a standing rule rather than a skill you're trusted to remember. <b>AGENTS.md §3 (Planning &amp; Verification)</b> makes it mandatory before any hard-to-reverse or high-stakes decision.</p>
+  <pre><span class="c"># AGENTS.md §3 — Planning &amp; Verification</span>
+- <b>Steelman consequential calls:</b> before committing to a hard-to-reverse
+  or high-stakes decision ... invoke the `steelman` skill — it argues the
+  strongest case *for* and *against*, surfaces the cruxes, then I judge.
+  <span class="c">A steelman won't self-invoke — that's why it lives here as a standing rule.</span></pre>
+  <p><b>r2-sdlc Phase 2 (Design)</b> hard-codes the same beat: if the approach rests on a hard-to-reverse choice, steelman it <em>before</em> the design ever reaches the user's redline — so what gets reviewed is already pressure-tested. Skipped for small, mechanical changes.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script>
+  // Scale the fixed 1200×630 card to viewport WIDTH (capped at 1, so the --og shot at a
+  // 1200px-wide viewport stays pixel-native), and collapse #fit's height to the scaled card.
+  const fit = () =>
+    document.documentElement.style.setProperty('--s', Math.min(innerWidth / 1200, 1));
+  addEventListener('resize', fit); fit();
+</script>
+<a id="__viz_dl" href="#" role="button" aria-label="Save a copy of this page"
+title="Save a copy" style="position:fixed;bottom:14px;right:14px;z-index:2147483646;
+width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+border-radius:8px;background:rgba(20,20,22,.55);color:#fff;opacity:.35;
+backdrop-filter:blur(4px);transition:opacity .15s;text-decoration:none"
+onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.35">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/>
+<line x1="12" y1="15" x2="12" y2="3"/></svg></a>
+<script>(function(){
+  var a=document.getElementById("__viz_dl");
+  var name=(document.title||"visualization").toLowerCase()
+    .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60)||"visualization";
+  function save(text){
+    var url=URL.createObjectURL(new Blob([text],{type:"text/html"}));
+    var t=document.createElement("a"); t.href=url; t.download=name+".html";
+    document.body.appendChild(t); t.click(); t.remove();
+    setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  }
+  a.addEventListener("click",function(e){
+    e.preventDefault();
+    fetch(location.href).then(function(r){return r.text();}).then(save)
+      .catch(function(){ save("<!DOCTYPE html>\n"+document.documentElement.outerHTML); });
+  });
+})();</script>
+</body>
+</html>
