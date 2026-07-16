@@ -1,297 +1,279 @@
 ---
 name: browser-capture
 description: >-
-  Get screenshots, animated GIFs, and smooth VIDEO out of a browser and onto disk,
-  so they can be embedded in a doc, guide, PR, report, or artifact. Use this
-  WHENEVER you need to save a shot of a web page or app to an image file, produce
-  a click-by-click walkthrough or how-to of a web UI, record a GIF of a browser
-  flow, or turn what you see in the browser into files inside Markdown/a PR/a
-  report — even when the user only says "add screenshots of the steps", "show how
-  to do X in the UI", or "record a walkthrough". Reach for it especially when a
-  GIF came out choppy, jumpy, or slideshow-like and someone wants real smooth
-  video or a screen recording of a browser flow: that is a solved problem here
-  (scripts/record-flow.js records headless Chrome at 30fps, no human needed), but
-  the obvious paths all fail silently — the computer tool's save_to_disk flag
-  writes no file, "take more screenshots to smooth out the GIF" adds zero frames,
-  and getDisplayMedia is permanently blocked in claude-in-chrome MCP tabs.
+  Get screenshots, animated GIFs, and smooth VIDEO out of a browser and onto disk, so they
+  can be embedded in a doc, guide, PR, report, or artifact. Use this WHENEVER you need to
+  save a shot of a web page or app to an image file, produce a click-by-click walkthrough or
+  how-to of a web UI, record a GIF of a browser flow, record a demo of an app, or turn what
+  you see in the browser into files inside Markdown/a PR/a report — even when the user only
+  says "add screenshots of the steps", "show how to do X in the UI", "record a walkthrough",
+  or "make a video of this". Especially reach for it when the app needs the user's real
+  LOGIN/SSO session, or when a GIF came out choppy, jumpy or slideshow-like and someone
+  wants real smooth video: both are solved here (record the user's own Chrome tab via the
+  claude-in-chrome MCP at full frame rate, no human camera work), but every obvious path
+  fails silently — the computer tool's save_to_disk writes no file, "more screenshots" adds
+  zero GIF frames, and getDisplayMedia dies with InvalidStateError unless the tab is visible.
 ---
 
 # browser-capture
 
-Turn a browser flow into image or video files you can embed. Three routes, and
-picking the right one up front is most of the value — each obvious shortcut here
-fails *silently*, which is how this ends up costing hours instead of minutes.
+Turn a browser flow into image or video files you can embed. Three routes, in strict order
+of preference. Each obvious shortcut here fails *silently*, which is how this costs hours
+instead of minutes — so pick the route first.
 
-Dependencies: **ffmpeg** on PATH; **puppeteer-core** for Route B (the viz skill
-ships a copy at `~/.claude/skills/viz/node_modules/puppeteer-core`, which
-`record-flow.js` finds automatically). On macOS **sips** is handy for single images.
+Dependencies: **ffmpeg** on PATH. Route 2 also needs **puppeteer-core** (the viz skill ships
+one at `~/.claude/skills/viz/node_modules/puppeteer-core`; `record-flow.js` finds it).
 
 ## Pick the route
 
-| You need | Route | Human needed? |
-|---|---|---|
-| Stills / a click-by-click how-to, while already driving the MCP | **A — GIF recorder** | no |
-| **Smooth video** of a flow | **B — `scripts/record-flow.js`** | **no** |
-| Smooth video of a flow behind the user's own logged-in session | **C — human films it** | yes, last resort |
+| | Route | Real login/SSO? | Human? | Use when |
+|---|---|---|---|---|
+| **1** | **MCP capture — the user's own Chrome** | ✅ **yes** | ~1s, no clicks | **Default. Prefer always.** |
+| **2** | Spawned browser (`record-flow.js`) | ❌ no session | none | Route 1 impossible: no GUI, screen must not be touched, CI/background, or deterministic scripted choreography |
+| **3** | GIF recorder (`gif_creator`) | ✅ yes | none | You specifically want a click-annotated how-to GIF and don't need smooth motion |
 
-**The trap that costs hours:** Route A produces a **slideshow**, always. `gif_creator`
-captures one frame per *action*, so a five-step flow yields ~five frames, and extra
-`screenshot` calls add **zero** frames. Padding, re-recording and re-timing cannot
-manufacture motion that was never captured. If a GIF looks "janky", "choppy" or
-"like a slideshow", that is not a quality bug to iterate on — it's Route A working
-as designed, and it's the signal to **switch to Route B**, not to try harder.
+**Prefer Route 1 by default.** It records the user's *actual* browser — their real session,
+their SSO, their data, at their real device pixel ratio (Retina). Nothing else can do that.
+Route 2 is a capable fallback that never touches the screen. Route 3 is only for annotated
+click-by-click GIFs — and note you can always convert a Route 1/2 video to GIF with ffmpeg,
+which usually looks better than the GIF recorder anyway.
+
+**The GIF trap:** `gif_creator` yields a **slideshow**, always — one frame per *action*, and
+extra `screenshot` calls add **zero** frames. If a GIF looks "janky" or "choppy", that isn't
+a quality bug to iterate on; it's Route 3 working as designed. Switch routes, don't try harder.
 
 ---
 
-# Route A — the GIF recorder (click-by-click how-tos)
+# Route 1 — record the user's real Chrome (default)
 
-Record the session as a GIF, download it, then rip stills out with ffmpeg. One
-recording gives you both an animated how-to and every still you need.
+Records the tab the MCP is already driving, via `getDisplayMedia({preferCurrentTab})` +
+`MediaRecorder`, downloading through a real `<a download>` click. Full frame rate, real
+device pixel ratio, real session. **No picker appears and the user clicks nothing.**
 
-### 1. Record
+### The one constraint
+
+All three must hold **at the instant capture starts** — and only then:
+
+1. the target tab is the **selected** tab in its window
+2. its window is **frontmost / not occluded by another app**
+3. a **trusted click** lands within ~5s (the MCP `computer` tool's clicks *are* trusted)
+
+Miss any one → `InvalidStateError: Invalid state`. That error means **"tab not visible"** —
+it does *not* mean capture is impossible. macOS marks a Chrome page `hidden` when its window
+is **occluded by another app**, so an editor sitting on top is enough to break it.
+
+**Once capture is live, Chrome pins the tab visible and none of it matters any more.**
+Verified: with a recording running, burying Chrome behind another app kept
+`visibilityState: "visible"` with `hasFocus: false` and the counter advancing exactly in real
+time (50 ticks / 5.0s). The user can switch apps, cover the window and keep working.
+
+> **Unverified:** switching to a *different Chrome tab* mid-capture. Occlusion is proven safe;
+> tab-switching is probably fine (it's how Meet tab-sharing behaves) but has not been tested.
+> Until it is, tell the user to avoid switching tabs while recording.
+
+### The procedure
+
+```
+1. javascript_tool : inject assets/mcp-recorder.js         -> window.__cap
+   (optional)      : inject assets/walkthrough-kit.js      -> window.__wt (cursor/highlight)
+2. javascript_tool : window.__cap.armButton()              -> full-viewport click target
+3. bash            : scripts/raise-chrome.sh <url-substring>
+4. computer        : SCREENSHOT, then click the target's centre in THAT screenshot's coords
+5. javascript_tool : window.__cap.state === 'RECORDING'    (else window.__cap.diagnose())
+6. drive the flow  : javascript_tool / computer
+7. javascript_tool : await window.__cap.stop()             -> ~/Downloads/<filename>
+8. bash            : verify + convert (below)
+```
+
+**Step 4 is where this actually goes wrong.** Screenshot dimensions change between calls
+(observed 1456×840 then 1502×818 for the same 1728px viewport), so a scale factor computed
+earlier silently misses. **Always screenshot immediately before clicking and use that image's
+coordinates.** `armButton()` covers the whole viewport for exactly this reason. If a click
+seems to do nothing, verify events are landing at all:
+
+```js
+window.__clicks = [];
+document.addEventListener('click', e => window.__clicks.push([e.clientX, e.clientY, e.isTrusted]), true);
+```
+
+If `__cap.state` stays `idle` with `__clicks` empty, the click isn't reaching the page —
+re-screenshot and re-click; don't keep changing the JS.
+
+### Verify + convert
+
+```bash
+ffprobe -v error -count_frames -select_streams v:0 \
+  -show_entries stream=nb_read_frames,width,height -of default=nw=1 ~/Downloads/capture.webm
+ffmpeg -y -loglevel error -i ~/Downloads/capture.webm -movflags faststart -pix_fmt yuv420p \
+  -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" ~/Downloads/capture.mp4
+```
+
+Hundreds of frames = real video. `yuv420p` + even dimensions are required for QuickTime/Slack
+to play it at all. **MediaRecorder webm is variable-frame-rate**, so `-vf select='eq(n,N)'`
+frame-index extraction is unreliable — **seek by time** (`-ss 7` / `-sseof -2.5`) instead.
+
+### Authentication — the whole reason this route wins
+
+The MCP is the user's real browser, so their sessions are already there. A protected app
+typically shows an account picker listing accounts already marked **"Signed in"** — one
+click and you're in, **no password**.
+
+**Never type the user's credentials.** If a real password field appears, stop and hand back
+to the human. That's a hard line, not a difficulty.
+
+---
+
+# Route 2 — spawned browser (fallback)
+
+`scripts/record-flow.js` records **headless** Chrome at real frame rates via puppeteer's
+`page.screencast()`. No session, but it never touches the screen — right for CI, background
+work, or when the user must not be interrupted at all.
+
+```bash
+node scripts/record-flow.js --url http://localhost:5173 --out /tmp/out.webm --gif
+node scripts/record-flow.js --url http://localhost:5173 --out /tmp/out.webm \
+  --flow ./my-flow.js --fps 30 --viewport 1280x800 --mp4
+```
+
+Options: `--fps` (30), `--viewport WxH` (1280x800), `--scale` (1; 2 = retina), `--flow`,
+`--gif`, `--mp4`, `--headful`, `--no-kit`, `--chrome <path>`.
+
+A `--flow` module exports `async (page, wt, nav) => {}`:
+
+```js
+module.exports = async (page, wt, nav) => {
+  await wt(async () => {                              // same-document steps
+    const card = await window.__wt.waitFor(() => document.querySelector('.card'));
+    await window.__wt.focusAndClick(card, card.querySelector('h2'));
+    await window.__wt.smoothScrollTo(1400, 1800);
+  });
+  await nav(async () => {                             // a step that LEAVES the document
+    const link = await window.__wt.waitFor(() => document.querySelector('a.next'));
+    await window.__wt.focusAndClick(link);
+  });
+};
+```
+
+### Multi-page apps (the sharp edge)
+
+A recorder that only works on an SPA is a toy. Three things break the moment a real hyperlink
+swaps the document — all handled, but don't undo them:
+
+- **Inject the kit with `evaluateOnNewDocument`, not `evaluate`.** `evaluate` injects once
+  into the *current* document; a navigation destroys that context and `window.__wt` with it.
+- **`evaluateOnNewDocument` runs at document-start, when `document.body` is null** — so the
+  kit builds its overlay **lazily**. A top-level `document.body.append(...)` throws there and
+  `window.__wt` then never exists *on any page*.
+- **A navigating click can't be a normal awaited call** — the context is torn down mid-
+  `evaluate` and puppeteer rejects with *"Execution context was destroyed"*. That's the
+  expected outcome of a successful click. `wt()` swallows it; **`nav()`** pairs it with
+  `waitForNavigation`.
+
+Verified against a real cross-origin hyperlink (`example.com` → `iana.org`): cursor and
+highlight survive the jump and keep working, in one continuous recording.
+
+### Getting into an authenticated app
+
+Route 2's only real weakness — and the reason Route 1 is the default.
+
+- **Copying the user's Chrome cookies does NOT ride an Entra/Azure AD SSO session.** Tested:
+  a profile copy carrying all 3750 cookies incl. 4 `ESTSAUTH*` still hit an interactive
+  password prompt (`sso_reload=true` — Entra tried silent SSO and fell back). Enterprise
+  sessions are device-bound. Don't spend an hour rediscovering this.
+- In order: **use Route 1**; avoid auth (local dev server / mocked build); log in
+  programmatically only where no human secret is involved; or do a **one-time headful login
+  into a persistent `--user-data-dir`** and reuse it headlessly afterwards.
+
+---
+
+# Route 3 — GIF recorder (click-annotated how-tos)
 
 ```
 gif_creator  action=start_recording
+# ...drive with computer + navigate; each click/navigation = one frame...
+gif_creator  action=export  download:true  filename="myflow.gif"   # -> ~/Downloads
 ```
-
-Drive the flow with `computer` (clicks, typing) and `navigate`. Each click and
-navigation becomes one frame, and the recorder draws click-indicator circles +
-action labels for free — which is exactly what makes a good how-to.
-
-### 2. Export as a download
-
-```
-gif_creator  action=export  download:true  filename="myflow.gif"
-```
-
-`download:true` triggers a real browser download → lands in **`~/Downloads`**.
 
 | Goal | options |
 |---|---|
 | How-to (show where to click) | `showClickIndicators:true, showActionLabels:true, showWatermark:false, showProgressBar:false` |
 | Cleaner / smaller | add `quality:8` (lower = better quality, larger file) |
 
-Export **clears the recording**, so record and export each phase separately.
-
-**Don't trust `computer` + `save_to_disk:true`** — it often returns only an image
-**ID and writes no findable file**. If you use it, `ls` the path and verify before
-building on it. The download above is the reliable way to get bytes on disk.
-
-### 3. Rip stills out
+Export **clears the recording** — record and export each phase separately. Then rip stills:
 
 ```bash
 ffmpeg -loglevel error -i ~/Downloads/myflow.gif frames/f-%02d.png
-
-# contact sheet, to see which frame is which
 ffmpeg -loglevel error -framerate 1 -pattern_type glob -i "frames/*.png" \
-  -vf "scale=360:-1,tile=5x6" -frames:v 1 contact.png
+  -vf "scale=360:-1,tile=5x6" -frames:v 1 contact.png   # contact sheet
 ```
 
-`Read` the contact sheet, pick the frames showing meaningful states, and copy them
-out with **descriptive names** (`do-1-role-form.png`, not `f-08.png`). Then clean
-the scratch copies out of `~/Downloads`.
+`Read` the contact sheet, copy out the meaningful frames with **descriptive names**
+(`do-1-role-form.png`, not `f-08.png`), then clean `~/Downloads`.
 
 ---
 
-# Route B — smooth video, fully automated
+## The visual layer — `assets/walkthrough-kit.js`
 
-**`scripts/record-flow.js` records headless Chrome at real frame rates.** No human,
-no screen recorder, no picker. It drives puppeteer's `page.screencast()` (CDP-backed),
-injects the visual kit, verifies the frame count, and optionally converts to gif/mp4.
+Works with **both** Route 1 and Route 2. A recording has no click annotations of its own, so
+the cursor, highlight box and click pulse *are* the narration. Injecting it exposes
+`window.__wt`: `focusAndClick(hlEl, clickEl?)` · `highlight(el)` / `hideBox()` ·
+`moveTo(x,y,dur)` · `smoothScrollTo(y,dur)` · `waitFor(fn)` · `realClick(el)` · `sleep(ms)`.
 
-```bash
-# simplest: scroll-through of a page
-node scripts/record-flow.js --url http://localhost:5173 --out /tmp/out.webm --gif
+Load-bearing details — know them before you change them:
 
-# with your own choreography
-node scripts/record-flow.js --url http://localhost:5173 --out /tmp/out.webm \
-  --flow ./my-flow.js --fps 30 --viewport 1280x800 --mp4
-```
-
-Options: `--fps` (30), `--viewport WxH` (1280x800), `--scale` (1; use 2 for retina),
-`--flow`, `--gif`, `--mp4`, `--headful`, `--no-kit`, `--chrome <path>`.
-
-A `--flow` module exports `async (page, wt, nav) => {}` and drives the injected kit:
-
-```js
-module.exports = async (page, wt, nav) => {
-  // same-document steps (SPA routing, scrolling) -> wt()
-  await wt(async () => {
-    const card = await window.__wt.waitFor(() => document.querySelector('.card'));
-    await window.__wt.focusAndClick(card, card.querySelector('h2')); // frame card, click title
-    await window.__wt.smoothScrollTo(1400, 1800);
-  });
-
-  // a step that leaves the document (real hyperlink, login redirect) -> nav()
-  await nav(async () => {
-    const link = await window.__wt.waitFor(() => document.querySelector('a.next'));
-    await window.__wt.focusAndClick(link);
-  });
-  // ...kit is already alive on the new page; keep going with wt()
-};
-```
-
-### Multi-page apps and navigation (this is the sharp edge)
-
-A recorder that only works on a single-page app is a toy. Two separate things break the
-moment a real hyperlink swaps the document — both are handled, but know they're there
-if you change this code:
-
-- **The kit must be injected with `page.evaluateOnNewDocument`, not `page.evaluate`.**
-  `evaluate` injects once into the *current* document; a cross-document navigation
-  destroys that context and `window.__wt` with it, so every step after the first
-  navigation throws "undefined". `evaluateOnNewDocument` re-injects into *every*
-  document — including cross-origin ones — before its own scripts run.
-- **`evaluateOnNewDocument` runs at document-start, when `document.body` is still null.**
-  So the kit builds its overlay **lazily** on first use rather than at top level — a
-  top-level `document.body.append(...)` throws at document-start and then `window.__wt`
-  is never defined *at all, on any page*. If you refactor the kit, keep it body-safe.
-- **A navigating click can't be a normal awaited call.** The context is torn down while
-  `page.evaluate` is still waiting, so puppeteer rejects with *"Execution context was
-  destroyed"*. That's the expected outcome of a successful click, not an error. `wt()`
-  swallows it and **`nav()`** pairs it with `waitForNavigation` — use `nav()` whenever a
-  step leaves the page.
-
-Verified end-to-end against a real cross-origin hyperlink (`example.com` → `iana.org`):
-the cursor and highlight box survive the jump and keep working on the new origin, in one
-continuous recording.
-
-### The visual layer — `assets/walkthrough-kit.js`
-
-A recording has **no click annotations of its own**, so the cursor, highlight box
-and click pulse *are* the narration — without them a viewer can't tell what was
-clicked or when, and the video reads as things randomly happening. `record-flow.js`
-injects the kit automatically and exposes `window.__wt`:
-
-`focusAndClick(hlEl, clickEl?)` · `highlight(el)` / `hideBox()` · `moveTo(x,y,dur)` ·
-`smoothScrollTo(y,dur)` · `waitFor(fn)` · `realClick(el)` · `sleep(ms)` · `CFG`
-
-Several things in it are load-bearing — worth knowing before you change them:
-
-- **Step tweens with `setTimeout(~16ms)`, never `requestAnimationFrame`.** rAF is
-  throttled or paused in headless and background tabs — exactly where this runs —
-  so an rAF tween silently stalls. Don't use a CSS transition either: it lags behind
-  what it's chasing, so the cursor and its ring visibly drift apart mid-glide.
-- **Hide the highlight box *before* the click, with no fade**, or it ghosts onto the
-  next page for a frame or two and looks like a rendering bug.
-- **Click via the full pointer-event sequence at `elementFromPoint`**, not a bare
-  `el.click()`. Component libraries nest the real interactive node inside the wrapper,
-  so a naive click often does nothing.
-- **Frame one element, click another** when a card's centre sits over some other
-  control — highlight the card, click its title.
+- **Step tweens with `setTimeout(~16ms)`, never `requestAnimationFrame`.** rAF is throttled
+  or paused in headless and background tabs, so an rAF tween silently stalls. And don't use a
+  CSS transition: it lags behind what it's chasing, so the cursor and its ring drift apart.
+- **Hide the highlight box *before* the click, with no fade**, or it ghosts onto the next page.
+- **Click via the full pointer-event sequence at `elementFromPoint`**, not a bare `el.click()` —
+  component libraries nest the real interactive node inside the wrapper.
+- **Frame one element, click another** when a card's centre sits over some other control.
 - **`waitFor` everything**; an early click is the most common way a take breaks.
-- **Pause on purpose** — a beat before each click and after each navigation is what
-  lets a viewer keep up.
-
-### Always verify the output
-
-`record-flow.js` prints the decoded frame count and warns below 10. Check it — this
-is what catches a silent blank/1-frame failure before you hand it to anyone:
-
-```bash
-ffprobe -v error -count_frames -select_streams v:0 \
-  -show_entries stream=nb_read_frames -of default=nw=1:nk=1 out.webm
-```
-
-Hundreds of frames = a real video. A handful = you're still looking at a slideshow.
-
-### Getting into an authenticated app — the one real limitation
-
-A fresh puppeteer browser has none of the user's session. This is the **only** thing
-Route B can't do by itself, and it's worth being precise about, because the obvious
-workaround has been tried and does not work:
-
-- **Copying the user's Chrome cookies does NOT ride an Entra/Azure AD SSO session.**
-  Tested: a surgical profile copy carrying all 3750 cookies including 4 `ESTSAUTH*`
-  session cookies still landed on an interactive `login.microsoftonline.com` password
-  prompt (note `sso_reload=true` in the authorize URL — Entra tried silent SSO and fell
-  back). Enterprise sessions are typically device-bound (platform SSO / PRT lives
-  outside Chrome's cookie jar), so cookies alone were never going to be enough. Don't
-  spend an hour rediscovering this.
-- **Never type the user's credentials** to get past it. If a password field appears,
-  stop and hand back to the human — that's a hard line, not a difficulty.
-
-What actually works, in order of preference:
-
-1. **Avoid auth entirely** — point `--url` at a local dev server, a mocked build, or
-   whatever pre-auth surface shows the thing you're demonstrating. Most of the time
-   the recording doesn't actually need prod.
-2. **Log in programmatically** *only* where the app supports it and no human secret is
-   involved (a test account from a secret store, a dev-mode bypass, an injected token).
-3. **One-time interactive login into a persistent profile.** Launch `--headful` with a
-   dedicated `--user-data-dir` **once**, let the human sign in themselves, then reuse
-   that directory for every subsequent run — headless and fully automated until the
-   session expires. This reduces the human from "runs the camera on every take" to
-   "signs in once a week", and is usually the right answer for a real app.
-4. **Route C** — only if even that is impossible.
 
 ---
 
-# Route C — the human films it (last resort)
+## Dead ends and gotchas — verified, don't re-derive
 
-Only when Route B genuinely can't reach the app — typically an SSO session that
-can't be reproduced in an automated browser. **You still choreograph and verify;
-the human only runs the camera.**
-
-1. Write a self-contained script that runs the whole flow when pasted into a console.
-   Start from `assets/walkthrough-kit.js` (paste it, then call `__wt.*` in a
-   sequence) — it's the same kit Route B uses.
-2. **Validate it end-to-end in a browser you drive first**, so you never spend the
-   human's attention on an untested script.
-3. Brief them concretely: which window to focus; how to record (macOS: **⌘⇧5** →
-   "Record Selected Portion" → drag over the window, which also keeps the rest of
-   their desktop private); and **a tell** — e.g. *"a white arrow appears top-left,
-   then starts gliding"* — so a mis-focused window is obvious immediately instead of
-   after a wasted take.
-4. **Take the file back and finish it yourself** — convert, re-time, verify. Their
-   job ends at "here's the recording".
-
----
-
-## Dead ends — verified, don't re-derive these
-
-- **`getDisplayMedia` inside a claude-in-chrome MCP tab: permanently blocked.** MCP
-  tabs are always `document.visibilityState === "hidden"` (the extension runs its tab
-  group backgrounded on purpose), and the Screen Capture spec rejects with
-  `InvalidStateError` unless the document is visible. Neither `window.focus()` nor a
-  synthetic click fixes it, and the tabs aren't reachable via AppleScript to
-  foreground them. *(Interesting aside: a `computer` click **is** a trusted event and
-  **does** grant user activation — so the gesture requirement isn't the blocker.
-  Visibility is.)* Route B sidesteps this entirely by not using the MCP.
-- **Recording the desktop to capture an automated browser** (`ffmpeg -f avfoundation`)
-  captures whatever is actually on screen — Slack, your editor — not the automated
-  browser. Route B records the browser's own frames, so this is never needed.
-- **"Headless can't be recorded"** — false, and worth stating plainly because it's an
-  easy and expensive assumption: `page.screencast()` records headless Chrome fine.
-  Route B was verified headless at 30fps.
+- **`computer` + `save_to_disk:true` writes no findable file.** It returns an image ID. Both
+  real routes use a genuine browser download instead, which does land in `~/Downloads`.
+- **"Headless can't be recorded" is FALSE** — `page.screencast()` records headless Chrome fine
+  (Route 2). Don't let this assumption kill an approach.
+- **`InvalidStateError` from getDisplayMedia means the tab is hidden**, nothing more. Causes:
+  not the selected tab, **or the window is occluded by another app**. Fix with
+  `raise-chrome.sh`, don't abandon the route. (`window.focus()` does NOT fix it.)
+- **A `computer` click IS a trusted event** and grants user activation — the gesture
+  requirement is never the blocker.
+- **Stray puppeteer Chromes poison AppleScript.** They're the same binary, so
+  `tell application "Google Chrome"` can bind to a headless zombie and report a browser with
+  one blank tab — making the real tabs look unreachable. Check and clean first:
+  ```bash
+  ps aux | grep -c "[p]uppeteer_dev_chrome_profile"
+  pkill -f "puppeteer_dev_chrome_profile"; rm -rf /var/folders/*/*/T/puppeteer_dev_chrome_profile-*
+  ```
+  (14 leftovers were holding 1.87 GB once.) Route 2 leaks these if a run dies — sweep them.
+- **Recording the desktop to capture a browser** (`ffmpeg -f avfoundation`) captures whatever
+  is actually on screen — the editor, Slack — not the target. Never needed; both routes
+  capture the browser's own frames.
 
 ## Tips
 
-- **Before/after pairs**: `git stash` the fix → record BEFORE → `git stash pop` →
-  record AFTER. With a dev server running, hot-reload swaps the code under an
-  identical flow, so both takes differ only in the thing you're demonstrating. Write
-  the flow to tolerate both outcomes (e.g. "click Back until no Back button remains").
-- **mp4 for sharing**: `--mp4` writes `yuv420p` + even dimensions, which QuickTime,
-  Slack and browsers require to play it at all. `.webm` is the master; convert for humans.
-- **sips vs ffmpeg** (macOS): `sips` for a quick single-image probe
-  (`sips -g pixelWidth -g pixelHeight file.png`); `ffmpeg` for anything multi-frame.
-- **Faithful capture of a live system**: if the UI mutates something and must be left
-  untouched, snapshot state first and verify after via the app's API — capture the
-  truth, don't assume it.
+- **Before/after pairs**: `git stash` the fix → record BEFORE → `git stash pop` → record AFTER.
+  With a dev server running, hot-reload swaps the code under an identical flow. Write the flow
+  to tolerate both outcomes ("click Back until no Back button remains").
+- **Privacy**: Route 1 records the user's real app with real data, and the file lands in
+  `~/Downloads`. Say so, and clean up injected overlays from their tab when done.
+- **sips vs ffmpeg** (macOS): `sips` for a quick single-image probe; `ffmpeg` for multi-frame.
 
 ## Concurrency
 
-MCP work is scoped to a **tab group** (`tabs_context_mcp`), and multiple browsers can
-be targeted (`list_connected_browsers` / `select_browser`), so the old blanket "never
-run browser tools in parallel" rule mostly doesn't apply. The residual caveat: the
-`computer` tool's mouse/keyboard actions contend on **foreground focus**, so avoid
-heavy *simultaneous* `computer`-driving of the same browser. Route B launches its own
-browser, so it doesn't contend with the MCP at all — you can record while the MCP
-session stays untouched.
+Route 1 drives the MCP, scoped to a **tab group** (`tabs_context_mcp`). Route 2 launches its
+own browser and doesn't contend with the MCP at all — you can record with Route 2 while an MCP
+session stays untouched. The residual caveat: `computer` mouse/keyboard actions contend on
+foreground focus, so avoid heavy *simultaneous* `computer`-driving of the same browser.
 
 ## See Also
 
-- **claude-in-chrome** skill — connecting to and driving the browser. This skill picks
-  up where that leaves off: getting the visuals onto disk.
+- **claude-in-chrome** skill — connecting to and driving the browser. This skill picks up
+  where that leaves off: getting the visuals onto disk.
 - **upload-image-to-github** skill — if the captured images need to render in a GitHub
   PR/issue on a private repo.
