@@ -111,17 +111,50 @@ node scripts/record-flow.js --url http://localhost:5173 --out /tmp/out.webm \
 Options: `--fps` (30), `--viewport WxH` (1280x800), `--scale` (1; use 2 for retina),
 `--flow`, `--gif`, `--mp4`, `--headful`, `--no-kit`, `--chrome <path>`.
 
-A `--flow` module exports `async (page, wt) => {}` and drives the injected kit:
+A `--flow` module exports `async (page, wt, nav) => {}` and drives the injected kit:
 
 ```js
-module.exports = async (page, wt) => {
+module.exports = async (page, wt, nav) => {
+  // same-document steps (SPA routing, scrolling) -> wt()
   await wt(async () => {
     const card = await window.__wt.waitFor(() => document.querySelector('.card'));
     await window.__wt.focusAndClick(card, card.querySelector('h2')); // frame card, click title
     await window.__wt.smoothScrollTo(1400, 1800);
   });
+
+  // a step that leaves the document (real hyperlink, login redirect) -> nav()
+  await nav(async () => {
+    const link = await window.__wt.waitFor(() => document.querySelector('a.next'));
+    await window.__wt.focusAndClick(link);
+  });
+  // ...kit is already alive on the new page; keep going with wt()
 };
 ```
+
+### Multi-page apps and navigation (this is the sharp edge)
+
+A recorder that only works on a single-page app is a toy. Two separate things break the
+moment a real hyperlink swaps the document — both are handled, but know they're there
+if you change this code:
+
+- **The kit must be injected with `page.evaluateOnNewDocument`, not `page.evaluate`.**
+  `evaluate` injects once into the *current* document; a cross-document navigation
+  destroys that context and `window.__wt` with it, so every step after the first
+  navigation throws "undefined". `evaluateOnNewDocument` re-injects into *every*
+  document — including cross-origin ones — before its own scripts run.
+- **`evaluateOnNewDocument` runs at document-start, when `document.body` is still null.**
+  So the kit builds its overlay **lazily** on first use rather than at top level — a
+  top-level `document.body.append(...)` throws at document-start and then `window.__wt`
+  is never defined *at all, on any page*. If you refactor the kit, keep it body-safe.
+- **A navigating click can't be a normal awaited call.** The context is torn down while
+  `page.evaluate` is still waiting, so puppeteer rejects with *"Execution context was
+  destroyed"*. That's the expected outcome of a successful click, not an error. `wt()`
+  swallows it and **`nav()`** pairs it with `waitForNavigation` — use `nav()` whenever a
+  step leaves the page.
+
+Verified end-to-end against a real cross-origin hyperlink (`example.com` → `iana.org`):
+the cursor and highlight box survive the jump and keep working on the new origin, in one
+continuous recording.
 
 ### The visual layer — `assets/walkthrough-kit.js`
 
@@ -162,13 +195,35 @@ ffprobe -v error -count_frames -select_streams v:0 \
 
 Hundreds of frames = a real video. A handful = you're still looking at a slideshow.
 
-### Getting into an authenticated app
+### Getting into an authenticated app — the one real limitation
 
-A fresh puppeteer browser has none of the user's session, which is the *only* real
-limitation of Route B. In order of preference: point `--url` at a local dev server
-that doesn't need SSO; log in programmatically within the flow; launch with a
-`--user-data-dir` copy of a profile that's already signed in; and only if all of
-that fails, fall back to Route C.
+A fresh puppeteer browser has none of the user's session. This is the **only** thing
+Route B can't do by itself, and it's worth being precise about, because the obvious
+workaround has been tried and does not work:
+
+- **Copying the user's Chrome cookies does NOT ride an Entra/Azure AD SSO session.**
+  Tested: a surgical profile copy carrying all 3750 cookies including 4 `ESTSAUTH*`
+  session cookies still landed on an interactive `login.microsoftonline.com` password
+  prompt (note `sso_reload=true` in the authorize URL — Entra tried silent SSO and fell
+  back). Enterprise sessions are typically device-bound (platform SSO / PRT lives
+  outside Chrome's cookie jar), so cookies alone were never going to be enough. Don't
+  spend an hour rediscovering this.
+- **Never type the user's credentials** to get past it. If a password field appears,
+  stop and hand back to the human — that's a hard line, not a difficulty.
+
+What actually works, in order of preference:
+
+1. **Avoid auth entirely** — point `--url` at a local dev server, a mocked build, or
+   whatever pre-auth surface shows the thing you're demonstrating. Most of the time
+   the recording doesn't actually need prod.
+2. **Log in programmatically** *only* where the app supports it and no human secret is
+   involved (a test account from a secret store, a dev-mode bypass, an injected token).
+3. **One-time interactive login into a persistent profile.** Launch `--headful` with a
+   dedicated `--user-data-dir` **once**, let the human sign in themselves, then reuse
+   that directory for every subsequent run — headless and fully automated until the
+   session expires. This reduces the human from "runs the camera on every take" to
+   "signs in once a week", and is usually the right answer for a real app.
+4. **Route C** — only if even that is impossible.
 
 ---
 

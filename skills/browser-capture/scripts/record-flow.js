@@ -68,13 +68,19 @@ const sh = (cmd, args) => execFileSync(cmd, args, { stdio: ['ignore', 'pipe', 'p
   try {
     const page = await browser.newPage();
     await page.setViewport({ width: VW, height: VH, deviceScaleFactor: SCALE });
-    await page.goto(URL_, { waitUntil: 'networkidle2', timeout: 60000 });
 
-    // Inject the visual layer BEFORE recording starts, so frame 1 already has the cursor.
+    // Inject the kit with evaluateOnNewDocument, NOT evaluate. This is load-bearing:
+    // a real hyperlink / cross-document navigation destroys the JS context, taking
+    // window.__wt with it — so a one-time evaluate() leaves every step after the first
+    // navigation throwing "__wt is undefined". evaluateOnNewDocument re-injects into
+    // EVERY document (including cross-origin ones, and iframes) before its own scripts
+    // run, so the kit survives navigation and multi-page apps work.
     if (!has('--no-kit')) {
       const kit = path.join(__dirname, '..', 'assets', 'walkthrough-kit.js');
-      if (fs.existsSync(kit)) await page.evaluate(fs.readFileSync(kit, 'utf8'));
+      if (fs.existsSync(kit)) await page.evaluateOnNewDocument(fs.readFileSync(kit, 'utf8'));
     }
+
+    await page.goto(URL_, { waitUntil: 'networkidle2', timeout: 60000 });
     await new Promise(r => setTimeout(r, 600)); // let fonts/layout settle
 
     fs.mkdirSync(path.dirname(OUT), { recursive: true });
@@ -82,9 +88,28 @@ const sh = (cmd, args) => execFileSync(cmd, args, { stdio: ['ignore', 'pipe', 'p
 
     if (FLOW) {
       const flow = require(path.resolve(FLOW));
-      // wt(fnBody, ...args) -> page.evaluate, with the kit available as __wt in the page
-      const wt = (fn, ...args) => page.evaluate(fn, ...args);
-      await flow(page, wt);
+      // wt(fn, ...args) -> page.evaluate with the kit available as window.__wt.
+      //
+      // A click that navigates tears down the JS context while this evaluate is still
+      // awaiting, so puppeteer rejects with "Execution context was destroyed". That is
+      // the EXPECTED outcome of a navigating click, not a failure — swallow it. Use
+      // nav(fn) below when you know a step navigates.
+      const GONE = /Execution context was destroyed|Target closed|Cannot find context|frame got detached/i;
+      const wt = async (fn, ...args) => {
+        try { return await page.evaluate(fn, ...args); }
+        catch (e) { if (GONE.test(e.message)) return undefined; throw e; }
+      };
+      // nav(fn): run an in-page step that causes a cross-document navigation, and wait for
+      // the new document to settle. The kit re-injects itself there automatically.
+      const nav = async (fn, ...args) => {
+        const [, r] = await Promise.all([
+          page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {}),
+          wt(fn, ...args),
+        ]);
+        await new Promise(r2 => setTimeout(r2, 400));
+        return r;
+      };
+      await flow(page, wt, nav);
     } else {
       // Default: a smooth scroll to the bottom. Proves motion and is often all you need.
       await page.evaluate(async () => {
