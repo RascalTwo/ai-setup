@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>aws-sso-creds — the token dies, you never notice</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:kind" content="explanatory">
+<meta name="viz:title" content="aws-sso-creds">
+<meta name="viz:description" content="Catches the expired-credential error itself, drives the IAM Identity Center portal via Chrome, and drops short-lived creds into a shell-sourced dotenv.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card stays a fixed 1200×630 clip target (verify.ts --og shoots a 1200×630
+     viewport => --s resolves to 1 => the OG image is pixel-native). The only change
+     from the stock poster template: the page SCROLLS, so a deep dive lives below.
+
+     The gotcha this solves: transform:scale() does NOT shrink an element's layout
+     box, so a scaled card still reserves 630px of flow and leaves a dead gap.
+     Fix: scale from `top center` and drive #fit's height off the same --s.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{ margin:0; overflow-x:hidden; background:var(--bg); }
+  #fit{ height:calc(630px * var(--s)); display:flex; justify-content:center; overflow:hidden; }
+  .og-card{ position:relative; width:1200px; height:630px; flex:none; overflow:hidden;
+            transform:scale(var(--s)); transform-origin:top center; }
+
+  /* ── the card ── */
+  .og-card{
+    background:
+      radial-gradient(900px 500px at 88% -10%, color-mix(in srgb, var(--danger) 18%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 110%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%);
+    color:var(--text); font-family:var(--sans);
+    display:grid; grid-template-columns:1fr 400px; gap:44px; align-items:center;
+    padding:60px 70px;
+  }
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:58px; line-height:1.04; margin:0 0 20px; letter-spacing:-1.5px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--accent); }
+  p.sub{ font-size:19px; line-height:1.45; color:var(--muted); margin:0 0 26px; max-width:540px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the panels = the "proof" slot */
+  .meters{ display:grid; gap:16px; }
+  .meter{ background:color-mix(in srgb, var(--panel) 78%, transparent); border:1px solid var(--border);
+          border-radius:14px; padding:17px 19px; }
+  .meter .lbl{ font-family:var(--mono); font-size:12.5px; letter-spacing:.1em; color:var(--muted); margin-bottom:10px; }
+  .meter .note{ margin-top:10px; font-size:12.5px; color:var(--muted); font-family:var(--mono); }
+  /* the errors it auto-fires on */
+  .meter.errs .lbl{ color:var(--danger); }
+  .errlist{ display:grid; gap:6px; }
+  .errlist code{ font-family:var(--mono); font-size:13.5px; color:var(--danger);
+                 background:color-mix(in srgb, var(--danger) 12%, transparent);
+                 border-radius:5px; padding:3px 7px; }
+  /* what lands on disk */
+  .meter.out .lbl{ color:var(--good); }
+  .meter.out .val{ font-family:var(--mono); font-size:14px; color:var(--good); line-height:1.5; word-break:break-all; }
+  .bar{ height:11px; border-radius:99px; background:var(--panel-2); overflow:hidden; margin-top:11px; }
+  .bar i{ display:block; height:100%; border-radius:99px; width:100%;
+          background:linear-gradient(90deg, var(--good), color-mix(in srgb, var(--good) 15%, transparent)); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive code{ font-family:var(--mono); font-size:.92em; background:var(--panel);
+              border:1px solid var(--border); border-radius:5px; padding:1px 5px; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body>
+<div id="fit">
+  <div class="og-card" data-atom="aws-sso-creds" data-viz-id="poster-card" data-label="aws-sso-creds poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · AWS-SSO-CREDS</div>
+      <h1 class="hook">The token dies.<br><em>You never notice.</em></h1>
+      <p class="sub">An <b>expired token</b> mid-task means you stop working and go click through an SSO portal. This one sees the error, drives the <b>IAM Identity Center</b> portal in Chrome, and drops short-lived creds into a <b>shell-sourced dotenv</b>.</p>
+      <div class="trigger"><span>say</span>&nbsp;"log into AWS"&nbsp;&nbsp;<span>· or say nothing at all</span></div>
+    </div>
+    <div class="meters">
+      <div class="meter errs">
+        <div class="lbl">FIRES PROACTIVELY ON</div>
+        <div class="errlist">
+          <code>ExpiredToken</code>
+          <code>InvalidClientTokenId</code>
+          <code>UnrecognizedClientException</code>
+          <code>Unable to locate credentials</code>
+        </div>
+        <div class="note">no one has to ask it</div>
+      </div>
+      <div class="meter out">
+        <div class="lbl">YOU GET</div>
+        <div class="val">~/.cache/aws-sso-creds/<br>&lt;portal&gt;-&lt;account&gt;.env</div>
+        <div class="bar"><i></i></div>
+        <div class="note">mode 600 · valid ~1 hour</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>The problem</h2>
+  <p>You're three commands deep into something real and an <code>aws</code> call dies. Not because the work is wrong — because a one-hour token quietly ran out. Now the task is on hold while you go find a browser tab, expand an account tile, and copy-paste export lines. The interruption costs more than the credentials do.</p>
+
+  <h2>The turn</h2>
+  <p>Hand the whole errand to the agent. It reaches the portal in Chrome, verifies it opened the <b>right account</b>, copies the credential block, and writes it to <code>~/.cache/aws-sso-creds/&lt;portal&gt;-&lt;account&gt;.env</code> at mode <code>600</code>. It prints the path, the account ID from <code>sts get-caller-identity</code>, and the expiry — <b>never the secrets</b>.</p>
+
+  <h2>"Why not just set SSO up properly?"</h2>
+  <p>Because that's <b>work</b>, and this is <b>lazy</b> — the good kind. Doing it the official way means an <code>~/.aws/config</code> sso-session plus a named profile for every account you ever touch, configured up front and maintained forever. That's a chore you pay before you get to do the thing you actually wanted to do.</p>
+  <p>And it only pays off for tools that know how to <b>resolve an AWS profile</b>. This drops <b>temporary credentials into environment variables</b> — the one credential path that works with <em>everything</em>: the CLI, Terraform, boto3, an SDK, a one-off script that never heard of a profile. Nothing to configure per account, nothing to maintain, and the creds <b>expire on their own</b> in about an hour, so the lazy path is also the one that leaves nothing lying around.</p>
+
+  <h2>The trigger</h2>
+  <p class="m">It doesn't wait to be asked. Any of these in an <code>aws</code> call's output is enough:</p>
+  <ul>
+    <li><code>ExpiredToken</code> · <code>InvalidClientTokenId</code></li>
+    <li><code>UnrecognizedClientException</code> · <code>Unable to locate credentials</code></li>
+  </ul>
+  <p>That's the selling point. The failure <b>is</b> the invocation — the thing that used to interrupt you now just fixes itself and the task keeps moving.</p>
+
+  <h2>The receipt</h2>
+  <p class="m">Consuming it is one line, because the Bash tool doesn't persist env between calls:</p>
+  <pre>set -a && source ~/.cache/aws-sso-creds/&lt;portal&gt;-&lt;account&gt;.env && set +a && aws sts get-caller-identity</pre>
+  <p class="m">And the write itself carries two scars — both real, both bite:</p>
+  <pre><span class="c"># 1. the portal's code block is CRLF; a stray \r corrupts the</span>
+<span class="c">#    Authorization header -> "Invalid header value"</span>
+<span class="c"># 2. the block has NO trailing newline, so AWS_REGION lands on the</span>
+<span class="c">#    end of AWS_SESSION_TOKEN -> InvalidClientTokenId</span>
+{ pbpaste | tr -d '\r' | sed -E 's/^export //; s/"//g'; echo; echo "AWS_REGION=us-east-1"; } &gt; "$OUT"</pre>
+  <p class="m">A session token ending in <code>-east-1</code> means bug #2 bit you. Debug by inspecting <b>lengths, never values</b>.</p>
+
+  <div class="callout"><b>Copy, don't read.</b> It clicks the portal's copy button so the secrets ride the clipboard straight to disk. Extracting the values via JavaScript and pasting them into a bash command would round-trip live credentials through the transcript — so it doesn't.</div>
+
+  <h2>The scope</h2>
+  <p>This is the <b>generic, any-portal</b> one: portal-agnostic by design, nothing hardcoded. Every portal fact — start URL, IdP, account IDs, cache prefix — resolves from either <code>portals.md</code> or a private per-org <code>&lt;org&gt;-aws</code> wrapper skill that pins one portal and hands the facts down. The copy in this public repo ships <code>portals.md</code> as a <b>template</b> with a fake example org; real org data never lands here.</p>
+  <ul>
+    <li><b>Never types a password.</b> A password prompt means the session died — that's the human's job, and it stops.</li>
+    <li><b>Never guesses an account.</b> Ambiguous request, or a name that isn't listed → it asks. It also verifies the account ID after the fact rather than trusting the tile it clicked.</li>
+    <li><b>Read-only by default.</b> These creds often carry write permissions; it won't run mutating commands unless that was the ask.</li>
+  </ul>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script>
+  // Scale the fixed 1200×630 card to viewport WIDTH (capped at 1, so the --og shot at a
+  // 1200px-wide viewport stays pixel-native), and collapse #fit's height to the scaled card.
+  const fit = () =>
+    document.documentElement.style.setProperty('--s', Math.min(innerWidth / 1200, 1));
+  addEventListener('resize', fit); fit();
+</script>
+</body>
+</html>

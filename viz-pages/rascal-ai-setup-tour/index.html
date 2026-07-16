@@ -748,6 +748,17 @@
       grid-template-columns: 1fr;
     }
   }
+  /* poster links — an atom with its own self-hero card lives one click away */
+  .poster-link{ color:inherit; text-decoration:none; border-bottom:1px dashed color-mix(in srgb, var(--district-color, #58a6ff) 55%, transparent); }
+  .poster-link:hover{ border-bottom-style:solid; }
+  /* `.skill-card span` is display:block (it styles the card's description spans),
+     so this pill MUST re-assert inline-block or it becomes a full-width row. */
+  .poster-link .pl-mark{ display:inline-block; margin-top:0;
+    font-family:var(--mono); font-size:10px; font-weight:500; letter-spacing:.06em;
+    color:var(--district-color, #58a6ff); border:1px solid color-mix(in srgb, var(--district-color, #58a6ff) 40%, transparent);
+    border-radius:5px; padding:1px 5px; margin-left:7px; vertical-align:middle; white-space:nowrap; }
+  a.skill-chip.has-poster{ text-decoration:none; border-color:color-mix(in srgb, var(--district-color, #58a6ff) 45%, transparent); }
+  a.skill-chip.has-poster:hover{ background:color-mix(in srgb, var(--district-color, #58a6ff) 16%, transparent); }
 </style>
 </head>
 <body>
@@ -929,17 +940,17 @@
               <span class="why">Why it matters: keeps the public core and private overlays from silently drifting.</span>
             </div>
             <div class="skill-card">
-              <strong>publish-markdown-to-confluence</strong>
+              <strong><a class="poster-link" href="../skill-publish-markdown-to-confluence/">publish-markdown-to-confluence <span class="pl-mark">poster ↗</span></a></strong>
               <span>Converts local Markdown to Atlassian document format and updates Confluence while preserving page extensions.</span>
             </div>
             <div class="skill-card">
-              <strong>delegate-to-codex</strong>
+              <strong><a class="poster-link" href="../skill-delegate-to-codex/">delegate-to-codex <span class="pl-mark">poster ↗</span></a></strong>
               <span>Hands a scoped task to the OpenAI Codex CLI headless, so the work bills to the ChatGPT subscription instead of spending Claude tokens.</span>
               <span class="why">Why it matters: the agnostic setup's escape hatch — fan work out cheaply, and stay ready for the day the free lunch ends.</span>
             </div>
           </div>
           <div class="skill-chips" style="margin-top: 10px">
-            <span class="skill-chip">steelman</span>
+            <a class="skill-chip has-poster" href="../skill-steelman/">steelman ↗</a>
             <span class="skill-chip">retro</span>
             <span class="skill-chip">retro-catchup</span>
             <span class="skill-chip">tldraw-canvas</span>
@@ -960,7 +971,7 @@
               <span>Summarizes local narrated videos into text so screen recordings can be verified without repeated vision reads. Delegates its transcription to transcribe-media.</span>
             </div>
             <div class="skill-card">
-              <strong>transcribe-media</strong>
+              <strong><a class="poster-link" href="../skill-transcribe-media/">transcribe-media <span class="pl-mark">poster ↗</span></a></strong>
               <span>Speech-to-text for any local audio or video file, through the Mac-optimized MLX Whisper build (GPU, not the CPU fallback).</span>
               <span class="why">Why it matters: the one speech-to-text engine — the subtitle, Drive, and narrated-video skills all route through it instead of re-deriving the command.</span>
             </div>
@@ -1006,7 +1017,7 @@
             <span class="skill-chip">port-terraform-provider-to-k8s-operator</span>
             <span class="skill-chip">r2-sdlc-documentation-philosophy</span>
             <span class="skill-chip">r2-sdlc-testing-paradigm</span>
-            <span class="skill-chip">aws-sso-creds</span>
+            <a class="skill-chip has-poster" href="../skill-aws-sso-creds/">aws-sso-creds ↗</a>
             <span class="skill-chip">trigger-github-deploy</span>
             <span class="skill-chip">wait-for-github-workflow</span>
             <span class="skill-chip">analyze-github-workflow-failure</span>
@@ -1014,7 +1025,7 @@
             <span class="skill-chip">diagnose-terraform-unknown-error</span>
             <span class="skill-chip">okta-api</span>
             <span class="skill-chip">ping-api</span>
-            <span class="skill-chip">upload-image-to-github</span>
+            <a class="skill-chip has-poster" href="../skill-upload-image-to-github/">upload-image-to-github ↗</a>
             <span class="skill-chip">reorder-github-project-board-by-depth</span>
           </div>
         </div>

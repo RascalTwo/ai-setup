@@ -13,6 +13,12 @@ source of truth; a deterministic installer symlinks it into place for both.
 > Personal config, published so others can borrow from it. Opinionated and
 > macOS-flavored. Take what's useful.
 
+**New here / just want the *why*?** Everything below is the machinery — the thinking behind it
+lives in the explorables: **[How I Use AI](https://rascaltwo.github.io/ai-setup/how-i-use-ai/)**
+(nine principles), a poster per skill, and the setup tour. All of them are on the
+**[explorables lobby →](https://rascaltwo.github.io/ai-setup/)**, which is the authoritative
+view of the set.
+
 I drive my agents largely by voice via [handy.computer](https://handy.computer) (not
 a built-in `/voice`), which is why `AGENTS.md` §1 leads with homophone/ambiguity
 guardrails.

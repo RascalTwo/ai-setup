@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>upload-image-to-github — the image that renders everywhere</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:kind" content="explanatory">
+<meta name="viz:title" content="upload-image-to-github">
+<meta name="viz:description" content="GitHub has no attachment API — this drives its real uploader to hand back a user-attachments CDN URL that renders even in private repos.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card stays a fixed 1200×630 clip target (verify.ts --og shoots a 1200×630
+     viewport => --s resolves to 1 => the OG image is pixel-native). The only change
+     from the stock poster template: the page SCROLLS, so a deep dive lives below.
+
+     The gotcha this solves: transform:scale() does NOT shrink an element's layout
+     box, so a scaled card still reserves 630px of flow and leaves a dead gap.
+     Fix: scale from `top center` and drive #fit's height off the same --s.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{ margin:0; overflow-x:hidden; background:var(--bg); }
+  #fit{ height:calc(630px * var(--s)); display:flex; justify-content:center; overflow:hidden; }
+  .og-card{ position:relative; width:1200px; height:630px; flex:none; overflow:hidden;
+            transform:scale(var(--s)); transform-origin:top center; }
+
+  /* ── the card ── */
+  .og-card{
+    background:
+      radial-gradient(900px 500px at 88% -10%, color-mix(in srgb, var(--c4) 20%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 110%, color-mix(in srgb, var(--danger) 14%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%);
+    color:var(--text); font-family:var(--sans);
+    display:grid; grid-template-columns:1fr 430px; gap:40px; align-items:center;
+    padding:60px 70px;
+  }
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--c4); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--c4);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--c4) 22%, transparent); }
+  h1.hook{ font-size:56px; line-height:1.04; margin:0 0 20px; letter-spacing:-1.5px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  p.sub{ font-size:19px; line-height:1.45; color:var(--muted); margin:0 0 26px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--c4);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the two paths = the "proof" slot */
+  .paths{ display:grid; gap:16px; }
+  .path{ background:color-mix(in srgb, var(--panel) 80%, transparent); border:1px solid var(--border);
+         border-radius:14px; padding:16px 18px; }
+  .path .lbl{ display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12px;
+              letter-spacing:.1em; color:var(--muted); margin-bottom:10px; }
+  .path .url{ font-family:var(--mono); font-size:13.5px; line-height:1.45; word-break:break-all;
+              color:var(--text); margin-bottom:11px; }
+  .path .verdict{ display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600; }
+  .chip{ font-family:var(--mono); font-size:11px; letter-spacing:.08em; padding:3px 8px; border-radius:99px; }
+
+  .path.bad{ border-color:color-mix(in srgb, var(--danger) 45%, var(--border)); }
+  .path.bad .lbl{ color:var(--danger); }
+  .path.bad .url{ color:var(--muted); text-decoration:line-through; text-decoration-color:color-mix(in srgb, var(--danger) 70%, transparent); }
+  .path.bad .verdict{ color:var(--danger); }
+  .path.bad .chip{ background:color-mix(in srgb, var(--danger) 16%, transparent); color:var(--danger); }
+
+  .path.good{ border-color:color-mix(in srgb, var(--good) 45%, var(--border)); }
+  .path.good .lbl{ color:var(--good); }
+  .path.good .verdict{ color:var(--good); }
+  .path.good .chip{ background:color-mix(in srgb, var(--good) 16%, transparent); color:var(--good); }
+  .path .note{ margin-top:9px; font-size:12.5px; color:var(--muted); font-family:var(--mono); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--c4);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive code{ font-family:var(--mono); font-size:14px; background:var(--panel-2);
+              border:1px solid var(--border); border-radius:5px; padding:1px 5px; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body>
+<div id="fit">
+  <div class="og-card" data-atom="upload-image-to-github" data-viz-id="poster-card" data-label="upload-image-to-github poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · UPLOAD-IMAGE-TO-GITHUB</div>
+      <h1 class="hook">Your image link<br><em>quietly doesn't load.</em></h1>
+      <p class="sub">GitHub has <b>no attachment API</b>, and a <b>raw</b> URL from a private repo never renders — camo can't authenticate. This drives GitHub's <b>own uploader</b> and hands back a URL that works anywhere.</p>
+      <div class="trigger"><span>say</span>&nbsp;"put this image at the top of the PR"</div>
+    </div>
+    <div class="paths">
+      <div class="path bad">
+        <div class="lbl">THE OBVIOUS PATH<span class="chip">TRAP</span></div>
+        <div class="url">raw.githubusercontent.com/<wbr>org/private-repo/…</div>
+        <div class="verdict">✕&nbsp; Broken image in the PR</div>
+        <div class="note">camo proxy can't auth → dead end</div>
+      </div>
+      <div class="path good">
+        <div class="lbl">THIS SKILL<span class="chip">WORKS</span></div>
+        <div class="url">github.com/user-attachments/<wbr>assets/&lt;uuid&gt;</div>
+        <div class="verdict">✓&nbsp; Renders, private repos included</div>
+        <div class="note">access-scoped to the repo's viewers</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>The problem</h2>
+  <p>You want a screenshot at the top of a PR. Every path that <i>looks</i> like it should work fails — and most of them fail <b>silently</b>, so you only find out when a reviewer sees a broken image icon.</p>
+
+  <h2>Why the obvious paths fail</h2>
+  <ul>
+    <li><b>There is no attachment API.</b> GitHub's only uploader is a browser drag-drop onto a classic Markdown editor. <code>gh</code> can't do it.</li>
+    <li><b><code>raw.githubusercontent.com</code> from a private repo</b> → does not render. GitHub proxies images through camo, and camo can't authenticate. Dead end.</li>
+    <li><b>The <code>file_upload</code> MCP tool</b> → currently rejects host paths (regressed). Don't rely on it.</li>
+    <li><b>Synthetic <code>cmd+v</code> paste</b> → unreliable; the key event never delivers image bytes to GitHub's paste handler.</li>
+  </ul>
+
+  <h2>The turn</h2>
+  <p>Stop trying to host the image. <b>Make GitHub's real uploader run.</b> Put the image on the clipboard as base64 <b>text</b>, then dispatch a genuine <code>drop</code> event carrying a reconstructed <code>File</code> onto a classic editor's <code>&lt;file-attachment&gt;</code> element. GitHub uploads it for real and inserts the markup — which we harvest. The bytes ride the OS clipboard; they never pass through the agent's context.</p>
+  <p class="m">The classic editor only exists in a few places — not the React <code>/issues/new</code> page. The reliable one is any repo's <b>wiki new-page</b>, used purely as an uploader and <b>never saved</b>. The asset persists on its own.</p>
+
+  <h2>The receipt</h2>
+  <p class="m">Clipboard → drop → URL → body. Four moves:</p>
+  <pre><span class="c"># 1. image onto the clipboard as base64 text (macOS; note the -i)</span>
+base64 -i /path/to/image.png | tr -d '\n' | pbcopy
+
+<span class="c"># 2. open a CLASSIC editor and prove it is one — both must be true</span>
+<span class="c">#    https://github.com/&lt;owner&gt;/&lt;repo&gt;/wiki/_new</span>
+({ hasFileAttachment: !!document.querySelector('file-attachment'),
+   hasBody: !!document.querySelector('#gollum-editor-body') })
+
+<span class="c"># 3. click the body for OS focus, then run scripts/drop-and-harvest.js</span>
+<span class="c">#    → { url, imgTag }</span>
+
+<span class="c"># 4. spend the URL</span>
+gh pr edit &lt;N&gt; --body-file body.md   <span class="c"># &lt;img width="1200" src="$URL" /&gt;</span></pre>
+
+  <div class="callout"><b>Scope is the gotcha:</b> a <code>user-attachments</code> asset is only visible to people who can see the repo it was uploaded through. Upload via the <b>same repo</b> as the PR — or one your audience can also see. Then navigate to the PR and <b>actually look at it</b>. A broken image means wrong repo scope or a bad URL; that eyeball check is the whole point.</div>
+
+  <h2>When not to</h2>
+  <ul>
+    <li>The image already has a <b>public, renderable URL</b> — just paste it.</li>
+    <li>The repo is public and the file is committed — <code>raw.githubusercontent.com</code> is fine there.</li>
+    <li>Chrome MCP isn't available. The whole mechanism is a real browser driving a real uploader.</li>
+  </ul>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script>
+  // Scale the fixed 1200×630 card to viewport WIDTH (capped at 1, so the --og shot at a
+  // 1200px-wide viewport stays pixel-native), and collapse #fit's height to the scaled card.
+  const fit = () =>
+    document.documentElement.style.setProperty('--s', Math.min(innerWidth / 1200, 1));
+  addEventListener('resize', fit); fit();
+</script>
+</body>
+</html>
