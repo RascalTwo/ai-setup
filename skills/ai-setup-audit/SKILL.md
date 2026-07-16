@@ -1,5 +1,5 @@
 ---
-description: "Weekly interactive audit of the AI-agent setup shared across Claude Code and OpenAI Codex — AGENTS.md rules, skills, MCP servers, settings, subagents, basic-memory. Use when the user asks to audit, optimize, clean up, or review their agent setup, keep their config fresh, or says 'run the weekly audit'. Also for stale skills, unused MCP servers, orphaned skills, drift in external-skills.json, or checking what's changed. Also refreshes the published AI-setup tour viz (viz-pages/rascal-ai-setup-tour) so the public map of the setup doesn't drift from reality."
+description: "Weekly interactive audit of the AI-agent setup shared across Claude Code and OpenAI Codex — AGENTS.md rules, skills, MCP servers, settings, subagents, basic-memory. Use when the user asks to audit, optimize, clean up, or review their agent setup, keep their config fresh, or says 'run the weekly audit'. Also for stale skills, unused MCP servers, orphaned skills, drift in external-skills.json, or checking what's changed. Also refreshes the published explorables in viz-pages — the setup tour and the per-skill posters — so the public face of the setup doesn't drift from reality."
 ---
 
 # AI Agent Setup Audit
@@ -347,19 +347,26 @@ Final cross-cutting pass. You've reviewed everything individually — now look a
 
 Present recommendations one at a time.
 
-## Phase 8: Refresh the Setup Tour Viz
+## Phase 8: Refresh the Published Explorables
 
-The **AI setup tour** (`ai-setup/viz-pages/rascal-ai-setup-tour/index.html`) is the public
-onboarding map for this entire setup — linked from the README and published to GitHub Pages. It
-is **hand-authored HTML**, built with this repo's own `/viz` skill: nothing regenerates it, so it
-drifts silently every time a skill, MCP server, or subagent changes. **This audit is the only
-cadence that catches that.** Treat the tour as a deliverable of the audit, not a static page — a
-tour that lies about the setup is worse than no tour.
+`ai-setup/viz-pages/` publishes a **lobby** of explorables to GitHub Pages — the public face of
+this setup. Two kinds of page live there, and **both drift**:
+
+- **The tour** (`rascal-ai-setup-tour/`) — the onboarding map of the whole setup.
+- **The skill posters** (`skill-<atom>/`) — one self-hero card per atom, each selling why that
+  atom exists, with a deep dive below the fold.
+
+All of it is **hand-authored HTML** built with this repo's own `/viz` skill. Nothing regenerates
+any of it, so it drifts silently every time a skill, MCP server, or subagent changes. **This audit
+is the only cadence that catches that.** Treat these as deliverables of the audit, not static
+pages — a published page that lies about the setup is worse than no page.
 
 Run this after Phases 1–7, so the refresh reflects both the real inventory and every decision made
 this session.
 
-### Find the drift (mechanical check)
+### A. The tour
+
+#### Find the drift (mechanical check)
 
 The tour names skills inline as `<strong>skill-name</strong>`, grouped into district sections
 (`Owned core and setup operations`, `Media and local AI`, `Cloud, API, and delivery`,
@@ -399,21 +406,73 @@ Walk each finding against the Phase 1 inventory and this session's decisions:
    rule, a retired MCP server, a skill that now delegates to another) needs its *words* updated,
    not just its lists.
 
-### Verify the render before moving on
+### B. The skill posters
 
-The tour is a live page — a broken edit is invisible in a diff. Always re-render:
+Each poster stamps its subject on its card as **`data-atom="<skill-name>"`**. That's deliberate:
+it keeps this check a one-second grep instead of a semantic judgment ("is this pitch still
+compelling?"), which is slow and fails quietly.
 
 ```bash
-bun "$HOME/.claude/skills/viz/verify.ts" \
-  "http://127.0.0.1:5180/Desktop/Desktop/Code/ai-setup/viz-pages/rascal-ai-setup-tour/"
+REPO=$HOME/Desktop/Desktop/Code/ai-setup
+
+echo "--- Posters whose atom NO LONGER EXISTS (renamed/removed skill) — real defect ---"
+grep -rhoE 'data-atom="[^"]+"' "$REPO"/viz-pages/skill-*/index.html 2>/dev/null |
+  cut -d'"' -f2 | sort -u |
+  while read -r a; do [ -d "$REPO/skills/$a" ] || echo "ORPHAN poster: $a (advertises a skill that's gone)"; done
+
+echo "--- Owned skills with no poster — a MENU, not a defect ---"
+for d in "$REPO"/skills/*/; do
+  n=$(basename "$d")
+  grep -rqF "data-atom=\"$n\"" "$REPO"/viz-pages/skill-*/index.html 2>/dev/null || echo "no poster: $n"
+done
 ```
 
-Require **`✓ 0 error(s)`**, then read `.verify/latest.png` to confirm the layout still holds (no
-overflowing labels, no orphaned arrows). Fix anything you find before Phase 9 — the tour is
+Read the two lists **differently** — this is the part that matters:
+
+- **ORPHAN poster** — a real defect, and the worst kind: a published page confidently selling a
+  skill that no longer exists. Fix or delete it, and remember it's `public`+`listed`, so it's on
+  the lobby right now. Renamed skill → rename the viz dir (`manage.ts move`) and update `data-atom`.
+- **no poster** — **not** a defect. Posters are deliberately opt-in; most skills will never have
+  one and that's correct. This list exists so adding one is a *decision* rather than an oversight.
+  Do not read it out as a to-do list, and do not offer to generate the whole backlog — that's the
+  meta-tooling trap. Raise a skill here only if it's genuinely load-bearing and undersold.
+
+Then per **changed** atom: if a skill's behavior moved this session (a new flag, a delegation, a
+retired dependency), its poster's **hook, proof, or receipt may now be a lie**. Check the posters
+of skills you touched in Phases 2–5 specifically — those are the ones with real drift.
+
+### Verify the render before moving on
+
+These are live pages — a broken edit is invisible in a diff. Always re-render **every viz you
+touched**:
+
+```bash
+V=$HOME/.claude/skills/viz/verify.ts
+BASE=http://127.0.0.1:5180/Desktop/Desktop/Code/ai-setup/viz-pages
+
+# ONE AT A TIME. See the caveat below — never run these concurrently.
+bun "$V" "$BASE/rascal-ai-setup-tour/"          # tour: render only
+bun "$V" "$BASE/skill-<atom>/" --og             # poster: ALSO regenerates og.auto.png
+```
+
+Require **`✓ 0 error(s)`**, then read `.verify/latest.png` and confirm the layout holds (no
+overflowing labels, no orphaned arrows). Fix anything you find before Phase 9 — these are
 committed and deployed there.
 
-**Golden rule still applies:** present each tour change individually. Don't rewrite the page
-wholesale, and don't auto-apply.
+⚠️ **Two traps, both learned the hard way:**
+
+1. **`verify.ts` is NOT parallel-safe.** It writes to one shared `.verify/latest.png` keyed to the
+   *skill* dir, not the viz. Run two verifies at once (or fan out subagents that each verify) and
+   they clobber each other — you will read a screenshot of a **different page** and cheerfully
+   confirm a layout you never looked at. Verify **serially**, or copy `latest.png` somewhere
+   unique immediately after each run.
+2. **A poster's `og.auto.png` does not regenerate itself.** Edit a card and the *page* updates
+   while the unfurl image stays stale — so Slack keeps previewing the old pitch. Any poster whose
+   card changed **must** be re-run with `--og`, and the resulting `og.auto.png` must be committed
+   with it. (Confirm it's still exactly 1200×630: `sips -g pixelWidth -g pixelHeight <og.auto.png>`.)
+
+**Golden rule still applies:** present each change individually. Don't rewrite a page wholesale,
+and don't auto-apply.
 
 ## Phase 9: Sync & Publish
 
@@ -440,7 +499,7 @@ Because every live entry is a symlink into a repo, edits made during the audit a
 
 5. **README** — if owned skills were added/removed/renamed, ask whether the README skill table needs updating.
 
-6. **Setup tour** — confirm Phase 8's refresh is reflected on disk (`viz-pages/rascal-ai-setup-tour/`) and rendered clean. Its edits are committed with everything else in the next step, and deployed below.
+6. **Explorables** — confirm Phase 8's refresh is on disk (`viz-pages/`) and rendered clean: the tour, plus any poster you touched (including its regenerated `og.auto.png`). They're committed with everything else in the next step, and deployed below.
 
 7. **Commit to `r2-main`.** Show `git status` and `git diff` in `ai-setup`, then offer a descriptive commit **on `r2-main`** (never commit the public snapshot directly).
 
@@ -464,8 +523,9 @@ If clean, publish and verify (reuse the same `$ORG`):
 ./squash-to-main.sh    # switches to the repo-owner gh account, force-pushes main, restores active account
 gh api repos/RascalTwo/ai-setup/git/trees/main?recursive=1 --jq '.tree[].path' | grep -iE "$ORG"'|private' || echo "clean"
 ```
-**Deploy the tour** (only if Phase 8 changed it). The tour publishes to GitHub Pages from
-`viz-pages/`, on its own path — **not** via `squash-to-main.sh`:
+**Deploy the explorables** (only if Phase 8 changed any). The whole `viz-pages/` container — lobby,
+tour, and every poster — publishes to GitHub Pages together, on its own path, **not** via
+`squash-to-main.sh`:
 
 ```bash
 DRY_RUN=1 ~/Desktop/Desktop/Code/ai-setup/viz-pages/deploy.sh   # build only, sanity-check first
