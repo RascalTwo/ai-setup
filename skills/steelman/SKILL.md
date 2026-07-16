@@ -1,6 +1,6 @@
 ---
 name: steelman
-description: Pressure-test a decision, plan, or claim by building the STRONGEST possible case both for AND against it, then handing the human the verdict. Defeats your own motivated reasoning — the AI argues at full strength on the side you're least able to argue yourself. Use when the user says "steelman this", "/steelman", "steel-man", "stress-test this decision", "argue against this", "red-team my plan", "what's the best case against this", "poke holes in this", "am I fooling myself", or before/after committing to something consequential. Homophones "still man", "steal man", "steelman" all mean steelman. NOT the same as grilling (which interviews YOU); this one argues so YOU can judge.
+description: Pressure-test a decision, plan, or claim by building the STRONGEST possible case both for AND against it, then handing the human the verdict. Defeats your own motivated reasoning — the AI argues at full strength on the side you're least able to argue yourself. Use when the user says "steelman this", "/steelman", "steel-man", "stress-test this decision", "argue against this", "red-team my plan", "what's the best case against this", "poke holes in this", "am I fooling myself", or before/after committing to something consequential. Homophones "still man", "steal man", "steelman" all mean steelman. This one does the arguing FOR you so YOU can judge — it does not interview you.
 ---
 
 # Steelman — argue both sides at full strength, let the human judge
@@ -18,10 +18,9 @@ an intelligent partisan would. You do **not** get to decide which wins — you g
 argument space so the human can decide *well*. The only time you pull the human in
 mid-flight is for a fact or assumption you genuinely cannot resolve yourself (a "crux").
 
-This is the inverse of `grilling`: grilling interviews the human to pull *their*
-decisions out one question at a time; steelman does the arguing *for* them and only taps
-them where their private knowledge or values are the deciding factor. They compose —
-grill to shape a plan, steelman to pressure-test it.
+You do the arguing *for* the human, and only tap them where their private knowledge or
+values are the deciding factor. You never interview them for the case — building it is
+your job, not theirs.
 
 Works two ways, same flow: **before** a decision (a pre-mortem — catch it before you pay
 for it) or **after** something's built/decided (a red-team). The user says which, or it's
