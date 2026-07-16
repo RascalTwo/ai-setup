@@ -60,7 +60,17 @@ JSON.stringify({
 });
 ```
 
-If `disabled === true` or `ariaDisabled === "true"`, **stop immediately** and report failure: "No transcript available — Transcript button is disabled. Recording has no captions." Do not attempt clicks, do not retry, do not fall through to DOM discovery — there is nothing to extract.
+If `disabled === true` or `ariaDisabled === "true"`, there is **no Google transcript to
+extract** — stop the browser flow (do not attempt clicks, retry, or DOM discovery). But the
+recording can still be transcribed by speech: tell the user, and offer the **ASR fallback** —
+download the recording from Drive, then run the `transcribe-media` skill on the file:
+
+```bash
+skills/transcribe-media/transcribe.sh <downloaded-file> --format vtt
+```
+
+That yields a `.vtt` from the audio (no Google speaker names, but the words are there). Only
+fall through to this when Google's own captions are genuinely absent.
 
 ### 3. Open the transcript panel
 
@@ -176,7 +186,7 @@ Tell the user:
 
 | Situation | What to do |
 |-----------|-----------|
-| No Transcript bar after playing | The recording may not have captions. Ask if captions were enabled during the meeting. |
+| No Transcript bar after playing | The recording may not have captions. Ask if captions were enabled during the meeting; if not, offer the `transcribe-media` ASR fallback (download the file, transcribe the audio). |
 | Zero timestamp elements in discovery | The DOM structure may have changed significantly. Use `read_page` on the transcript panel to visually inspect and adapt. |
 | Transcript panel is empty | Captions may still be processing. Ask the user to try again later. |
 | Very few entries for a long video | Scroll the transcript panel to trigger lazy loading, then re-extract. |

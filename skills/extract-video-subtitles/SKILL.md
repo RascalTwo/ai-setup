@@ -1,7 +1,7 @@
 ---
 name: extract-video-subtitles
 version: 1.0.0
-description: "Extract embedded subtitle/caption tracks from a local video or audio file using FFmpeg. Use this skill when the user has a video file (MP4, MKV, WebM, etc.) and wants to extract the subtitles or captions as a separate text file (WebVTT, SRT). Common use case: extracting auto-generated captions from a downloaded Google Meet recording. Also use when the user mentions 'get subtitles from video', 'extract captions', 'rip subs', or has a recording with embedded closed captions they want as text."
+description: "Extract embedded subtitle/caption tracks from a local video or audio file using FFmpeg. Use this skill when the user has a video file (MP4, MKV, WebM, etc.) and wants to extract the subtitles or captions as a separate text file (WebVTT, SRT). Common use case: extracting auto-generated captions from a downloaded Google Meet recording. Also use when the user mentions 'get subtitles from video', 'extract captions', 'rip subs', or has a recording with embedded closed captions they want as text. If the file has NO embedded subtitle track, this skill falls back to generating captions from speech via the transcribe-media skill (MLX Whisper)."
 ---
 
 # Video Subtitle Extractor
@@ -41,7 +41,17 @@ This returns JSON with all subtitle streams. Each stream has:
 - `tags.language` — language code if available
 - `tags.title` — description if available
 
-If no subtitle streams are found, tell the user the file doesn't have embedded captions. Suggest they try the `extract-gdrive-transcript` skill instead if it's a Google Meet recording they haven't downloaded yet.
+If no subtitle streams are found, the file has no embedded captions to extract — but it's
+already local, so **generate them from the speech with the `transcribe-media` skill** (MLX
+Whisper ASR):
+
+```bash
+skills/transcribe-media/transcribe.sh "$FILE_PATH" --format vtt   # or srt
+```
+
+That produces the same `.vtt`/`.srt` this skill would, straight from the audio. (Only if it's
+a Google Meet recording still in the Drive player — not downloaded — is `extract-gdrive-transcript`
+the better route, since it reuses Google's speaker-attributed captions.)
 
 ### 2. Show available tracks
 

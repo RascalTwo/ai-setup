@@ -8,6 +8,8 @@ thousands a frame-by-frame native read would burn. Claude can't `Read` video; th
 model (Qwen3-VL) is vision-only and **cannot hear audio**. So the job is split on a shared timeline:
 
 - **Whisper** hears the English voice → word-level timestamped transcript (the *spotlight*).
+  Transcription is delegated to the **`transcribe-media`** skill (MLX Whisper, GPU-accelerated;
+  falls back to the `openai-whisper` CLI if that skill isn't installed) — one speech-to-text engine, shared.
 - **Qwen3-VL** (via mlx-vlm) sees the picture → reasons over timestamped sampled frames (the *eyes*).
 
 The transcript is fed to Qwen3-VL as timestamped text, so "spoken X at 0:42" lines up with "frame at

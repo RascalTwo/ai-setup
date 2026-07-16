@@ -3,6 +3,7 @@
 
 Splits the job across two local models on a shared timeline (seconds into the clip):
   - Whisper  hears the English voice track  -> word-level timestamped transcript
+             (via the `transcribe-media` skill — MLX Whisper; openai-whisper fallback)
   - Qwen3-VL (via mlx-vlm) sees the picture  -> reasons over sampled frames, each stamped
 The transcript is fed to Qwen3-VL as timestamped text context, so "spoken X at 0:42" lines up
 with "frame at 0:42 shows Y". A vision-only model thus behaves like an audio+video model.
@@ -38,12 +39,25 @@ def has_speech(video: str) -> bool:
 
 
 def transcribe(video: str, whisper_model: str) -> list:
-    """Word-level timestamped transcript via OpenAI whisper. Returns list of {start,end,word}."""
+    """Word-level timestamped transcript. Delegates to the `transcribe-media` skill
+    (MLX Whisper, GPU-accelerated on Apple Silicon) — the canonical speech-to-text
+    primitive — and falls back to the openai-whisper CLI if that sibling script isn't
+    present. Both emit the same segments[].words[] JSON. Returns list of {start,end,word}."""
+    script = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                          "..", "transcribe-media", "transcribe.sh")
     with tempfile.TemporaryDirectory() as d:
-        r = run(["whisper", video, "--model", whisper_model, "--language", "en",
-                 "--word_timestamps", "True", "--output_format", "json", "--output_dir", d])
-        if r.returncode != 0:
-            raise RuntimeError(f"whisper failed: {r.stderr[-400:]}")
+        if os.path.exists(script):
+            # mlx_whisper wants a HF repo id; map a bare model name (e.g. large-v3-turbo).
+            model = whisper_model if "/" in whisper_model else f"mlx-community/whisper-{whisper_model}"
+            r = run(["bash", script, video, "--output-dir", d,
+                     "--format", "json", "--language", "en", "--model", model])
+            if r.returncode != 0:
+                raise RuntimeError(f"transcribe-media failed: {(r.stderr or r.stdout)[-400:]}")
+        else:
+            r = run(["whisper", video, "--model", whisper_model, "--language", "en",
+                     "--word_timestamps", "True", "--output_format", "json", "--output_dir", d])
+            if r.returncode != 0:
+                raise RuntimeError(f"whisper failed: {r.stderr[-400:]}")
         jf = os.path.join(d, os.path.splitext(os.path.basename(video))[0] + ".json")
         data = json.load(open(jf))
     return [w for s in data.get("segments", []) for w in s.get("words", [])]
