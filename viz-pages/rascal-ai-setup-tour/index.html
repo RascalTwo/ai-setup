@@ -916,7 +916,7 @@
       <div class="skills-map">
         <div class="skill-district core" style="--district-color: var(--mint)" data-viz-id="skills-owned-core" data-label="Owned core skills">
           <h3>Owned core and setup operations</h3>
-          <p class="district-note">Skills that explain, audit, publish, or visualize the setup itself.</p>
+          <p class="district-note">Skills that explain, audit, publish, or visualize the setup itself — plus the thinking tools that pressure-test a decision and route work across agents.</p>
           <div class="skill-card-grid single">
             <div class="skill-card">
               <strong>viz</strong>
@@ -932,8 +932,14 @@
               <strong>publish-markdown-to-confluence</strong>
               <span>Converts local Markdown to Atlassian document format and updates Confluence while preserving page extensions.</span>
             </div>
+            <div class="skill-card">
+              <strong>delegate-to-codex</strong>
+              <span>Hands a scoped task to the OpenAI Codex CLI headless, so the work bills to the ChatGPT subscription instead of spending Claude tokens.</span>
+              <span class="why">Why it matters: the agnostic setup's escape hatch — fan work out cheaply, and stay ready for the day the free lunch ends.</span>
+            </div>
           </div>
           <div class="skill-chips" style="margin-top: 10px">
+            <span class="skill-chip">steelman</span>
             <span class="skill-chip">retro</span>
             <span class="skill-chip">retro-catchup</span>
             <span class="skill-chip">tldraw-canvas</span>
@@ -942,7 +948,7 @@
 
         <div class="skill-district media" style="--district-color: var(--green)" data-viz-id="skills-media-local" data-label="Media and local AI skills">
           <h3>Media and local AI</h3>
-          <p class="district-note">Local-first tools for images, narrated video, subtitles, and Drive recordings.</p>
+          <p class="district-note">Local-first tools for images, speech-to-text, narrated video, subtitles, browser capture, and Drive recordings.</p>
           <div class="skill-card-grid single">
             <div class="skill-card">
               <strong>read-image-locally</strong>
@@ -951,7 +957,17 @@
             </div>
             <div class="skill-card">
               <strong>read-narrated-video</strong>
-              <span>Summarizes local narrated videos into text so screen recordings can be verified without repeated vision reads.</span>
+              <span>Summarizes local narrated videos into text so screen recordings can be verified without repeated vision reads. Delegates its transcription to transcribe-media.</span>
+            </div>
+            <div class="skill-card">
+              <strong>transcribe-media</strong>
+              <span>Speech-to-text for any local audio or video file, through the Mac-optimized MLX Whisper build (GPU, not the CPU fallback).</span>
+              <span class="why">Why it matters: the one speech-to-text engine — the subtitle, Drive, and narrated-video skills all route through it instead of re-deriving the command.</span>
+            </div>
+            <div class="skill-card">
+              <strong>browser-capture</strong>
+              <span>Gets screenshots, GIFs, and smooth 30fps video out of headless Chrome and onto disk, ready to embed in a doc or PR.</span>
+              <span class="why">Why it matters: the obvious paths silently write no file — this carries the route that actually works.</span>
             </div>
           </div>
           <div class="skill-chips" style="margin-top: 10px">
@@ -980,8 +996,14 @@
               <strong>provider API wrappers</strong>
               <span>Okta, Ping, AWS SSO, GitHub image upload, and project-board ordering are packaged as named operations.</span>
             </div>
+            <div class="skill-card">
+              <strong>provider porting</strong>
+              <span>Ports a Terraform provider's whole resource surface to an Ansible collection or a Kubernetes operator — with parity that's measured against the provider, not assumed.</span>
+            </div>
           </div>
           <div class="skill-chips" style="margin-top: 10px">
+            <span class="skill-chip">port-terraform-provider-to-ansible</span>
+            <span class="skill-chip">port-terraform-provider-to-k8s-operator</span>
             <span class="skill-chip">r2-sdlc-documentation-philosophy</span>
             <span class="skill-chip">r2-sdlc-testing-paradigm</span>
             <span class="skill-chip">aws-sso-creds</span>
@@ -1181,10 +1203,10 @@
       color: colors.skill,
       cls: "main-only secret-only",
       x: 730, y: 150, w: 154, h: 86,
-      copy: "Skills are the main capability layer. The repo ships owned skills such as `/viz`, audit helpers, local vision, deployment helpers, API wrappers, and video/transcript tools. `external-skills.json` reproduces community skills through `npx skills`.",
+      copy: "Skills are the main capability layer. The repo ships owned skills such as `/viz`, audit helpers, local vision, speech-to-text, browser capture, deployment helpers, API wrappers, provider porting, and video/transcript tools. `external-skills.json` reproduces community skills through `npx skills`.",
       bullets: [
         "Community set: Matt Pocock pipeline, ponytail, graphify, find-skills, and LN auditors.",
-        "Owned set: `/viz`, ai-setup-audit, local image/video reading, deploy/log helpers, API wrappers.",
+        "Owned set: `/viz`, ai-setup-audit, steelman, local image/video reading, transcribe-media, browser-capture, delegate-to-codex, deploy/log helpers, API wrappers, provider porting.",
         "Private overlays add company or personal skills without publishing secrets."
       ]
     },
