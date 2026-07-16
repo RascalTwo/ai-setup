@@ -467,9 +467,16 @@ committed and deployed there.
    confirm a layout you never looked at. Verify **serially**, or copy `latest.png` somewhere
    unique immediately after each run.
 2. **A poster's `og.auto.png` does not regenerate itself.** Edit a card and the *page* updates
-   while the unfurl image stays stale — so Slack keeps previewing the old pitch. Any poster whose
-   card changed **must** be re-run with `--og`, and the resulting `og.auto.png` must be committed
-   with it. (Confirm it's still exactly 1200×630: `sips -g pixelWidth -g pixelHeight <og.auto.png>`.)
+   while the unfurl image stays stale — so chat keeps previewing the old pitch. Any poster whose
+   card changed **must** be re-run with `--og`. Confirm it's still exactly 1200×630:
+   `sips -g pixelWidth -g pixelHeight <og.auto.png>`.
+
+   ⚠️ **`og.auto.png` is git-ignored** (`viz-pages/.gitignore`) — it is a **build input on disk**,
+   not a tracked artifact. Two consequences: committing is not what makes it live (`deploy.sh`
+   reads `viz-pages/` **off disk**, so regenerate *before* deploying, not before committing); and
+   a **fresh clone has no OG images at all** until `--og` is re-run per viz, which silently
+   degrades every unfurl and the lobby's grid thumbnails + auto-montage. If you ever publish from
+   a clean checkout, regenerate first.
 
 **Golden rule still applies:** present each change individually. Don't rewrite a page wholesale,
 and don't auto-apply.
