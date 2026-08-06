@@ -1,0 +1,6 @@
+**/__pycache__/
+node_modules/
+.DS_Store
+
+# viz mirror config: sibling-repo paths — local-only, never commit
+skills/viz/viz-pages/mirrors.json

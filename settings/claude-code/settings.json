@@ -1,0 +1,59 @@
+{
+  "cleanupPeriodDays": 99999,
+  "env": {},
+  "permissions": {
+    "deny": [
+      "AskUserQuestion",
+      "NotebookEdit"
+    ]
+  },
+  "model": "opus[1m]",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/herdr-agent-state.sh\" session",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "disableRemoteControl": true,
+  "disableArtifact": true,
+  "statusLine": {
+    "type": "command",
+    "command": "ccstatusline",
+    "padding": 0,
+    "refreshInterval": 30
+  },
+  "enabledPlugins": {
+    "code-modernization@claude-plugins-official": false,
+    "frontend-design@claude-plugins-official": false,
+    "pyright-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {},
+  "effortLevel": "high",
+  "awaySummaryEnabled": false,
+  "tui": "fullscreen",
+  "autoMemoryEnabled": false,
+  "skipDangerousModePermissionPrompt": true,
+  "autoCompactEnabled": false,
+  "agentPushNotifEnabled": true,
+  "voiceEnabled": true
+}

@@ -1,0 +1,2235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta name="viz:triaged" content="true">
+<meta charset="utf-8">
+<title>/viz — self-portrait</title>
+<!-- this viz practices what it depicts: it's a live dashboard of the running server -->
+<meta name="viz:posture" content="local">
+<meta name="viz:listed" content="listed">
+<meta name="viz:kind" content="operational">
+<meta name="viz:title" content="/viz — self-portrait">
+<meta name="viz:description" content="The viz skill rendering itself — runtime architecture, the publish lifecycle, and live stats across every root.">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-hi: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --accent: #58a6ff;
+    --green: #2ea043;
+    --orange: #f0883e;
+    --pink: #db61a2;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  body { padding: 24px; max-width: 1500px; margin: 0 auto; }
+  header { margin-bottom: 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+  header .head-copy { min-width: 0; }
+  header h1 {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    font-size: 26px;
+    margin: 0 0 8px;
+  }
+  header p { margin: 0; color: var(--muted); }
+  .accent { color: var(--accent); }
+  code { background: var(--surface); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+
+  .diagram-label {
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin: 8px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .diagram-label::before {
+    content: "";
+    width: 22px;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 24px;
+  }
+  svg { display: block; width: 100%; height: auto; }
+
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 16px;
+    align-items: start;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .panel-wide {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .slug-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr); /* one column — minmax(0,…) lets rows truncate instead of overflowing */
+  }
+  /* Grid / cards view — parity with the lobby's card grid. Same row markup, CSS reflow only:
+     the thumb becomes a full-width hero, slug-id the body, slug-meta a wrapped footer. The
+     drawer (a sibling of .slug) spans the full row so it isn't wedged into a single cell. */
+  .slug-grid.cards { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+  .slug-grid.cards .slug {
+    flex-direction: column; align-items: stretch; justify-content: flex-start;
+    gap: 0; padding: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--bg);
+  }
+  .slug-grid.cards .slug-thumb {
+    width: 100%; aspect-ratio: 1200 / 630; align-self: stretch;
+    border: none; border-bottom: 1px solid var(--border); border-radius: 0;
+  }
+  .slug-grid.cards .slug-id { padding: 12px 14px 0; }
+  .slug-grid.cards .slug-meta { flex-wrap: wrap; justify-content: flex-start; gap: 10px 14px; padding: 10px 14px 12px; }
+  .slug-grid.cards .slug-size { min-width: 0; text-align: left; }
+  .slug-grid.cards .slug-drawer { grid-column: 1 / -1; }
+  .axes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .axis-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .axis-card.posture { border-left: 3px solid var(--green); }
+  .axis-card.listed  { border-left: 3px solid var(--accent); }
+  .axis-card.kind    { border-left: 3px solid var(--orange); }
+  .axis-card.triaged { border-left: 3px solid #d29922; }
+  .axis-card-h {
+    font-family: ui-monospace, monospace;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .axis-sub { color: var(--muted); font-weight: 400; font-size: 11px; }
+  .axis-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .axis-card p { margin: 0; font-size: 12.5px; color: #cdd6e0; line-height: 1.55; }
+  .axis-card b { font-family: ui-monospace, monospace; font-size: 11.5px; }
+  .axis-card b.g { color: var(--green); }
+  .axis-card b.p { color: var(--pink); }
+  .axis-card b.a { color: var(--accent); }
+  .axis-card b.o { color: var(--orange); }
+  .axis-card b.m { color: var(--muted); }
+  .axis-card b.r { color: #f85149; }
+  .axes-foot { margin: 14px 0 0; font-size: 12px; color: var(--muted); line-height: 1.55; }
+  .axes-foot b { color: var(--text); }
+  .commits-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .panel h2 {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+  }
+  .panel-wide h2 {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+  }
+  .row:last-child { border-bottom: none; }
+  .row .k { color: var(--muted); }
+
+  .commit {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .commit:last-child { border-bottom: none; }
+  .commit-hash {
+    font-family: ui-monospace, monospace;
+    color: var(--accent);
+    margin-right: 8px;
+  }
+  .commit-when { color: var(--muted); font-size: 11px; }
+
+  .slug {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    gap: 12px;
+  }
+  .slug:last-child { border-bottom: none; }
+  .slug-id {
+    overflow: hidden;
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .slug-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .slug-name:hover { text-decoration: underline; }
+  .slug-host {
+    font-size: 10px;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Full path, revealed only while a search is active so path-only matches are visible. */
+  .slug-path {
+    font-size: 10px;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: ui-monospace, monospace;
+  }
+
+  /* Native search box — lives outside #slugs, so its value & focus survive the
+     5s re-render that wipes the browser's own Ctrl+F highlights. */
+  .slug-search-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    transition: border-color 0.15s;
+  }
+  .slug-search-wrap:focus-within { border-color: var(--accent); }
+  .search-icon { display: inline-flex; color: var(--muted); }
+  .search-icon svg { width: 14px; height: 14px; display: block; }
+  #slug-search {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    width: 240px;
+  }
+  #slug-search::placeholder { color: var(--muted); }
+  /* Hide the native clear "x" of type=search so our Esc-to-clear is the one path. */
+  #slug-search::-webkit-search-cancel-button { -webkit-appearance: none; }
+  .search-count {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 0;
+    white-space: nowrap;
+  }
+  .search-count.zero { color: #f85149; }
+  #slugs mark {
+    background: rgba(240,136,62,0.32);
+    color: var(--text);
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 9px;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  .badge.central  { background: rgba(88,166,255,0.16);  color: var(--accent); border: 1px solid rgba(88,166,255,0.4); }
+  .badge.external { background: rgba(240,136,62,0.16);  color: var(--orange); border: 1px solid rgba(240,136,62,0.4); }
+
+  /* per-viz axes — posture (access) · listed (advertisement) · kind (shelf-life) */
+  .axis {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .axis svg { width: 10px; height: 10px; display: block; }
+  .axis.local    { background: rgba(125,133,144,0.14); color: var(--muted);  border: 1px solid rgba(125,133,144,0.4); }
+  .axis.public   { background: rgba(46,160,67,0.16);   color: var(--green);  border: 1px solid rgba(46,160,67,0.45); }
+  .axis.private  { background: rgba(219,97,162,0.16);  color: var(--pink);   border: 1px solid rgba(219,97,162,0.45); }
+  .axis.untagged { background: rgba(248,81,73,0.14);   color: #f85149;       border: 1px solid rgba(248,81,73,0.45); }
+  .axis.unlisted { background: transparent;            color: var(--muted);  border: 1px dashed rgba(125,133,144,0.5); }
+  .axis.op       { background: rgba(240,136,62,0.14);  color: var(--orange); border: 1px solid rgba(240,136,62,0.45); }
+  .slug-axes { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; }
+  /* Description marker — native title tooltip on hover, no scroll noise. */
+  .desc-i { font-size: 10px; color: var(--muted); margin-left: 5px; cursor: help; }
+  .slug-tags { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .tag-chip { font-size: 10px; color: var(--muted); background: var(--surface-hi);
+    border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; white-space: nowrap; }
+  .tag-chip.more { cursor: help; }
+  .slug-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .slug-size {
+    font-size: 11px;
+    min-width: 64px;
+    text-align: right;
+  }
+  .slug-age {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 62px;
+    cursor: help;
+  }
+  .slug-age svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+  .icon-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    color: var(--muted);
+  }
+  .icon-badge svg { width: 16px; height: 16px; display: block; }
+  .icon-badge .count {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background: var(--accent);
+    color: #0d1117;
+    border-radius: 8px;
+    min-width: 14px;
+    height: 14px;
+    font-size: 9px;
+    line-height: 14px;
+    font-family: ui-monospace, monospace;
+    padding: 0 3px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .icon-badge.commits .count { background: var(--orange); }
+  .icon-badge.commits .count.pending { background: var(--border); color: var(--muted); }
+  .icon-only.api-on  { color: var(--green); }
+  .icon-only.api-off { color: var(--border); }
+  .icon-only.mirror-on  { color: var(--pink); }
+  .icon-only.mirror-src { color: var(--accent); }
+  .icon-only.mirror-off { color: var(--border); }
+  .icon-only.hero-on  { color: #bc8cff; }
+  .icon-only.hero-off { color: var(--border); }
+  a.icon-only { text-decoration: none; }
+  .icon-only svg { width: 16px; height: 16px; display: block; }
+  /* OG preview thumbnail at the row's left edge — only shown when an og image exists. */
+  .slug-thumb {
+    flex: none;
+    align-self: stretch;        /* height = the row's content height (driven by the text column, not the image) */
+    width: 84px;                /* fixed → left column stays aligned; the image is a background, so it can't inflate the row */
+    min-height: 0;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background-color: var(--panel);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .slug-thumb.empty { border-style: dashed; opacity: 0.4; }
+
+  .slug-totals {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 4px 0 14px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    flex-wrap: wrap;
+  }
+  .total-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .total-item svg { width: 15px; height: 15px; display: block; }
+  .total-item .total-value {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .total-item .total-split {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 11px;
+  }
+  .total-item.slugs   svg { color: var(--accent); }
+  .total-item.files   svg { color: var(--accent); }
+  .total-item.commits svg { color: var(--orange); }
+  .total-item.size    svg { color: var(--muted); }
+  .total-item.posture svg { color: var(--green); }
+
+  .pulse-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    margin-right: 8px;
+    box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.5);
+    animation: pulse 2s ease-out infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.7); }
+    70%  { box-shadow: 0 0 0 8px rgba(46, 160, 67, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(46, 160, 67, 0); }
+  }
+
+  .btn-rescan {
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--text);
+    background: var(--surface-hi);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 7px 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .btn-rescan:hover:not(:disabled) { background: #232a33; }
+  .btn-rescan:disabled { opacity: 0.6; cursor: progress; border-color: var(--border); }
+  .btn-rescan svg { width: 14px; height: 14px; display: block; }
+  .btn-rescan.scanning svg { animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .dash-actions { display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex:none; }
+  /* Preview trigger lives inline in the scope filter — compact to match the control row. */
+  .ctl-btn {
+    font: inherit; font-size:11px; color:var(--text);
+    background:var(--surface-hi); border:1px solid var(--accent); border-radius:5px;
+    padding:2px 8px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
+  }
+  .ctl-btn[hidden] { display:none; } /* author display:inline-flex would otherwise beat UA [hidden] */
+  .ctl-btn:hover:not(:disabled) { background:#232a33; }
+  .ctl-btn:disabled { opacity:.5; cursor:not-allowed; border-color:var(--border); }
+  .ctl-btn.scanning { cursor:progress; }
+  .ctl-btn svg { width:12px; height:12px; display:block; }
+  .ctl-btn.scanning svg { animation: spin 0.9s linear infinite; }
+  .preview-result { font-family:ui-monospace, monospace; font-size:11px; color:var(--muted); }
+  .preview-result a { color:var(--accent); text-decoration:none; }
+  .preview-result a:hover { text-decoration:underline; }
+  .preview-result.err { color:var(--orange); }
+
+  .rescan-note {
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--muted);
+    font-weight: 400;
+    margin-left: 10px;
+  }
+
+  /* SVG */
+  .box rect {
+    fill: var(--surface);
+    stroke: var(--border);
+    stroke-width: 1.5;
+    rx: 8;
+  }
+  .box.server rect { fill: var(--surface-hi); stroke: var(--accent); stroke-width: 2; }
+  .box.browser rect { fill: var(--surface-hi); stroke: var(--green); }
+  .box.repo rect { fill: var(--surface-hi); stroke: var(--orange); }
+  .box.repo.central rect { stroke: var(--accent); }
+  .box.user rect, .box.claude rect { stroke: var(--pink); }
+  .box.source rect  { fill: var(--surface-hi); stroke: var(--accent); }
+  .box.publish rect { fill: var(--surface-hi); stroke: var(--pink); stroke-width: 2; }
+  .box.gate rect    { fill: rgba(248,81,73,0.06); stroke: #f85149; stroke-dasharray: 5 3; }
+  .box.host rect    { fill: var(--surface-hi); stroke: var(--green); stroke-width: 2; }
+  .box.skip rect    { fill: var(--surface); stroke: var(--muted); stroke-dasharray: 4 3; }
+  .box.pub rect     { fill: var(--surface-hi); stroke: var(--green); }
+  .box.prv rect     { fill: var(--surface-hi); stroke: var(--pink); }
+  .box.tape rect    { fill: var(--surface-hi); stroke: var(--orange); }
+  .box .meta-posture { fill: var(--green); }
+  .box .meta-listed  { fill: var(--accent); }
+  .box .meta-kind    { fill: var(--orange); }
+  .arrow.pink path   { stroke: var(--pink); }
+  .arrow.green path  { stroke: var(--green); }
+  .arrow.dead path   { stroke: var(--muted); stroke-dasharray: 3 4; }
+  .box .title {
+    fill: var(--text);
+    font-family: ui-monospace, monospace;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .box .sub {
+    fill: var(--muted);
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+  }
+  .box .l10 {
+    fill: var(--muted);
+    font-family: ui-monospace, monospace;
+    font-size: 10px;
+  }
+
+  .subbox rect {
+    fill: var(--bg);
+    stroke: var(--border);
+    stroke-width: 1;
+    rx: 5;
+  }
+  .subbox.router rect   { stroke: var(--accent); }
+  .subbox.sse rect      { stroke: var(--green); }
+  .subbox.scanner rect  { stroke: var(--orange); }
+  .subbox.registry rect { stroke: var(--pink); }
+  .subbox .stitle {
+    fill: var(--text);
+    font-family: ui-monospace, monospace;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .subbox .ssub {
+    fill: var(--muted);
+    font-family: ui-monospace, monospace;
+    font-size: 10px;
+  }
+
+  .arrow path {
+    fill: none;
+    stroke: #7d8590;
+    stroke-width: 1.5;
+  }
+  .arrow.sse path {
+    stroke: var(--green);
+    stroke-dasharray: 5 4;
+    animation: dash 1.2s linear infinite;
+  }
+  .arrow.flow path {
+    stroke-dasharray: 6 4;
+    animation: dash 2s linear infinite;
+  }
+  .arrow.internal path {
+    stroke: var(--muted);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+  }
+  .arrow.pipeline path {
+    stroke: var(--green);
+    stroke-width: 1.25;
+    stroke-dasharray: 4 3;
+    animation: dash 1.5s linear infinite;
+  }
+  .arrow.scan path {
+    stroke: var(--orange);
+    stroke-width: 1.25;
+    stroke-dasharray: 4 3;
+    animation: dash 1.5s linear infinite;
+  }
+  @keyframes dash { to { stroke-dashoffset: -20; } }
+  .arrow text {
+    fill: var(--muted);
+    font-family: ui-monospace, monospace;
+    font-size: 10.5px;
+  }
+  .arrow text.lbl-accent { fill: var(--accent); }
+  .arrow text.lbl-orange { fill: var(--orange); }
+
+  /* ---- surface management drawer (ADR 0009) ---- */
+  .manage-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 6px; cursor: pointer; font-size: 13px; line-height: 1;
+    padding: 2px 6px; opacity: 0; transition: opacity .12s, color .12s, border-color .12s;
+  }
+  .slug:hover .manage-btn { opacity: 1; }
+  .manage-btn:hover { color: var(--accent); border-color: var(--accent); }
+  /* Sink rows have no ⋯; reserve its exact box (invisible, hover-proof) so the meta cluster stays aligned. */
+  .manage-btn.spacer { visibility: hidden; }
+
+  .slug-drawer {
+    grid-column: 1 / -1; /* #slugs is a 2-col grid — span the full width as a band */
+    padding: 10px 14px 12px; margin: -1px 0 0; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 0 0 8px 8px;
+    display: flex; flex-direction: column; gap: 8px;
+    animation: drawer-in .12s ease-out;
+  }
+  @keyframes drawer-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+  .dg-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .dg { display: inline-flex; align-items: center; gap: 5px; }
+  .dg-l { color: var(--muted); font-size: 11px; min-width: 52px; text-transform: lowercase; }
+  .dg-b {
+    background: var(--surface-hi); border: 1px solid var(--border); color: var(--text);
+    border-radius: 5px; cursor: pointer; font: inherit; font-size: 11.5px; padding: 3px 9px;
+    transition: background .1s, border-color .1s, color .1s;
+  }
+  .dg-b:hover { border-color: var(--accent); }
+  .dg-b.on { background: rgba(88,166,255,0.16); border-color: var(--accent); color: var(--accent); }
+  .dg-b.warn:hover { border-color: var(--orange); color: var(--orange); }
+  .dg-b.armed { background: rgba(240,136,62,0.18); border-color: var(--orange); color: var(--orange); }
+  .d-in, .d-sel {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    border-radius: 5px; font: inherit; font-size: 11.5px; padding: 3px 6px; max-width: 240px;
+  }
+  .d-in:focus, .d-sel:focus { outline: none; border-color: var(--accent); }
+  .d-in.wide { max-width: none; flex: 1; min-width: 180px; }
+  /* A .dg flagged .grow stretches to fill its row, and its input/select fills the dg —
+     so rename/move/title/desc use the band's full width instead of capping at ~180px. */
+  .dg.grow { flex: 1; }
+  .dg.grow .d-in, .dg.grow .d-sel { flex: 1; min-width: 0; max-width: none; }
+  .tag-edit { flex: 1; align-items: flex-start; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; flex: 1;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 3px 5px; min-height: 26px; }
+  .chips:focus-within { border-color: var(--accent); }
+  .chip { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; color: var(--text);
+    background: var(--surface-hi); border: 1px solid var(--border); border-radius: 4px; padding: 1px 3px 1px 6px; }
+  .chip-x { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 10px; padding: 0 2px; line-height: 1; }
+  .chip-x:hover { color: var(--pink); }
+  .tag-input { flex: 1; min-width: 80px; background: transparent; border: none; outline: none;
+    color: var(--text); font: inherit; font-size: 11.5px; padding: 2px; }
+  .mirror-list { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .mchip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted);
+    background: var(--surface-hi); border: 1px solid var(--border); border-radius: 5px; padding: 2px 4px 2px 8px; }
+  .mchip i { color: var(--accent); font-style: normal; }
+  .mx { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 0 3px; }
+  .mx:hover, .mx.armed { color: var(--orange); }
+  .mz { color: var(--muted); font-size: 11px; }
+  .drawer-status { font-size: 11px; color: var(--muted); min-height: 14px; font-family: ui-monospace, monospace; }
+  .drawer-status.ok  { color: var(--green); }
+  .drawer-status.err { color: var(--pink); }
+
+  /* ---- filter + sort controls ---- */
+  .slug-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 4px 0 12px; font-size: 11px; }
+  .slug-controls .ctl { display: inline-flex; align-items: center; gap: 5px; }
+  .slug-controls label { color: var(--muted); }
+  .slug-controls select, #sort-dir, .ctl-reset {
+    background: var(--surface-hi); border: 1px solid var(--border); color: var(--text);
+    border-radius: 5px; font: inherit; font-size: 11px; padding: 2px 6px; cursor: pointer;
+    transition: border-color .1s, color .1s;
+  }
+  .slug-controls select:hover, #sort-dir:hover, .ctl-reset:hover { border-color: var(--accent); }
+  .slug-controls select:focus { outline: none; border-color: var(--accent); }
+  .slug-controls select.active { border-color: var(--accent); color: var(--accent); }
+  #sort-dir { min-width: 24px; text-align: center; line-height: 1; }
+  #f-scope { max-width: 240px; } /* a selected container path can be long — cap the closed select; the dropdown still shows full text */
+  .ctl-sep { width: 1px; height: 16px; background: var(--border); }
+  .ctl-check { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); cursor: pointer; }
+  .ctl-check.active { color: var(--accent); }
+  .ctl-check input { accent-color: var(--accent); margin: 0; }
+  .ctl-reset { color: var(--muted); }
+  /* tag filter: dropdown appends removable pills (OR within tags — parity with the lobby's Tags facet) */
+  .tag-pills { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  .tag-pill { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; color: var(--accent);
+    background: #11203a; border: 1px solid var(--accent); border-radius: 999px; padding: 1px 4px 1px 8px; }
+  .tag-pill button { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 10px; padding: 0 1px; line-height: 1; }
+  .tag-pill button:hover { color: var(--pink); }
+  /* list / grid view toggle */
+  .view-seg { display: inline-flex; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; margin-left: auto; }
+  .view-seg button { font: inherit; font-size: 11px; background: var(--surface-hi); color: var(--muted);
+    border: none; padding: 3px 10px; cursor: pointer; }
+  .view-seg button + button { border-left: 1px solid var(--border); }
+  .view-seg button.on { color: var(--accent); background: #11203a; }
+
+  /* ============ tab shell ============ */
+  .tabbar { display:flex; gap:4px; margin:0 0 26px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .tabbar button { appearance:none; background:none; border:none; color:var(--muted); font:inherit;
+    font-size:14px; font-weight:600; padding:10px 16px; cursor:pointer; border-bottom:2px solid transparent;
+    margin-bottom:-1px; display:flex; align-items:center; gap:7px; }
+  .tabbar button:hover { color:var(--text); }
+  .tabbar button.active { color:var(--text); border-bottom-color:var(--accent); }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; animation:tabfade .25s ease; }
+  @keyframes tabfade { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+  .dash-intro { display:flex; align-items:flex-start; justify-content:space-between; gap:24px; margin-bottom:20px; }
+  .dash-intro p { margin:0; color:var(--muted); max-width:920px; }
+
+  /* ============ prose (README / Quick Start) ============ */
+  .prose { max-width:none; }
+  .prose > h2 { font-size:20px; margin:38px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+  .prose h3 { font-size:15px; margin:22px 0 6px; color:var(--text); }
+  .prose p { margin:0 0 12px; color:#c9d1d9; }
+  .prose ul { margin:0 0 12px; padding-left:22px; color:#c9d1d9; }
+  .prose li { margin:5px 0; }
+  .prose strong, .prose b { color:var(--text); }
+  .prose em { color:#c9d1d9; }
+  .prose a { color:var(--accent); text-decoration:none; }
+  .prose a:hover { text-decoration:underline; }
+  .prose pre { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px 14px;
+    overflow-x:auto; margin:0 0 12px; }
+  .prose pre code { background:none; padding:0; font-size:12.5px; color:#e6edf3; }
+  .prose .lead { font-size:16px; line-height:1.55; color:var(--muted); }
+  .prose .lead code { font-size:14px; }
+
+  /* first-visit jump strip */
+  .jump { display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:var(--surface-hi);
+    border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:8px;
+    padding:12px 16px; margin:0 0 28px; }
+  .jump b { color:var(--text); }
+  .jump span { color:var(--muted); }
+  .jump button.go { appearance:none; background:var(--accent); color:#04101f; border:none; font:inherit;
+    font-weight:700; font-size:13px; padding:6px 14px; border-radius:6px; cursor:pointer; }
+  .jump button.go:hover { filter:brightness(1.1); }
+
+  /* walkthrough step list */
+  .steps { counter-reset:step; padding:0; margin:6px 0 12px; list-style:none; }
+  .steps > li { counter-increment:step; position:relative; padding:14px 0 14px 46px; border-top:1px solid var(--border); }
+  .steps > li::before { content:counter(step); position:absolute; left:0; top:13px; width:30px; height:30px;
+    border-radius:50%; background:var(--surface); border:1px solid var(--border); color:var(--accent);
+    font-weight:700; display:grid; place-items:center; font-size:14px; }
+  .steps h3 { margin:0 0 4px; }
+  .steps p { margin:0; }
+  .steps .feat { display:inline-block; font-size:11px; color:var(--muted); background:var(--surface);
+    border:1px solid var(--border); border-radius:20px; padding:1px 10px; margin-left:8px; vertical-align:middle;
+    font-weight:400; }
+
+  /* feature teaser grid */
+  .teasers { display:grid; grid-template-columns:repeat(auto-fill, minmax(228px,1fr)); gap:12px; margin:14px 0; }
+  .teaser { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+  .teaser h3 { margin:0 0 5px; font-size:14px; }
+  .teaser p { margin:0; font-size:12.5px; color:var(--muted); }
+  .teaser .k { font-family:ui-monospace, monospace; font-size:11px; color:var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-copy">
+    <h1>/viz <span class="accent">— self-portrait</span></h1>
+    <p>The skill rendering itself — an <strong>interactive guide</strong> to what <code>/viz</code> is and how to
+       use it, and a <strong>live dashboard</strong> of the running server. New here? Start with the README.</p>
+  </div>
+</header>
+
+<nav class="tabbar" role="tablist">
+  <button id="tabbtn-readme" onclick="showTab('readme')">📖 README</button>
+  <button id="tabbtn-quickstart" onclick="showTab('quickstart')">⚡ Quick Start</button>
+  <button id="tabbtn-dashboard" onclick="showTab('dashboard')">📊 Dashboard</button>
+</nav>
+
+<!-- ================= README ================= -->
+<section id="tab-readme" class="tab-panel">
+  <div class="prose">
+    <div class="jump" id="jump-qs">
+      <b>⚡ Just want to get going?</b>
+      <span>Skip the story — install and first viz in under a minute.</span>
+      <button class="go" onclick="showTab('quickstart')">Quick Start →</button>
+    </div>
+
+    <p class="lead"><code>/viz</code> is a skill that lets an AI coding agent <strong>show</strong> you
+      something — a chart, a graph, a 3D scene, a state machine, a dashboard, an animated explainer — as a live,
+      hot-reloading web page instead of a wall of text. This page <em>is</em> that skill rendering itself: read it
+      here, then open the <a href="#dashboard" onclick="showTab('dashboard');return false">Dashboard</a> to watch
+      the real running system.</p>
+
+    <h2>The problem</h2>
+    <p>You ask your AI assistant to “show me how these services talk,” or “visualize this distribution,” or “draw
+      the state machine.” What comes back?</p>
+    <ul>
+      <li>ASCII art in the terminal that falls apart past ten boxes,</li>
+      <li>a static SVG blob you can’t poke at, dumped into the chat and gone by the next message, or</li>
+      <li>“I can’t really visualize that here.”</li>
+    </ul>
+    <p>The terminal can’t render a real graph. Chat artifacts are throwaway and stateless. And there’s no
+      <strong>loop</strong> — no way for the agent to make a picture, actually see how it came out, and fix it.</p>
+
+    <h2>The solution</h2>
+    <p>Give the agent a real browser canvas. <code>/viz</code> serves whatever HTML/CSS/JS it writes at a live
+      local URL that <strong>hot-reloads</strong> on every save, keeps <strong>every version in git</strong>, and
+      lets the agent screenshot its own output to check the render. One skill turns “describe it in words” into
+      “build it, see it, refine it” — for anything HTML and JS can express, which is basically anything.</p>
+    <p>Same reason a whiteboard beats a paragraph: some ideas are shaped like pictures.</p>
+
+    <h2>How it works <span style="font-weight:400;font-size:13px;color:var(--muted)">— the 20-second version</span></h2>
+    <p>A single tiny Bun web server runs in the background and serves your visualizations from many folders at
+      once: a central scratch library, plus any <code>viz-pages/</code> folder inside your own repos. Each viz is
+      a folder with an <code>index.html</code> (optionally a live data backend). Save the file → the browser
+      reloads itself. When you’re happy, one command bakes a viz into a single self-contained HTML file you can
+      host anywhere.</p>
+    <p><strong>You never have to hold any of this in your head</strong> — the agent drives it. Want the full
+      picture? The architecture diagrams <strong>below</strong> break down the runtime and publish lifecycle; the
+      <a href="#dashboard" onclick="showTab('dashboard');return false">Dashboard</a> shows it running live.</p>
+
+  </div>
+
+  <!-- Under the hood — architecture, relocated from the old Dashboard tab -->
+  <h2 style="font-size:22px; margin:10px 0 4px; letter-spacing:-.01em;">Under the hood</h2>
+  <p style="color:var(--muted); max-width:none; margin:0 0 18px;">How the machine actually works — the runtime that serves and hot-reloads your vizzes, then the publish lifecycle that ships them. The live <a href="#dashboard" style="color:var(--accent);text-decoration:none" onclick="showTab('dashboard');return false">Dashboard</a> puts all of this to work against your real library.</p>
+
+<h2 class="diagram-label">Runtime — one server, many roots, hot-reload</h2>
+<div class="diagram">
+  <svg viewBox="0 0 1180 1080" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#7d8590" />
+      </marker>
+      <marker id="ah-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#2ea043" />
+      </marker>
+      <marker id="ah-pink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#db61a2" />
+      </marker>
+      <marker id="ah-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#f0883e" />
+      </marker>
+      <marker id="ah-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#58a6ff" />
+      </marker>
+      <marker id="ah-mute" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#7d8590" />
+      </marker>
+    </defs>
+
+    <!-- ===================== TOP: User → Claude → bootstrap ===================== -->
+
+    <!-- User -->
+    <g class="box user" transform="translate(40, 30)">
+      <rect width="160" height="60"/>
+      <text x="80" y="30" text-anchor="middle" class="title">User</text>
+      <text x="80" y="48" text-anchor="middle" class="sub">types /viz &lt;slug&gt;</text>
+    </g>
+
+    <!-- Claude -->
+    <g class="box claude" transform="translate(250, 30)">
+      <rect width="160" height="60"/>
+      <text x="80" y="30" text-anchor="middle" class="title">Claude</text>
+      <text x="80" y="48" text-anchor="middle" class="sub">runs the skill</text>
+    </g>
+
+    <!-- Bootstrap: forks central vs --local -->
+    <g class="box" transform="translate(150, 140)">
+      <rect width="360" height="156"/>
+      <text x="180" y="26" text-anchor="middle" class="title">bootstrap.ts</text>
+      <line x1="14" y1="38" x2="346" y2="38" stroke="#30363d"/>
+      <!-- central fork -->
+      <text x="20"  y="60" text-anchor="start" class="sub" style="fill:#58a6ff">default → CENTRAL</text>
+      <text x="20"  y="76" text-anchor="start" class="sub">mint ~/.viz-pages/&lt;slug&gt;/</text>
+      <text x="20"  y="92" text-anchor="start" class="sub">commit to central git</text>
+      <!-- local fork -->
+      <text x="186" y="60" text-anchor="start" class="sub" style="fill:#f0883e">--local [dir] → HOST</text>
+      <text x="186" y="76" text-anchor="start" class="sub">&lt;repo&gt;/viz-pages/&lt;slug&gt;/</text>
+      <text x="186" y="92" text-anchor="start" class="sub">register .discovered.json</text>
+      <text x="186" y="108" text-anchor="start" class="sub">print host `git add` hint</text>
+      <line x1="180" y1="44" x2="180" y2="112" stroke="#30363d"/>
+      <line x1="14" y1="118" x2="346" y2="118" stroke="#30363d"/>
+      <text x="180" y="132" text-anchor="middle" class="sub" style="fill:#7d8590">+ flags: --deck · --poster · --global</text>
+      <text x="180" y="148" text-anchor="middle" class="l10" style="fill:#7d8590">slide deck · self-hero OG card · force central in a repo</text>
+    </g>
+
+    <!-- ===================== CENTER: Bun server internals ===================== -->
+    <g transform="translate(300, 300)">
+      <g class="box server">
+        <rect width="560" height="600"/>
+        <text x="280" y="32" text-anchor="middle" class="title">Bun Server  ·  singleton</text>
+        <text x="280" y="52" text-anchor="middle" class="sub">127.0.0.1:5180 only 🔒  ·  serves MANY roots  ·  Bun.serve · idleTimeout 255s</text>
+        <line x1="16" y1="66" x2="544" y2="66" stroke="#30363d"/>
+        <text x="16"  y="588" text-anchor="start" class="sub" id="server-containers" style="fill:#f0883e">containers: …</text>
+        <text x="544" y="588" text-anchor="end"   class="sub" id="server-uptime" style="fill:#58a6ff">uptime: …</text>
+      </g>
+
+      <!-- Router: longest-known-id-prefix matching -->
+      <g class="subbox router" transform="translate(16, 84)">
+        <rect width="528" height="50"/>
+        <text x="264" y="21" text-anchor="middle" class="stitle">Router · longest-known-id-prefix match</text>
+        <text x="264" y="38" text-anchor="middle" class="ssub">/_health · /_rescan · /_kit/* · /&lt;id&gt;/* · /&lt;id&gt;/api/* · /&lt;id&gt;/_reload</text>
+      </g>
+
+      <!-- Slug map -->
+      <g class="subbox router" transform="translate(16, 150)">
+        <rect width="258" height="62"/>
+        <text x="129" y="22" text-anchor="middle" class="stitle">Slug map · id → abs dir</text>
+        <text x="129" y="39" text-anchor="middle" class="ssub">sortedIds longest-first</text>
+        <text x="129" y="54" text-anchor="middle" class="ssub">rebuilt on boot/scan/_rescan</text>
+      </g>
+
+      <!-- Shadow registry -->
+      <g class="subbox registry" transform="translate(286, 150)">
+        <rect width="258" height="62"/>
+        <text x="129" y="22" text-anchor="middle" class="stitle">Shadow registry</text>
+        <text x="129" y="39" text-anchor="middle" class="ssub">.discovered.json · uncommitted</text>
+        <text x="129" y="54" text-anchor="middle" class="ssub">central seeded in code</text>
+      </g>
+
+      <!-- Deep scanner -->
+      <g class="subbox scanner" transform="translate(16, 228)">
+        <rect width="528" height="70"/>
+        <text x="264" y="22" text-anchor="middle" class="stitle">Deep scanner · walks $HOME (boot + /_rescan)</text>
+        <text x="264" y="39" text-anchor="middle" class="ssub">finds every viz-pages/ · skips node_modules/.git/Library/dot-folders</text>
+        <text x="264" y="55" text-anchor="middle" class="ssub">follows symlinks (loop-guarded) · prune on match · depth cap 12</text>
+      </g>
+
+      <!-- Static handler -->
+      <g class="subbox" transform="translate(16, 314)">
+        <rect width="258" height="84"/>
+        <text x="129" y="22" text-anchor="middle" class="stitle">Static handler</text>
+        <text x="129" y="40" text-anchor="middle" class="ssub">injects reload &lt;script&gt;</text>
+        <text x="129" y="55" text-anchor="middle" class="ssub">with the viz's id baked in</text>
+        <text x="129" y="70" text-anchor="middle" class="ssub">blocks ../ path-escape</text>
+      </g>
+
+      <!-- API loader -->
+      <g class="subbox" transform="translate(286, 314)">
+        <rect width="258" height="84"/>
+        <text x="129" y="22" text-anchor="middle" class="stitle">API loader</text>
+        <text x="129" y="40" text-anchor="middle" class="ssub">dynamic import()</text>
+        <text x="129" y="55" text-anchor="middle" class="ssub">&lt;id-dir&gt;/api.ts</text>
+        <text x="129" y="70" text-anchor="middle" class="ssub">?t=… cache-bust</text>
+      </g>
+
+      <!-- SSE pump -->
+      <g class="subbox sse" transform="translate(16, 414)">
+        <rect width="528" height="48"/>
+        <text x="264" y="20" text-anchor="middle" class="stitle">SSE pump · /&lt;id&gt;/_reload</text>
+        <text x="264" y="37" text-anchor="middle" class="ssub">Set&lt;client&gt; · per-id filter · "data: reload\n\n"</text>
+      </g>
+
+      <!-- Debouncer -->
+      <g class="subbox" transform="translate(16, 478)">
+        <rect width="528" height="36"/>
+        <text x="264" y="23" text-anchor="middle" class="stitle">Debouncer · coalesce 100 ms per id</text>
+      </g>
+
+      <!-- per-container fs.watch -->
+      <g class="subbox" transform="translate(16, 530)">
+        <rect width="528" height="36"/>
+        <text x="264" y="23" text-anchor="middle" class="stitle">fs.watch — one watcher PER container (recursive, dotfiles skipped)</text>
+      </g>
+
+      <!-- Router fan-out arrows -->
+      <g class="arrow internal"><path d="M 145 134 L 145 150" marker-end="url(#ah-mute)"/></g>
+      <g class="arrow internal"><path d="M 415 134 L 415 150" marker-end="url(#ah-mute)"/></g>
+      <!-- registry → scanner (scanner unions into registry) and registry → slug map -->
+      <g class="arrow internal"><path d="M 415 212 L 415 228" marker-end="url(#ah-mute)"/></g>
+      <g class="arrow internal"><path d="M 145 212 L 145 314" marker-end="url(#ah-mute)"/></g>
+      <!-- scanner → registry (writes back) -->
+      <g class="arrow scan"><path d="M 360 228 C 360 222, 360 216, 360 212" marker-end="url(#ah-orange)"/></g>
+      <!-- router → static/api -->
+      <g class="arrow internal"><path d="M 415 298 L 415 314" marker-end="url(#ah-mute)"/></g>
+
+      <!-- Reload pipeline: fs.watch → Debouncer → SSE pump -->
+      <g class="arrow pipeline"><path d="M 280 530 L 280 514" marker-end="url(#ah-green)"/></g>
+      <g class="arrow pipeline"><path d="M 280 478 L 280 462" marker-end="url(#ah-green)"/></g>
+    </g>
+
+    <!-- ===================== RIGHT: Browser ===================== -->
+    <g class="box browser" transform="translate(930, 470)">
+      <rect width="220" height="210"/>
+      <text x="110" y="34" text-anchor="middle" class="title">Browser</text>
+      <text x="110" y="62" text-anchor="middle" class="sub">renders &lt;id&gt;/index.html</text>
+      <text x="110" y="86" text-anchor="middle" class="sub">fetch /&lt;id&gt;/api/*</text>
+      <text x="110" y="110" text-anchor="middle" class="sub">GET /_rescan</text>
+      <text x="110" y="134" text-anchor="middle" class="sub">EventSource(/&lt;id&gt;/_reload)</text>
+      <text x="110" y="158" text-anchor="middle" class="sub">→ location.reload()</text>
+      <text x="110" y="190" text-anchor="middle" class="sub" style="fill:#2ea043">← you are here</text>
+    </g>
+
+    <!-- ===================== BOTTOM: multiple roots, distinct git repos ===================== -->
+
+    <!-- Central library (single git repo) -->
+    <g class="box repo central" transform="translate(120, 940)">
+      <rect width="360" height="116"/>
+      <text x="180" y="30" text-anchor="middle" class="title">Central library</text>
+      <text x="180" y="50" text-anchor="middle" class="sub">~/.viz-pages/  (or ~/.claude/viz-pages/)</text>
+      <text x="180" y="70" text-anchor="middle" class="sub" style="fill:#58a6ff">its OWN git repo · committed by bootstrap</text>
+      <text x="180" y="96" text-anchor="middle" class="sub" id="central-stats" style="fill:#58a6ff">… central vizzes · … commits</text>
+    </g>
+
+    <!-- External host repos (each its own git repo) -->
+    <g class="box repo" transform="translate(700, 940)">
+      <rect width="380" height="116"/>
+      <text x="190" y="30" text-anchor="middle" class="title">Host repos  (N discovered)</text>
+      <text x="190" y="50" text-anchor="middle" class="sub">&lt;any-repo&gt;/viz-pages/&lt;slug&gt;/</text>
+      <text x="190" y="70" text-anchor="middle" class="sub" style="fill:#f0883e">EACH its own git repo · committed by host</text>
+      <text x="190" y="96" text-anchor="middle" class="sub" id="external-stats" style="fill:#f0883e">… external vizzes across … repos</text>
+    </g>
+
+    <!-- ===================== ARROWS ===================== -->
+
+    <!-- User → Claude -->
+    <g class="arrow"><path d="M 200 60 L 248 60" marker-end="url(#ah-pink)" stroke="#db61a2"/></g>
+    <!-- Claude → bootstrap -->
+    <g class="arrow flow"><path d="M 330 90 L 330 138" marker-end="url(#ah)"/></g>
+
+    <!-- bootstrap central fork → Central library (commit) -->
+    <g class="arrow flow">
+      <path d="M 240 258 C 200 480, 200 800, 270 938" marker-end="url(#ah-accent)" stroke="#58a6ff"/>
+      <text x="150" y="540" text-anchor="middle" class="lbl-accent">commit central</text>
+    </g>
+    <!-- bootstrap local fork → Host repo (create + register, no central commit) -->
+    <g class="arrow flow">
+      <path d="M 470 258 C 700 380, 880 680, 890 938" marker-end="url(#ah-orange)" stroke="#f0883e"/>
+      <text x="655" y="282" text-anchor="middle" class="lbl-orange">--local: create + register</text>
+    </g>
+    <!-- bootstrap → server (ensure running) -->
+    <g class="arrow flow"><path d="M 400 258 C 420 275, 480 290, 520 298" marker-end="url(#ah)"/></g>
+
+    <!-- Static handler → Browser (HTML, reload script injected) -->
+    <g class="arrow">
+      <path d="M 860 540 L 928 540" marker-end="url(#ah)"/>
+      <text x="894" y="532" text-anchor="middle">html</text>
+    </g>
+    <!-- Browser → API loader / Router (fetch api + /_rescan) -->
+    <g class="arrow">
+      <path d="M 928 580 L 860 580" marker-end="url(#ah)"/>
+      <text x="894" y="598" text-anchor="middle">fetch / _rescan</text>
+    </g>
+    <!-- SSE pump → Browser -->
+    <g class="arrow sse">
+      <path d="M 860 632 L 928 632" marker-end="url(#ah-green)"/>
+      <text x="894" y="624" text-anchor="middle">SSE reload</text>
+    </g>
+
+    <!-- Central library → server (reads + fs events) -->
+    <g class="arrow">
+      <path d="M 320 940 L 360 902" marker-end="url(#ah)"/>
+      <text x="300" y="924" text-anchor="end">reads · watch</text>
+    </g>
+    <!-- Host repos → server (reads + fs events, per-container watch) -->
+    <g class="arrow">
+      <path d="M 820 940 L 800 902" marker-end="url(#ah)"/>
+      <text x="845" y="924" text-anchor="start">reads · watch</text>
+    </g>
+    <!-- Deep scanner discovers host repos -->
+    <g class="arrow scan">
+      <path d="M 844 558 C 980 720, 980 860, 900 938" marker-end="url(#ah-orange)"/>
+      <text x="1010" y="760" text-anchor="middle" class="lbl-orange">deep scan finds</text>
+    </g>
+  </svg>
+</div>
+
+<h2 class="diagram-label">Publish lifecycle — from local scratch to the open internet</h2>
+<div class="diagram">
+  <svg viewBox="0 0 1180 560" xmlns="http://www.w3.org/2000/svg">
+
+    <!-- ===================== SOURCE: the viz dir + its <head> ===================== -->
+    <g class="box source" transform="translate(24, 150)">
+      <rect width="280" height="250"/>
+      <text x="14" y="30" class="title">viz/&lt;slug&gt;/</text>
+      <text x="14" y="50" class="sub">what you author &amp; commit</text>
+      <line x1="14" y1="62" x2="266" y2="62" stroke="#30363d"/>
+      <text x="14" y="86"  class="sub">index.html</text>
+      <text x="14" y="106" class="sub">api.ts            (optional)</text>
+      <text x="14" y="126" class="sub">recordings.json   (tape)</text>
+      <line x1="14" y1="140" x2="266" y2="140" stroke="#30363d"/>
+      <text x="14" y="162" class="sub" style="fill:#e6edf3">&lt;head&gt; — sole source of truth</text>
+      <text x="14" y="186" class="l10 meta-posture">viz:posture = public · private · local</text>
+      <text x="14" y="206" class="l10 meta-listed">viz:listed  = listed · unlisted</text>
+      <text x="14" y="226" class="l10 meta-kind">viz:kind    = explanatory · operational</text>
+    </g>
+
+    <!-- ===================== BUILD.TS ===================== -->
+    <g class="box publish" transform="translate(344, 150)">
+      <rect width="240" height="250"/>
+      <text x="120" y="30" text-anchor="middle" class="title">build.ts</text>
+      <text x="120" y="50" text-anchor="middle" class="sub">central-only · author action</text>
+      <text x="120" y="66" text-anchor="middle" class="sub">builds to dist · NEVER deploys</text>
+    </g>
+    <!-- secret-scan human gate (inside build.ts) -->
+    <g class="box gate" transform="translate(358, 230)">
+      <rect width="212" height="66"/>
+      <text x="106" y="22" text-anchor="middle" class="sub" style="fill:#f85149; font-weight:600">✋ secret-scan · HUMAN GATE</text>
+      <text x="106" y="40" text-anchor="middle" class="l10">scan tape for secrets,</text>
+      <text x="106" y="54" text-anchor="middle" class="l10">you sign off — no scrubber</text>
+    </g>
+    <!-- inline step (inside build.ts) -->
+    <g class="box" transform="translate(358, 308)">
+      <rect width="212" height="66"/>
+      <text x="106" y="26" text-anchor="middle" class="sub" style="fill:#e6edf3">inline kit + tape →</text>
+      <text x="106" y="46" text-anchor="middle" class="sub">1 self-contained .html</text>
+    </g>
+
+    <!-- ===================== POSTURE BRANCH ===================== -->
+    <g class="box skip" transform="translate(640, 150)">
+      <rect width="270" height="58"/>
+      <text x="14" y="24" class="sub meta-posture" style="fill:#7d8590">posture = local</text>
+      <text x="14" y="44" class="sub" style="fill:#7d8590">✋ SKIPPED — never leaves machine</text>
+    </g>
+    <g class="box pub" transform="translate(640, 230)">
+      <rect width="270" height="58"/>
+      <text x="14" y="24" class="sub" style="fill:#2ea043; font-weight:600">posture = public</text>
+      <text x="14" y="44" class="sub">hosted as-is · no encryption</text>
+    </g>
+    <g class="box prv" transform="translate(640, 310)">
+      <rect width="270" height="78"/>
+      <text x="14" y="24" class="sub" style="fill:#db61a2; font-weight:600">posture = private</text>
+      <text x="14" y="44" class="sub">StatiCrypt AES-256 seal</text>
+      <text x="14" y="64" class="sub" style="fill:#db61a2">🔗 magic link · key in #fragment</text>
+    </g>
+
+    <!-- ===================== STATIC HOST ===================== -->
+    <g class="box host" transform="translate(970, 150)">
+      <rect width="186" height="286"/>
+      <text x="93" y="30" text-anchor="middle" class="title">Static host</text>
+      <text x="93" y="50" text-anchor="middle" class="sub">GitHub / GitLab Pages</text>
+      <line x1="14" y1="62" x2="172" y2="62" stroke="#30363d"/>
+      <text x="14" y="86"  class="sub" style="fill:#e6edf3">lobby (index.html)</text>
+      <text x="14" y="106" class="l10" style="fill:#f0883e">_preamble.html → intro</text>
+      <text x="14" y="128" class="l10" style="fill:#2ea043">public   → full card</text>
+      <text x="14" y="148" class="l10" style="fill:#db61a2">private  → 🔒 link req.</text>
+      <text x="14" y="168" class="l10">unlisted → absent</text>
+      <line x1="14" y1="182" x2="172" y2="182" stroke="#30363d"/>
+      <text x="14" y="206" class="l10" style="fill:#2ea043">public → OG/Twitter meta</text>
+      <text x="14" y="224" class="l10">→ URL unfurls a card</text>
+      <line x1="14" y1="236" x2="172" y2="236" stroke="#30363d"/>
+      <text x="14" y="258" class="l10">dumb host · no server</text>
+    </g>
+
+    <!-- ===================== TAPE RECORDER ===================== -->
+    <g class="box tape" transform="translate(24, 430)">
+      <rect width="280" height="106"/>
+      <text x="14" y="26" class="title" style="font-size:13px">Tape recorder · recordings.json</text>
+      <text x="14" y="48" class="sub">--record → tees live api responses</text>
+      <text x="14" y="68" class="sub">--frozen → serves the tape + banner</text>
+      <text x="14" y="92" class="sub" style="fill:#f0883e">makes an api-backed viz portable</text>
+    </g>
+
+    <!-- ===================== ARROWS ===================== -->
+    <!-- source → publish -->
+    <g class="arrow"><path d="M 304 275 L 344 275" marker-end="url(#ah)"/></g>
+    <!-- tape → source (recordings.json) -->
+    <g class="arrow scan"><path d="M 164 430 L 164 402" marker-end="url(#ah-orange)"/><text x="174" y="420" text-anchor="start" class="lbl-orange">feeds</text></g>
+    <!-- publish → branch (fan) -->
+    <g class="arrow dead"><path d="M 584 250 C 612 210, 616 179, 640 179" marker-end="url(#ah-mute)"/></g>
+    <g class="arrow"><path d="M 584 275 C 610 268, 618 259, 640 259" marker-end="url(#ah-green)"/></g>
+    <g class="arrow pink"><path d="M 584 300 C 612 340, 616 349, 640 349" marker-end="url(#ah-pink)"/></g>
+    <!-- public → host -->
+    <g class="arrow green"><path d="M 910 259 C 945 259, 945 250, 970 250" marker-end="url(#ah-green)"/></g>
+    <!-- private → host -->
+    <g class="arrow pink"><path d="M 910 349 C 945 349, 945 300, 970 300" marker-end="url(#ah-pink)"/></g>
+    <!-- local → dead end -->
+    <g class="arrow dead"><path d="M 910 179 L 958 179" marker-end="url(#ah-mute)"/></g>
+    <text x="922" y="170" class="sub" style="fill:#7d8590; font-size:10px">⊘ stays local</text>
+  </svg>
+</div>
+
+<p class="axes-foot" style="max-width:none; margin:12px 2px 0">Two lobby details the boxes gloss over (the lobby is the container's front page — the auto-generated <code>index.html</code> card grid; public by default, private behind a <code>_private-lobby</code> marker): a per-container <b><code>_preamble.html</code></b> — authored HTML dropped at a container root (next to the slug dirs), injected verbatim above the card grid as an intro, so each publish place sets its own. And <b>rich link previews</b> — every <b>public</b> viz emits Open Graph + Twitter-Card <code>&lt;meta&gt;</code> tags (this is OG unfurl, <i>not</i> oEmbed — a dumb static host has no endpoint to serve oEmbed), so the URL unfurls a card in Slack / Discord / iMessage. The image is a human <code>og.png</code> (1200×630, preferred) or an <code>og.auto.png</code> screenshot from <code>verify --og</code>, degrading to a text-only card when neither is present.</p>
+
+<p class="axes-foot" style="max-width:none; margin:12px 2px 0">Four sealing/shipping moves the branch above skips: <b>Private lobby</b> — drop a <code>_private-lobby</code> marker in a container root and the <i>whole</i> published site (the lobby page + every <b>public</b> viz in it) sits behind <b>one</b> StatiCrypt password; <b>private</b> vizzes keep their own separate key. <b>Share shim</b> — a sealed page's <code>&lt;head&gt;</code> is encrypted, so it can't carry an OG card; each private (and lobby-sealed public) viz also emits a tiny unsealed shim at a <i>secret</i> StatiCrypt-hash path whose head holds the card and whose body JS-redirects to the magic link — crawlers read the card, humans bounce through. The shim URL <i>is</i> the link you share. <b><code>rotate</code></b> revokes + re-mints a viz's magic link, or <code>rotate &lt;container&gt; --lobby</code> the lobby key — old link dies. And deploying is a <b>separate human step</b> the boxes deliberately omit (<code>build.ts</code> NEVER deploys): <b><code>deploy-all.ts</code></b> pushes every container that has an executable <code>deploy.sh</code>, skipping any whose <code>viz-pages</code> subtree isn't clean-committed, so what ships always matches git.</p>
+
+<div class="panel-wide axes-panel">
+  <h2><span>Four per-viz axes — declared in <code>&lt;head&gt;</code>, independent, composable</span></h2>
+  <div class="axes-grid">
+    <div class="axis-card posture">
+      <div class="axis-card-h"><span class="axis-dot" style="background:#2ea043"></span>posture <span class="axis-sub">— access control</span></div>
+      <p><b class="g">public</b> hosted as-is, anyone with the URL.
+         <b class="p">private</b> StatiCrypt-sealed; the key rides in the magic-link <code>#fragment</code> — possession = access.
+         <b class="m">local</b> never published (the scaffold default).
+         Untagged is a <b class="r">hard error</b> — nothing ships on a guess.</p>
+    </div>
+    <div class="axis-card listed">
+      <div class="axis-card-h"><span class="axis-dot" style="background:#58a6ff"></span>listed <span class="axis-sub">— index advertisement</span></div>
+      <p><b class="a">listed</b> gets a card on the lobby.
+         <b class="m">unlisted</b> is still <i>built &amp; reachable by direct URL</i> — just off the lobby.
+         Obscurity, not security: if the name is sensitive, use <b class="p">private</b> + a non-revealing slug.</p>
+    </div>
+    <div class="axis-card kind">
+      <div class="axis-card-h"><span class="axis-dot" style="background:#f0883e"></span>kind <span class="axis-sub">— shelf-life (view-time)</span></div>
+      <p><b>explanatory</b> a timeless diagram; freezing loses nothing (default).
+         <b class="o">operational</b> a live-monitoring tool whose truth expires — gets a louder red frozen banner and a ⚡ index badge. Litmus: <i>“if I froze this, would it still do its job?”</i></p>
+    </div>
+    <div class="axis-card triaged">
+      <div class="axis-card-h"><span class="axis-dot" style="background:#d29922"></span>triaged <span class="axis-sub">— audit posture, not publishing</span></div>
+      <p><b>triaged</b> means you've consciously reviewed this viz's posture; <b class="m">untriaged</b> is still in the audit backlog. Unlike the other three it never touches publishing — it's a drain-to-zero worklist so a growing library gets swept without a per-viz meeting. Set it from the ⚑ pickers or any row's drawer below.</p>
+    </div>
+  </div>
+  <p class="axes-foot">Also new: <b>standalone <code>.runtime/</code></b> — <code>--local</code> vendors a self-contained server into a host repo so its vizzes run with no skill installed (<code>bun viz-pages/.runtime/server.ts</code>). And the shared <b>kit</b> at <code>/_kit/</code> (tokens + SVG helpers) is inlined into every published page. Every live viz also injects an <b>anchored review layer</b> — Alt/Option-click any element to drop a comment into <code>comments.json</code> for the agent to resolve. And <b><code>manage.ts vendor</code></b> copies a whole viz into another repo as a self-contained, runnable copy (a <code>.vendored.json</code> marker + an auto-installed pre-commit drift guard keep it in lockstep with its origin) — set it up from any row's drawer below.</p>
+</div>
+
+  <div class="prose">
+    <h2>Install it — however you like</h2>
+    <p>Easiest, and it works across Claude Code, Codex, Copilot, Cursor, Gemini Antigravity, and more:</p>
+    <pre><code>npx skills add RascalTwo/ai-setup -s viz</code></pre>
+    <p>That drops <code>/viz</code> into every agent you have installed; update anytime with
+      <code>npx skills update</code>. Prefer no third-party tools? Clone the repo and copy or symlink the
+      <code>skills/viz/</code> folder into your agent’s skills directory by hand — it’s fully self-contained. The
+      only requirement is <a href="https://bun.sh">Bun</a>.</p>
+
+    <h2>Invoke it — every way there is</h2>
+    <p>Once installed, just describe what you want to see. The plainest form:</p>
+    <pre><code>/viz a force-directed graph of this repo's imports</code></pre>
+    <ul>
+      <li><code>/viz</code> <b>&lt;describe anything&gt;</b> — the agent names a spatial form and builds it.</li>
+      <li><code>/viz [name]</code> — hand it a slug, or let it choose one.</li>
+      <li><code>--deck</code> — an arrow-key <strong>slide deck</strong> instead of a single screen.</li>
+      <li><code>--poster</code> — a single 1200×630 <strong>share card</strong> (an OG image that unfurls in Slack/X/Teams).</li>
+      <li><code>--local [dir]</code> — create the viz <strong>inside a project’s repo</strong>, versioned with its code, rather than the central library.</li>
+      <li><code>--global</code> — force the central library even when you’re inside a repo.</li>
+    </ul>
+    <p>And you never start from scratch twice — just talk to it: <em>“color the bars by team,” “add a legend,”
+      “make it 3D,” “now animate the transition.”</em> Each ask edits the same viz and hot-reloads.</p>
+
+    <h2>The feedback loop is the point</h2>
+    <p>This is what makes it more than a code generator:</p>
+    <ul>
+      <li><strong>Hot-reload</strong> — save and the page refreshes itself; you and the agent watch it change together.</li>
+      <li><strong>Self-verify</strong> — the agent drives headless Chrome to screenshot the viz and read its own
+        console, catching a blank page or an overflowing label <em>before</em> handing it to you.</li>
+      <li><strong>Point at it</strong> — Alt/Option-click any element in the live viz to pin a comment to that exact
+        bar or node; the agent reads your located feedback and fixes it. You review, it resolves.</li>
+    </ul>
+
+    <h2>Walkthrough — make your first viz</h2>
+    <p>The fastest way to learn the whole tool is to make one thing. Here’s the arc, and the feature each step
+      quietly teaches:</p>
+    <ol class="steps">
+      <li>
+        <h3>Ask for it <span class="feat">bootstrap</span></h3>
+        <p>Say <em>“/viz the states of a checkout flow as a state machine.”</em> The agent scaffolds a viz folder,
+          starts the server if it isn’t running, and hands you a live URL. You installed and configured nothing.</p>
+      </li>
+      <li>
+        <h3>Watch it pick a form <span class="feat">visual grammar + kit</span></h3>
+        <p>It announces the spatial form first — <em>“rendering this as a state diagram, transitions as labeled
+          arrows”</em> — because a real shape (graph, treemap, Sankey, timeline) beats text in a box. It pulls from
+          the built-in <strong>kit</strong> so colors and arrows look like one system, not re-guessed hexes.</p>
+      </li>
+      <li>
+        <h3>See it — and see it checked <span class="feat">verify</span></h3>
+        <p>Before it says “done,” it screenshots the page and reads the console, so “blank page from a typo’d
+          import” gets caught and fixed, not shipped. You just get a working picture.</p>
+      </li>
+      <li>
+        <h3>Refine by talking <span class="feat">iterate + hot-reload</span></h3>
+        <p><em>“Mark the retry state red. Add a cancel transition.”</em> Same viz, edited in place, browser reloads
+          on save. Every change is committed to git, so any version rolls back.</p>
+      </li>
+      <li>
+        <h3>Point at what’s wrong <span class="feat">review layer</span></h3>
+        <p>Alt-click the “paid” node, type <em>“this should loop back to cart on decline.”</em> The pin sticks to
+          that node even as things animate; the agent reads it, fixes it, marks it resolved.</p>
+      </li>
+      <li>
+        <h3>Give it live data <span class="feat">backend + tape</span></h3>
+        <p>Optional: a per-viz Bun <code>api.ts</code> feeds real data (a shell command, a file) streamed into the
+          page. A <strong>tape recorder</strong> freezes a snapshot so it still plays away from your machine.</p>
+      </li>
+      <li>
+        <h3>Ship it <span class="feat">publish</span></h3>
+        <p>One command bakes the viz into a single self-contained HTML file for any static host — public, or
+          <strong>encrypted</strong> behind a share-link or a one-password whole-site lobby. Its URL even unfurls a
+          preview card.</p>
+      </li>
+    </ol>
+    <p>That’s the spine. Everything else is depth on one of these steps.</p>
+
+    <h2>…and there’s more than fits here</h2>
+    <p>A sampler of what the agent can reach for — you don’t need to remember any of it:</p>
+    <div class="teasers">
+      <div class="teaser"><h3>Slide decks</h3><p><span class="k">--deck</span> — arrow-key presentations with reversible build fragments.</p></div>
+      <div class="teaser"><h3>Share cards</h3><p><span class="k">--poster</span> — a 1200×630 OG image that unfurls as a link preview.</p></div>
+      <div class="teaser"><h3>Live backends</h3><p><span class="k">api.ts</span> — real data over SSE, with frozen tapes for portability.</p></div>
+      <div class="teaser"><h3>Private publishing</h3><p>StatiCrypt magic-links and one-password <span class="k">lobby</span> seals.</p></div>
+      <div class="teaser"><h3>Repo-local vizzes</h3><p><span class="k">--local</span> — visualizations versioned alongside a project’s code.</p></div>
+      <div class="teaser"><h3>Deterministic management</h3><p><span class="k">manage.ts</span> — move, re-posture, and mirror vizzes without hand-editing.</p></div>
+      <div class="teaser"><h3>The shared kit</h3><p>Dark-theme tokens, chrome, and SVG-diagram helpers at <span class="k">/_kit/</span>.</p></div>
+      <div class="teaser"><h3>Bulk deploy</h3><p><span class="k">deploy-all.ts</span> — ship every set-up container in one git-clean-gated command.</p></div>
+    </div>
+    <p style="margin-top:18px"><strong>Now go watch the machine run itself →</strong>
+      <a href="#dashboard" onclick="showTab('dashboard');return false">open the Dashboard</a>, which is this very
+      page reporting on its own live server, roots, and history.</p>
+  </div>
+</section>
+
+<!-- ================= QUICK START ================= -->
+<section id="tab-quickstart" class="tab-panel">
+  <div class="prose">
+    <p class="lead">Install, then ask for a picture. Under a minute.</p>
+
+    <h2>1 · Install</h2>
+    <p>Needs <a href="https://bun.sh">Bun</a> (<code>bun --version</code> should print a number). Then, in a terminal:</p>
+    <pre><code>npx skills add RascalTwo/ai-setup -s viz</code></pre>
+    <p>Works across Claude Code, Codex, Copilot, Cursor, Gemini Antigravity, and more — it installs
+      <code>/viz</code> into each agent you have. Update later with <code>npx skills update</code>. (No
+      <code>npx</code>? Clone the repo and symlink <code>skills/viz/</code> into your agent’s skills dir.)</p>
+
+    <h2>2 · Invoke</h2>
+    <p>In your agent, just describe what you want to see:</p>
+    <pre><code>/viz a treemap of this folder's file sizes</code></pre>
+    <p>It picks a form, builds it, and hands you a live, hot-reloading URL.</p>
+
+    <h2>3 · Loop</h2>
+    <ul>
+      <li><strong>Ask</strong> — <code>/viz &lt;anything&gt;</code></li>
+      <li><strong>See</strong> — open the URL; it reloads as the agent edits</li>
+      <li><strong>Refine</strong> — “make it 3D,” “color by team,” or Alt-click an element to pin a comment</li>
+    </ul>
+    <p>That’s the whole rhythm. Extras when you want them: <code>--deck</code> (slides), <code>--poster</code>
+      (share card), <code>--local</code> (a viz inside a repo), a live <code>api.ts</code> backend, and
+      one-command publishing.</p>
+
+    <p style="margin-top:20px">Want the why, the how, and a guided tour? →
+      <a href="#readme" onclick="showTab('readme');return false">read the full README</a>. Or just
+      <a href="#dashboard" onclick="showTab('dashboard');return false">poke the Dashboard</a>.</p>
+  </div>
+</section>
+
+<!-- ================= DASHBOARD ================= -->
+<section id="tab-dashboard" class="tab-panel">
+  <div class="dash-intro">
+    <p>The live operational view — the running server's status, every viz it's serving right now, and recent
+      history, read straight from your machine. <span style="color:var(--orange)">Live only: on a static copy this
+      shows nothing — run the skill locally for data.</span> New to all this? The
+      <a href="#readme" style="color:var(--accent);text-decoration:none" onclick="showTab('readme');return false">README</a> explains the whole system.</p>
+    <div class="dash-actions">
+      <button id="rescan-btn" class="btn-rescan" title="Re-run the deep scan over $HOME for viz-pages/ containers">
+        <span id="rescan-icon"></span><span id="rescan-label">Rescan $HOME</span>
+      </button>
+    </div>
+  </div>
+
+<div class="panel-wide">
+  <h2>
+    <span>Active vizzes <span id="git-status" class="rescan-note"></span></span>
+    <span class="slug-search-wrap" title="Filter the list by title or path. Survives the 5s auto-refresh (native browser find does not). Focus with / or ⌘/Ctrl+F · clear with Esc.">
+      <span id="search-icon" class="search-icon"></span>
+      <input id="slug-search" type="search" autocomplete="off" spellcheck="false"
+             placeholder="search title or path…  ( / )">
+      <span id="search-count" class="search-count"></span>
+    </span>
+  </h2>
+  <div id="slug-controls" class="slug-controls">
+    <span class="ctl"><label>sort</label>
+      <select id="sort-key">
+        <option value="modified">modified</option>
+        <option value="created">created</option>
+        <option value="name">name</option>
+        <option value="size">size</option>
+        <option value="files">files</option>
+        <option value="commits">commits</option>
+      </select>
+      <button id="sort-dir" data-dir="desc" title="toggle ascending / descending">↓</button>
+    </span>
+    <span class="ctl-sep"></span>
+    <span class="ctl"><label>posture</label>
+      <select id="f-posture"><option value="">all</option><option value="public">public</option><option value="private">private</option><option value="local">local</option><option value="untagged">untagged</option></select></span>
+    <span class="ctl"><label>listed</label>
+      <select id="f-listed"><option value="">all</option><option value="listed">listed</option><option value="unlisted">unlisted</option></select></span>
+    <span class="ctl"><label>kind</label>
+      <select id="f-kind"><option value="">all</option><option value="explanatory">explanatory</option><option value="operational">operational</option></select></span>
+    <span class="ctl"><label>triaged</label>
+      <select id="f-triaged"><option value="">all</option><option value="triaged">triaged</option><option value="untriaged">untriaged</option></select></span>
+    <span class="ctl"><label>api</label>
+      <select id="f-api"><option value="">all</option><option value="yes">has api</option><option value="no">no api</option></select></span>
+    <span class="ctl"><label>tag</label>
+      <select id="f-tag" title="filter by tag — pick more than one (OR); each becomes a removable pill"><option value="">add tag…</option></select>
+      <span id="tag-pills" class="tag-pills"></span></span>
+    <span class="ctl"><label>scope</label>
+      <select id="f-scope" title="filter to one container (place)"><option value="">all</option></select>
+      <button id="preview-btn" class="ctl-btn" title="Build the selected container exactly as it would publish and serve it locally" disabled>
+        <span id="preview-icon"></span><span id="preview-label">preview</span>
+      </button>
+      <button id="preview-stop" class="ctl-btn" title="Take down the running preview" hidden>stop</button>
+      <span id="preview-result" class="preview-result"></span></span>
+    <label class="ctl-check" title="Hide mirrored-in copies — show only the origin viz of each mirror"><input type="checkbox" id="f-originals">originals only</label>
+    <button id="filters-reset" class="ctl-reset" title="clear all filters & reset sort">reset</button>
+    <span class="view-seg" id="slug-view" role="group" aria-label="list or grid view">
+      <button data-view="list" title="list view">list</button>
+      <button data-view="cards" title="grid view">grid</button>
+    </span>
+  </div>
+  <div id="slug-totals" class="slug-totals"></div>
+  <div id="slugs" class="slug-grid">loading…</div>
+</div>
+<div class="panels">
+  <div class="panel">
+    <h2><span class="pulse-dot"></span>Server</h2>
+    <div id="server-info">loading…</div>
+  </div>
+  <div class="panel">
+    <h2>Recent commits (central) <span id="commit-total" style="text-transform:none; letter-spacing:0; margin-left:6px; color:var(--muted)"></span></h2>
+    <div id="commits" class="commits-scroll">loading…</div>
+  </div>
+</div>
+</section><!-- /tab-dashboard -->
+
+<script>
+  // ---- tab shell: README / Quick Start / Dashboard ----
+  const TABS = ['readme', 'quickstart', 'dashboard'];
+  function showTab(name) {
+    if (!TABS.includes(name)) name = 'dashboard';
+    for (const t of TABS) {
+      document.getElementById('tab-' + t).classList.toggle('active', t === name);
+      document.getElementById('tabbtn-' + t).classList.toggle('active', t === name);
+    }
+    try { localStorage.setItem('viz-sp-seen', '1'); } catch (e) {}
+    if (('#' + name) !== location.hash) history.replaceState(null, '', '#' + name);
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', function () {
+    const h = location.hash.replace('#', '');
+    if (TABS.includes(h)) showTab(h);
+  });
+  (function initTab() {
+    const fromHash = location.hash.replace('#', '');
+    let seen = false;
+    try { seen = !!localStorage.getItem('viz-sp-seen'); } catch (e) {}
+    // explicit hash wins; else first-timers land on the README, returning visitors on the Dashboard
+    showTab(TABS.includes(fromHash) ? fromHash : (seen ? 'dashboard' : 'readme'));
+  })();
+
+  function fmtUptime(s) {
+    if (s < 60) return s + 's';
+    if (s < 3600) return Math.floor(s/60) + 'm ' + (s%60) + 's';
+    return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
+  }
+  function fmtSize(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+    return (b / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+  // Compact two-unit relative age: "now", "12m", "5h 12m", "1d 5h", "3mo".
+  function fmtAgo(ms) {
+    if (!ms) return '—';
+    const m = (Date.now() - ms) / 60000, h = m / 60, d = h / 24;
+    if (m < 1) return 'now';
+    if (m < 60) return `${Math.floor(m)}m`;
+    if (h < 24) { const H = Math.floor(h), M = Math.floor(m - H * 60); return M ? `${H}h ${M}m` : `${H}h`; }
+    if (d < 30) { const D = Math.floor(d), H = Math.floor(h - D * 24); return H ? `${D}d ${H}h` : `${D}d`; }
+    return `${Math.floor(d / 30)}mo`;
+  }
+
+  const ICONS = {
+    file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+    commit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/></svg>',
+    zap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+    zapOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12.41 6.75 13 2 10.57 4.92"/><polyline points="18.57 12.91 21 10 15.66 10"/><polyline points="8 8 3 14 12 14 11 22 16 16"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
+    folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
+    hdd: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>',
+    refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>',
+    globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+    lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+    alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+  };
+
+  // Render the per-viz axis badges (posture · listed · kind) read live from <head>.
+  const POSTURE_ICON = { public: 'globe', private: 'lock', local: 'home', untagged: 'alert' };
+  function axisBadges(s) {
+    const p = POSTURE_ICON[s.posture] ? s.posture : 'untagged';
+    const parts = [
+      `<span class="axis ${p}" title="posture: ${p} — ${p==='public'?'hosted as-is':p==='private'?'sealed, magic-link only':p==='local'?'never published':'no viz:posture — publish would refuse'}">${ICONS[POSTURE_ICON[p]]}${p}</span>`,
+    ];
+    if (s.listed === false)
+      parts.push(`<span class="axis unlisted" title="unlisted — built &amp; reachable by URL, but off the lobby">unlisted</span>`);
+    if (s.kind === 'operational')
+      parts.push(`<span class="axis op" title="operational — a live tool; a frozen copy goes stale">${ICONS.zap}op</span>`);
+    return `<span class="slug-axes">${parts.join('')}</span>`;
+  }
+  // Tag chips: show up to 3 inline; the rest collapse into a +N that lists all on hover.
+  function tagChips(s) {
+    const tags = s.tags || [];
+    if (!tags.length) return '';
+    const shown = tags.slice(0, 3).map(t => `<span class="tag-chip" title="tag">${esc(t)}</span>`).join('');
+    const extra = tags.length > 3
+      ? `<span class="tag-chip more" title="${esc(tags.join(', '))}">+${tags.length - 3}</span>` : '';
+    return `<span class="slug-tags">${shown}${extra}</span>`;
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  // ---- Native search -----------------------------------------------------
+  // The list re-renders every 5s, which wipes the browser's own Ctrl+F
+  // highlights. This filter is re-applied on EVERY render from the live input
+  // value, so matches + highlights persist across the auto-refresh. It matches
+  // title (name) and path (id); space-separated terms are AND-ed.
+  function currentTerms() {
+    const q = (document.getElementById('slug-search')?.value || '').trim().toLowerCase();
+    return q ? q.split(/\s+/) : [];
+  }
+  function matchTerms(s, terms) {
+    if (!terms.length) return true;
+    const hay = (s.name + ' ' + s.id + ' ' + (s.title || '') + ' ' + (s.tags || []).join(' ')).toLowerCase();
+    return terms.every(t => hay.includes(t));
+  }
+  // Escape `text`, wrapping any term occurrences in <mark>. Works on raw text
+  // (merging overlapping ranges) and escapes each segment, so highlights never
+  // break HTML.
+  function hl(text, terms) {
+    text = String(text);
+    if (!terms.length) return esc(text);
+    const lower = text.toLowerCase();
+    const ranges = [];
+    for (const t of terms) {
+      for (let i = lower.indexOf(t); i !== -1; i = lower.indexOf(t, i + t.length))
+        ranges.push([i, i + t.length]);
+    }
+    if (!ranges.length) return esc(text);
+    ranges.sort((a, b) => a[0] - b[0]);
+    const merged = [];
+    for (const r of ranges) {
+      const last = merged[merged.length - 1];
+      if (last && r[0] <= last[1]) last[1] = Math.max(last[1], r[1]);
+      else merged.push(r.slice());
+    }
+    let out = '', pos = 0;
+    for (const [start, end] of merged) {
+      out += esc(text.slice(pos, start)) + '<mark>' + esc(text.slice(start, end)) + '</mark>';
+      pos = end;
+    }
+    return out + esc(text.slice(pos));
+  }
+
+  // ?hide= / ?hideSlug= / ?hideCommits= — match against id substrings now.
+  function parseHidden() {
+    const params = new URLSearchParams(location.search);
+    const split = (s) => (s || '').split(',').map(x => x.trim()).filter(Boolean);
+    const both = split(params.get('hide'));
+    const slugOnly = split(params.get('hideSlug'));
+    const commitOnly = split(params.get('hideCommits'));
+    return {
+      slugs: [...both, ...slugOnly],
+      commits: [...both, ...commitOnly],
+    };
+  }
+  const matchesAny = (hay, needles) => needles.some(n => hay.includes(n));
+
+  function commitSlug(subject) {
+    const create = subject.match(/^create viz:\s*(\S+)/);
+    if (create) return create[1];
+    const prefixed = subject.match(/^([a-z0-9][a-z0-9-]*):/);
+    return prefixed ? prefixed[1] : null;
+  }
+
+  // ---- Merge model -------------------------------------------------------
+  // gitFeed is the SLOW map (id -> {commitCount}); it arrives
+  // once on load and again after a rescan. The 5s fast loop NEVER touches it.
+  // Rows render the commit col as "—" until the matching id appears here.
+  let gitFeed = {};       // { [id]: { commitCount } }
+  let gitLoaded = false;  // have we ever resolved api/slugs-git?
+  let lastSlugs = [];     // last fast-feed snapshot, for re-render after git lands
+  let openDrawerId = null;// which row's management drawer is expanded (ADR 0009)
+  let confirmKey = null;  // destructive button armed for its 2nd (confirming) click
+
+  function gitFor(id) {
+    return gitLoaded ? (gitFeed[id] ?? null) : null;
+  }
+
+  async function loadGit() {
+    try {
+      gitFeed = await fetch('api/slugs-git').then(r => r.json());
+      gitLoaded = true;
+      document.getElementById('git-status').textContent = '';
+      renderSlugs(lastSlugs);
+    } catch (e) {
+      console.error('loadGit failed:', e);
+    }
+  }
+
+  // Scope filter options = one per container (place). Label central as its own path,
+  // externals by their host repo path. Rebuilt only when the container set changes so
+  // it never clobbers the current selection or an open dropdown on the 5s poll.
+  let scopeSig = '';
+  function populateScope(slugs) {
+    const map = new Map();
+    for (const s of slugs) {
+      if (map.has(s.container)) continue;
+      map.set(s.container, { value: s.container, isCentral: s.isCentral,
+        label: s.isCentral ? '.claude/viz-pages' : (s.host ? s.host + '/viz-pages' : s.container) });
+    }
+    const conts = [...map.values()].sort((a, b) => (b.isCentral - a.isCentral) || a.label.localeCompare(b.label));
+    const sig = conts.map(c => c.value).join('|');
+    if (sig === scopeSig) return;
+    scopeSig = sig;
+    const sel = document.getElementById('f-scope'), cur = sel.value;
+    sel.innerHTML = '<option value="">all</option>' +
+      conts.map(c => `<option value="${esc(c.value)}">${esc(c.label)}</option>`).join('');
+    sel.value = conts.some(c => c.value === cur) ? cur : '';
+  }
+
+  // Tag filter — dropdown adds a tag to activeTags (OR semantics), each shown as a removable
+  // pill. Options rebuilt only when the (all-tags − active) set changes, so the 5s poll never
+  // clobbers an open dropdown.
+  const activeTags = new Set();
+  let tagSig = '';
+  function renderTagFilter(slugs) {
+    document.getElementById('tag-pills').innerHTML = [...activeTags].sort()
+      .map(t => `<span class="tag-pill">${esc(t)}<button data-tag-rm="${esc(t)}" title="remove">✕</button></span>`).join('');
+    const all = [...new Set(slugs.flatMap(s => s.tags || []))].filter(t => !activeTags.has(t)).sort();
+    const sig = all.join('|');
+    if (sig !== tagSig) {
+      tagSig = sig;
+      document.getElementById('f-tag').innerHTML =
+        '<option value="">add tag…</option>' + all.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+    }
+  }
+
+  function renderSlugs(allSlugs) {
+    const hidden = parseHidden();
+    const slugs = allSlugs.filter(s => !matchesAny(s.id, hidden.slugs));
+    lastSlugs = allSlugs;
+    populateScope(slugs);
+    renderTagFilter(slugs);
+
+    // Stats describe the real library — mirror rows are duplicate views, not vizzes.
+    const natives = slugs.filter(s => !s.isMirror);
+    const centralCount  = natives.filter(s => s.isCentral).length;
+    const externalCount = natives.length - centralCount;
+    const hostRepos = new Set(natives.filter(s => !s.isCentral).map(s => s.host));
+
+    // Totals — git-derived numbers only count ids that have landed in gitFeed.
+    const totals = natives.reduce((acc, s) => {
+      const g = gitFor(s.id);
+      const p = ['public','private','local'].includes(s.posture) ? s.posture : 'untagged';
+      acc.posture[p]++;
+      if (s.kind === 'operational') acc.operational++;
+      return {
+        ...acc,
+        files: acc.files + s.fileCount,
+        commits: acc.commits + (g ? g.commitCount : 0),
+        bytes: acc.bytes + s.sizeBytes,
+        centralCommits: acc.centralCommits + (g && s.isCentral ? g.commitCount : 0),
+      };
+    }, { files: 0, commits: 0, bytes: 0, centralCommits: 0,
+         posture: { public: 0, private: 0, local: 0, untagged: 0 }, operational: 0 });
+
+    const pc = totals.posture;
+    const postureSplit = [
+      pc.local    ? pc.local + ' local'       : '',
+      pc.public   ? pc.public + ' public'     : '',
+      pc.private  ? pc.private + ' private'   : '',
+      pc.untagged ? pc.untagged + ' untagged' : '',
+    ].filter(Boolean).join(' / ') || '—';
+
+    const commitVal = gitLoaded ? totals.commits : '—';
+
+    document.getElementById('slug-totals').innerHTML = [
+      ['slugs',   ICONS.folder,   natives.length + ' <span class="total-split">(' + centralCount + ' central / ' + externalCount + ' external)</span>', natives.length + ' viz' + (natives.length===1?'':'zes')],
+      ['posture', ICONS.lock,     '<span class="total-split">' + postureSplit + '</span>', 'posture split (from each viz’s viz:posture meta)' + (totals.operational ? ' · ' + totals.operational + ' operational' : '')],
+      ['files',   ICONS.file,     totals.files,                  totals.files + ' file' + (totals.files===1?'':'s') + ' on disk'],
+      ['commits', ICONS.commit,   commitVal,                     gitLoaded ? totals.commits + ' commit' + (totals.commits===1?'':'s') + ' across all host repos' : 'git feed loading…'],
+      ['size',    ICONS.hdd,      fmtSize(totals.bytes),         totals.bytes.toLocaleString() + ' bytes on disk'],
+    ].map(([cls, icon, value, title]) =>
+      `<span class="total-item ${cls}" title="${title}">${icon}<span class="total-value">${value}</span></span>`
+    ).join('');
+
+    // Search filters only the RENDERED rows — the totals + diagram stats above
+    // still describe the whole library, so they don't lurch around while typing.
+    const terms = currentTerms();
+    const f = filterState();
+    markActiveControls(f);
+    const shown = sortSlugs(applyFilters(slugs, f).filter(s => matchTerms(s, terms)), f);
+    // The row's age badge tracks whatever time axis you're sorting on; any non-time sort falls back to modified.
+    const timeField = f.sortKey === 'created' ? 'created' : 'modified';
+
+    const narrowed = terms.length > 0 || shown.length !== slugs.length;
+    const countEl = document.getElementById('search-count');
+    if (countEl) {
+      countEl.textContent = narrowed ? `${shown.length} / ${slugs.length}` : '';
+      countEl.classList.toggle('zero', narrowed && shown.length === 0);
+    }
+
+    document.getElementById('slugs').innerHTML = shown.length === 0
+      ? `<div style="color: var(--muted)">${terms.length
+            ? `no viz matches “${esc(terms.join(' '))}”`
+            : narrowed ? 'no viz matches the current filters' : 'none yet'}</div>`
+      : shown.map(s => {
+          const g = gitFor(s.originId || s.id);
+          const commitCount = g ? g.commitCount : null;
+          const badge = s.isCentral
+            ? '<span class="badge central">central</span>'
+            : '<span class="badge external">external</span>';
+          // While searching, show the full path (highlighted) instead of just the
+          // host — that's how a path-only match becomes visible. Otherwise keep
+          // the compact host line for external vizzes.
+          const sub = terms.length
+            ? `<span class="slug-path" title="${esc(s.id)}">${hl(s.id, terms)}</span>`
+            : s.isMirror
+              ? `<span class="slug-host" title="publish-mirror row from ${esc(s.mirrorFrom)} — single-file, build-time only">↳ mirror ← ${esc(s.mirrorFrom)}</span>`
+              : s.isVendored
+                ? `<span class="slug-host" title="vendored full copy of ${esc(s.mirrorFrom)} — runs standalone; edit the origin and re-sync">↳ vendored ← ${esc(s.mirrorFrom)}</span>`
+                : (!s.isCentral && s.host)
+                  ? `<span class="slug-host" title="host repo: ${esc(s.host)}">↳ ${esc(s.host)}</span>`
+                  : '';
+          const commitInner = commitCount === null
+            ? '<span class="count pending">—</span>'
+            : `<span class="count">${commitCount}</span>`;
+          const vizHref = '/' + (s.originId || s.id).split('/').map(encodeURIComponent).join('/') + '/';
+          const thumb = s.og
+            ? `<span class="slug-thumb" style="background-image:url('${vizHref}${s.og}')" title="OG preview (${s.og})"></span>`
+            : `<span class="slug-thumb empty" title="no OG preview image"></span>`;
+          return `<div class="slug" data-id="${esc(s.id)}">
+            ${thumb}
+            <span class="slug-id">
+              <a class="slug-name" href="${vizHref}" target="_blank" rel="noopener" title="${esc(s.originId || s.id)}">${badge}${hl(s.title || s.name, terms)}${s.description ? `<span class="desc-i" title="${esc(s.description)}">ⓘ</span>` : ''}</a>
+              ${sub}
+              ${axisBadges(s)}${tagChips(s)}
+            </span>
+            <span class="slug-meta">
+              <span class="icon-badge files" title="${s.fileCount} file${s.fileCount===1?'':'s'}">
+                ${ICONS.file}<span class="count">${s.fileCount}</span>
+              </span>
+              <span class="icon-badge commits" title="${commitCount === null ? 'commits — git feed loading' : commitCount + ' commit' + (commitCount===1?'':'s')}">
+                ${ICONS.commit}${commitInner}
+              </span>
+              <span class="slug-age" title="showing ${timeField}&#10;modified ${new Date(s.mtime).toLocaleString()}${s.created ? '&#10;created  ' + new Date(s.created).toLocaleString() : ''}">
+                ${ICONS.clock}${fmtAgo(timeField === 'created' ? s.created : s.mtime)}
+              </span>
+              <span class="slug-size" title="${s.sizeBytes.toLocaleString()} bytes on disk">${fmtSize(s.sizeBytes)}</span>
+              <span class="icon-only ${s.hasApi ? 'api-on' : 'api-off'}" title="${s.hasApi ? 'has api.ts' : 'no api.ts'}">
+                ${s.hasApi ? ICONS.zap : ICONS.zapOff}
+              </span>
+              ${s.hero
+                ? `<a class="icon-only hero-on" href="${vizHref}hero.html" target="_blank" rel="noopener" title="has hero.html — the OG card source (click to open)">${ICONS.image}</a>`
+                : `<span class="icon-only hero-off" title="no hero.html OG card">${ICONS.image}</span>`}
+              ${s.mirroredIn
+                ? `<span class="icon-only mirror-on" title="${s.isVendored ? 'vendored full copy of ' + esc(s.mirrorFrom || '') + ' — runs standalone; edit the origin and re-sync' : 'mirrored-in copy from ' + esc(s.mirrorFrom || '') + ' — edit the origin viz, not this sink'}">${ICONS.link}</span>`
+                : (s.vendoredOut && s.vendoredOut.length)
+                  ? `<span class="icon-only mirror-src" title="origin viz — vendored (full copy) into: ${esc(s.vendoredOut.join(', '))}">${ICONS.link}</span>`
+                  : (s.mirrorsOut && s.mirrorsOut.length)
+                    ? `<span class="icon-only mirror-src" title="origin viz — publish-mirrored to: ${esc(s.mirrorsOut.join(', '))}">${ICONS.link}</span>`
+                    : `<span class="icon-only mirror-off" title="not mirrored">${ICONS.link}</span>`}
+              ${s.mirroredIn
+                ? '<span class="manage-btn spacer" aria-hidden="true">⋯</span>'
+                : `<button class="manage-btn" data-act="toggle" title="manage axes · rename · move · mirror">⋯</button>`}
+            </span>
+          </div>${s.id === openDrawerId ? drawerHtml(s) : ''}`;
+        }).join('');
+
+    // Update diagram bottom-row stats.
+    const cc = gitLoaded ? totals.centralCommits : '…';
+    document.getElementById('central-stats').textContent =
+      `${centralCount} central viz${centralCount===1?'':'zes'} · ${cc} commits`;
+    document.getElementById('external-stats').textContent =
+      `${externalCount} external viz${externalCount===1?'':'zes'} across ${hostRepos.size} repo${hostRepos.size===1?'':'s'}`;
+  }
+
+  function renderCommits(allCommits) {
+    const hidden = parseHidden();
+    const commits = allCommits.filter(c => {
+      const slug = commitSlug(c.subject);
+      return !slug || !matchesAny(slug, hidden.commits);
+    });
+    document.getElementById('commit-total').textContent =
+      commits.length === 0 ? '' : '(' + commits.length + ')';
+    document.getElementById('commits').innerHTML = commits.length === 0
+      ? '<div style="color: var(--muted)">no commits yet</div>'
+      : commits.map(c => `<div class="commit">
+          <span class="commit-hash">${esc(c.hash)}</span>${esc(c.subject)}<br>
+          <span class="commit-when">${esc(c.when)}</span>
+        </div>`).join('');
+  }
+
+  function renderServer(info) {
+    document.getElementById('server-info').innerHTML = [
+      ['bun', info.bunVersion],
+      ['pid', info.pid],
+      ['uptime', fmtUptime(info.uptimeSec)],
+      ['port', info.port],
+      ['containers', info.containers],
+    ].map(([k,v]) => `<div class="row"><span class="k">${k}</span><span>${esc(v)}</span></div>`).join('');
+    document.getElementById('server-uptime').textContent = 'uptime: ' + fmtUptime(info.uptimeSec);
+    document.getElementById('server-containers').textContent = 'containers: ' + info.containers;
+  }
+
+  // ---- Fast loop (5s): server-info + slugs only. NO git feed here. -------
+  async function loadFast() {
+    try {
+      const [info, slugs] = await Promise.all([
+        fetch('api/server-info').then(r => r.json()),
+        fetch('api/slugs').then(r => r.json()),
+      ]);
+      renderServer(info);
+      // An open drawer holds live form state — don't clobber it on the 5s poll.
+      // Keep the snapshot fresh so closing/re-rendering shows current data.
+      if (openDrawerId) lastSlugs = slugs; else renderSlugs(slugs);
+    } catch (e) {
+      console.error('loadFast failed:', e);
+    }
+  }
+
+  async function loadCommits() {
+    try {
+      renderCommits(await fetch('api/log').then(r => r.json()));
+    } catch (e) {
+      console.error('loadCommits failed:', e);
+    }
+  }
+
+  // ---- Rescan button -----------------------------------------------------
+  const rescanBtn = document.getElementById('rescan-btn');
+  document.getElementById('rescan-icon').innerHTML = ICONS.refresh;
+  rescanBtn.addEventListener('click', async () => {
+    rescanBtn.disabled = true;
+    rescanBtn.classList.add('scanning');
+    document.getElementById('rescan-label').textContent = 'scanning…';
+    document.getElementById('git-status').textContent = '· git feed refreshing…';
+    gitLoaded = false; // force "—" placeholders until the fresh git feed lands
+    try {
+      // /_rescan is an ABSOLUTE server route (not under this viz's api/).
+      await fetch('/_rescan').then(r => r.json());
+      // Re-pull fast feed (slugs/containers may have changed) + slow git feed.
+      await loadFast();
+      await loadGit();
+    } catch (e) {
+      console.error('rescan failed:', e);
+    } finally {
+      rescanBtn.disabled = false;
+      rescanBtn.classList.remove('scanning');
+      document.getElementById('rescan-label').textContent = 'Rescan $HOME';
+    }
+  });
+
+  // ---- Live preview ------------------------------------------------------
+  const previewBtn = document.getElementById('preview-btn');
+  const previewStop = document.getElementById('preview-stop');
+  const previewScope = document.getElementById('f-scope'); // preview builds whatever the scope filter is pinned to
+  const previewResult = document.getElementById('preview-result');
+  document.getElementById('preview-icon').innerHTML = ICONS.refresh;
+  function setPreviewResult(html, isErr) {
+    previewResult.innerHTML = html || '';
+    previewResult.className = 'preview-result' + (isErr ? ' err' : '');
+  }
+  // "preview" needs a specific container — disabled while scope is "all".
+  const syncPreviewEnabled = () => { previewBtn.disabled = !previewScope.value; };
+  previewScope.addEventListener('change', syncPreviewEnabled);
+  syncPreviewEnabled();
+  previewBtn.addEventListener('click', async () => {
+    const container = previewScope.value;
+    if (!container) { setPreviewResult('pick a container first', true); return; }
+    previewBtn.disabled = true;
+    previewBtn.classList.add('scanning');
+    document.getElementById('preview-label').textContent = 'building…';
+    setPreviewResult('building the publishable tree — this can take a bit…');
+    const r = await mgmt('preview', { container }); // POST blocks until the build serves
+    previewBtn.classList.remove('scanning');
+    document.getElementById('preview-label').textContent = 'preview';
+    syncPreviewEnabled();
+    if (r && r.ok && r.url) {
+      setPreviewResult(`serving → <a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>`);
+      previewStop.hidden = false;
+    } else {
+      setPreviewResult('preview failed: ' + esc((r && r.err) || 'unknown error'), true);
+      previewStop.hidden = true;
+    }
+  });
+  previewStop.addEventListener('click', async () => {
+    previewStop.disabled = true;
+    await mgmt('preview-stop', {});
+    previewStop.disabled = false;
+    previewStop.hidden = true;
+    setPreviewResult('preview stopped');
+  });
+
+  // ---- Search wiring -----------------------------------------------------
+  const searchEl = document.getElementById('slug-search');
+  document.getElementById('search-icon').innerHTML = ICONS.search;
+  // Re-render rows from the last snapshot on every keystroke — no refetch.
+  searchEl.addEventListener('input', () => renderSlugs(lastSlugs));
+  searchEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { searchEl.value = ''; renderSlugs(lastSlugs); searchEl.blur(); }
+  });
+  // ⌘/Ctrl+F and "/" focus this box instead of the (futile) browser find.
+  window.addEventListener('keydown', (e) => {
+    const typing = document.activeElement === searchEl;
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
+      e.preventDefault(); searchEl.focus(); searchEl.select();
+    } else if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey) {
+      e.preventDefault(); searchEl.focus();
+    }
+  });
+
+  // ---- Surface management (ADR 0009): drawer → api/{update,move,mirror,vendor} ----
+  // Reads are local; every write shells out to manage.ts (one definition of the
+  // hard logic). The drawer is rendered inline by renderSlugs when its row is open.
+  const cssEsc = (s) => String(s).replace(/["\\]/g, '\\$&');
+  const drawerOf = (id) => document.querySelector(`.slug-drawer[data-id="${cssEsc(id)}"]`);
+  const chipHtml = (t) => `<span class="chip" data-tag="${esc(t)}">${esc(t)}<button class="chip-x" data-act="chip-rm" title="remove">✕</button></span>`;
+
+  // Sink/destination containers = every other container in the library.
+  function containerOptions(currentContainer) {
+    return [...new Set(lastSlugs.map(s => s.container))]
+      .filter(c => c !== currentContainer)
+      .map(c => ({ value: c, label: c.split('/').slice(-3).join('/') }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+      .map(({ value, label }) => `<option value="${esc(value)}">${esc(label)}</option>`).join('')
+      || '<option value="" disabled>no other containers</option>';
+  }
+
+  function drawerHtml(s) {
+    const cur = { posture: s.posture, listed: s.listed ? 'listed' : 'unlisted', kind: s.kind, triaged: s.triaged ? 'true' : 'false' };
+    const grp = (axis, label, opts) => `<div class="dg"><span class="dg-l">${label}</span>` +
+      opts.map(([v, t]) => `<button class="dg-b ${cur[axis] === v ? 'on' : ''}" data-act="axis" data-axis="${axis}" data-val="${v}">${t}</button>`).join('') + `</div>`;
+    return `<div class="slug-drawer" data-id="${esc(s.id)}">
+      <div class="dg-row">
+        ${grp('posture', 'posture', [['public','public'],['private','private'],['local','local']])}
+        ${grp('listed', 'listed', [['listed','listed'],['unlisted','unlisted']])}
+      </div>
+      <div class="dg-row">
+        ${grp('kind', 'kind', [['explanatory','explanatory'],['operational','operational']])}
+        ${grp('triaged', 'triaged', [['true','triaged'],['false','untriaged']])}
+      </div>
+      <div class="dg-row">
+        <div class="dg grow"><span class="dg-l">rename</span>
+          <input class="d-in" data-fld="name" value="${esc(s.name)}" spellcheck="false">
+          <button class="dg-b" data-act="rename">save</button></div>
+        <div class="dg grow"><span class="dg-l">move →</span>
+          <select class="d-sel" data-fld="toContainer">${containerOptions(s.container)}</select>
+          <button class="dg-b warn" data-act="move">move</button></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg grow"><span class="dg-l">title</span>
+          <input class="d-in wide" data-fld="title" value="${esc(s.title)}" placeholder="${esc(s.name)}" spellcheck="false"></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg grow"><span class="dg-l">desc</span>
+          <input class="d-in wide" data-fld="description" value="${esc(s.description)}" placeholder="one-line description" spellcheck="false"></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg tag-edit"><span class="dg-l">tags</span>
+          <span class="chips" data-fld="tags">${(s.tags || []).map(chipHtml).join('')}<input class="tag-input" list="all-tags" placeholder="add tag…" spellcheck="false"></span>
+          <button class="dg-b" data-act="meta-save" title="save title · description · tags">save</button></div>
+      </div>
+      <datalist id="all-tags">${[...new Set(lastSlugs.flatMap((x) => x.tags || []))].sort().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
+      <div class="dg-row">
+        <div class="dg"><span class="dg-l">mirror →</span>
+          <select class="d-sel" data-fld="to">${containerOptions(s.container)}</select>
+          <select class="d-sel" data-fld="access"><option value="public">public</option><option value="private">private</option></select>
+          <button class="dg-b" data-act="mirror-add">add</button></div>
+        <div class="dg"><span class="dg-l">mirrors</span><span class="mirror-list"><span class="mz">…</span></span></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg"><span class="dg-l">vendor →</span>
+          <select class="d-sel" data-fld="vto">${containerOptions(s.container)}</select>
+          <button class="dg-b" data-act="vendor-add" title="copy this viz as a self-contained, runnable copy into another repo (+ a drift-guard hook)">copy</button></div>
+        ${s.isVendored ? `<div class="dg"><span class="dg-l">origin</span>
+          <button class="dg-b" data-act="vendor-sync" title="re-pull this vendored copy from its origin — overwrites local edits">re-sync</button></div>` : ''}
+      </div>
+      <div class="dg-row">
+        <div class="dg"><span class="dg-l">danger</span>
+          <button class="dg-b warn" data-act="delete" title="delete this viz folder — click twice to confirm">delete viz</button></div>
+      </div>
+      <div class="drawer-status"></div>
+    </div>`;
+  }
+
+  function setStatus(id, msg, ok) {
+    const el = drawerOf(id)?.querySelector('.drawer-status');
+    if (el) { el.textContent = msg || ''; el.className = 'drawer-status' + (ok === true ? ' ok' : ok === false ? ' err' : ''); }
+  }
+  async function mgmt(route, body) {
+    try {
+      return await fetch('api/' + route, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
+    } catch (e) { return { ok: false, err: String(e) }; }
+  }
+  async function loadMirrors(id) {
+    const box = drawerOf(id)?.querySelector('.mirror-list');
+    if (!box) return;
+    const rows = await fetch('api/mirrors?id=' + encodeURIComponent(id)).then(r => r.json()).catch(() => []);
+    box.innerHTML = rows.length === 0 ? '<span class="mz">none</span>'
+      : rows.map(m => `<span class="mchip">${esc(m.to)} <i>[${esc(m.access)}]</i>${m.listed ? '' : ' ·unlisted'}<button class="mx" data-act="mirror-rm" data-to="${esc(m.to)}" title="remove mirror">✕</button></span>`).join('');
+  }
+  function reopenRender() { renderSlugs(lastSlugs); if (openDrawerId) loadMirrors(openDrawerId); }
+  async function refreshAfter() { await loadFast(); await loadGit(); }
+
+  document.getElementById('slugs').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const act = btn.dataset.act;
+    const id = btn.closest('.slug, .slug-drawer')?.dataset.id;
+    if (!id) return;
+
+    if (act === 'toggle') {
+      openDrawerId = openDrawerId === id ? null : id;
+      confirmKey = null;
+      reopenRender();
+      return;
+    }
+    if (act === 'chip-rm') { btn.closest('.chip')?.remove(); return; }
+    // Two-step confirm for destructive actions: first click arms, second within 2.5s commits.
+    const arm = (key) => {
+      if (confirmKey === key) { confirmKey = null; return true; }
+      confirmKey = key; btn.classList.add('armed');
+      if (btn.classList.contains('dg-b')) btn.textContent = 'confirm?';
+      setTimeout(() => { if (confirmKey === key) reopenRender(); }, 2500);
+      return false;
+    };
+    const drawer = drawerOf(id);
+
+    if (act === 'axis') {
+      const body = { id, [btn.dataset.axis]: btn.dataset.val };
+      setStatus(id, 'saving…');
+      const r = await mgmt('update', body);
+      setStatus(id, r.ok ? (r.out.split('\n')[0] || 'updated') : (r.err || 'failed'), r.ok);
+      if (r.ok) { await refreshAfter(); loadMirrors(id); }
+    } else if (act === 'meta-save') {
+      const val = (f) => drawer.querySelector(`input[data-fld="${f}"]`).value.trim();
+      const chips = [...drawer.querySelectorAll('[data-fld="tags"] .chip')].map(c => c.dataset.tag);
+      const pend = drawer.querySelector('.tag-input').value.trim(); // commit an un-entered tag too
+      if (pend && !chips.some(t => t.toLowerCase() === pend.toLowerCase())) chips.push(pend);
+      setStatus(id, 'saving…');
+      const r = await mgmt('update', { id, title: val('title'), description: val('description'), tags: chips.join(', ') });
+      setStatus(id, r.ok ? (r.out.split('\n')[0] || 'saved') : (r.err || 'failed'), r.ok);
+      if (r.ok) { await refreshAfter(); loadMirrors(id); }
+    } else if (act === 'rename') {
+      const name = drawer.querySelector('[data-fld="name"]').value.trim();
+      if (!name) return setStatus(id, 'name required', false);
+      setStatus(id, 'renaming…');
+      const r = await mgmt('move', { id, name });
+      if (r.ok) { openDrawerId = null; await refreshAfter(); } else setStatus(id, r.err || 'failed', false);
+    } else if (act === 'move') {
+      const to = drawer.querySelector('[data-fld="toContainer"]').value;
+      if (!to) return setStatus(id, 'no destination container', false);
+      if (!arm('move')) return setStatus(id, 'click move again to confirm');
+      setStatus(id, 'moving…');
+      const r = await mgmt('move', { id, toContainer: to });
+      if (r.ok) { openDrawerId = null; await refreshAfter(); } else setStatus(id, r.err || 'failed', false);
+    } else if (act === 'mirror-add') {
+      const to = drawer.querySelector('[data-fld="to"]').value;
+      if (!to) return setStatus(id, 'no sink container', false);
+      setStatus(id, 'mirroring…');
+      const r = await mgmt('mirror', { id, sub: 'add', to, access: drawer.querySelector('[data-fld="access"]').value });
+      setStatus(id, r.ok ? (r.out.split('\n')[0] || 'mirror added') : (r.err || 'failed'), r.ok);
+      if (r.ok) loadMirrors(id);
+    } else if (act === 'mirror-rm') {
+      if (!arm('rm:' + btn.dataset.to)) { btn.textContent = '✓?'; return setStatus(id, 'click ✕ again to confirm'); }
+      setStatus(id, 'removing…');
+      const r = await mgmt('mirror', { id, sub: 'rm', to: btn.dataset.to });
+      setStatus(id, r.ok ? 'mirror removed' : (r.err || 'failed'), r.ok);
+      if (r.ok) loadMirrors(id);
+    } else if (act === 'vendor-add') {
+      const to = drawer.querySelector('[data-fld="vto"]').value;
+      if (!to) return setStatus(id, 'no sink container', false);
+      if (!arm('vendor:' + to)) return setStatus(id, 'click copy again to confirm — writes a full copy + a pre-commit guard into the sink repo');
+      setStatus(id, 'vendoring…');
+      const r = await mgmt('vendor', { id, to });
+      setStatus(id, r.ok ? (r.out.split('\n')[0] || 'vendored') : (r.err || 'failed'), r.ok);
+      if (r.ok) await refreshAfter();
+    } else if (act === 'vendor-sync') {
+      if (!arm('vsync:' + id)) return setStatus(id, 'click re-sync again to confirm — overwrites this copy from its origin');
+      setStatus(id, 're-syncing…');
+      const r = await mgmt('vendor-sync', { id });
+      setStatus(id, r.ok ? (r.out.split('\n')[0] || 're-synced') : (r.err || 'failed'), r.ok);
+      if (r.ok) await refreshAfter();
+    } else if (act === 'delete') {
+      if (!arm('delete:' + id)) return setStatus(id, 'click delete again to confirm — this removes the folder');
+      setStatus(id, 'deleting…');
+      const r = await mgmt('delete', { id });
+      if (r.ok) { openDrawerId = null; await refreshAfter(); } else setStatus(id, r.err || 'failed', false);
+    }
+  });
+
+  // Tag chip entry: Enter/comma commits the typed tag (datalist suggests existing
+  // ones as you type); Backspace on an empty input removes the last chip.
+  document.getElementById('slugs').addEventListener('keydown', (e) => {
+    const input = e.target.closest('.tag-input');
+    if (!input) return;
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const v = input.value.trim().replace(/,+$/, '');
+      if (!v) return;
+      const chips = input.closest('.chips');
+      if (![...chips.querySelectorAll('.chip')].some(c => c.dataset.tag.toLowerCase() === v.toLowerCase()))
+        input.insertAdjacentHTML('beforebegin', chipHtml(v));
+      input.value = '';
+    } else if (e.key === 'Backspace' && !input.value) {
+      input.closest('.chips')?.querySelector('.chip:last-of-type')?.remove();
+    }
+  });
+
+  // ---- Filter + sort controls (client-side over the fast snapshot) -------
+  function filterState() {
+    const v = (id) => document.getElementById(id).value;
+    return {
+      sortKey: v('sort-key'),
+      sortDir: document.getElementById('sort-dir').dataset.dir,
+      posture: v('f-posture'), listed: v('f-listed'), kind: v('f-kind'),
+      triaged: v('f-triaged'), api: v('f-api'), scope: v('f-scope'),
+      tags: [...activeTags],
+      originals: document.getElementById('f-originals').checked,
+    };
+  }
+  function applyFilters(list, f) {
+    return list.filter(s => {
+      if (f.tags.length && !(s.tags || []).some(t => f.tags.includes(t))) return false; // OR within tags
+      if (f.posture && (s.posture || 'untagged') !== f.posture) return false;
+      if (f.listed === 'listed' && !s.listed) return false;
+      if (f.listed === 'unlisted' && s.listed) return false;
+      if (f.kind && s.kind !== f.kind) return false;
+      if (f.triaged === 'triaged' && !s.triaged) return false;
+      if (f.triaged === 'untriaged' && s.triaged) return false;
+      if (f.api === 'yes' && !s.hasApi) return false;
+      if (f.api === 'no' && s.hasApi) return false;
+      if (f.scope && s.container !== f.scope) return false;
+      if (f.originals && s.mirroredIn) return false;
+      return true;
+    });
+  }
+  const SORT_KEYS = {
+    modified: s => s.mtime,
+    created:  s => s.created,
+    name:     s => s.name.toLowerCase(),
+    size:     s => s.sizeBytes,
+    files:    s => s.fileCount,
+    commits:  s => (gitFor(s.id)?.commitCount ?? -1),
+  };
+  const NATURAL_DIR = { modified: 'desc', created: 'desc', name: 'asc', size: 'desc', files: 'desc', commits: 'desc' };
+  function sortSlugs(list, f) {
+    const key = SORT_KEYS[f.sortKey] || SORT_KEYS.recent;
+    const dir = f.sortDir === 'asc' ? 1 : -1;
+    return [...list].sort((a, b) => {
+      const va = key(a), vb = key(b);
+      if (va < vb) return -dir;
+      if (va > vb) return dir;
+      return a.name.localeCompare(b.name); // stable tiebreak by name
+    });
+  }
+  function markActiveControls(f) {
+    for (const id of ['f-posture', 'f-listed', 'f-kind', 'f-triaged', 'f-api', 'f-scope'])
+      document.getElementById(id).classList.toggle('active', !!document.getElementById(id).value);
+    document.getElementById('f-tag').classList.toggle('active', activeTags.size > 0);
+    document.querySelector('.ctl-check').classList.toggle('active', f.originals);
+  }
+  function setSortDir(dir) {
+    const b = document.getElementById('sort-dir');
+    b.dataset.dir = dir; b.textContent = dir === 'asc' ? '↑' : '↓';
+  }
+  ['f-posture', 'f-listed', 'f-kind', 'f-triaged', 'f-api', 'f-scope', 'f-originals']
+    .forEach(id => document.getElementById(id).addEventListener('change', () => renderSlugs(lastSlugs)));
+  // Tag dropdown ADDS to the active set (doesn't replace) — that's how one <select> gives the
+  // lobby's multi-tag behavior. Pills remove on click.
+  document.getElementById('f-tag').addEventListener('change', (e) => {
+    if (e.target.value) { activeTags.add(e.target.value); e.target.value = ''; renderSlugs(lastSlugs); }
+  });
+  document.getElementById('tag-pills').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tag-rm]');
+    if (b) { activeTags.delete(b.dataset.tagRm); renderSlugs(lastSlugs); }
+  });
+  // List / grid view toggle — flips a class on #slugs (same markup, CSS reflow); choice persists.
+  const viewSeg = document.getElementById('slug-view');
+  function setView(v) {
+    document.getElementById('slugs').classList.toggle('cards', v === 'cards');
+    for (const b of viewSeg.querySelectorAll('button')) b.classList.toggle('on', b.dataset.view === v);
+    try { localStorage.setItem('sp-view', v); } catch {}
+  }
+  viewSeg.addEventListener('click', (e) => { const b = e.target.closest('button[data-view]'); if (b) setView(b.dataset.view); });
+  setView((() => { try { return localStorage.getItem('sp-view') || 'list'; } catch { return 'list'; } })());
+  document.getElementById('sort-key').addEventListener('change', () => {
+    setSortDir(NATURAL_DIR[document.getElementById('sort-key').value] || 'desc'); // sensible default per key
+    renderSlugs(lastSlugs);
+  });
+  document.getElementById('sort-dir').addEventListener('click', () => {
+    setSortDir(document.getElementById('sort-dir').dataset.dir === 'asc' ? 'desc' : 'asc');
+    renderSlugs(lastSlugs);
+  });
+  document.getElementById('filters-reset').addEventListener('click', () => {
+    ['f-posture', 'f-listed', 'f-kind', 'f-triaged', 'f-api', 'f-scope'].forEach(id => document.getElementById(id).value = '');
+    activeTags.clear();
+    document.getElementById('f-originals').checked = false;
+    document.getElementById('sort-key').value = 'modified';
+    setSortDir('desc');
+    renderSlugs(lastSlugs);
+  });
+
+  // ---- Boot --------------------------------------------------------------
+  // Live data only means anything with a running server behind us. Detect the
+  // environment (this is the kit's vizEnv(), inlined since this standalone page
+  // doesn't import the module): a static publish (window.__VIZ_STATIC__, stamped
+  // by build.ts) or an unreachable server → show a "run me locally" placeholder in
+  // each live region and skip all fetching / auto-refresh. Live → business as usual.
+  async function vizEnv() {
+    if (window.__VIZ_STATIC__) return 'static';
+    try { return (await fetch('/_health', { cache: 'no-store' })).ok ? 'live' : 'offline'; }
+    catch { return 'offline'; }
+  }
+  (async function boot() {
+    const env = await vizEnv();
+    if (env !== 'live') {
+      const why = env === 'static'
+        ? "This is a static copy — there's no live server behind it."
+        : "The viz server isn't reachable right now.";
+      const ph = (what) =>
+        '<div style="padding:26px 20px; text-align:center; color:var(--muted); line-height:1.7; ' +
+        'border:1px dashed var(--border); border-radius:10px; background:var(--surface)">' +
+        '🔌 <b style="color:var(--text)">Live only.</b> ' + why + '<br>Run <code>/viz</code> locally and open the ' +
+        'self-portrait to see ' + what + ' here.</div>';
+      document.getElementById('slug-totals').innerHTML = '';
+      document.getElementById('git-status').textContent = '';
+      document.getElementById('slugs').innerHTML = ph('your live library');
+      document.getElementById('server-info').innerHTML = ph('server status');
+      document.getElementById('commits').innerHTML = ph('recent commits');
+      const rb = document.getElementById('rescan-btn'); if (rb) rb.style.display = 'none';
+      return;
+    }
+    document.getElementById('git-status').textContent = '· git feed loading…';
+    loadFast();
+    loadCommits();
+    loadGit();          // slow feed: once on load (and again after rescan)
+    setInterval(loadFast, 5000);
+    setInterval(loadCommits, 30000);
+  })();
+</script>
+
+</body>
+</html>

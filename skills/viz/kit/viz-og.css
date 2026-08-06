@@ -1,0 +1,278 @@
+/* viz-og.css — the 1200×630 OG / hero card layout. Load AFTER viz-kit.css:
+
+     <link rel="stylesheet" href="/_kit/viz-kit.css">
+     <link rel="stylesheet" href="/_kit/viz-og.css">
+
+   Why this exists: 94 hero.html files were authored before it, and NONE of them
+   loaded the kit — every one re-typed the same ~90 lines of card CSS by hand. The
+   drift is measurable: `.right` padding exists in six variants across the corpus,
+   `.eyebrow` margin-bottom in three, `.chip` font-size in two. Worse, `.og-card`
+   is not a convention but a CONTRACT — verify.ts --og clips the screenshot to that
+   element and errors without it — so a tooling dependency was being hand-retyped 93
+   times. The values here are the modal ones from that corpus, so a card built on
+   this file matches what the good heroes already looked like.
+
+   Everything is expressed in viz-kit tokens, so a re-themed viz and its hero card
+   stay in sync (the old hand-rolled heroes had a PARALLEL palette — --fg/--line
+   instead of --text/--border, at different hexes, so a viz and its own card
+   disagreed about what "the background" was).
+
+   Anatomy — the shape ~50 of the 94 heroes converged on:
+
+     .og-card                       1200×630, the element --og clips to
+       .frame                       inset hairline border
+       .left                        eyebrow / title / essence / sub / chips
+       .right                       .panel (a figure, chart, or diagram)
+                                      .panel-cap, your content, .foot > .stat
+
+   Both columns are optional: drop .right for a full-bleed title card, or drop
+   .left for a figure-only card. */
+
+.og-card {
+  width: 1200px;
+  height: 630px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  font-family: var(--sans);
+  color: var(--text);
+  /* Two off-screen colour washes + the flat background. Keeps a large dark card
+     from reading as a flat rectangle; the anchors sit outside the frame so no
+     gradient edge is ever visible inside it. */
+  background:
+    radial-gradient(1150px 620px at 6% -12%, color-mix(in srgb, var(--warn) 10%, transparent), transparent 58%),
+    radial-gradient(980px 560px at 108% 8%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 60%),
+    var(--bg);
+}
+/* Top sheen + bottom vignette. Pointer-events off so it never eats a click while
+   you're composing the card in the live browser. */
+.og-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 20%),
+    radial-gradient(1400px 800px at 50% 130%, rgba(0, 0, 0, 0.5), transparent 60%);
+}
+
+.frame {
+  position: absolute;
+  inset: 22px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 18px;
+  pointer-events: none;
+}
+
+/* ── Columns ─────────────────────────────────────────────────────────────── */
+
+.og-card > .left {
+  width: 618px;
+  padding: 64px 16px 64px 72px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+.og-card > .right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 60px 56px 4px;
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Left column ─────────────────────────────────────────────────────────── */
+
+/* Small uppercase pill above the title — the category/context line. */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  width: fit-content;
+  margin-bottom: 30px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.eyebrow .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+
+/* The headline. Deliberately huge — an OG card is read at thumbnail size in a
+   Slack scroll, so the title has to survive being shrunk to ~300px wide. */
+.og-card .title {
+  font-size: 88px;
+  line-height: 0.93;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  margin: 0;
+}
+/* .hl tints a span inside title/essence — the one idea you want carrying colour. */
+.og-card .title .hl,
+.essence .hl {
+  color: var(--warn);
+}
+.essence .hl2 {
+  color: var(--good);
+}
+
+/* One-sentence claim under the title. This is the line people actually read. */
+.essence {
+  margin-top: 28px;
+  max-width: 505px;
+  font-size: 29px;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.og-card .sub {
+  margin-top: 16px;
+  max-width: 490px;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.og-card .sub code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  color: var(--text);
+  background: var(--panel-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 30px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 13px;
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 13.5px;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+/* Tiny square tick before a chip's label. */
+.chip .tk {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--warn);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--warn) 60%, transparent);
+}
+
+/* ── Right column: the figure panel ──────────────────────────────────────── */
+
+.og-card .panel {
+  width: 434px;
+  padding: 20px 20px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--panel) 92%, transparent),
+    color-mix(in srgb, var(--bg) 92%, transparent)
+  );
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+.panel-cap {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.panel-cap .t {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.panel-cap .s {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--faint);
+}
+/* An inline figure inside the panel. */
+.og-card svg.graph {
+  width: 100%;
+  display: block;
+}
+
+/* Stat row under the figure. .stat.good / .warn / .danger tint the number. */
+.foot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 10px;
+}
+.stat .n {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1;
+}
+.stat.good .n { color: var(--good); }
+.stat.warn .n { color: var(--warn); }
+.stat.danger .n { color: var(--danger); }
+.stat.accent .n { color: var(--accent); }
+.stat .l {
+  margin-top: 5px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.stat .d {
+  margin-top: 3px;
+  max-width: 180px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+/* ── Safe zone ───────────────────────────────────────────────────────────── */
+
+/* Slack/X/Teams/WebEx/Discord centre-crop a link card, so keep anything that MUST
+   survive inside the middle ~1080×565. Add class="show-safe" to .og-card while
+   composing to see the guide; remove it before shooting (it renders in the shot). */
+.og-card.show-safe::before {
+  content: "";
+  position: absolute;
+  left: 60px;
+  top: 32px;
+  width: 1080px;
+  height: 565px;
+  border: 1px dashed color-mix(in srgb, var(--danger) 55%, transparent);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 3;
+}
