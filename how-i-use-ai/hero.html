@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  :root {
+    --bg: #0b0d12;
+    --bg-2: #11141c;
+    --fg: #e6e8ee;
+    --fg-dim: #9aa1b1;
+    --fg-faint: #5b6378;
+    --a: #58a6ff;        /* accountable / you  (viz --accent) */
+    --r: #bc8cff;        /* the doing / AI     (viz --c4) */
+    --teal: #4ec9b0;     /* viz --c5 */
+    --line: #232838;
+    --code-bg: #0a0c11;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #05060a; }
+
+  .og-card {
+    width: 1200px; height: 630px;
+    overflow: hidden; position: relative;
+    background:
+      radial-gradient(1150px 620px at 6% -12%, rgba(88,166,255,0.10), transparent 58%),
+      radial-gradient(950px 560px at 108% 8%, rgba(188,140,255,0.08), transparent 60%),
+      var(--bg);
+    font-family: var(--sans); color: var(--fg);
+    display: flex; align-items: stretch;
+  }
+  .frame { position: absolute; inset: 22px; border: 1px solid rgba(35,40,56,0.7); border-radius: 18px; pointer-events: none; }
+  .og-card::after {
+    content: ""; position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.015), transparent 20%),
+      radial-gradient(1400px 800px at 50% 130%, rgba(0,0,0,0.5), transparent 60%);
+    pointer-events: none;
+  }
+
+  /* ---- LEFT: editorial column ---- */
+  .left { width: 664px; padding: 64px 16px 64px 72px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 2; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--mono); font-size: 14px; letter-spacing: 0.08em;
+    color: var(--a); background: rgba(88,166,255,0.10);
+    border: 1px solid rgba(88,166,255,0.22);
+    padding: 7px 14px; border-radius: 999px;
+    width: fit-content; margin-bottom: 32px; text-transform: uppercase;
+  }
+  .eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--a); box-shadow: 0 0 10px var(--a); }
+
+  .title { font-size: 74px; line-height: 0.94; font-weight: 800; letter-spacing: -0.045em; white-space: nowrap; }
+  .title .r { color: var(--r); }
+  .title .a { color: var(--a); }
+
+  .essence { margin-top: 30px; font-size: 29px; line-height: 1.28; font-weight: 600; letter-spacing: -0.02em; max-width: 510px; }
+  .essence .hl { color: var(--a); }
+
+  .sub { margin-top: 16px; font-size: 17px; line-height: 1.5; color: var(--fg-dim); max-width: 480px; }
+  .sub code { font-family: var(--mono); font-size: 0.9em; color: var(--fg); background: var(--code-bg); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line); white-space: nowrap; }
+
+  .chips { display: flex; gap: 10px; margin-top: 32px; flex-wrap: wrap; }
+  .chip { font-family: var(--mono); font-size: 13.5px; color: var(--fg-dim); background: var(--bg-2); border: 1px solid var(--line); padding: 8px 13px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; }
+  .chip .tk { width: 6px; height: 6px; border-radius: 2px; background: var(--a); box-shadow: 0 0 6px rgba(88,166,255,0.5); }
+  .chip:nth-child(2) .tk { background: var(--r); box-shadow: 0 0 6px rgba(188,140,255,0.5); }
+  .chip:nth-child(3) .tk { background: var(--teal); box-shadow: 0 0 6px rgba(78,201,176,0.5); }
+
+  /* ---- RIGHT: the split, one frame ---- */
+  .right { flex: 1; display: flex; align-items: center; justify-content: center; padding: 60px 64px 60px 8px; position: relative; z-index: 2; }
+  .panel {
+    width: 412px;
+    background: linear-gradient(180deg, rgba(22,26,37,0.92), rgba(17,20,28,0.92));
+    border: 1px solid var(--line); border-radius: 16px; padding: 22px 22px 20px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+  .panel-cap { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+  .panel-cap .t { font-family: var(--mono); font-size: 13px; color: var(--fg-dim); letter-spacing: 0.04em; text-transform: uppercase; }
+  .panel-cap .s { font-family: var(--mono); font-size: 12px; color: var(--fg-faint); }
+
+  svg.graph { width: 100%; display: block; }
+
+  .foot { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .stat .n { font-family: var(--mono); font-weight: 700; font-size: 30px; line-height: 1; }
+  .stat.r .n { color: var(--r); }
+  .stat.a .n { color: var(--a); }
+  .stat .l { font-family: var(--mono); font-size: 11.5px; color: var(--fg-faint); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 6px; }
+  .stat .d { font-size: 12.5px; color: var(--fg-dim); margin-top: 4px; line-height: 1.35; }
+</style>
+</head>
+<body>
+  <div class="og-card">
+    <div class="frame"></div>
+
+    <!-- LEFT -->
+    <div class="left">
+      <div class="eyebrow"><span class="dot"></span>Working philosophy &middot; 9 principles</div>
+
+      <div class="title">Delegate the <span class="r">R</span>.<br>Keep the <span class="a">A</span>.</div>
+
+      <div class="essence">
+        AI is a means to an end. The <span class="hl">accountability</span> never leaves my desk.
+      </div>
+
+      <div class="sub">
+        And the lesson that took months: someone else&rsquo;s excellent framework is worthless if it fights your grain &mdash; so I built the <code>R2 SDLC</code> to fit mine.
+      </div>
+
+      <div class="chips">
+        <span class="chip"><span class="tk"></span>make it yours</span>
+        <span class="chip"><span class="tk"></span>retro everything</span>
+        <span class="chip"><span class="tk"></span>the teaching test</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: one unit of work, split -->
+    <div class="right">
+      <div class="panel">
+        <div class="panel-cap">
+          <span class="t">One unit of work</span>
+          <span class="s">split, not handed over</span>
+        </div>
+
+        <svg class="graph" viewBox="0 0 368 246" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <style>
+              .lab    { font-family: ui-monospace,"SF Mono",Menlo,monospace; font-size: 12.5px; fill: #e6e8ee; dominant-baseline: middle; }
+              .sublab { font-family: ui-monospace,"SF Mono",Menlo,monospace; font-size: 10.5px; fill: #5b6378; dominant-baseline: middle; }
+              .glyph  { font-family: ui-monospace,"SF Mono",Menlo,monospace; font-size: 20px; font-weight: 700; dominant-baseline: middle; text-anchor: middle; }
+            </style>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+              <path d="M0,1 L9,5 L0,9 z" fill="#bc8cff"/>
+            </marker>
+            <marker id="aa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+              <path d="M0,1 L9,5 L0,9 z" fill="#58a6ff"/>
+            </marker>
+          </defs>
+
+          <!-- the incoming work -->
+          <circle cx="24" cy="123" r="11" fill="#4ec9b0" stroke="#0b0d12" stroke-width="2"/>
+          <text class="sublab" x="8" y="150">the work</text>
+
+          <!-- fork -->
+          <path d="M35 123 H70" stroke="#232838" stroke-width="2"/>
+
+          <!-- R rail: delegated, dashed -->
+          <path d="M70 123 C96 123, 96 62, 128 62" stroke="#bc8cff" stroke-width="2" stroke-dasharray="5 5" opacity="0.75" marker-end="url(#ar)"/>
+          <rect x="140" y="34" width="222" height="56" rx="10" fill="#0a0c11" stroke="#3a2b55"/>
+          <rect x="154" y="48" width="28" height="28" rx="7" fill="#bc8cff" stroke="#0b0d12" stroke-width="2"/>
+          <text class="glyph" x="168" y="63" fill="#0b0d12">R</text>
+          <text class="lab" x="194" y="54">the doing</text>
+          <text class="sublab" x="194" y="72">typing &middot; scaffolding</text>
+          <text class="sublab" x="140" y="106" fill="#bc8cff" opacity="0.85">&rarr; handed to the model</text>
+
+          <!-- A rail: kept, solid -->
+          <path d="M70 123 C96 123, 96 184, 128 184" stroke="#58a6ff" stroke-width="2.4" marker-end="url(#aa)"/>
+          <rect x="140" y="156" width="222" height="56" rx="10" fill="#0a0c11" stroke="#22456e"/>
+          <rect x="154" y="170" width="28" height="28" rx="7" fill="#58a6ff" stroke="#0b0d12" stroke-width="2"/>
+          <text class="glyph" x="168" y="185" fill="#0b0d12">A</text>
+          <text class="lab" x="194" y="176">accountable</text>
+          <text class="sublab" x="194" y="194">judgment &middot; what ships</text>
+          <text class="sublab" x="140" y="228" fill="#58a6ff" opacity="0.85">&rarr; stays on me</text>
+        </svg>
+
+        <div class="foot">
+          <div class="stat r">
+            <div class="n">R</div>
+            <div class="l">delegated</div>
+            <div class="d">it does the doing &mdash; and demos it back to me</div>
+          </div>
+          <div class="stat a">
+            <div class="n">A</div>
+            <div class="l">never delegated</div>
+            <div class="d">the model will eventually be wrong; the bar stays on me</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

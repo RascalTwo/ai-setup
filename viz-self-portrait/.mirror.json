@@ -1,0 +1,11 @@
+{
+  "origin": "src-e4fd2f6343c6",
+  "card": {
+    "title": "/viz — self-portrait",
+    "description": "The viz skill rendering itself — runtime architecture, the publish lifecycle, and live stats across every root.",
+    "tags": [],
+    "kind": "operational",
+    "listed": true,
+    "private": false
+  }
+}
