@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>r2-sdlc-testing-paradigm — mocks are the last resort</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="r2-sdlc-testing-paradigm">
+<meta name="viz:description" content="The testing taste r2-sdlc loads before writing any test and again when reviewing them: black-box, most-real-first, fakes over mocks, Given/When/Then.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c5) 15%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--danger) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 470px; gap:38px; align-items:center; padding:56px 66px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:13px;
+            letter-spacing:.13em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:56px; line-height:1.04; margin:0 0 18px; letter-spacing:-1.5px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--danger); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 20px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the realness descent = the "proof" slot. Five rungs from most-real to most-
+     isolated. The rungs are the skill; the TAGS are the argument — you enter at
+     the top, rung 4 is a sidestep rather than a demotion, and rung 5 is a floor. */
+  .cap{ font-family:var(--mono); font-size:12px; letter-spacing:.13em; color:var(--muted); margin-bottom:14px; }
+  .cap b{ color:var(--c5); }
+  .rail{ position:relative; display:flex; flex-direction:column; gap:10px; }
+  .rail::before{ content:""; position:absolute; left:9px; top:16px; bottom:16px; width:2px;
+                 background:linear-gradient(180deg, var(--c5), color-mix(in srgb, var(--c4) 70%, var(--border)),
+                                                    color-mix(in srgb, var(--danger) 60%, var(--border))); }
+  .rung{ --k:var(--faint); display:grid; grid-template-columns:20px 1fr; gap:11px; align-items:center; }
+  .node{ width:11px; height:11px; border-radius:50%; background:var(--k); margin:0 auto; }
+  .body{ display:flex; align-items:baseline; gap:10px; background:color-mix(in srgb, var(--panel) 72%, transparent);
+         border:1px solid var(--border); border-radius:10px; padding:11px 12px; }
+  .body .n{ font-family:var(--mono); font-size:13.5px; letter-spacing:.04em; color:var(--text); white-space:nowrap; }
+  .body .d{ font-size:12.5px; color:var(--muted); line-height:1.3; }
+  .body .d em{ font-style:normal; font-family:var(--mono); font-size:11.5px; color:var(--text); }
+  .tag{ margin-left:auto; font-family:var(--mono); font-size:10px; letter-spacing:.11em; padding:2px 7px;
+        border-radius:99px; white-space:nowrap; color:var(--k);
+        background:color-mix(in srgb, var(--k) 13%, transparent);
+        border:1px solid color-mix(in srgb, var(--k) 45%, transparent); }
+  .rung.t1{ --k:var(--c5); }
+  .rung.t2{ --k:color-mix(in srgb, var(--c5) 60%, var(--c4)); }
+  .rung.t3{ --k:var(--c4); }
+  .rung.t4{ --k:var(--c3); }
+  .rung.t4 .node{ background:var(--bg); box-shadow:inset 0 0 0 2px var(--k); }
+  .rung.t4 .body{ border-style:dashed; border-color:color-mix(in srgb, var(--c3) 45%, transparent); }
+  .rung.t4 .tag{ background:none; border-style:dashed; }
+  .rung.t5{ --k:var(--danger); }
+  .rung.t5 .body{ border-color:color-mix(in srgb, var(--danger) 50%, transparent); }
+  .pfoot{ font-family:var(--mono); font-size:11.5px; letter-spacing:.09em; color:var(--faint); margin-top:14px; }
+  .pfoot b{ color:var(--c5); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  pre .bad{ color:var(--danger); }
+  pre .ok{ color:var(--good); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .chapter{ border-left:3px solid var(--accent); background:color-mix(in srgb, var(--accent) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="r2-sdlc-testing-paradigm" data-viz-id="poster-card" data-label="r2-sdlc-testing-paradigm poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · R2-SDLC-TESTING-PARADIGM</div>
+      <h1 class="hook">Mocks are the<br><em>last resort.</em></h1>
+      <p class="sub">Tests sit on a spectrum from <b>most real</b> to <b>most isolated</b>. This chapter of r2-sdlc says: start at the most-real end the project can support, and step down only when forced. A fake has <b>working logic</b> that matches the real contract; a mock returns Y and asserts it was called. Fakes let you write behavior tests — mocks force structure tests.</p>
+      <p class="not">It does <b>not</b> ban unit tests.<br>On date math and parsers, don't apologize for them.</p>
+      <div class="trigger"><span>chapter of</span>&nbsp;/r2-sdlc</div>
+    </div>
+    <div>
+      <div class="cap">THE PREFERENCE HIERARCHY &nbsp;·&nbsp; <b>ENTER AT THE TOP</b></div>
+      <div class="rail">
+        <div class="rung t1">
+          <span class="node"></span>
+          <div class="body"><span class="n">1 REAL E2E</span><span class="d">against a real environment</span><span class="tag">START HERE</span></div>
+        </div>
+        <div class="rung t2">
+          <span class="node"></span>
+          <div class="body"><span class="n">2 EMULATED</span><span class="d">MSW, in-process DB, local SQS — <em>it can't tell</em></span></div>
+        </div>
+        <div class="rung t3">
+          <span class="node"></span>
+          <div class="body"><span class="n">3 FAKES</span><span class="d">a working stand-in that honors the contract</span></div>
+        </div>
+        <div class="rung t4">
+          <span class="node"></span>
+          <div class="body"><span class="n">4 UNIT</span><span class="d">complex pure-ish logic only</span><span class="tag">NOT A DEMOTION</span></div>
+        </div>
+        <div class="rung t5">
+          <span class="node"></span>
+          <div class="body"><span class="n">5 MOCKS</span><span class="d">call-and-return stubs</span><span class="tag">LAST RESORT</span></div>
+        </div>
+      </div>
+      <div class="pfoot">↓ MORE TESTS vs. MORE-<b>REAL</b> TESTS → REAL WINS, EVERY TIME</div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <div class="chapter">This is a chapter, not a command. It's the testing taste that <a href="../skill-r2-sdlc/">r2-sdlc</a> loads <b>before writing any test</b>, and loads again when tests get reviewed. Writers follow these rules; the <code>test-reviewer</code> enforces them. Same document, both jobs — which is why a reviewer can never object to something a writer was never told.</div>
+
+  <h2>Test as if you don't know how it works</h2>
+  <p>The core stance is <b>black box</b>: you are a <b>user</b> of the thing under test, and "user" is context-dependent. For a UI, a human clicking around. For an HTTP API, a consumer making requests. For a library function, a caller. For a CLI, a shell invocation. Exercise the code the way that user would and assert on observable outcomes — never on internal structure.</p>
+  <p class="m">Which makes one anti-pattern a naming problem rather than a style problem: the <b>wrong layer of "user"</b> — a test that claims to be behavior-level but is really poking a private helper.</p>
+
+  <h2>Rung 4 is a sidestep, not a demotion</h2>
+  <p>The hierarchy descends by realness, but unit tests get an explicit carve-out. Date math with timezones and DST, parsers and tokenizers, pricing and scoring, any function with N×M input combinations where each one matters — for those, a behavior test would have to synthesize dozens of scenarios through the full stack. Unit-test the function directly, exhaustively.</p>
+  <p class="m">They're <b>still GWT-formatted</b> and still assert observable output. They just target a narrower user: the function's caller.</p>
+
+  <h2>A test that cannot fail is a useless test</h2>
+  <p>If you can delete the implementation and the test still passes, it isn't testing anything. Red-green-refactor prevents this <em>by construction</em> — you have to watch it fail for the right reason first — but the skill states it standalone anyway, because it's the single most common way tests become theater.</p>
+  <ul>
+    <li>Tautologies — <code>expect(x).toBe(x)</code>.</li>
+    <li>Missing or trivial assertions: the body runs code and never asserts anything meaningful.</li>
+    <li>Stubs that always return the expected value, then assertions against that value.</li>
+    <li>Tests that pass whether or not the code under test is invoked.</li>
+  </ul>
+  <div class="callout"><b>If the red phase never fails for the right reason, the test has a bug</b> — and you fix the <em>test</em>, before writing any implementation.</div>
+
+  <h2>Vertical, not horizontal — and this one has an override</h2>
+  <p>Default mode: write one test, make it pass, write the next. AI agents have a strong pull toward the other shape because bulk-generating tests <em>feels</em> productive, and it produces the worst kind of tests — tests of <b>imagined</b> behavior. With no implementation to look at, they assert on the shape of things (data structures, signatures), so they pass when behavior breaks and fail when behavior is fine. The moment you learn something mid-build, every test ahead of you needs revising.</p>
+  <pre><span class="bad">WRONG (horizontal):</span>
+  RED:   test1, test2, test3, test4, test5
+  GREEN: impl1, impl2, impl3, impl4, impl5
+
+<span class="ok">RIGHT (vertical):</span>
+  RED → GREEN: test1 → impl1
+  RED → GREEN: test2 → impl2</pre>
+  <p class="m">The override is explicit: if <b>you</b> ask for horizontal — "draft all the test cases so I can review them", "scaffold the tests before any impl" — it does horizontal. Your call wins. It just never chooses it on its own.</p>
+
+  <h2>Repeat the verb. Never write AND.</h2>
+  <p>Every behavior test is Given/When/Then, verbs in ALL CAPS, and multiple clauses each get their own line rather than being joined:</p>
+  <pre>GIVEN a user with no session
+WHEN they request the dashboard
+THEN they are redirected to /login
+THEN a login-required event is logged   <span class="c">← not "...to /login AND a login-required..."</span></pre>
+  <p>In code there are two forms. <b>Gherkin-style <code>given()</code>/<code>when()</code>/<code>then()</code> helpers</b> are preferred where the stack already has them — and rare, because most projects don't emulate Gherkin. The skill's guard rail: <b>don't invent machinery just to get this form</b>. Otherwise use section-marker comments, where the comment must carry the <em>clause</em>, not just the verb — <code>// GIVEN a user with no session</code>, never a bare <code>// GIVEN</code>.</p>
+  <p class="m">Even the title has a rule, and it's grammatical: <code>it(...)</code> reads as "it <b>should</b> …", so the string continues that sentence; <code>test(...)</code> takes a declarative. Match the caller the file already uses; don't mix them.</p>
+
+  <h2>What a reviewer actually asks</h2>
+  <p class="m">Three questions per test, then findings as a prioritized list — severity (blocking / nit), location, suggested fix:</p>
+  <ul>
+    <li><b>Who's the user, and what behavior is this exercising?</b> If you can't answer in one sentence, the test is muddled.</li>
+    <li><b>Would this test catch the bug it was written to prevent?</b> If not, it's theater.</li>
+    <li><b>Is there a simpler version using fewer mocks?</b> If yes, propose it.</li>
+  </ul>
+  <p>The flag list is concrete: mocks where a fake would work, <code>expect(repo.save).toHaveBeenCalledWith(...)</code> with no behavioral outcome behind it, malformed or missing GWT, behavior tests reaching into internals, bulk-written batches, and over-mocking — when 80% of a test is setup and 20% is assertion, the assertion is usually on the mocks.</p>
+  <p class="m">When in doubt, it resolves the same way every time: default to the highest-realness tier the project can support. One high-signal behavior test beats five implementation-asserting mocks.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · a chapter of <a href="../skill-r2-sdlc/">r2-sdlc</a>.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

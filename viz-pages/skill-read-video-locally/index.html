@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>read-video-locally — you don't write the questions</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="read-video-locally">
+<meta name="viz:description" content="Splits a video between local Whisper and local Qwen3-VL on one shared timeline, so a vision-only model verifies what the narrator said at ~0 Claude vision tokens.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c5) 16%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c4) 14%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 470px; gap:38px; align-items:center; padding:56px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:53px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  h1.hook .hook-2{ display:block; margin-top:10px; font-size:26px; letter-spacing:-.6px; color:var(--muted); font-weight:600; }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 20px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14.5px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the shared-clock alignment = the "proof" slot. Two senses, one ruler: the
+     speech lane and the frame lane are the SAME 12-column grid, so "spoken at
+     0:42" literally sits above "frame at 0:42". Kill the speech lane and you
+     have the other mode — which is why the mode switch lives in the same figure. */
+  .cap{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; color:var(--muted); margin-bottom:12px; }
+  .cap b{ color:var(--c5); }
+  .clock{ background:color-mix(in srgb, var(--panel) 72%, transparent); border:1px solid var(--border);
+          border-radius:14px; padding:14px 15px 13px; }
+  /* one 12-column grid for BOTH lanes, so column 8 is the same instant in each */
+  .stack{ display:grid; grid-template-columns:repeat(12,1fr); column-gap:3px; row-gap:7px; }
+  .band{ grid-column:8; grid-row:2 / 6; background:color-mix(in srgb, var(--c5) 9%, transparent);
+         border-left:1px dashed color-mix(in srgb, var(--c5) 60%, transparent);
+         border-right:1px dashed color-mix(in srgb, var(--c5) 60%, transparent); border-radius:3px; }
+  .lh{ grid-column:1 / -1; display:flex; align-items:baseline; gap:8px; font-family:var(--mono);
+       font-size:11px; letter-spacing:.11em; position:relative; }
+  .lh .who{ font-weight:700; }
+  .lh .what{ color:var(--faint); letter-spacing:.06em; }
+  .lh.hear .who{ color:var(--c4); }
+  .lh.see .who{ color:var(--c5); }
+  .chip{ grid-row:2; position:relative; font-family:var(--mono); font-size:10.5px; line-height:1.9;
+         color:var(--text); text-align:center; background:color-mix(in srgb, var(--c4) 22%, transparent);
+         border-radius:6px; border:1px solid color-mix(in srgb, var(--c4) 45%, transparent);
+         white-space:nowrap; overflow:hidden; }
+  .at{ grid-column:8 / span 4; grid-row:3; position:relative; font-family:var(--mono); font-size:10px;
+       color:var(--c5); letter-spacing:.06em; padding-left:5px; }
+  .fr{ grid-row:5; height:26px; border-radius:5px; position:relative;
+       background:color-mix(in srgb, var(--c5) 12%, transparent);
+       border:1px solid color-mix(in srgb, var(--c5) 28%, transparent); }
+  .fr.lit{ background:color-mix(in srgb, var(--c5) 38%, transparent); border-color:var(--c5); }
+  .join{ font-family:var(--mono); font-size:11px; color:var(--text); margin-top:11px; line-height:1.5; }
+  .join b{ color:var(--c5); }
+  .join.s{ margin-top:4px; font-size:10px; letter-spacing:.03em; color:var(--faint); }
+  .modes{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:12px; }
+  .m{ border:1px solid var(--border); border-radius:10px; padding:9px 10px;
+      background:color-mix(in srgb, var(--panel) 60%, transparent); }
+  .m .k{ font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; margin-bottom:5px; }
+  .m .v{ font-size:11.5px; line-height:1.4; color:var(--muted); }
+  .m.on{ border-color:color-mix(in srgb, var(--c4) 50%, transparent); }
+  .m.on .k{ color:var(--c4); }
+  .m.off .k{ color:var(--faint); }
+  .pfoot{ font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; color:var(--faint); margin-top:11px; }
+  .pfoot b{ color:var(--c5); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="read-video-locally" data-viz-id="poster-card" data-label="read-video-locally poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · READ-NARRATED-VIDEO</div>
+      <h1 class="hook">You don't write<br>the questions.<br><em>The narrator did.</em><br><span class="hook-2">And when nobody narrates, it still watches.</span></h1>
+      <p class="sub">Claude can't <b>Read</b> video, and the best local video model — Qwen3-VL — <b>cannot hear</b>. So the job splits: Whisper takes the voice, Qwen3-VL takes the picture, and a shared timeline glues them. Each spoken comment becomes a claim checked against the frame at that second. On a silent screen capture the transcript step drops out and your question drives instead — and either way, <b>you never choose a frame sampler</b>.</p>
+      <p class="not">Local models in, <b>text</b> out — ~0 Claude vision tokens.<br>An optimization, <b>never a hard dependency.</b></p>
+      <div class="trigger"><span>run</span>&nbsp;python3 read_video.py demo.mp4</div>
+    </div>
+    <div>
+      <div class="cap">TWO SENSES &nbsp;·&nbsp; <b>ONE CLOCK</b> &nbsp;·&nbsp; SAME FILE, SAME START</div>
+      <div class="clock">
+        <div class="stack">
+          <span class="band"></span>
+          <div class="lh hear" style="grid-row:1"><span class="who">WHISPER</span><span class="what">hears the voice · word-level times</span></div>
+          <span class="chip" style="grid-column:2 / span 4">"…and here…"</span>
+          <span class="chip" style="grid-column:8 / span 5; text-align:left; padding-left:7px">"…it turns green"</span>
+          <span class="at">0:42.3</span>
+          <div class="lh see" style="grid-row:4"><span class="who">QWEN3-VL</span><span class="what">sees the frames</span></div>
+          <span class="fr" style="grid-column:1"></span><span class="fr" style="grid-column:2"></span>
+          <span class="fr" style="grid-column:3"></span><span class="fr" style="grid-column:4"></span>
+          <span class="fr" style="grid-column:5"></span><span class="fr" style="grid-column:6"></span>
+          <span class="fr" style="grid-column:7"></span><span class="fr lit" style="grid-column:8"></span>
+          <span class="fr" style="grid-column:9"></span><span class="fr" style="grid-column:10"></span>
+          <span class="fr" style="grid-column:11"></span><span class="fr" style="grid-column:12"></span>
+        </div>
+        <div class="join">word at <b>0:42.3</b>, frame under it at <b>0:42</b> — one claim, verified.</div>
+        <div class="join s">sampled frames ≈ duration × fps, merged by 2, capped at 768</div>
+      </div>
+      <div class="modes">
+        <div class="m on">
+          <div class="k">AUDIO PRESENT → NARRATED</div>
+          <div class="v">The transcript <b>is</b> the query list. You hand-author nothing.</div>
+        </div>
+        <div class="m off">
+          <div class="k">NO AUDIO → SILENT</div>
+          <div class="v">Whisper skipped. Your <b>--question</b> drives the frames instead.</div>
+        </div>
+      </div>
+      <div class="pfoot">MODE IS <b>AUTO-DETECTED</b> FROM THE AUDIO TRACK — YOU DON'T PICK IT</div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>Two half-senses, one timeline</h2>
+  <p>A frame-by-frame native read of a video burns thousands of vision tokens. The local route costs ~0 — but no single local model does the whole job: Qwen3-VL (via mlx-vlm) sees and can't hear, Whisper hears and can't see. Feed Qwen3-VL the transcript <b>as timestamped text</b> and the two halves line up: "spoken X at 0:42" against "frame at 0:42 shows Y". A vision-only model then behaves like an audio+video one, locally, with no Omni model needed.</p>
+  <p class="m">The hearing half isn't reimplemented here — transcription is delegated to the <a href="../skill-transcribe-media/">transcribe-media</a> skill (MLX Whisper, GPU-accelerated), falling back to the <code>openai-whisper</code> CLI if that skill isn't installed. One speech-to-text engine, shared. Word-level timestamps are the point: they're what anchors deictic words like "here" and "this" to a moment.</p>
+
+  <h2>The narration is the query list</h2>
+  <p>In narrated mode you don't author questions — the speaker already did. Every comment in the voice-over becomes a claim verified against the video at its own timestamp. In silent mode (an agent's own screen capture, no audio) Whisper is skipped and your <code>--question</code> drives it, which upgrades self-verification from a flipbook of stills to <b>motion over time</b>: <em>did it animate, or teleport?</em> — a question one screenshot cannot answer.</p>
+  <p class="m">Always pass a specific intent. Like <a href="../skill-read-image-locally/">read-image-locally</a>, a video model is only as good as the prompt; never expect anything useful from a vague request. And subjective calls — "is the easing juicy, is it fun" — stay a human's, in both modes.</p>
+
+  <h2>When the video path averages your answer away</h2>
+  <p>The video path samples frames as a temporal sequence and merges adjacent pairs, so a <b>brief</b> event — a fast tween, a six-frame transition — buried in a mostly-static clip gets averaged into a gist. The model reports a flat "it's a green plate" and misses the change entirely. <code>--montage</code> reframes the <b>temporal</b> question as a <b>spatial</b> one: tile the sampled frames into one numbered contact sheet and read it in image mode, which Qwen3-VL resolves far better than a fast transition. It auto-trims the settled tail by frame-diff, so the brief transition fills the grid instead of getting two tiles while ten are wasted on a static end.</p>
+  <pre><span class="c"># the model returns a per-tile 0–10 trajectory, never a verdict</span>
+snap  → 0,0,0,0,0,3,6,9,10,10,10,10
+tween → 0,0,0,3,5,6,7,8,9,10,10,10
+<span class="c"># the prompt never says "snap" or "gradual" — so the model can't be led.
+# the CALLER computes the verdict from rise-width.</span></pre>
+
+  <h2>You never pick the sampler</h2>
+  <p>Uniform <code>--fps</code> sampling over-samples a static screencast — six hundred near-identical slides — and under-samples a fast cut. Frame <b>selection</b> is a different job from frame <b>reading</b>, so it's delegated to <a href="https://github.com/HUANGCHIHHUNGLeo/claude-real-video"><code>claude-real-video</code></a>: deterministic ffmpeg-and-Pillow frame math, <b>no model, no API</b>, scene-change selection plus dedup. It picks; Qwen3-VL and Whisper still read and hear. The caller picks nothing.</p>
+  <pre>clip ≥ 20s, crv present  → <b>crv</b>        scene-selected + deduped
+clip &lt; 20s               → <b>uniform</b>    <span class="c"># a correctness call, not a speed one</span>
+crv missing or failing   → <b>uniform</b> + a warning naming the downgrade
+answer degenerates       → <b>the other one</b>, automatically</pre>
+  <p class="m">Short clips stay uniform <em>on purpose</em>. crv's whole job is deleting near-duplicate frames — and a smooth tween <em>is</em> a run of near-duplicates, so dedup would eat the very frames that answer "did it slide or teleport?". The real routing axis is the <b>question</b>, not the clip; sniffing the question is brittle, so duration stands in for it — agent self-captures are short and motion-shaped, real-world video is long and content-shaped.</p>
+
+  <div class="callout"><b>Two measured degenerations, one detector.</b> Handed too many dense stills, the model loops one caption instead of reading each frame: first the <em>same sentence for 14 consecutive frames</em>, then later "similar to the previous one but a different layout" four times running. So crv's frames are read as <b>numbered contact sheets</b>, not loose stills — and the detector compares consecutive lines for <em>near</em>-identity, because an exact-match check sails straight past the second failure.</div>
+
+  <h2>Boundaries, measured</h2>
+  <ul>
+    <li>Use it for <b>"how many in-between states were there"</b> — position over time, presence, a scalar that ramps. For <b>easing-feel, continuity or bounce</b>, the still grid hides it: use the video path, or a human.</li>
+    <li>The model <b>smears a hard edge by ~2–3 tiles</b>, reading an instant jump as a short ramp. Separating a true snap from a <b>sub-0.2s</b> tween is therefore <b>marginal</b> — raise <code>--tiles</code> and judge on rise-<em>width</em>, not on "any intermediate value".</li>
+    <li>For a pure colour or brightness trajectory, a <b>direct pixel read</b> (PIL over the frames) beats any model. Reach for the model when the per-frame question is <em>semantic</em> — where, what, whether — not a number you could just measure.</li>
+    <li>Montage needs <b>Pillow</b> for the sheet build.</li>
+  </ul>
+
+  <h2>The lever is prompt framing, not model size</h2>
+  <p>Narrated verification is strong and stable — the transcript anchors the model. Motion was the hard part, and the fix wasn't a bigger model. A plain "does it slide or teleport?" made <b>both</b> the 4-bit and the 8-bit model lazily call a smooth slide a teleport. <b>Enumeration framing</b> — walk the frames one by one, note each position, judge afterwards — fixes it, and is now baked into the silent-question prompt.</p>
+  <p class="m">The 8-bit default earns its place <em>in combination with</em> that framing, not on its own: asked to enumerate, 4-bit sometimes degenerated into repeated junk (<code>x=10, x=10, …</code>) while 8-bit enumerates cleanly every time. <code>Qwen3-VL-8B-Instruct-8bit</code> is ~10 GB; bf16 isn't worth it, since 8-bit is near-lossless and faster on Apple Silicon where inference is bandwidth-bound.</p>
+
+  <div class="callout"><b>ollama's <code>qwen3-vl:8b</code> is image-only.</b> Its runner does no temporal video encoding — don't route video through ollama. mlx-vlm is the video path. (ollama stays fine for single images and read-image-locally.)</div>
+
+  <h2>It is allowed to fail</h2>
+  <p>On any hard failure — mlx/Qwen3-VL load error, empty output — the engine prints <code>RVL_FAILED …</code> and exits non-zero. That's a designed exit, not a dead end: extract frames with ffmpeg and read them natively. The Whisper step is separately best-effort — if it fails, the run simply continues in silent mode and warns on stderr.</p>
+  <pre>ffmpeg -i video.mp4 -vf fps=2 /tmp/frames/f%03d.png   <span class="c"># then Read the frames</span></pre>
+  <p class="m">The same trick makes a clip in the first place, with no new dependency: drive a sequence through the app's screenshot hook, then <code>ffmpeg -framerate 10 -pattern_type glob</code> the burst into an mp4 and question it. That works even where OS screen recording is blocked for the app — a Godot window driven by computer-use, for instance.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

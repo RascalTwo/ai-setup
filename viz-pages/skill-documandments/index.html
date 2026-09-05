@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>documandments — nobody finds it, nothing keeps it true, don't write it</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="documandments">
+<meta name="viz:description" content="Enforces the Ten Commandments of Documentation on any change that touches prose — starting by deciding whether the doc should exist at all.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is the fixed 1200×630 clip target; the page scrolls, so the deep
+     dive lives below it. Mechanics (the --s scale, the collapsed #fit height)
+     all come from /_kit/poster.css — nothing here re-derives them.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 94% -10%, color-mix(in srgb, var(--c4) 16%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--good) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 430px; gap:40px; align-items:center; padding:56px 70px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:52px; line-height:1.06; margin:0 0 20px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--danger); }
+  p.sub{ font-size:18.5px; line-height:1.45; color:var(--muted); margin:0 0 20px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the ladder = the "proof" slot. Prose is the BOTTOM rung, and the rungs
+     step right as they descend so the last resort is visibly the smallest. */
+  .cap{ font-family:var(--mono); font-size:11.5px; letter-spacing:.13em; color:var(--muted);
+        margin-bottom:11px; line-height:1.5; }
+  .cap b{ color:var(--text); }
+  .ladder{ display:flex; flex-direction:column; gap:7px; }
+  .rung{ display:grid; grid-template-columns:20px 1fr; gap:11px; align-items:baseline;
+         background:color-mix(in srgb, var(--panel) 80%, transparent); border:1px solid var(--border);
+         border-left:3px solid var(--rc); border-radius:11px; padding:10px 13px; }
+  .rung .n{ font-family:var(--mono); font-size:12.5px; color:var(--rc); letter-spacing:.02em; }
+  .rung .t{ font-size:15px; font-weight:600; color:var(--text); line-height:1.25; }
+  .rung .d{ font-size:12.5px; color:var(--muted); line-height:1.4; margin-top:3px; }
+  .r1{ --rc:var(--good); }
+  .r2{ --rc:var(--c5); margin-left:9px; }
+  .r3{ --rc:var(--accent); margin-left:18px; }
+  .r4{ --rc:var(--warn); margin-left:27px; }
+  .r5{ --rc:var(--danger); margin-left:36px; border-style:dashed; }
+  .tag{ font-family:var(--mono); font-size:10px; letter-spacing:.12em; color:var(--danger);
+        border:1px solid color-mix(in srgb, var(--danger) 45%, transparent); border-radius:5px;
+        padding:1px 5px; margin-left:7px; vertical-align:2px; }
+  .kicker{ margin-top:12px; font-size:13px; line-height:1.45; color:var(--muted); text-align:right; }
+  .kicker b{ color:var(--text); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive code{ font-family:var(--mono); font-size:.88em; color:var(--accent);
+              background:var(--panel); border:1px solid var(--border); border-radius:5px; padding:1px 5px; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="documandments" data-viz-id="poster-card" data-label="documandments poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · DOCUMANDMENTS</div>
+      <h1 class="hook">Nobody finds it.<br>Nothing keeps it true.<br><em>Don't write it.</em></h1>
+      <p class="sub">Ten rules, enforced on any diff that touches prose. The first is a <b>gate</b>: name the purpose, the audience, the path they'll arrive by, and who keeps it true — or write nothing and say so plainly.</p>
+      <p class="not">Documentation can't be tested.<br><b>Nothing goes red when it goes stale.</b></p>
+      <div class="trigger"><span>fires on</span>&nbsp;"…and document it"</div>
+    </div>
+    <div>
+      <div class="cap">THE LADDER · <b>DOCS ARE THE LAST RESORT</b><br>CLIMB DOWN ONLY WHEN THE RUNG ABOVE IS EXHAUSTED</div>
+      <div class="ladder">
+        <div class="rung r1"><div class="n">1</div><div><div class="t">Design</div><div class="d">A clearer name, a smaller function, a split module.</div></div></div>
+        <div class="rung r2"><div class="n">2</div><div><div class="t">Contract</div><div class="d">A type, an enum, a schema. Truth here can't drift.</div></div></div>
+        <div class="rung r3"><div class="n">3</div><div><div class="t">Test</div><div class="d">An example that fails when it goes stale.</div></div></div>
+        <div class="rung r4"><div class="n">4</div><div><div class="t">Prose in the reader's path</div><div class="d">The confusing line. The PR that reviews it.</div></div></div>
+        <div class="rung r5"><div class="n">5</div><div><div class="t">A standalone doc<span class="tag">LAST RESORT</span></div><div class="d">Only if too big to inline — and linked from where the reader stands.</div></div></div>
+      </div>
+      <div class="kicker">Subpar docs in the right place beat<br><b>thorough docs in the wrong place.</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>The problem</h2>
+  <p>Documentation costs as much as code to write and maintain, and gets a fraction of the scrutiny. Nothing compiles it, nothing tests it, nothing goes red when it drifts — it just misleads quietly until someone acts on it. The ten rules are the missing scrutiny. They come from <b>documandments.com</b> (Austin Grey Lovelace, 2026); the skill is the enforcement.</p>
+
+  <h2>Rule I is a gate, not advice</h2>
+  <p>Before a single line, four questions get answered out loud: <b>what is this accomplishing</b>, <b>who is the audience</b>, <b>how will they know it exists</b> — the critical path, the file or review or error message they are <em>already</em> looking at — and <b>who keeps it true</b>.</p>
+  <p class="m">Fail any one and the doc doesn't get written. Not written badly, not written with a TODO — not written. The output is a sentence instead: <em>"I'm not adding a doc for X because nobody would find it and nothing keeps it true."</em> This is the most important rule; the other nine only matter for docs that clear it.</p>
+
+  <h2>Then the ladder</h2>
+  <p>Docs that pass the gate still don't go straight to a <code>docs/</code> page. Confusion you can <b>delete</b> beats confusion you can explain, and truth baked into a <b>contract</b> is enforced rather than remembered — never write "may be null" when you could make it nullable, never document a valid-values list you could have made an enum. Prose is rung four. A standalone document is rung five.</p>
+  <p class="m">And placement outranks quality: if it sits somewhere the reader must first <em>think to look</em>, assume they never will.</p>
+
+  <h2>What survives in the prose</h2>
+  <ul>
+    <li><b>Only the why.</b> The code shows what, the tests show how. Write what they can't: the trade-off, the constraint, why the obvious approach was rejected, what breaks if someone "simplifies" it.</li>
+    <li><b>Less detail, not more.</b> The seven-step walkthrough becomes a lie the moment the process grows an eighth step, and it always does. Deciding what to leave out is the valuable part.</li>
+    <li><b>One home per fact.</b> Copies drift, disagree, and teach the reader to trust neither. Link instead — and prefer a source that <em>can't</em> drift, generated from the code or authoritative over it.</li>
+    <li><b>Flat, tagged, linked.</b> A folder tree taxes you twice: once guessing the branch to file under, again guessing it to find.</li>
+    <li><b>Diagrams in the repo, in text.</b> Mermaid first. Never a screenshot, never a link into a tool that demands an account — those are diagrams that will never be updated.</li>
+  </ul>
+
+  <div class="callout"><b>Especially when the prose is AI-generated — which means yours.</b> The default failure mode is verbose, over-structured, faintly corporate text with three sentences where one would do. The rule is to reread your own draft as an editor and cut it <em>before</em> it enters the codebase.</div>
+
+  <h2>Rule X: distrust what's already there</h2>
+  <p>Treat every doc you read as an unversioned script running in production with no coverage — verify it against the code before relying on it. When you change code, grep for the prose that describes it and fix or delete whatever your change just falsified. <b>Stale docs are a defect your change introduced.</b> Deleting a stale doc is a legitimate fix and often the best one.</p>
+
+  <h2>The review pass</h2>
+  <p>The same ten rules run backwards over a diff. It reports <b>only what fails</b> — no clean bill, no restating what's fine — as rule number, <code>file:line</code>, what's wrong, and the fix.</p>
+  <pre><span class="c"># the fix is almost always one of three words</span>
+III  api/client.ts:88   comment restates the line below  → <b>cut it</b>
+IV   docs/setup.md:12   duplicates the vendor's install  → <b>link it</b>
+II   README.md:40       lists the 5 valid modes in prose → <b>make it a type</b></pre>
+
+  <h2>Where judgment overrides</h2>
+  <p>The rules serve the reader, not themselves. A generated API reference is "detailed" and that's fine. A legally required runbook exists whether or not it survives entropy. A newcomer tutorial is step-by-step <em>on purpose</em>. When a rule and the reader conflict, <b>the reader wins</b> — but the skill has to say which rule it's setting aside and why, so it's a decision instead of a slip.</p>
+  <p class="m">The skill file ends by pointing rule X at itself: this too will eventually be outdated.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

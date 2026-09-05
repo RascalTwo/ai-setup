@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>confluence-editor — edits your page, refuses to publish it</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="confluence-editor">
+<meta name="viz:description" content="Drives the real Confluence editor in Chrome to make surgical edits to a page — a section, a paragraph, a screenshot — and leaves the result as an unpublished draft for you to review.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All scale-to-fit mechanics come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 95% -10%, color-mix(in srgb, var(--danger) 15%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c5) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 486px; gap:38px; align-items:center; padding:56px 66px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:54px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 20px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the misfire ledger = the "proof" slot. Three ways to select the text you are
+     about to delete, and what each one was actually observed to do. The numbers
+     are the skill's own tallies — that is the argument for the draft. */
+  .cap{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; color:var(--muted); margin-bottom:11px; }
+  .cap b{ color:var(--text); }
+  .ledger{ display:flex; flex-direction:column; gap:10px; }
+  .row{ display:grid; grid-template-columns:1fr auto; gap:14px; align-items:center;
+        background:color-mix(in srgb, var(--panel) 74%, transparent); border:1px solid var(--border);
+        border-left:3px solid var(--faint); border-radius:11px; padding:12px 14px; }
+  .row .k{ font-family:var(--mono); font-size:13.5px; color:var(--text); margin-bottom:5px; }
+  .row .d{ font-size:12.5px; line-height:1.38; color:var(--muted); }
+  .row .v{ text-align:right; font-family:var(--mono); white-space:nowrap; }
+  .row .v .big{ font-size:22px; line-height:1; letter-spacing:-.5px; display:block; }
+  .row .v .lil{ font-size:10.5px; letter-spacing:.11em; color:var(--muted); display:block; margin-top:5px; }
+  .row.silent{ border-left-color:var(--warn); }
+  .row.silent .v .big{ color:var(--warn); }
+  .row.blast{ border-left-color:var(--danger); background:color-mix(in srgb, var(--danger) 9%, transparent);
+              border-color:color-mix(in srgb, var(--danger) 34%, transparent); }
+  .row.blast .v .big{ color:var(--danger); font-size:15px; line-height:1.25; }
+  .row.safe{ border-left-color:var(--good); }
+  .row.safe .v .big{ color:var(--good); }
+  .pfoot{ font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--faint); margin-top:12px; }
+  .pfoot b{ color:var(--c4); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="confluence-editor" data-viz-id="poster-card" data-label="confluence-editor poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · CONFLUENCE-EDITOR</div>
+      <h1 class="hook">Edits your page.<br><em>Refuses to publish it.</em></h1>
+      <p class="sub">It drives the real Confluence editor in Chrome the way you would — replace a section, swap a paragraph, upload a screenshot at the caret — and then it <b>stops</b>. Confluence autosaves, the header flips to <b>Saved</b>, and the diff is sitting in a tab for you to read and click Update on yourself.</p>
+      <p class="not">Never clicks <b>Update</b> unless you say to.<br>A draft is a mistake you can still take back.</p>
+      <div class="trigger"><span>say</span>&nbsp;"edit this Confluence page"</div>
+    </div>
+    <div>
+      <div class="cap">SELECTING TEXT TO DELETE &nbsp;·&nbsp; <b>3 METHODS, OBSERVED</b></div>
+      <div class="ledger">
+        <div class="row silent">
+          <div>
+            <div class="k">shift + click</div>
+            <div class="d">Does not extend the selection. Collapses silently to a caret — the <em>Delete</em> after it hits something else.</div>
+          </div>
+          <div class="v"><span class="big">SILENT</span><span class="lil">NO WARNING</span></div>
+        </div>
+        <div class="row blast">
+          <div>
+            <div class="k">shift + cmd + →</div>
+            <div class="d">On the <b>last line of a block</b> it selects to the end of the document. Caught only because a screenshot was taken afterwards.</div>
+          </div>
+          <div class="v"><span class="big">1 SECTION<br>+ 2 TABLES</span><span class="lil">GONE, OFF-TARGET</span></div>
+        </div>
+        <div class="row safe">
+          <div>
+            <div class="k">Range + execCommand('delete')</div>
+            <div class="d"><em>selectNodeContents</em> on the exact node. No coordinates, cannot overshoot, leaves the caret in the empty node.</div>
+          </div>
+          <div class="v"><span class="big">11 / 11</span><span class="lil">ZERO MISFIRES</span></div>
+        </div>
+      </div>
+      <div class="pfoot">↑ THIS IS WHY IT HANDS BACK A <b>DRAFT</b> AND NOT A PUBLISHED PAGE</div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>The draft is the deliverable</h2>
+  <p>Most automation's definition of done is "it's live." Here it's the opposite: the end state is a page with <b>unpublished changes</b> on it. Confluence autosaves as the edits land, so nothing is lost — the human opens the tab, reads what changed, and publishes. The skill says to tell them that when handing back.</p>
+  <p class="m">Drafts are <b>per user and survive tab closure</b>, so closing the tab doesn't discard the work. Until someone publishes or discards, everyone else on that page sees an "unpublished changes" marker.</p>
+
+  <h2>The API shows you a page that isn't there</h2>
+  <p>Fetching the page through the Atlassian API returns the <b>published</b> version. If the page has unpublished changes — yours from five minutes ago, or the user's from last week — you read stale content and edit against a version that no longer exists. So the current text comes from the editor tab, never from the API.</p>
+  <p class="m">When the two disagree, <b>the editor is right</b> and the difference is a draft. Reloading the <code>edit-v2</code> URL pulls the current server-side draft, which is the whole fix for a stale tab.</p>
+
+  <h2>Delete with a Range, not with the keyboard</h2>
+  <p>Coordinate- and keyboard-based selection failed twice before this recipe existed. It's precise, needs no coordinates, and cannot overshoot:</p>
+  <pre>const root = document.querySelector('.ProseMirror');
+const el = <span class="c">/* the &lt;p&gt; or &lt;li&gt; you want to clear */</span>;
+el.scrollIntoView({ block: 'center' });
+root.focus();
+const r = document.createRange();  r.selectNodeContents(el);
+const s = window.getSelection();   s.removeAllRanges();  s.addRange(r);
+document.execCommand('delete');    <span class="c">// deprecated. works. 11-for-11.</span></pre>
+  <p class="m">And the standing rule when there's no way around a visual selection: <b>screenshot the highlighted range before pressing Delete.</b></p>
+
+  <h2>Typing is markdown — until it isn't</h2>
+  <p>The editor autoformats as you type: <code>## </code>, <code>* </code>, <code>1. </code>, <code>_italic_</code>, backticks, fences, and a bare URL followed by a space. The traps are all about what happens <em>after</em> a construct starts.</p>
+  <ul>
+    <li>Inside a list, <b>Enter continues the list</b>. Prefix later items with <code>* </code> and you get literal asterisks — type the marker once, then separate items with newlines in a single <code>type</code>.</li>
+    <li><b>Tab / shift+Tab</b> nest and outdent — that's how you get <code>a.</code> / <code>b.</code> under a numbered step. <b>Two Enters</b> exit a list.</li>
+    <li><code>cmd+alt+0</code> puts the block back to body text — needed after deleting a heading, or the replacement text inherits the heading style.</li>
+  </ul>
+  <p class="m">A pasted Confluence URL becomes a link that displays the raw URL. To show the page title, click it, hit <b><code>URL</code></b> on the floating toolbar, and choose <b>Inline</b> — <code>Card</code> and <code>Embed</code> are the other two, and neither looks like an ordinary in-page link.</p>
+
+  <h2>Images land at the caret</h2>
+  <p>The editor has a hidden file input; uploading to it inserts the media wherever the caret is. So "replace this placeholder with a screenshot" is exactly two moves: clear the placeholder with the Range recipe above — which leaves the caret in the now-empty node — then upload. Allow <b>~5 seconds per image</b>; the media node renders asynchronously.</p>
+  <p class="m">With several placeholders, work <b>bottom-up</b> so earlier positions don't shift, and re-query the DOM each pass instead of caching a list of nodes. Returning the remaining count from the JS turns the tool output into a visible countdown. Images themselves come from the <b>browser-capture</b> skill — plus its sanitized-screenshots reference if the page shows real identifiers.</p>
+
+  <h2>Verify structurally, not visually</h2>
+  <p>List markers render in ways that make a correct document look broken — an image inside list item <code>b.</code> can paint with the <code>b.</code> marker alone on its own line, which reads as a leftover empty bullet. Check the DOM before "fixing" it, or you'll delete something that was fine. The sweep worth running before handing back: count remaining placeholders, and list the inserted images in document order to confirm nothing was missed or transposed.</p>
+
+  <div class="callout"><b>The other way to lose an image:</b> <code>Escape</code> and stray clicks can <em>node-select</em> a media node rather than placing a caret, and a Backspace there deletes the picture. Blue border plus a caption prompt means node-selected — press <b>ArrowRight</b> to collapse. Also: clicking the editor's empty margin does not focus it, and a stale Table of Contents is expected — macros regenerate on publish.</div>
+
+  <h2>When it's the wrong skill</h2>
+  <p>This one is for a page a <b>human owns</b> and will review: one section, one paragraph, one image, through the real UI, left unpublished. If the page is generated from a local markdown file that is the source of truth, that's <b>publish-markdown-to-confluence</b> instead — whole body, ADF over the API, published immediately.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

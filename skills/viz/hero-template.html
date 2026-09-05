@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>__SLUG__ — hero card</title>
+
+<!-- The OG / hero card for __SLUG__.
+
+     `bun verify.ts <url> --og` renders THIS file (not the live viz) and clips the
+     screenshot to the .og-card element below → og.auto.png, which is what unfurls
+     when the viz URL is pasted into Slack/Discord/Teams/WebEx.
+
+     Two rules:
+       1. Keep the element with class="og-card". verify.ts clips to it; without it
+          you get a blind top-left 1200×630 crop and an error.
+       2. Keep anything that MUST survive inside the centre ~1080×565 — link cards
+          get centre-cropped. Add class="show-safe" to .og-card to see the guide,
+          and remove it before you shoot (it renders into the shot).
+
+     The layout below is the shape most hero cards converge on: a left column that
+     says what this IS, and a right panel holding a figure that shows it. Both are
+     optional — delete .right for a full-bleed title card, delete .left for a
+     figure-only one. Style comes from the kit, so this card re-themes with the viz. -->
+
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/viz-og.css">
+<style>
+  /* Re-theme the card by overriding tokens here — it stays in sync with the viz
+     if you make the same override in index.html. Delete if you want the default.
+  :root { --accent: #37d9a0; --warn: #f0b429; }
+  */
+  html, body { margin: 0; background: #05060a; }
+</style>
+</head>
+<body>
+
+<div class="og-card">
+  <div class="frame"></div>
+
+  <div class="left">
+    <div class="eyebrow"><span class="dot"></span>__SLUG__</div>
+
+    <h1 class="title">The one idea.<br><span class="hl">In four words.</span></h1>
+
+    <div class="essence">
+      The single sentence someone should walk away with — written as a
+      <span class="hl">claim</span>, not a description.
+    </div>
+
+    <div class="sub">
+      One or two lines of supporting detail. Mention the concrete thing:
+      a <code>filename</code>, a number, the name of the system.
+    </div>
+
+    <div class="chips">
+      <span class="chip"><span class="tk"></span>first fact</span>
+      <span class="chip"><span class="tk"></span>second fact</span>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="panel">
+      <div class="panel-cap">
+        <span class="t">What this shows</span>
+        <span class="s">the qualifier</span>
+      </div>
+
+      <!-- Your figure. Inline SVG is usually right: it's crisp at any scale and
+           inherits the kit tokens (fill="var(--accent)" works). Reach for
+           /_kit/viz.js helpers — arrowMarkers(), connect(), labelBox() — if it's
+           a boxes-and-arrows diagram. -->
+      <svg class="graph" viewBox="0 0 392 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="16" y="60" width="150" height="64" rx="8"
+              fill="var(--panel-2)" stroke="var(--border)"/>
+        <text x="91" y="97" text-anchor="middle" font-size="13"
+              font-family="var(--mono)" fill="var(--text)">before</text>
+
+        <line x1="176" y1="92" x2="216" y2="92" stroke="var(--accent)"
+              stroke-width="2" marker-end="url(#ah-accent)"/>
+        <defs>
+          <marker id="ah-accent" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+          </marker>
+        </defs>
+
+        <rect x="226" y="60" width="150" height="64" rx="8"
+              fill="color-mix(in srgb, var(--good) 12%, transparent)"
+              stroke="var(--good)"/>
+        <text x="301" y="97" text-anchor="middle" font-size="13"
+              font-family="var(--mono)" fill="var(--good)">after</text>
+      </svg>
+
+      <div class="foot">
+        <div class="stat danger">
+          <div class="n">12</div>
+          <div class="l">before</div>
+          <div class="d">what the number meant</div>
+        </div>
+        <div class="stat good">
+          <div class="n">1</div>
+          <div class="l">after</div>
+          <div class="d">what it means now</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

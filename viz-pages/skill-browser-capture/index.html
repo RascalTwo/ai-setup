@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>browser-capture — fragile for one instant, then it stops caring</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="browser-capture">
+<meta name="viz:description" content="Records the user's real logged-in Chrome tab to a video file on disk — three conditions have to hold at the instant capture starts, and none of them matter afterwards.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c4) 16%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c5) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 472px; gap:38px; align-items:center; padding:54px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:52px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 20px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the proof slot = the gate. Three conditions AND-ed at a single instant, then a
+     fork, then the latch. The DIAGRAM's argument: the fragility has a timestamp. */
+  .route{ display:flex; align-items:baseline; gap:10px; background:color-mix(in srgb, var(--panel) 72%, transparent);
+          border:1px solid var(--border); border-left:3px solid var(--c5); border-radius:10px;
+          padding:9px 13px; margin-bottom:16px; }
+  .route .n{ font-family:var(--mono); font-size:12.5px; color:var(--c5); letter-spacing:.06em; white-space:nowrap; }
+  .route .d{ font-size:12px; color:var(--muted); white-space:nowrap; }
+  .route .tag{ margin-left:auto; font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
+               color:var(--c5); white-space:nowrap; }
+  .cap{ font-family:var(--mono); font-size:10.8px; letter-spacing:.10em; color:var(--muted); margin-bottom:10px; }
+  .cap b{ color:var(--c4); }
+  .conds{ display:flex; flex-direction:column; gap:6px; position:relative; }
+  .conds::before{ content:""; position:absolute; left:11px; top:14px; bottom:14px; width:2px;
+                  background:color-mix(in srgb, var(--c4) 45%, var(--border)); }
+  .c{ display:grid; grid-template-columns:24px 1fr; gap:10px; align-items:center; }
+  .c .i{ width:22px; height:22px; border-radius:50%; background:var(--bg); position:relative;
+         box-shadow:inset 0 0 0 2px var(--c4); font-family:var(--mono); font-size:11px; color:var(--c4);
+         display:flex; align-items:center; justify-content:center; }
+  .c .t{ background:color-mix(in srgb, var(--panel) 72%, transparent); border:1px solid var(--border);
+         border-radius:9px; padding:8px 11px; font-size:12.5px; line-height:1.35; color:var(--muted); }
+  .c .t b{ color:var(--text); font-weight:600; }
+  .c .t em{ font-style:normal; font-family:var(--mono); font-size:11px; color:var(--c5); }
+  .fork{ display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-top:12px; align-items:stretch; }
+  .arm{ border-radius:12px; padding:11px 12px 12px; border:1px solid var(--border);
+        background:color-mix(in srgb, var(--panel) 60%, transparent); }
+  .arm .k{ font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; margin-bottom:7px; }
+  .arm .h{ font-size:14px; font-weight:600; color:var(--text); margin-bottom:5px; }
+  .arm .d{ font-size:11.5px; line-height:1.4; color:var(--muted); }
+  .arm.ok{ border-top:2px solid var(--good); } .arm.ok .k{ color:var(--good); }
+  .arm.bad{ border-top:2px solid var(--danger); } .arm.bad .k{ color:var(--danger); }
+  .arm.bad .h{ font-family:var(--mono); font-size:12.5px; }
+  .evid{ margin-top:11px; border-radius:11px; padding:10px 13px;
+         background:color-mix(in srgb, var(--good) 9%, transparent);
+         border:1px solid color-mix(in srgb, var(--good) 34%, transparent); }
+  .evid .k{ font-family:var(--mono); font-size:10.5px; letter-spacing:.13em; color:var(--good); margin-bottom:5px; }
+  .evid .v{ font-size:12.5px; line-height:1.4; color:var(--muted); }
+  .evid .v b{ color:var(--text); }
+  .pfoot{ font-family:var(--mono); font-size:11px; letter-spacing:.09em; color:var(--faint); margin-top:11px; }
+  .pfoot b{ color:var(--c4); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); display:block; }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .quote{ border-left:3px solid var(--c4); padding:4px 0 4px 18px; margin:0 0 16px;
+          font-size:16.5px; line-height:1.6; color:var(--text); font-style:italic; }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="browser-capture" data-viz-id="poster-card" data-label="browser-capture poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · BROWSER-CAPTURE</div>
+      <h1 class="hook">Fragile for one<br>instant. <em>Then it<br>stops caring.</em></h1>
+      <p class="sub">It records the user's <b>actual Chrome</b> — their real SSO session, their data, their Retina pixel ratio, at full frame rate — by asking the tab to share itself. <b>No picker appears and the user clicks nothing.</b> The brittle part is the handshake, and it lasts about a second.</p>
+      <p class="not">A choppy GIF is not a quality bug to iterate on.<br><b>It's Route 3 working as designed.</b> Switch routes.</p>
+      <div class="trigger"><span>say</span>&nbsp;"record a walkthrough"</div>
+    </div>
+    <div>
+      <div class="route"><span class="n">ROUTE 1 · DEFAULT</span><span class="d">the tab the MCP already drives</span><span class="tag">preferCurrentTab</span></div>
+      <div class="cap">THE ONE CONSTRAINT — <b>ALL THREE, AT THE INSTANT CAPTURE STARTS</b></div>
+      <div class="conds">
+        <div class="c"><span class="i">1</span><span class="t">the target tab is the <b>selected</b> tab in its window</span></div>
+        <div class="c"><span class="i">2</span><span class="t">its window is <b>frontmost, not occluded by another app</b> — an editor sitting on top is enough to break it</span></div>
+        <div class="c"><span class="i">3</span><span class="t">a <b>trusted click</b> lands within ~5s <em>— the MCP's own clicks are trusted</em></span></div>
+      </div>
+      <div class="fork">
+        <div class="arm ok">
+          <div class="k">↓&nbsp; ALL THREE HOLD</div>
+          <div class="h">RECORDING — latched</div>
+          <div class="d">Chrome pins the tab visible. Bury the window, switch apps, keep working.</div>
+        </div>
+        <div class="arm bad">
+          <div class="k">↓&nbsp; MISS ANY ONE</div>
+          <div class="h">InvalidStateError</div>
+          <div class="d">Means <b>"tab not visible"</b>. It does <b>not</b> mean capture is impossible.</div>
+        </div>
+      </div>
+      <div class="evid">
+        <div class="k">VERIFIED, NOT ASSUMED</div>
+        <div class="v">Recording live, Chrome buried behind another app: <b>visibilityState "visible"</b>, hasFocus <b>false</b>, counter advancing in exact real time — <b>50 ticks / 5.0s</b>.</div>
+      </div>
+      <div class="pfoot">↑ AFTER THE FIRST FRAME, <b>NONE OF IT MATTERS ANY MORE</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>Pick the route before you touch anything</h2>
+  <p>Turning a browser flow into files you can embed has three routes, and they are in <b>strict order of preference</b>. The reason the skill opens with the choice rather than a procedure: <b>every obvious shortcut here fails silently</b>, which is how this costs hours instead of minutes.</p>
+  <ul>
+    <li><b>Route 1 — MCP capture, the user's own Chrome.</b> The default; prefer always. Real login/SSO, real data, real device pixel ratio. About a second of human-visible disruption and zero clicks from them. <b>Nothing else can do that.</b></li>
+    <li><b>Route 2 — a spawned browser</b> (<code>record-flow.js</code>). No session at all, but it never touches the screen. For when Route 1 is impossible: no GUI, CI or background, the screen must not be disturbed, or the choreography has to be deterministic and scripted.</li>
+    <li><b>Route 3 — the GIF recorder</b> (<code>gif_creator</code>). Only when a click-annotated how-to GIF is specifically what's wanted and smooth motion isn't needed.</li>
+  </ul>
+  <p class="m">You can always convert a Route 1 or Route 2 video to GIF with ffmpeg — which usually looks better than the GIF recorder anyway. Dependencies: <b>ffmpeg</b> on PATH; Route 2 also wants <b>puppeteer-core</b>, and <code>record-flow.js</code> finds the one the viz skill already ships.</p>
+
+  <div class="callout"><b>The GIF trap.</b> <code>gif_creator</code> yields a <b>slideshow, always</b> — one frame per <em>action</em>, and extra <code>screenshot</code> calls add <b>zero</b> frames. If a GIF looks janky or choppy, that is not a quality bug to iterate on; it is Route 3 working exactly as designed. Switch routes, don't try harder.</div>
+
+  <h2>The error is a sentence, not a mystery</h2>
+  <p><code>InvalidStateError: Invalid state</code> means one thing: <b>the tab wasn't visible</b>. macOS marks a Chrome page <code>hidden</code> when its window is occluded by another app — so an editor sitting on top is enough, even though the tab is selected and the page is "open". Re-raise, re-screenshot, re-click.</p>
+  <p class="m">The flip side is the useful half. Once capture is live, Chrome pins the tab visible and the whole constraint evaporates — proven, not assumed. The one thing that is <b>not</b> proven is switching to a <em>different Chrome tab</em> mid-capture: occlusion is verified safe, tab-switching is probably fine and has simply never been tested. Until it is, the skill says to tell the user not to do it.</p>
+
+  <h2>Say something before the screen goes red</h2>
+  <p>Arming the click target throws a <b>red overlay across the user's entire screen</b>, and then a script yanks Chrome in front of whatever they were doing. <b>You</b> click that overlay — the MCP's clicks are trusted, so the human never has to touch it. They don't know that.</p>
+  <div class="quote">"I had no idea I, as a human, was supposed to click that."</div>
+  <p class="m">That is a verbatim user report, and it is why step 0 of the procedure is <b>one line in chat before anything happens</b>. Same reason the overlay's default label is worded at the person — "Claude is starting a screen recording / No action needed" — rather than as the imperative "CLICK TO START RECORDING". Override the label if you like; keep that property.</p>
+
+  <h2>Where it actually goes wrong: the click</h2>
+  <p>Screenshot dimensions <b>change between calls</b> — 1456×840 then 1502×818 were observed for the same 1728px viewport — so any scale factor computed earlier silently misses. Always screenshot <b>immediately before</b> clicking and use that image's coordinates. The target covers the whole viewport for exactly this reason.</p>
+  <p class="m">If a click seems to do nothing, find out whether events are landing at all before changing any JS:</p>
+  <pre>window.__clicks = [];
+document.addEventListener('click', e =&gt; window.__clicks.push(
+  [e.clientX, e.clientY, e.isTrusted]), true);
+<span class="c">// state stays 'idle' + __clicks empty  → the click isn't reaching the page. Re-screenshot, re-click.
+// state stays 'idle' + a TRUSTED click on some OTHER element → top-layer.</span></pre>
+  <p>That second case is the sneaky one. An open <code>&lt;dialog&gt;</code> — or anything via <code>showModal()</code> / popover — paints above <b>every</b> z-index, so a target appended to <code>&lt;body&gt;</code> sits underneath it and the click hits the dialog. Seen on a session-detail modal, where the click logged cleanly as <code>[864, 471, true, "SPAN"]</code> while the recorder never left <code>idle</code>. The fix is in the skill: the arm helper now hosts inside <code>dialog[open]</code> / <code>[role="dialog"]</code> when one is present, and returns the host so you can confirm.</p>
+
+  <h2>Then prove the file is real</h2>
+  <pre>ffprobe -v error -count_frames -select_streams v:0 \
+  -show_entries stream=nb_read_frames,width,height -of default=nw=1 capture.webm
+ffmpeg -y -loglevel error -i capture.webm -movflags faststart -pix_fmt yuv420p \
+  -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" capture.mp4</pre>
+  <p class="m">Hundreds of frames = real video. <code>yuv420p</code> and even dimensions aren't polish — without them QuickTime and Slack won't play the file <b>at all</b>. And MediaRecorder webm is <b>variable-frame-rate</b>, so frame-index extraction (<code>-vf select='eq(n,N)'</code>) is unreliable: seek by time instead (<code>-ss 7</code>, <code>-sseof -2.5</code>).</p>
+
+  <h2>The hard line</h2>
+  <p>Route 1 wins because the MCP <em>is</em> the user's real browser, so their sessions are already there — a protected app typically shows an account picker with accounts already marked "Signed in", one click and you're in, no password. <b>Never type the user's credentials.</b> If a real password field appears, stop and hand back to the human. The skill calls that a hard line, not a difficulty.</p>
+
+  <h2>The cursor is the narration</h2>
+  <p>A recording has no click annotations of its own, so the injected walkthrough kit's fake cursor, highlight box and click pulse <b>are</b> the explanation. It works with Route 1 and Route 2 alike. Three of its rules break a take rather than merely annoy:</p>
+  <ul>
+    <li><b>Wait for everything.</b> An early click is the most common way a take breaks.</li>
+    <li><b>Frame one element, click another</b> when a card's centre sits over some other control.</li>
+    <li><b>Assert on geometry, never on "the call returned".</b> A drag or resize that does <em>nothing</em> is indistinguishable from one that works — the handle is there, the wait resolves, nothing throws, and the rect comes back byte-identical. Measure before and after.</li>
+  </ul>
+  <p class="m">Everything situational lives beside the skill rather than in it: long takes (gating the choreography, parking the OS pointer out of frame, clapping and trimming both ends, polling under CDP's 45s limit), the other two routes, sanitized stills for documents that show real account IDs — and a file of verified dead ends, so nobody re-derives them.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

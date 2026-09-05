@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>reorder-github-project-board-by-depth — three blockers outranks one</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="reorder-github-project-board-by-depth">
+<meta name="viz:description" content="Reorders one GitHub Projects column by longest-path dependency depth, so the least-blocked work floats to the top and deeply blocked work sinks.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c8) 15%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c5) 14%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 468px; gap:38px; align-items:center; padding:56px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:13px;
+            letter-spacing:.13em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:57px; line-height:1.04; margin:0 0 20px; letter-spacing:-1.5px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c5); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 20px; max-width:540px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:14.5px; line-height:1.52; color:var(--muted); margin:0 0 20px; max-width:540px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14.5px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the "proof" slot: the column itself, banded by depth. The BANDS are the
+     claim — the item with three blockers sits ABOVE the item with one, because
+     the pip track (the longest path behind it) is what does the ranking. */
+  .cap{ font-family:var(--mono); font-size:11.5px; letter-spacing:.13em; color:var(--muted); margin-bottom:11px; }
+  .cap b{ color:var(--text); }
+  .col{ display:flex; flex-direction:column; gap:10px; }
+  .band{ background:color-mix(in srgb, var(--panel) 72%, transparent); border:1px solid var(--border);
+         border-left:3px solid var(--k); border-radius:10px; padding:10px 13px 11px; }
+  .bh{ display:flex; align-items:baseline; gap:9px; margin-bottom:9px; }
+  .bh .dep{ font-family:var(--mono); font-size:12px; letter-spacing:.11em; color:var(--k); }
+  .bh .note{ font-size:11.5px; color:var(--muted); line-height:1.32; margin-left:auto; text-align:right; }
+  .item{ display:grid; grid-template-columns:92px 1fr; align-items:center; gap:13px; padding:5px 0; }
+  .item + .item{ border-top:1px dashed color-mix(in srgb, var(--border) 80%, transparent); }
+  .item .t{ font-size:13.5px; color:var(--text); line-height:1.3; }
+  /* pip track = the longest path standing between you and this issue.
+     Right-aligned so every ◻ lands on one vertical line and the chains grow
+     LEFTWARD — length on the page is literally the depth number. */
+  .track{ display:flex; align-items:center; justify-content:flex-end; gap:0; height:14px; }
+  .pip{ width:9px; height:9px; border-radius:50%; background:var(--k); flex:none; }
+  .lnk{ width:10px; height:2px; background:color-mix(in srgb, var(--k) 55%, transparent); flex:none; }
+  .here{ width:13px; height:13px; border-radius:3px; background:transparent;
+         box-shadow:inset 0 0 0 2px var(--k); flex:none; }
+  .band.d0{ --k:var(--c5); }
+  .band.d1{ --k:var(--c4); }
+  .band.d3{ --k:var(--c8); }
+  .legend{ --k:var(--faint); display:flex; gap:18px; margin-top:12px; font-family:var(--mono);
+           font-size:10.5px; letter-spacing:.06em; color:var(--faint); }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .pfoot{ font-family:var(--mono); font-size:11px; letter-spacing:.09em; color:var(--faint); margin-top:8px;
+          line-height:1.5; }
+  .pfoot b{ color:var(--c8); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive code{ font-family:var(--mono); font-size:14.5px; color:var(--c5); }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="reorder-github-project-board-by-depth" data-viz-id="poster-card" data-label="reorder-github-project-board-by-depth poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · REORDER-GITHUB-PROJECT-BOARD-BY-DEPTH</div>
+      <h1 class="hook">Three blockers<br>outranks <em>one.</em></h1>
+      <p class="sub">Depth is the <b>longest path</b> from an unblocked root down to the issue — not a count of its blockers. So an issue blocked by three independent root-level items is <b>shallower</b> than one blocked by a single thing that's itself blocked by five. Sort a column by that and the top is always the most actionable work.</p>
+      <p class="not">Sorts <b>within one column</b>. Never moves an item between columns.<br>Reads <b>blocking / blocked-by</b> only — not sub-issues, not tracked-by.</p>
+      <div class="trigger"><span>say</span>&nbsp;"sort the board by dependency depth"</div>
+    </div>
+    <div>
+      <div class="cap">ONE COLUMN &nbsp;·&nbsp; DEPTH ASCENDING, THEN <b>TITLE A→Z</b></div>
+      <div class="col">
+        <div class="band d0">
+          <div class="bh"><span class="dep">DEPTH 0</span><span class="note">zero blockers — a root.<br>ties broken alphabetically</span></div>
+          <div class="item">
+            <span class="track"><span class="here"></span></span>
+            <span class="t">Add retry to the webhook sender</span>
+          </div>
+          <div class="item">
+            <span class="track"><span class="here"></span></span>
+            <span class="t">Split the config loader</span>
+          </div>
+        </div>
+        <div class="band d1">
+          <div class="bh"><span class="dep">DEPTH 1</span><span class="note"><b>three</b> blockers —<br>but all three are roots</span></div>
+          <div class="item">
+            <span class="track"><span class="pip"></span><span class="lnk"></span><span class="here"></span></span>
+            <span class="t">Migrate the session store</span>
+          </div>
+        </div>
+        <div class="band d3">
+          <div class="bh"><span class="dep">DEPTH 3</span><span class="note"><b>one</b> blocker —<br>three layers behind it</span></div>
+          <div class="item">
+            <span class="track"><span class="pip"></span><span class="lnk"></span><span class="pip"></span><span class="lnk"></span><span class="pip"></span><span class="lnk"></span><span class="here"></span></span>
+            <span class="t">Enable the new dashboard</span>
+          </div>
+        </div>
+      </div>
+      <div class="legend"><span><span class="here"></span> THE ITEM</span><span><span class="pip"></span> ONE LAYER BEHIND IT</span></div>
+      <div class="pfoot">TRACK LENGTH IS THE LONGEST PATH, NOT THE BLOCKER COUNT.<br><b>THAT IS THE WHOLE IDEA.</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>Counting blockers lies to you</h2>
+  <p>A backlog column sorted by "how many things block this" looks reasonable and ranks the wrong work first. An issue blocked by three independent root-level items is <b>one layer</b> from being pickable. An issue blocked by one thing that is itself blocked by five things is further away than that — but the count scores it as the safer bet. The count says the first item is worse; the shape of the graph says it's nearly ready.</p>
+  <p>So this skill ranks by <b>depth</b> instead: the longest path from any root node — an issue with zero blockers — to this issue, following blocking relationships. A root is depth 0. An issue blocked only by roots is depth 1. And so on. It captures <b>transitive</b> distance, which is the thing you actually care about when you're deciding what to start on Monday.</p>
+  <p class="m">Within a depth, items are sorted alphabetically by title. That's the whole ordering rule: <code>(depth ascending, title alphabetical)</code>. The payoff is a "pick up from the top" column — the top is always the most actionable work, and deeply blocked items sink to the bottom.</p>
+
+  <h2>What you have to tell it</h2>
+  <ul>
+    <li><b><code>org</code></b> and <b><code>project</code></b> are required — the owner, and the project <em>number</em> from the URL. It prompts if you leave either out.</li>
+    <li><b><code>column</code></b> defaults to <code>"Parking Lot"</code>. <b><code>view</code></b> defaults to <code>1</code> and is rarely needed.</li>
+    <li><b><code>repo</code></b> auto-detects: if every issue in the column comes from one repo, it takes that one from the first issue. <b>If the column is mixed, it stops and asks</b> rather than guessing.</li>
+  </ul>
+
+  <h2>What actually happens</h2>
+  <p class="m">The skill doesn't hand-roll the graph in conversation — it shells out to <code>scripts/reorder.py</code>, which does the whole run and prints a summary table of the final order with the depth numbers attached. The steps, for transparency:</p>
+  <pre>1  <span class="c">gh api graphql</span>   → the project's node ID
+2  fetch every project item: status, issue #, title, item ID
+3  keep only the items in the target column
+4  <span class="c">REST</span> issue_dependencies_summary → blocker COUNTS
+5  for anything with blockers → the issue timeline gives the
+   actual blocking issue numbers
+6  build the graph, compute longest-path depth <span class="c">(memoized DFS)</span>
+7  sort by (depth ↑, title A→Z)
+8  apply it: updateProjectV2ItemPosition mutations,
+   <span class="c">afterId-chained so each item lands behind the last</span>
+9  report the final order</pre>
+  <p class="m">Steps 4 and 5 are deliberately two calls: the summary endpoint gives <em>how many</em> blockers an issue has, and only the issues that have any get their timeline walked for the actual blocking issue numbers.</p>
+
+  <div class="callout"><b>If it hits an auth error</b>, the fix is one line and the skill will tell you to run it: <code>gh auth refresh -s project</code>.</div>
+
+  <h2>Where it stops</h2>
+  <ul>
+    <li><b>One column, in place.</b> It reorders within a single column and does not move items between columns. It is a sorter, not a triager.</li>
+    <li><b>Blocking and blocked-by only.</b> Sub-issue and tracked-by relationships are ignored — a parent/child hierarchy will not show up as depth.</li>
+    <li><b>It needs <code>gh</code>,</b> authenticated with the <code>project</code> scope.</li>
+    <li><b>It runs at roughly 3 API calls a second</b> on purpose, to stay inside GitHub's rate limits. A large column takes as long as it takes.</li>
+  </ul>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

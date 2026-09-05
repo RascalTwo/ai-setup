@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ttyimgspool — the TUI will never show you the image</title>
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="ttyimgspool">
+<meta name="viz:description" content="Spools every image Claude Code takes or touches into a per-session gallery you open in the terminal with prefix+i.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* Card + dive. Same mechanics note as every poster: transform:scale() does not
+     shrink the layout box, so poster.css collapses #fit's height off the same --s. */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 92% -8%, color-mix(in srgb, var(--c4) 16%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 110%, color-mix(in srgb, var(--c5) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 430px; gap:40px; align-items:center; padding:56px 70px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--c4); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--c4);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--c4) 22%, transparent); }
+  h1.hook{ font-size:54px; line-height:1.05; margin:0 0 20px; letter-spacing:-1.5px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c5); }
+  p.sub{ font-size:18.5px; line-height:1.45; color:var(--muted); margin:0 0 20px; max-width:530px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:14.5px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:530px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .keys{ display:flex; gap:10px; align-items:center; }
+  .trigger{ display:inline-flex; align-items:center; gap:9px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--c4);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+  .status{ font-family:var(--mono); font-size:15px; padding:10px 14px; border-radius:9px;
+           background:color-mix(in srgb, var(--warn) 12%, transparent);
+           border:1px solid color-mix(in srgb, var(--warn) 40%, transparent); color:var(--warn); }
+
+  /* the capture pipeline = the "proof" slot */
+  .pipe{ display:grid; gap:0; }
+  .node{ background:color-mix(in srgb, var(--panel) 80%, transparent); border:1px solid var(--border);
+         border-radius:13px; padding:12px 15px; }
+  .node .k{ font-family:var(--mono); font-size:11.5px; letter-spacing:.13em; margin-bottom:5px; }
+  .node .v{ font-family:var(--mono); font-size:13px; line-height:1.45; color:var(--text); }
+  .node .v em{ font-style:normal; color:var(--muted); }
+  .n1{ border-left:3px solid var(--c4); } .n1 .k{ color:var(--c4); }
+  .n3{ border-left:3px solid var(--c5); } .n3 .k{ color:var(--c5); }
+  .n4{ border-left:3px solid var(--accent); } .n4 .k{ color:var(--accent); }
+  .arrow{ justify-self:center; color:var(--faint); font-size:15px; line-height:1; padding:7px 0; }
+
+  .gate{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .lane{ border-radius:13px; padding:11px 13px 12px; border:1px solid var(--border);
+         background:color-mix(in srgb, var(--panel) 80%, transparent); }
+  .lane .k{ font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; margin-bottom:8px; }
+  .lane ul{ margin:0; padding:0; list-style:none; }
+  .lane li{ font-size:12.5px; line-height:1.42; color:var(--muted); margin-bottom:3px; }
+  .lane li:last-child{ margin-bottom:0; }
+  .lane li b{ color:var(--text); font-weight:600; }
+  .lane li .cmd{ font-family:var(--mono); font-size:12px; color:var(--text); }
+  .lane.in{ border-top:2px solid var(--good); } .lane.in .k{ color:var(--good); }
+  .lane.out{ border-top:2px solid var(--danger); } .lane.out .k{ color:var(--danger); }
+  .lane.out li{ text-decoration:line-through; text-decoration-color:color-mix(in srgb, var(--danger) 60%, transparent); }
+  .lane.out li.why{ text-decoration:none; color:var(--faint); margin-top:7px; }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--c4);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive code{ font-family:var(--mono); font-size:.9em; color:var(--c5); }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="ttyimgspool" data-viz-id="poster-card" data-label="ttyimgspool poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED TOOL · TTYIMGSPOOL</div>
+      <h1 class="hook">The TUI will never<br>show you <em>the<br>image it just read.</em></h1>
+      <p class="sub">So every image Claude Code pastes, reads, screenshots or is asked to touch gets <b>spooled next to the session that produced it</b>. One keypress opens it as a gallery — in a pane that closes when you leave.</p>
+      <p class="not">Not a missing feature. <b>Two processes cannot interleave writes</b> to a tty owned by a full-screen TUI — the image lands as literal base64.</p>
+      <div class="keys">
+        <div class="trigger"><span>press</span>&nbsp;prefix+i</div>
+        <div class="status">🖼 8 · 10m</div>
+      </div>
+    </div>
+    <div class="pipe">
+      <div class="node n1">
+        <div class="k">EVERY TOOL CALL</div>
+        <div class="v">PostToolUse <em>+</em> UserPromptSubmit</div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="gate">
+        <div class="lane in">
+          <div class="k">SPOOLED</div>
+          <ul>
+            <li>images you <b>paste</b></li>
+            <li>computer-use &amp; Chrome <b>shots</b></li>
+            <li>any image you <b>Read</b></li>
+            <li>paths a tool was <b>asked</b> to act on</li>
+            <li><b>base64</b> in tool output</li>
+          </ul>
+        </div>
+        <div class="lane out">
+          <div class="k">IGNORED</div>
+          <ul>
+            <li>paths that appear only in a tool's <b>output</b></li>
+            <li class="why">on purpose — one <span class="cmd">ls ~/Pictures</span> would flood the gallery</li>
+          </ul>
+        </div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="node n3">
+        <div class="k">SPOOL · PER SESSION</div>
+        <div class="v">~/.claude/ttyimgspool/&lt;session-id&gt;/<br><em>dedup by basename + byte size · keeps 100</em></div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="node n4">
+        <div class="k">GALLERY · NEWEST FIRST</div>
+        <div class="v">a temporary pane, chafa over kitty graphics<br><em>closes when you leave it</em></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>The problem</h2>
+  <p>Claude Code looks at images constantly — screenshots it takes, images you paste, files it reads. You never see any of them. And you never will <em>inline</em>: two processes cannot interleave writes to a tty owned by a full-screen TUI, so a large image gets shredded mid-payload and arrives as literal base64 text. That's not a feature waiting to be built. It's the terminal.</p>
+  <p>So the images go somewhere else. A hook spools them per session; <b>prefix+i</b> in herdr opens a gallery scoped to the session in the pane you're already in, and the pane goes away when you leave it.</p>
+
+  <h2>What gets captured</h2>
+  <p>A <code>PostToolUse</code> hook runs on every tool call, plus <code>UserPromptSubmit</code>. The rule that matters is the asymmetry in the card: an image path is spooled when a tool was <b>asked</b> to act on it — <code>open shot.png</code>, <code>cp</code>, <code>ls</code> — and ignored when it merely showed up in the tool's <b>output</b>. One <code>ls ~/Pictures</code> would otherwise flood the gallery. Base64 images in output are the exception, and are captured: those are images Claude actually looked at.</p>
+  <p class="m">The same file mentioned twice is stored once — dedup is by basename plus byte size.</p>
+
+  <h2>The keys</h2>
+  <pre><span class="c"># gallery</span>
+1…9 then Enter   open image N   <span class="c">(type the whole number; nothing fires until Enter)</span>
+Backspace / Esc  correct or cancel the number
+] [              next / previous page
+a                toggle this session ⇄ all sessions
+q                quit
+
+<span class="c"># single image</span>
+n p              older / newer
+g                back to the gallery
+d                delete this image
+C                delete all <span class="c">(confirms)</span></pre>
+  <p class="m">Numbering is global: image 36 is <code>36)</code> on page 2, not <code>1)</code>.</p>
+
+  <h2>Which session is "this" session</h2>
+  <p>Sessions are scoped by herdr's <code>agent_session</code> for the pane, which the hook and the viewer each resolve <b>independently</b> — so they agree without passing anything between them. Claude Code's own <code>session_id</code> is deliberately <em>not</em> used: a session running as a background job reports the job id instead, and the two would disagree.</p>
+  <p class="m">If a session has no images of its own, the gallery falls back to showing every session rather than an empty screen. <code>a</code> toggles back.</p>
+
+  <h2>The status line</h2>
+  <p><code>🖼 8 · 10m</code> — how many images this session has, and how long ago the newest arrived. It turns yellow when something landed in the last two minutes, and disappears entirely when the session has none.</p>
+
+  <h2>Install</h2>
+  <pre>bun install.ts     <span class="c"># symlinks both scripts, installs chafa, merges the keybinding</span>
+herdr server stop  <span class="c"># then reattach</span></pre>
+  <div class="callout"><b>The restart is not optional the first time.</b> The gallery depends on herdr's <code>experimental.kitty_graphics</code>, and that setting only takes effect on a full server restart.</div>
+  <p class="m">Requires herdr, <code>chafa</code>, and a terminal that speaks the kitty graphics protocol (Ghostty, kitty, WezTerm). Without chafa the hook still spools images — only the viewer goes blank. Two env vars tune it: <code>TTYIMGSPOOL_DIR</code> (default <code>~/.claude/ttyimgspool</code>) and <code>TTYIMGSPOOL_KEEP</code> (default <code>100</code>, pruned when the gallery opens).</p>
+
+  <h2>What it doesn't do</h2>
+  <ul>
+    <li><b>No inline images</b> in the transcript — see above; not fixable from here.</li>
+    <li><b>No click-to-open.</b> Terminals can't run a command from a click, and an OSC 8 <code>file://</code> link opens Finder, not the image.</li>
+    <li><b>herdr only</b> for the keybinding and session scoping. The viewer itself is plain bash plus chafa and runs anywhere — you just launch it yourself, and lose scoping.</li>
+  </ul>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one tool, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

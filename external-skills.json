@@ -1,0 +1,35 @@
+{
+  "_comment": "Third-party skills installed via `npx skills`. install.ts --externals reproduces these deterministically (npx skills add <repo> -s <skills>). Owned skills live in skills/; these are NOT vendored.",
+  "repos": {
+    "mattpocock/skills": [
+      "ask-matt", "code-review", "codebase-design", "diagnosing-bugs", "domain-modeling",
+      "grilling", "handoff", "implement",
+      "improve-codebase-architecture", "prototype", "research",
+      "resolving-merge-conflicts", "setup-matt-pocock-skills", "tdd", "teach",
+      "to-spec", "to-tickets", "triage", "wayfinder",
+      "to-questionnaire", "wait-what", "wizard", "writing-for-agents",
+      "implement-spec", "writing-fragments", "writing-shape", "writing-beats"
+    ],
+    "anthropics/skills": [
+      "docx", "frontend-design", "pdf", "pptx",
+      "skill-creator", "xlsx"
+    ],
+    "vercel-labs/skills": ["find-skills"],
+    "dietrichgebert/ponytail": [
+      "ponytail", "ponytail-debt", "ponytail-gain",
+      "ponytail-help", "ponytail-review"
+    ],
+    "safishamsi/graphify": ["graphify"],
+    "ayghri/i-have-adhd": ["i-have-adhd"],
+    "mrwadams/mcp-stride-gpt": ["stride-threat-modelling"],
+    "levnikolaevich/claude-code-skills": [
+      "ln-11-plan-reviewer", "ln-12-delivery-reviewer",
+      "ln-21-documentation-auditor",
+      "ln-23-test-suite-auditor", "ln-24-architecture-auditor",
+      "ln-25-persistence-auditor", "ln-31-performance-optimizer",
+      "ln-32-dependency-upgrader", "ln-33-code-modernizer",
+      "ln-34-benchmark-comparator", "ln-42-acceptance-test-builder",
+      "ln-51-opportunity-evaluator", "ln-61-skill-reviewer"
+    ]
+  }
+}

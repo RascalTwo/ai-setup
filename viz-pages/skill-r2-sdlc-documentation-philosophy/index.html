@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>r2-sdlc-documentation-philosophy — too little and too much are the same bug</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="r2-sdlc-documentation-philosophy">
+<meta name="viz:description" content="The documentation chapter of r2-sdlc: docs only where a reader would otherwise be confused, and reviewers who flag noise as hard as they flag gaps.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     The card gradient deliberately echoes ../skill-r2-sdlc/ — this is a chapter
+     of that book, and it should look like one.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c4) 16%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 452px; gap:40px; align-items:center; padding:56px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:13px;
+            letter-spacing:.13em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:53px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 20px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--c4);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* THE PROOF SLOT — one ruler, two failing ends.
+     The skill's whole claim is that under-documenting and over-documenting are
+     the same defect seen from opposite sides, so the figure is a single axis
+     with a narrow band in the middle and real examples parked in each zone. */
+  .cap{ font-family:var(--mono); font-size:12px; letter-spacing:.13em; color:var(--muted); margin-bottom:11px; }
+  .cap b{ color:var(--accent); }
+  .band{ position:relative; display:flex; flex-direction:column; gap:9px; padding-left:20px; }
+  .band::before{ content:""; position:absolute; left:5px; top:8px; bottom:8px; width:3px; border-radius:99px;
+                 background:linear-gradient(180deg, var(--danger), color-mix(in srgb, var(--good) 85%, transparent) 50%, var(--danger)); }
+  .zone{ background:color-mix(in srgb, var(--panel) 70%, transparent); border:1px solid var(--border);
+         border-radius:11px; padding:11px 13px 12px; }
+  .zl{ display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:11.5px;
+       letter-spacing:.12em; margin-bottom:8px; }
+  .zl .pip{ width:7px; height:7px; border-radius:50%; }
+  .zl .tag{ margin-left:auto; font-size:10px; letter-spacing:.1em; color:var(--faint); }
+  .zone p{ margin:0 0 5px; font-size:12.5px; line-height:1.36; color:var(--muted); }
+  .zone p:last-child{ margin-bottom:0; }
+  .zone code{ font-family:var(--mono); font-size:11.5px; color:var(--text); }
+  .zone.fail{ border-color:color-mix(in srgb, var(--danger) 34%, var(--border)); }
+  .zone.fail .zl{ color:var(--danger); } .zone.fail .pip{ background:var(--danger); }
+  .zone.hit{ background:color-mix(in srgb, var(--good) 9%, var(--panel));
+             border-color:color-mix(in srgb, var(--good) 50%, transparent); }
+  .zone.hit .zl{ color:var(--good); }
+  .zone.hit .pip{ background:var(--good); box-shadow:0 0 0 4px color-mix(in srgb, var(--good) 24%, transparent); }
+  .zone.hit p{ color:var(--text); }
+  .pfoot{ font-family:var(--mono); font-size:11px; letter-spacing:.09em; color:var(--faint); margin-top:11px; }
+  .pfoot b{ color:var(--c4); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="r2-sdlc-documentation-philosophy" data-viz-id="poster-card" data-label="r2-sdlc documentation philosophy poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · R2-SDLC-DOCUMENTATION-PHILOSOPHY</div>
+      <h1 class="hook">Too little and too much<br>are <em>the same bug.</em></h1>
+      <p class="sub">A doc earns its keep only by adding signal a reader can't get from the code. Below that bar it's a trap; above it, it's a line someone now has to keep true. So the reviewers are aimed at <b>both</b> failure modes — noise gets flagged exactly as hard as a gap.</p>
+      <p class="not">Exports get a contract.<br>Internals get <b>silence</b>.</p>
+      <div class="trigger"><span>a chapter of</span>&nbsp;/r2-sdlc</div>
+    </div>
+    <div>
+      <div class="cap">ONE RULER · <b>BOTH</b> ENDS ARE EQUALLY BAD</div>
+      <div class="band">
+        <div class="zone fail">
+          <div class="zl"><span class="pip"></span>TOO LITTLE<span class="tag">FLAGGED</span></div>
+          <p>Exported API shipped with no doc string — or one that says nothing.</p>
+          <p>Complex logic with no explanation. A hidden constraint never called out.</p>
+          <p>A new user-facing feature with no user-facing doc.</p>
+        </div>
+        <div class="zone hit">
+          <div class="zl"><span class="pip"></span>EARNS ITS KEEP<span class="tag">THE MIDDLE</span></div>
+          <p>The <b>WHY</b> a careful reader would still miss: a subtle invariant, a workaround for a library quirk, surprising ordering or side effects.</p>
+          <p>On an export: purpose, non-obvious params, the return contract, what it throws, "must be called after init".</p>
+        </div>
+        <div class="zone fail">
+          <div class="zl"><span class="pip"></span>TOO MUCH<span class="tag">ALSO FLAGGED</span></div>
+          <p><code>// increment counter</code> above <code>counter++</code>.</p>
+          <p><code>// added for the Stripe migration</code> · <code>// see JIRA-1234</code>.</p>
+          <p><code>@param id The id</code> when <code>id: UserId</code> is right there. Stale docs still lingering.</p>
+        </div>
+      </div>
+      <div class="pfoot">AN EXPORT IS A LIBRARY. <b>AN INTERNAL HELPER ISN'T.</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>A layer, not the whole rulebook</h2>
+  <p>This isn't something you run, and it isn't the general documentation rules either — those
+  belong to <a href="../skill-documandments/">documandments</a>, which owns the gate (should this
+  doc exist at all?), the ladder (fix it with a name, a type, a test, a comment — prose last),
+  what survives in the prose, and the duty to update or delete prose in the same change as the
+  code. <b>This file is the thin layer <a href="../skill-r2-sdlc/">r2-sdlc</a> adds on top</b>:
+  the bar for exported APIs, and the checklists the <code>code-reviewer</code> and
+  <code>docs-currency-reviewer</code> run.</p>
+  <div class="callout"><b>It used to restate documandments</b> — about 51 lines of Goldilocks,
+  inline-comment rules and README currency, in a second vocabulary. documandments is vendored
+  from documandments.com and expected to change when the site does, and nothing checks that copy
+  for drift, so the duplicate was guaranteed to disagree eventually. Trimmed to 88 lines in the
+  2026-08-30 audit: one home per fact, which is documandments' own rule.</div>
+
+  <h2>The export bar is the part that's ours</h2>
+  <p>documandments has no notion of an exported API — it reasons about docs, not call sites. So
+  this is the one rule with nowhere else to live: <b>if other code imports it, treat it as a
+  library.</b> A one-line purpose (not mechanism), the non-obvious parameters, the return contract
+  <em>including</em> error/null/empty behavior, what it throws, and usage constraints. Not the
+  implementation details — callers don't care how.</p>
+  <pre><span class="c"># the split that does the work</span>
+exported  → the library bar: contract, errors, constraints
+internal  → the comment bar: only a non-obvious WHY
+<b>never</b>     → a doc string that restates the type signature</pre>
+  <p>The last line is the one reviewers flag most: <code>/** @param id The id */</code> above
+  <code>id: UserId</code> is a line someone now has to keep true, in exchange for nothing.</p>
+
+  <h2>The worst thing is a doc that's now wrong</h2>
+  <p>Outdated documentation is ranked the number-one worst outcome here: <b>wrong docs are worse than no docs</b>, because they actively mislead. documandments states the duty (prose describing changed code is updated or deleted in the same change); what this layer adds is the <code>docs-currency-reviewer</code>'s two questions.</p>
+  <ul>
+    <li><b>Are any existing docs now wrong?</b> Did you rename a file, module, command, config key or endpoint? Change setup steps, env vars, defaults? Change a public API or an output format? Every doc and every example that references the old thing has to move.</li>
+    <li><b>Does anything you added need new documentation?</b> A new public command or endpoint, a new config option, a gotcha that isn't self-evident, a new architectural concept. Written when the answer is yes — <b>not "just in case."</b></li>
+  </ul>
+
+  <div class="callout"><b>The reviewer stops at the finding.</b> <code>docs-currency-reviewer</code> reports a file path, a line, and the specific change needed — and does <b>not</b> rewrite docs unprompted. It surfaces the gap and lets the main agent decide whether to fix it in this run or spin it off.</div>
+
+  <h2>When in doubt</h2>
+  <p>One question settles it: <em>would a reader reasonably need this to understand or safely use the code?</em> Yes → write it, concisely, focused on the WHY and the contract. No → write nothing. And if you genuinely can't tell, the tie-breaker isn't neutral — <b>lean toward not writing</b>. It's easier to add a doc when a reader later asks "why?" than to delete stale noise that has already calcified into the codebase.</p>
+
+  <div class="foot">A chapter of <a href="../skill-r2-sdlc/">r2-sdlc</a> · part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a>.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

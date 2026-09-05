@@ -1,0 +1,14 @@
+# claude-tab's herdr keybinding. Merged into ~/.config/herdr/config.toml by
+# install.ts (guarded on the command path, so re-running is a no-op).
+#
+# type = "shell" runs detached in the background, which is what we want: the
+# script only talks to herdr's socket API and prints nothing, so it needs no
+# pane of its own — the tab it creates is the visible result.
+#
+# `~` is expanded by install.ts — herdr does not expand it in this field.
+
+[[keys.command]]
+key = "prefix+a"
+type = "shell"
+command = "~/.claude/bin/claude-tab"
+description = "new tab running claude here"

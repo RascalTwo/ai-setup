@@ -1,0 +1,13 @@
+# ttyimgspool's herdr keybinding. Merged into ~/.config/herdr/config.toml by
+# install.ts (guarded on the command path, so re-running is a no-op).
+#
+# type = "pane" gives a temporary zoomed pane that closes when the command exits,
+# which is the whole point: the gallery is there when you want it and gone after.
+#
+# `~` is expanded by install.ts — herdr does not expand it in this field.
+
+[[keys.command]]
+key = "prefix+i"
+type = "pane"
+command = "~/.claude/bin/ttyimgspool"
+description = "browse this session's screenshots"

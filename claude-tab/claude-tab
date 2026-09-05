@@ -1,0 +1,10 @@
+#!/bin/sh
+# New herdr tab, already running Claude Code.
+# Bound to prefix+a in ~/.config/herdr/config.toml (see README.md).
+#
+# No --label: herdr auto-numbers the tab, same as an unnamed prefix+c tab.
+# The new tab inherits the focused pane's cwd on its own ([terminal] new_cwd).
+# `pane run` makes claude the pane's foreground process, so the tab behaves
+# exactly as if you had typed the command yourself.
+pane=$(herdr tab create --focus | jq -r .result.root_pane.pane_id)
+exec herdr pane run "$pane" claude --dangerously-skip-permissions

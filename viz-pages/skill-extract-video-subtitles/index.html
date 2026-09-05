@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>extract-video-subtitles — the words are already in the file</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="extract-video-subtitles">
+<meta name="viz:description" content="Pulls an embedded subtitle track out of a local video with FFmpeg instead of re-transcribing it, and falls back to speech recognition only when there is no track to pull.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 95% -10%, color-mix(in srgb, var(--c4) 16%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c5) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 468px; gap:38px; align-items:center; padding:56px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:55px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 20px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the proof slot = a CROSS-SECTION of the file. The skill's whole argument is
+     about WHICH LAYER the words are sitting in — one is a stream you can map out,
+     one has to be recognised from speech, one is pixels and is not this problem. */
+  .cap{ font-family:var(--mono); font-size:12px; letter-spacing:.13em; color:var(--muted); margin-bottom:11px; }
+  .cap b{ color:var(--accent); }
+  .file{ border:1px solid var(--border); border-radius:14px; padding:12px; display:flex;
+         flex-direction:column; gap:10px; background:color-mix(in srgb, var(--panel) 40%, transparent); }
+  .fname{ font-family:var(--mono); font-size:11.5px; color:var(--muted); padding:3px 4px 9px;
+          border-bottom:1px dashed var(--border); }
+  .fname b{ color:var(--text); }
+  .layer{ border:1px solid var(--border); border-left-width:3px; border-radius:10px; padding:12px 13px;
+          background:color-mix(in srgb, var(--panel) 78%, transparent); }
+  .layer .top{ display:flex; align-items:baseline; gap:9px; margin-bottom:7px; }
+  .layer .id{ font-family:var(--mono); font-size:13px; letter-spacing:.04em; white-space:nowrap; }
+  .layer .what{ font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden;
+                text-overflow:ellipsis; }
+  .layer .route{ font-family:var(--mono); font-size:11.5px; color:var(--text); white-space:nowrap; }
+  .layer .route s{ color:var(--faint); text-decoration:none; }
+  .tag{ margin-left:auto; font-family:var(--mono); font-size:10px; letter-spacing:.11em;
+        padding:2px 7px; border-radius:99px; white-space:nowrap; }
+  .layer.subs{ border-color:color-mix(in srgb, var(--c4) 32%, var(--border)); border-left-color:var(--c4); }
+  .layer.subs .id{ color:var(--c4); }
+  .layer.subs .tag{ color:var(--c4); background:color-mix(in srgb, var(--c4) 14%, transparent);
+                    border:1px solid color-mix(in srgb, var(--c4) 45%, transparent); }
+  .layer.aud{ border-left-color:var(--c5); }
+  .layer.aud .id{ color:var(--c5); }
+  .layer.aud .tag{ color:var(--c5); border:1px solid color-mix(in srgb, var(--c5) 40%, transparent); }
+  .layer.pix{ border-style:dashed; border-left-color:var(--faint); background:transparent; }
+  .layer.pix .id{ color:var(--faint); }
+  .layer.pix .what,.layer.pix .route{ color:var(--faint); }
+  .layer.pix .tag{ color:var(--faint); border:1px dashed var(--border); }
+  .pfoot{ font-family:var(--mono); font-size:11px; letter-spacing:.09em; color:var(--faint); margin-top:10px; }
+  .pfoot b{ color:var(--muted); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="extract-video-subtitles" data-viz-id="poster-card" data-label="extract-video-subtitles poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · EXTRACT-VIDEO-SUBTITLES</div>
+      <h1 class="hook">The words are<br><em>already in the file.</em></h1>
+      <p class="sub">A downloaded Meet recording ships with its own caption track. Transcribing it is re-doing work that's already sitting in stream <b>0:s</b> — and the re-do <b>loses the speaker names</b>. One <b>ffprobe</b>, one <b>ffmpeg -map</b>, and you have the <code>.vtt</code>.</p>
+      <p class="not">Subtitles burned into the picture are <b>pixels</b>.<br>FFmpeg can't get those. That's OCR — a different problem.</p>
+      <div class="trigger"><span>say</span>&nbsp;"extract the captions from this video"</div>
+    </div>
+    <div>
+      <div class="cap">WHERE THE WORDS ACTUALLY LIVE &nbsp;·&nbsp; <b>ffprobe</b> DECIDES</div>
+      <div class="file">
+        <div class="fname"><b>recording.mp4</b> — one container, three places the words could be</div>
+        <div class="layer subs">
+          <div class="top"><span class="id">0:s &nbsp;SUBTITLES</span><span class="what">text, already written</span><span class="tag">THIS SKILL</span></div>
+          <div class="route">ffmpeg -map 0:s:N -c:s webvtt &nbsp;<s>→ srt if it must</s></div>
+        </div>
+        <div class="layer aud">
+          <div class="top"><span class="id">0:a &nbsp;AUDIO</span><span class="what">speech, no text</span><span class="tag">AUTO-FALLBACK</span></div>
+          <div class="route">transcribe-media &nbsp;<s>→ Whisper, same .vtt out</s></div>
+        </div>
+        <div class="layer pix">
+          <div class="top"><span class="id">0:v &nbsp;PIXELS</span><span class="what">captions burned in</span><span class="tag">NOT THIS SKILL</span></div>
+          <div class="route">nothing to map &nbsp;<s>→ needs OCR. out of scope.</s></div>
+        </div>
+      </div>
+      <div class="pfoot">↑ STILL IN THE DRIVE PLAYER → <b>extract-gdrive-transcript</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>The failure it saves you from</h2>
+  <p>You download a Google Meet recording and ask for a transcript. The obvious move is to run speech recognition over it — and it works, and it takes minutes, and the output is a wall of text with <b>no idea who said what</b>. Meanwhile the file you handed over already contained a caption track that Google wrote during the call, with speaker names in it. The skill's first act is to <b>look</b> before it listens.</p>
+
+  <h2>The whole workflow</h2>
+  <pre><span class="c"># 1 — probe: is there anything to extract at all?</span>
+ffprobe -v quiet -print_format json -show_streams -select_streams s "$FILE"
+   <span class="c">→ index, codec_name (webvtt / subrip / ass / mov_text),
+     tags.language, tags.title</span>
+
+<span class="c"># 2 — one stream: use it. more than one: show them and ask.</span>
+   Found 2 subtitle streams:
+     Stream 0: webvtt (English)
+     Stream 1: subrip (Spanish)      <span class="c">default: 0</span>
+
+<span class="c"># 3 — extract, WebVTT first</span>
+ffmpeg -i "$FILE" -map 0:s:$N -c:s webvtt "$OUT" -y</pre>
+  <p class="m">Output lands next to the input with the extension swapped — <code>recording.mp4</code> → <code>recording.vtt</code> — unless you say otherwise. Then it reports the path, the format, the file size, and a <b>preview of the first few entries</b>, because a subtitle file that extracted cleanly and a subtitle file that came out as garbage look identical from a byte count.</p>
+
+  <h2>WebVTT first, SRT only as a fallback</h2>
+  <p>The preference isn't stylistic. WebVTT carries <code>&lt;v Speaker&gt;</code> voice tags and <b>SRT does not</b>. Google Meet captions are WebVTT internally, so extracting one to WebVTT keeps the speaker attribution intact; converting down to SRT throws it away. SRT is what you get when the source codec can't be converted to WebVTT at all.</p>
+
+  <h2>No subtitle track is not a dead end</h2>
+  <p>If <code>ffprobe</code> comes back empty, there's nothing embedded to extract — but the file is <b>already local</b>, so the skill hands off to <a href="../skill-transcribe-media/">transcribe-media</a> and generates the captions from the speech instead.</p>
+  <pre>skills/transcribe-media/transcribe.sh "$FILE" --format vtt   <span class="c"># or srt</span></pre>
+  <p class="m">Same <code>.vtt</code> or <code>.srt</code> on the other end, just derived from audio rather than lifted from a container. The one case where that's the wrong route: a Meet recording that's <b>still sitting in the Drive player</b> and hasn't been downloaded. There, <a href="../skill-extract-gdrive-transcript/">extract-gdrive-transcript</a> wins, because it reuses Google's own speaker-attributed captions rather than re-recognising anything.</p>
+
+  <div class="callout"><b>Hardcoded subtitles are out of scope, permanently.</b> Some files have the text painted into the video frames rather than carried as a stream. There is no stream to map, so FFmpeg cannot extract them at any quality setting — recovering that text is OCR, which is a different problem and not what this skill is.</div>
+
+  <h2>When the output looks wrong</h2>
+  <p class="m">Garbled or empty results usually mean the track is in a format FFmpeg can't <em>convert</em>, not one it can't read. Re-extract with <code>-c:s copy</code> to get the raw bytes untouched and see what the format actually is before blaming the file.</p>
+
+  <h2>What it needs</h2>
+  <ul>
+    <li><b>FFmpeg installed</b> — <code>brew install ffmpeg</code>, or <code>apt install ffmpeg</code> on Linux. No FFmpeg, no skill.</li>
+    <li><b>A local file.</b> Video or audio, MP4 / MKV / WebM, anything FFmpeg opens. Nothing is uploaded and nothing is downloaded — it reads the file where it sits.</li>
+    <li><b>A path.</b> If you don't give one, it asks for one rather than guessing.</li>
+  </ul>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>
