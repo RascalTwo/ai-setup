@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>plus-ultra — the list is allowed to be empty</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="plus-ultra">
+<meta name="viz:description" content="Mines the compromises already made in finished work, prices every improvement, sorts them into debts, upside and gold-plating — and is allowed to conclude &quot;ship it&quot;.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 95% -10%, color-mix(in srgb, var(--c4) 17%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c5) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 470px; gap:38px; align-items:center; padding:56px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:56px; line-height:1.04; margin:0 0 18px; letter-spacing:-1.5px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 20px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the SORTER = the "proof" slot. Every candidate hits one gate — "was it
+     promised?" — and lands in exactly one of three buckets. The reject chute is
+     a bucket too, and that is the argument. */
+  .cap{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; color:var(--muted); margin-bottom:10px; }
+  .cap b{ color:var(--c4); }
+  .gate{ border:1px solid color-mix(in srgb, var(--c4) 50%, transparent); border-radius:11px;
+         background:color-mix(in srgb, var(--c4) 10%, transparent); padding:10px 14px; text-align:center; }
+  .gate .q{ font-family:var(--mono); font-size:15px; letter-spacing:.08em; color:var(--text); }
+  .arms{ display:grid; grid-template-columns:1fr 1fr; gap:12px; font-family:var(--mono); font-size:11px;
+         letter-spacing:.14em; color:var(--faint); padding:5px 40px 4px; }
+  .arms span:last-child{ text-align:right; }
+  .forks{ display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:stretch; }
+  .bk{ background:color-mix(in srgb, var(--panel) 76%, transparent); border:1px solid var(--border);
+       border-radius:12px; padding:12px 13px 13px; }
+  .bk .lbl{ font-family:var(--mono); font-size:12.5px; letter-spacing:.12em; margin-bottom:7px; }
+  .bk .rule{ font-size:13px; line-height:1.42; color:var(--muted); margin:0 0 8px; }
+  .bk .rule b{ color:var(--text); }
+  .bk .call{ font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; color:var(--faint); margin:0; }
+  .bk.debt{ border-top:2px solid var(--warn); }
+  .bk.debt .lbl{ color:var(--warn); }
+  .bk.up{ border-top:2px solid var(--c4); }
+  .bk.up .lbl{ color:var(--c4); }
+  .bk.gold{ border:1px dashed color-mix(in srgb, var(--c5) 45%, var(--border)); margin-top:12px; }
+  .bk.gold .lbl{ color:var(--c5); }
+  .bk.gold .lbl .s{ color:var(--faint); letter-spacing:.04em; }
+  .price{ display:flex; align-items:baseline; gap:10px; margin-top:12px; padding:9px 12px;
+          border-left:3px solid var(--accent); background:color-mix(in srgb, var(--panel) 60%, transparent);
+          border-radius:0 9px 9px 0; }
+  .price .k{ font-family:var(--mono); font-size:10px; letter-spacing:.14em; color:var(--accent); white-space:nowrap; }
+  .price .v{ font-family:var(--mono); font-size:11.5px; line-height:1.35; color:var(--muted); }
+  .price .v b{ color:var(--text); }
+  .verdict{ margin-top:13px; text-align:center; font-family:var(--mono); font-size:11.5px;
+            letter-spacing:.11em; color:var(--faint); }
+  .verdict b{ color:var(--good); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="plus-ultra" data-viz-id="poster-card" data-label="plus-ultra poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · PLUS-ULTRA</div>
+      <h1 class="hook">The list is allowed<br><em>to be empty.</em></h1>
+      <p class="sub">Ask a model "could this be better?" and it fills a list <b>every time</b> — two real gaps blended with however many plausible extras it takes to look responsive. A list that always fills carries no information. So every line here has to <b>earn its place</b>: memory before invention, a price on each entry, and a genuine option to say the thing is done.</p>
+      <p class="not">It proposes. <b>It does not build.</b><br>Fires only <b>after</b> the work is declared done.</p>
+      <div class="trigger"><span>say</span>&nbsp;"plus ultra"</div>
+    </div>
+    <div>
+      <div class="cap">ONE GATE &nbsp;·&nbsp; <b>THREE</b> BUCKETS, NEVER MERGED</div>
+      <div class="gate"><div class="q">WAS IT PROMISED?</div></div>
+      <div class="arms"><span>YES ↙</span><span>↘ NO</span></div>
+      <div class="forks">
+        <div class="bk debt">
+          <div class="lbl">DEBTS</div>
+          <p class="rule">A bar was set and the work came in <b>under</b> it.</p>
+          <p class="call">A RISK CALL — WHAT BREAKS IF THIS STAYS?</p>
+        </div>
+        <div class="bk up">
+          <div class="lbl">UPSIDE</div>
+          <p class="rule">It does what it promised. This would make it do <b>more</b>.</p>
+          <p class="call">A VALUE CALL — WORTH IT VS. ANYTHING ELSE?</p>
+        </div>
+      </div>
+      <div class="bk gold">
+        <div class="lbl">GOLD-PLATING <span class="s">— considered, and NOT recommended</span></div>
+        <p class="rule" style="margin:0">Rejected, with the reason. The bucket that makes the other two <b>credible</b> — it tells you which tempting directions are traps.</p>
+      </div>
+      <div class="price"><span class="k">EVERY&nbsp;LINE&nbsp;PRICED</span><span class="v">add retry with backoff · <b>~20 min</b> · removes the most likely production page</span></div>
+      <div class="verdict">CLOSES ON ONE CALL — WHICH MAY BE <b>"NOTHING — SHIP IT."</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>The list that always fills</h2>
+  <p>"Could this be better?" is a question a model essentially never answers <em>no</em> to. Asked in prose it produces a list of improvements every single time, and you can't tell which two entries are load-bearing and which five are there to look responsive. The whole answer degrades into noise.</p>
+  <p class="m">So the work of this skill isn't <em>generating</em> improvements — that part is free and worthless. It's making each one earn its place. <b>"Nothing — ship it" is a valid output, and sometimes the correct one.</b></p>
+
+  <h2>Debts before ideas</h2>
+  <p>It opens by <b>remembering</b>, not brainstorming. Whoever just did the work is already sitting on a ledger of compromises they made and moved past:</p>
+  <ul>
+    <li>Scope trimmed to fit — "the simple version for now".</li>
+    <li><code>TODO</code>, <code>FIXME</code>, stubs, hardcoded values, magic numbers.</li>
+    <li>Error paths left unhandled; edge cases acknowledged and skipped.</li>
+    <li>Tests unwritten or written shallow — a manual check standing in for an automated one.</li>
+    <li>A workaround chosen over the real fix, and the reason.</li>
+    <li>Anything the work rests on that was <b>assumed</b> rather than verified.</li>
+  </ul>
+  <p>This is the highest-value material in the skill, and the part you cannot get by asking the question conversationally — a cold brainstorm reaches for what's <em>interesting</em> rather than what's <em>actually missing</em>. Only once the ledger is exhausted does it invent: the adjacent capability, the direction the work could take. Ideas go second on purpose, because they crowd out debts whenever they go first.</p>
+  <p class="m">If the work isn't in context — an older change, a different session — it reads the artifact before saying anything: the diff, the files, the test output, the issue it came from. Speculating about code it hasn't looked at is exactly how the filler gets in.</p>
+
+  <h2>A price, or an admission</h2>
+  <p>Each entry carries an effort estimate and what it buys. The difference is not cosmetic:</p>
+  <pre><span class="c">✓</span> add retry with backoff · ~20 min · removes the most likely production page
+<span class="c">✗ improve error handling</span></pre>
+  <p class="m">The second one hands the entire judgment back to you — which is the labour you invoked this to be spared. Where it genuinely can't estimate, it <b>says so in place of the price</b> rather than dropping the price silently.</p>
+
+  <h2>Why the buckets don't merge</h2>
+  <p>The sorting test is a single question: <b>was it promised?</b> Promised-and-missing is a <b>debt</b>; never-promised is <b>upside</b>. They stay apart because they're answered by different questions — a debt is a <em>risk</em> call, an upside is a <em>value</em> call. Merged into one ranked list, a shiny idea outranks a missing error handler and you have to re-sort by hand, which is the labour this exists to spare you.</p>
+  <p>The third bucket does something the other two can't do for themselves. Naming what was <b>rejected</b>, and why, is the clearest available evidence that the model was selecting rather than listing — and it's often the most useful section on the page, because it tells you which tempting directions are traps.</p>
+
+  <div class="callout"><b>The trap: treating everything <code>ponytail</code> cut as a debt.</b> Ponytail runs by default on coding work and strips scope — YAGNI, stdlib over custom, one line over fifty. This skill is its opposite lens, which is precisely why it's invoked rather than standing: the two cannot run at once. But a deferral that was <em>correct</em> stays correct, and re-listing it turns plus-ultra into an undo button for the skill that just did its job. Deliberately deferred scope belongs under <b>Upside</b> only if the reason to defer it has since weakened — and nowhere at all if it hasn't.</div>
+
+  <h2>When the buckets come out thin</h2>
+  <p>The lazy default is reviewing your own work in-context: free, instant, usually enough. Its weakness is that the author of a piece of work is the <b>worst-positioned party</b> to see what it's missing — you already judged each of those calls fine once.</p>
+  <p class="m">So when the buckets look thin, or suspiciously flattering, it escalates: an <b>independent subagent that hasn't seen the reasoning</b>, handed only the artifact and the goal it was meant to serve. What that agent flags and you didn't is precisely the material your own investment hid. Reserved for work that matters — on a small change, the in-context pass is the right amount of effort.</p>
+
+  <h2>Then it stops</h2>
+  <p>It closes on a single call: the one thing to do next, or "nothing — ship it." A call, not a summary of the buckets. <b>This skill proposes; it does not execute.</b> It waits for you to choose before building anything.</p>
+
+  <h2>Where it sits</h2>
+  <p class="m">Three lenses, three moments, and the timing is the whole distinction. <a href="../skill-steelman/">steelman</a> tests a decision before you commit to it. <code>grilling</code> shapes a plan before it's built. <b>plus-ultra fires after the work is declared done</b> — it doesn't shape the plan and it doesn't re-litigate the decision.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

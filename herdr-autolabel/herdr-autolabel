@@ -1,0 +1,74 @@
+#!/bin/sh
+# Living herdr tab label. After each Claude turn, ask a local model for a short
+# slug describing what the conversation is about NOW, and rename the tab to it.
+# Runs as a Claude Code Stop hook. See README.md.
+
+MODEL=${HERDR_AUTOLABEL_MODEL:-qwen2.5-coder:7b}
+LIMIT=12
+STATE_DIR="$HOME/.claude/herdr-autolabel"
+
+# Outside herdr there is no tab to rename, so don't even wake ollama.
+[ -n "$HERDR_TAB_ID" ] || exit 0
+command -v herdr >/dev/null 2>&1 || exit 0
+command -v ollama >/dev/null 2>&1 || exit 0
+
+transcript=$(jq -r '.transcript_path // empty' 2>/dev/null)
+[ -f "$transcript" ] || exit 0
+
+# Everything past here is a model call. Detach it: a Stop hook that blocks is a
+# Stop hook you feel on every single turn.
+{
+  mkdir -p "$STATE_DIR"
+  state="$STATE_DIR/$(printf '%s' "$HERDR_TAB_ID" | tr -c 'a-zA-Z0-9' '_')"
+  ours=$(cat "$state" 2>/dev/null)
+
+  label=$(herdr tab list --workspace "$HERDR_WORKSPACE_ID" \
+          | jq -r --arg t "$HERDR_TAB_ID" '.result.tabs[]|select(.tab_id==$t)|.label')
+
+  # An auto-numbered label is fair game, and so is one we set ourselves.
+  # Anything else is a name the human typed — back off, permanently.
+  case "$label" in
+    ''|*[!0-9]*) [ "$label" = "$ours" ] || exit 0 ;;
+  esac
+
+  # User turns only: drop tool results, images, and injected system blocks.
+  msgs=$(jq -r 'select(.type=="user") | .message.content
+                | if type=="string" then . else (.[]? | select(.type=="text") | .text) end' \
+           "$transcript" 2>/dev/null \
+         | grep -vE '^\s*(<|\[Image|Caveat:)' | grep -vE '^\s*$')
+  [ -n "$msgs" ] || exit 0
+
+  prompt="Name a terminal tab for this coding session.
+Reply with ONE slug and nothing else: 1-2 words, lowercase, hyphenated, ${LIMIT} characters max.
+No quotes, no punctuation, no explanation.
+
+Current slug: ${ours:-none}
+If the conversation is still about the same thing as the current slug, reply with exactly the current slug.
+Otherwise name what the conversation is about NOW — the latest messages matter most.
+
+How it started:
+$(printf '%s' "$msgs" | head -1 | cut -c1-300)
+
+Most recent messages:
+$(printf '%s' "$msgs" | tail -3 | cut -c1-300)
+
+Slug:"
+
+  # Small models pad, quote, capitalize, and explain. Keep only what survives.
+  raw=$(printf '%s' "$prompt" | ollama run "$MODEL" --keepalive 2m 2>/dev/null \
+        | head -1 | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' \
+        | sed 's/^-*//; s/-*$//')
+  [ -n "$raw" ] || exit 0
+
+  # Over-long answers are common. Cut to LIMIT, and if that lands mid-word, drop
+  # the partial tail rather than shipping "css-bug-fixi".
+  slug=$(printf '%s' "$raw" | cut -c "1-$LIMIT")
+  if [ "$slug" != "$raw" ] && [ "$(printf '%s' "$raw" | cut -c "$((LIMIT+1))")" != "-" ]; then
+    case "$slug" in *-*) slug=${slug%-*} ;; esac
+  fi
+  [ -n "$slug" ] && [ "$slug" != "$label" ] || exit 0
+
+  herdr tab rename "$HERDR_TAB_ID" "$slug" >/dev/null 2>&1 && printf '%s' "$slug" > "$state"
+} >/dev/null 2>&1 &
+
+exit 0

@@ -1,0 +1,99 @@
+{
+  "version": 3,
+  "lines": [
+    [
+      {
+        "id": "06837110-8c11-46f8-9c58-4f0f949b90bb",
+        "type": "context-bar",
+        "metadata": {
+          "display": "progress-short"
+        }
+      },
+      {
+        "id": "sep-img",
+        "type": "separator",
+        "character": " \u2502 "
+      },
+      {
+        "id": "w-img",
+        "type": "custom-command",
+        "commandPath": "$HOME/.claude/statusline-ttyimgspool.sh",
+        "preserveColors": true
+      },
+      {
+        "id": "sep-cache",
+        "type": "separator",
+        "character": " \u2502 "
+      },
+      {
+        "id": "w-cache",
+        "type": "custom-command",
+        "commandPath": "$HOME/.claude/statusline-cache.sh",
+        "preserveColors": true
+      },
+      {
+        "id": "sep-5h",
+        "type": "separator",
+        "character": " \u2502 "
+      },
+      {
+        "id": "w-5h",
+        "type": "custom-command",
+        "commandPath": "$HOME/.claude/statusline-5h.sh",
+        "preserveColors": true
+      },
+      {
+        "id": "sep-wk",
+        "type": "separator",
+        "character": " \u2502 "
+      },
+      {
+        "id": "w-wk",
+        "type": "custom-command",
+        "commandPath": "$HOME/.claude/statusline-wk.sh",
+        "preserveColors": true
+      },
+      {
+        "id": "sep-dur",
+        "type": "separator",
+        "character": " \u2502 "
+      },
+      {
+        "id": "w-dur",
+        "type": "custom-command",
+        "commandPath": "$HOME/.claude/statusline-duration.sh",
+        "preserveColors": true
+      },
+      {
+        "id": "sep-cost",
+        "type": "separator",
+        "character": " \u2502 "
+      },
+      {
+        "id": "w-cost",
+        "type": "custom-command",
+        "commandPath": "$HOME/.claude/statusline-cost.sh",
+        "preserveColors": true
+      }
+    ],
+    [],
+    []
+  ],
+  "flexMode": "full-minus-40",
+  "compactThreshold": 60,
+  "colorLevel": 2,
+  "inheritSeparatorColors": false,
+  "globalBold": false,
+  "powerline": {
+    "enabled": false,
+    "separators": [
+      "\ue0b0"
+    ],
+    "separatorInvertBackground": [
+      false
+    ],
+    "startCaps": [],
+    "endCaps": [],
+    "autoAlign": false
+  }
+}

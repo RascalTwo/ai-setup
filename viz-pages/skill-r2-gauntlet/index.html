@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>r2-gauntlet — the duplicates are the point</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="r2-gauntlet">
+<meta name="viz:description" content="Fans every code reviewer on the machine at one diff in parallel, then dedups the overlapping findings into a single report ranked by how many reviewers independently agreed.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(840px 500px at 96% -10%, color-mix(in srgb, var(--c4) 17%, transparent), transparent 60%),
+      radial-gradient(740px 460px at -6% 112%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 482px; gap:34px; align-items:center; padding:52px 62px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:50px; line-height:1.05; margin:0 0 15px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  p.sub{ font-size:17px; line-height:1.46; color:var(--muted); margin:0 0 16px; max-width:510px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:14.5px; line-height:1.5; color:var(--muted); margin:0 0 17px; max-width:510px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the funnel = the "proof" slot. The roster fans OUT (the easy part, and
+     deliberately redundant); the synthesis bar is where the product is made;
+     the three rows below carry the consensus counts that ranked them. */
+  .cap{ font-family:var(--mono); font-size:11.5px; letter-spacing:.13em; color:var(--muted); margin-bottom:10px; }
+  .cap b{ color:var(--accent); }
+  .grp{ display:grid; grid-template-columns:74px 1fr; gap:9px; align-items:start; margin-bottom:7px; }
+  .grp .gl{ font-family:var(--mono); font-size:9.5px; letter-spacing:.09em; color:var(--faint);
+            text-align:right; padding-top:4px; line-height:1.25; }
+  .grp .gc{ display:flex; flex-wrap:wrap; gap:4px; }
+  .chip{ font-family:var(--mono); font-size:9.5px; letter-spacing:0; padding:3px 5px; border-radius:5px;
+         background:color-mix(in srgb, var(--panel) 82%, transparent); border:1px solid var(--border);
+         color:var(--muted); white-space:nowrap; }
+  .grp.cond .gl{ color:var(--c8); }
+  .grp.cond .chip{ border:1px dashed color-mix(in srgb, var(--c8) 55%, transparent);
+                   color:color-mix(in srgb, var(--c8) 72%, var(--text)); background:transparent; }
+  .funnel{ display:flex; align-items:center; gap:9px; margin:11px 0 10px; padding:8px 11px; border-radius:9px;
+           background:color-mix(in srgb, var(--c4) 11%, transparent);
+           border:1px solid color-mix(in srgb, var(--c4) 42%, transparent); }
+  .funnel .a{ font-size:13px; color:var(--c4); }
+  .funnel .t{ font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; color:var(--c4); line-height:1.35; }
+  .funnel .t b{ color:var(--text); }
+  .out{ display:grid; grid-template-columns:62px 1fr 44px; gap:8px; align-items:center; margin-bottom:5px;
+        background:color-mix(in srgb, var(--panel) 70%, transparent); border:1px solid var(--border);
+        border-left:2px solid var(--faint); border-radius:8px; padding:6px 9px; }
+  .out .sev{ font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; color:var(--faint); }
+  .out .ttl{ font-size:11.5px; color:var(--muted); line-height:1.3; }
+  .out .cx{ font-family:var(--mono); font-size:11px; text-align:right; color:var(--faint); }
+  .out.b{ border-left-color:var(--danger); } .out.b .sev{ color:var(--danger); } .out.b .cx{ color:var(--c4); font-weight:700; }
+  .out.h{ border-left-color:var(--warn); }   .out.h .sev{ color:var(--warn); }   .out.h .cx{ color:var(--c4); }
+  .pfoot{ font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; color:var(--faint); margin-top:9px; }
+  .pfoot b{ color:var(--c4); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="r2-gauntlet" data-viz-id="poster-card" data-label="r2-gauntlet poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · R2-GAUNTLET</div>
+      <h1 class="hook">Every reviewer<br>at once. <em>The<br>duplicates are<br>the point.</em></h1>
+      <p class="sub">Your machine has about twenty review lenses that overlap heavily. The gauntlet runs <b>all of them in parallel on one diff</b>, then dedups by meaning and ranks what's left by how many reviewers <b>independently</b> raised it. A bug five of them flagged outranks one only ponytail noticed.</p>
+      <p class="not">The fan-out is the easy part.<br><b>The synthesis is the product.</b></p>
+      <div class="trigger"><span>run</span>&nbsp;/r2-gauntlet &lt;scope&gt;</div>
+    </div>
+    <div>
+      <div class="cap">ONE SCOPE ARTIFACT, COMPUTED <b>ONCE</b>, HANDED TO ALL</div>
+      <div class="grp">
+        <div class="gl">SUBAGENTS<br>×5</div>
+        <div class="gc"><span class="chip">code-reviewer</span><span class="chip">test-reviewer</span><span class="chip">docs-currency</span><span class="chip">reuse</span><span class="chip">security</span></div>
+      </div>
+      <div class="grp">
+        <div class="gl">SKILLS<br>×6</div>
+        <div class="gc"><span class="chip">ln-12 delivery</span><span class="chip">ln-21 docs</span><span class="chip">ln-24 arch</span><span class="chip">ln-25 data</span><span class="chip">ponytail-review</span><span class="chip">code-review</span></div>
+      </div>
+      <div class="grp">
+        <div class="gl">BUILT-IN<br>×1</div>
+        <div class="gc"><span class="chip">security-review</span></div>
+      </div>
+      <div class="grp cond">
+        <div class="gl">ONLY IF<br>EARNED ×4</div>
+        <div class="gc"><span class="chip">fidelity · needs design.md</span><span class="chip">qa · needs the ask</span><span class="chip">/review · needs a PR</span><span class="chip">floor · dep + a11y + async</span></div>
+      </div>
+      <div class="funnel">
+        <span class="a">▼</span>
+        <div class="t"><b>SYNTHESIS</b> — THE PART THAT ISN'T FREE<br>NORMALIZE → DEDUP BY MEANING → COUNT CONSENSUS → RANK</div>
+      </div>
+      <div class="out b"><span class="sev">BLOCKER</span><span class="ttl">same finding, five reviewers, one entry</span><span class="cx">×5</span></div>
+      <div class="out h"><span class="sev">HIGH</span><span class="ttl">two names for it — merged, sources kept</span><span class="cx">×3</span></div>
+      <div class="out"><span class="sev">LOW / NIT</span><span class="ttl">one reviewer, one line, bottom of the list</span><span class="cx">×1</span></div>
+      <div class="pfoot">RANKED BY SEVERITY, THEN <b>CONSENSUS</b> · SKIPS ARE LISTED, NOT HIDDEN</div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>Sixteen reviewers, sixteen reports</h2>
+  <p>Once you've collected a shelf of review skills, using them is the problem. Run them one at a time and you read the same finding five times in five different voices, with no idea which of the five you should actually believe. Run only your favourite and you've thrown away the other fifteen opinions. The gauntlet's answer isn't a better reviewer — it's <b>one pass, one report</b>.</p>
+
+  <h2>The overlap is a feature</h2>
+  <p>The roster is <b>deliberately redundant</b>, and the skill forbids pruning it to "reduce duplicates." The duplicates <em>are</em> the signal. Synthesis merges findings that name the same problem in the same place — judged <b>by meaning, not string match</b>, so ponytail-review's "premature <code>BaseProcessor</code> abstraction" and code-reviewer's "single-impl interface, inline it" collapse into one entry — then keeps the <b>set of sources</b> that raised it. That count is the confidence score, and it's what does the ranking after severity.</p>
+  <p class="m">The report is explicit about the shrinkage: raw findings <em>n</em> → after dedup <em>m</em>, with a <b>consensus highlights</b> section for anything three or more independent reviewers flagged. The skill's own closing instruction is that a flat undeduped digest "is just the old chaos with one keystroke — the ranking is the deliverable."</p>
+
+  <h2>The one thing it refuses to do</h2>
+  <p>Guess what to review. The gauntlet <b>blocks</b> until you've named a scope, and if the invocation didn't carry one it asks rather than defaulting — reviewing the wrong thing burns about sixteen agents. There are exactly four:</p>
+  <pre>repo         <span class="c">the whole tracked tree      → git ls-files</span>
+unstaged     <span class="c">working-tree changes        → git diff</span>
+staged       <span class="c">what's staged for commit    → git diff --cached</span>
+since &lt;ref&gt;   <span class="c">everything since a commit   → git diff &lt;ref&gt;...HEAD</span></pre>
+  <p>The resolved diff is written to the scratchpad <b>once</b> and the same artifact is handed to every reviewer. Reviewers are not allowed to recompute scope for themselves — if they each resolved it, they'd diverge, and the dedup would be comparing apples to oranges.</p>
+
+  <h2>Probe the conditionals. Never interview.</h2>
+  <p>Two lenses need an oracle a diff can't supply. <code>fidelity-reviewer</code> asks "does this match the design?" and needs a <code>design.md</code>; <code>qa-validator</code> asks "does this solve the user's problem?" and needs the original ask. The gauntlet <b>looks</b> in the known locations, includes the reviewer if it finds exactly one obvious candidate, and otherwise <b>skips it with the reason printed in the report</b> — "no design doc found, pass one to enable". Turning that probe into a Q&amp;A is listed as an anti-pattern: look, decide, note, move on.</p>
+  <div class="callout"><b>Skips are output, not silence.</b> Every lens that didn't run — no design doc, no open PR, a scanner binary that isn't installed — lands in a <b>Skipped reviewers</b> section of the report. You always know what didn't get looked at.</div>
+
+  <h2>The floor nobody else covers</h2>
+  <p>One conditional subagent runs the mechanical checks that no judgement-based reviewer owns, and only the sub-checks the diff actually triggers: a changed dependency manifest enables the dep audit, changed JSX/TSX enables the a11y pass, and any code diff gets copy-paste detection (<b>10+ duplicated lines, not 3</b>), circular-import detection, and an async-correctness sweep — <code>forEach(async)</code> with no error handling, a missing <code>await</code>, fire-and-forget with no logging, <code>Promise.all</code> with no failure strategy. Tool not installed → that sub-check is skipped and named.</p>
+  <p class="m">The dependency check <b>reuses repo-issue-scanner's existing <code>dependency-audit</code> skill</b> rather than reimplementing it. Same reason the roster itself isn't written here: it lives in <b>one shared registry</b> that both the gauntlet and the scanner read, so adding a lens in one place can't leave the other stale. The scanner is a sibling that shares that registry — the two deliberately don't call each other.</p>
+
+  <h2>It reports. It never fixes.</h2>
+  <p>Reviewers are read-only truth-tellers; the gauntlet edits no code, regardless of who invoked it. It ranks the findings, saves the report next to the diff, and hands the decisions back. When <a href="../skill-r2-sdlc/">r2-sdlc</a> calls it as its Tier-2 quality wave it can pass <code>--quality-only</code> to skip the correctness pair the pipeline already gated, or a <code>--only</code>/<code>--skip</code> subset — but the fix-and-re-run loop belongs to the caller either way.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

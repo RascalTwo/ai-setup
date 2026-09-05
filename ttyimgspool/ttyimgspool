@@ -1,0 +1,142 @@
+#!/bin/bash
+# Image viewer for Claude Code screenshots, launched by a herdr keybinding.
+#
+# Scoping: herdr sets HERDR_ACTIVE_PANE_ID for [[keys.command]] invocations, and
+# that pane knows its Claude session id, so we show only THIS session's images.
+# Falls back to every session when launched outside herdr or from a non-agent pane.
+#
+#   gallery: type # + enter · ]/[ page · a scope · q quit
+#   single:  n older · p newer · g gallery · d delete · C clear all · q quit
+#
+# ponytail: shells out to `herdr pane get` + sed instead of parsing JSON; there
+# is no jq here and one field doesn't justify a dependency.
+root=${TTYIMGSPOOL_DIR:-$HOME/.claude/ttyimgspool}
+KEEP=${TTYIMGSPOOL_KEEP:-100}
+mkdir -p "$root"
+
+session=""
+if [ -n "$HERDR_ACTIVE_PANE_ID" ]; then
+  session=$(herdr pane get "$HERDR_ACTIVE_PANE_ID" 2>/dev/null |
+            sed -n 's/.*"agent_session":{[^}]*"value":"\([^"]*\)".*/\1/p')
+fi
+scope=${session:-ALL}
+dir="$root/${session:-}"
+[ -n "$session" ] && mkdir -p "$dir"
+
+list_imgs() {
+  if [ -n "$session" ] && [ "$scope" != "ALL" ]; then
+    ls -t "$dir"/* 2>/dev/null
+  else
+    ls -t "$root"/*/* "$root"/* 2>/dev/null | grep -v '/$'
+  fi
+}
+
+prune() {
+  ls -t "$1"/* 2>/dev/null | tail -n +$((KEEP + 1)) |
+    while IFS= read -r old; do [ -f "$old" ] && rm -f "$old"; done
+}
+[ -n "$session" ] && prune "$dir"
+
+reload() { IFS=$'\n' read -rd '' -a imgs < <(list_imgs; printf '\0'); }
+
+# Grid + header only; the footer is drawn by the main loop so a keystroke can
+# update it without re-transmitting every thumbnail.
+# Sets globals: start, per_page, pages
+gallery() {
+  local cols rows tw th per_row rows_fit i r c n=0
+  cols=$(tput cols); rows=$(tput lines)
+  tw=22; th=8
+  per_row=$(( cols / (tw + 2) )); [ "$per_row" -lt 1 ] && per_row=1
+  rows_fit=$(( (rows - 3) / (th + 2) )); [ "$rows_fit" -lt 1 ] && rows_fit=1
+  per_page=$(( per_row * rows_fit ))
+  pages=$(( (${#imgs[@]} + per_page - 1) / per_page )); [ "$pages" -lt 1 ] && pages=1
+  (( page >= pages )) && page=$(( pages - 1 ))
+  (( page < 0 )) && page=0
+  start=$(( page * per_page ))
+  clear
+  printf 'gallery — %s — %d images — page %d/%d\n' \
+    "${session:-all sessions}" ${#imgs[@]} $((page + 1)) "$pages"
+  for (( i = start; i < start + per_page && i < ${#imgs[@]}; i++ )); do
+    r=$(( 2 + (n / per_row) * (th + 2) ))
+    c=$(( 1 + (n % per_row) * (tw + 2) ))
+    tput cup "$r" "$c"
+    chafa -f kitty --size ${tw}x${th} "${imgs[$i]}" 2>/dev/null
+    tput cup $((r + th)) "$c"
+    # global index, so #36 on page 2 really is 36
+    printf '%d) %.15s' $((i + 1)) "$(basename "${imgs[$i]}")"
+    n=$((n + 1))
+  done
+}
+
+single() {
+  local i=$1 k
+  while :; do
+    clear
+    chafa -f kitty --scale max "${imgs[$i]}"
+    printf '[%d/%d] %s\nn older · p newer · g gallery · d delete · C clear · q quit ' \
+      $((i + 1)) ${#imgs[@]} "$(basename "${imgs[$i]}")"
+    read -rn1 -s k
+    case $k in
+      n|' ') ((i < ${#imgs[@]} - 1)) && ((i++)) ;;
+      p)     ((i > 0)) && ((i--)) ;;
+      d)     rm -f "${imgs[$i]}"; reload
+             [ ${#imgs[@]} -eq 0 ] && return
+             ((i >= ${#imgs[@]})) && i=$(( ${#imgs[@]} - 1 )) ;;
+      C)     printf '\ndelete all %d? [y/N] ' ${#imgs[@]}; read -rn1 -s c
+             [ "$c" = y ] && { rm -f "${imgs[@]}"; reload; return; } ;;
+      g)     return ;;
+      q|$'\e') exit ;;
+    esac
+  done
+}
+
+page=0
+buf=""
+dirty=1
+trap 'dirty=1' WINCH   # live resize: redraw on terminal size change
+reload
+# a session with nothing of its own is more useful showing everything than
+# an empty screen; 'a' toggles back
+if [ ${#imgs[@]} -eq 0 ] && [ -n "$session" ]; then scope=ALL; reload; fi
+
+while :; do
+  if [ ${#imgs[@]} -eq 0 ]; then
+    clear
+    echo "no images for ${session:-any session}"
+    echo "— a = toggle scope, any other key closes —"
+    read -rn1 -s k
+    [ "$k" = a ] || exit
+    [ "$scope" = ALL ] && scope="$session" || scope=ALL
+    reload; dirty=1; continue
+  fi
+
+  (( dirty )) && { gallery; dirty=0; }
+
+  tput cup "$(($(tput lines) - 1))" 0; tput el
+  if [ -n "$buf" ]; then
+    printf 'open #%s — enter=go · backspace · esc=cancel ' "$buf"
+  else
+    printf 'type # + enter · ]/[ page · a %s · q quit ' \
+      "$([ "$scope" = ALL ] && echo 'this session' || echo 'all sessions')"
+  fi
+
+  read -rn1 -s k || continue   # interrupted by SIGWINCH -> redraw
+  case $k in
+    [0-9])   buf+="$k" ;;
+    $'\x7f') buf="${buf%?}" ;;
+    "")      # enter
+             if [ -n "$buf" ]; then
+               idx=$((10#$buf - 1)); buf=""
+               if (( idx >= 0 && idx < ${#imgs[@]} )); then
+                 page=$(( idx / per_page )); single "$idx"; dirty=1
+               fi
+             fi ;;
+    ']'|'.') buf=""; (( page < pages - 1 )) && { ((page++)); dirty=1; } ;;
+    '['|',') buf=""; (( page > 0 )) && { ((page--)); dirty=1; } ;;
+    a)       buf=""; [ "$scope" = ALL ] && scope="$session" || scope=ALL
+             page=0; dirty=1 ;;
+    q)       exit ;;
+    $'\e')   [ -n "$buf" ] && buf="" || exit ;;
+  esac
+  reload
+done

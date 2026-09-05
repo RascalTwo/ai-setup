@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dream queue</title>
+<!-- Never published: this reads a private repo's proposal queue and can mutate it. -->
+<meta name="viz:posture" content="local">
+<meta name="viz:listed" content="unlisted">
+<!-- Operational: a frozen copy of this page is a picture of a queue, not the queue. -->
+<meta name="viz:title" content="dream queue">
+<meta name="viz:description" content="Review, approve and merge overnight dream proposals. The single human touchpoint.">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<style>
+  /* Re-theme only, per the kit rules: tokens overridden, components kept. */
+  :root { --rail: 62px; --top: 0px; }
+  body { font-family: var(--sans); }
+
+  /* ── Heartbeat ─────────────────────────────────────────────────────────── */
+  #hb { position: sticky; top: 0; z-index: 40; border-bottom: 1px solid var(--border); }
+  #hb .in { display: flex; align-items: baseline; gap: 14px; padding: 10px 18px; }
+  #hb .n { font: 700 20px/1 var(--sans); letter-spacing: -.02em; }
+  #hb .lbl { color: var(--muted); font-size: 13px; }
+  #hb .meta { margin-left: auto; color: var(--faint); font: 400 12px/1.4 var(--mono); text-align: right; }
+  #hb.fresh { background: color-mix(in oklab, var(--good) 12%, var(--bg)); }
+  #hb.fresh .n { color: var(--good); }
+  #hb.warn  { background: color-mix(in oklab, var(--warn) 16%, var(--bg)); border-bottom: 2px solid var(--warn); }
+  #hb.warn .n { color: var(--warn); font-size: 28px; }
+  #hb.warn .in { flex-wrap: wrap; padding: 14px 18px; }
+  /* Alarm is deliberately loud: this is the rot detector. The previous system died
+     silently for 3.5 months because nothing ever surfaced its own absence. */
+  #hb.alarm, #hb.never {
+    background: color-mix(in oklab, var(--danger) 26%, var(--bg));
+    border-bottom: 3px solid var(--danger);
+    animation: alarm 1.9s ease-in-out infinite;
+  }
+  #hb.alarm .in, #hb.never .in { padding: 20px 18px; flex-wrap: wrap; }
+  /* The one hero figure on the page (dataviz: exactly one per view, ≥48px, same
+     sans as everything else). Nothing else is allowed to compete with it. */
+  #hb.alarm .n, #hb.never .n { font-size: 52px; color: var(--danger); }
+  #hb.alarm .lbl, #hb.never .lbl { font-size: 16px; color: var(--text); font-weight: 600; }
+  #hb .say { flex-basis: 100%; color: var(--text); font-size: 13px; opacity: .85; }
+  @keyframes alarm { 0%,100% { box-shadow: inset 0 0 0 0 transparent; } 50% { box-shadow: inset 0 -3px 0 0 var(--danger), 0 0 34px -6px var(--danger); } }
+  @media (prefers-reduced-motion: reduce) { #hb.alarm, #hb.never { animation: none; } }
+
+  /* ── Command bar ───────────────────────────────────────────────────────── */
+  #bar { position: sticky; z-index: 39; background: var(--panel); border-bottom: 1px solid var(--border);
+         display: flex; align-items: center; gap: 10px; padding: 8px 18px; flex-wrap: wrap; }
+  #bar .stat { display: flex; align-items: baseline; gap: 5px; font-size: 12px; color: var(--muted); }
+  #bar .stat b { font: 700 15px/1 var(--sans); color: var(--text); }
+  #bar .sep { width: 1px; height: 22px; background: var(--border); }
+  .chip { border: 1px solid var(--border); background: var(--bg); color: var(--muted); border-radius: 999px;
+          padding: 4px 11px; font: 500 12px/1 var(--sans); cursor: pointer; }
+  .chip.on { border-color: var(--accent); color: var(--accent); background: color-mix(in oklab, var(--accent) 14%, var(--bg)); }
+  #q { flex: 1; min-width: 130px; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+       border-radius: 6px; padding: 5px 10px; font: 400 13px/1.3 var(--sans); }
+  #q:focus { outline: none; border-color: var(--accent); }
+  .btn { border: 1px solid var(--border); background: var(--panel-2); color: var(--text); border-radius: 6px;
+         padding: 6px 12px; font: 600 12px/1 var(--sans); cursor: pointer; }
+  .btn:hover:not(:disabled) { border-color: var(--accent); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn.go { border-color: var(--good); color: var(--good); }
+  .btn.go:hover:not(:disabled) { background: color-mix(in oklab, var(--good) 18%, var(--panel-2)); }
+
+  #fixbar { background: color-mix(in oklab, var(--c8) 22%, var(--bg)); border-bottom: 1px solid var(--c8);
+            color: var(--text); font: 600 12px/1 var(--sans); padding: 7px 18px; letter-spacing: .04em; }
+
+  /* ── List ──────────────────────────────────────────────────────────────── */
+  main { padding: 0 18px 40vh; max-width: 1180px; }
+  .band { position: sticky; z-index: 30; background: var(--bg); padding: 16px 0 7px;
+          display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+  .band h2 { margin: 0; font: 700 12px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; }
+  .band .cnt { font: 400 11px/1 var(--mono); color: var(--faint); }
+  .band .caret { margin-left: auto; color: var(--faint); font-size: 11px; }
+  .band .hint { color: var(--faint); font: 400 11px/1 var(--sans); }
+  .b0 h2 { color: var(--accent); } .b1 h2 { color: color-mix(in oklab, var(--accent) 70%, var(--muted)); }
+  .b2 h2 { color: var(--muted); }  .b3 h2 { color: var(--faint); }
+
+  /* ── Proposal card ─────────────────────────────────────────────────────── */
+  .p { display: grid; grid-template-columns: var(--rail) 1fr auto; gap: 0 14px;
+       background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+       padding: 12px 14px; margin-bottom: 8px; scroll-margin-top: 190px; }
+  .p.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 6px 24px -12px var(--accent); }
+  .p.done { opacity: .55; }
+  .p.top { border-color: color-mix(in oklab, var(--accent) 50%, var(--border)); }
+
+  /* Rank meter — a single ratio against the queue's maximum.
+     Per dataviz: length carries the magnitude and hue does NOT (one color for
+     every bar, so the free channel isn't burned double-encoding rank); the
+     unfilled track is a lighter step of the same ramp, not gray; bar capped at
+     18px so the rail's leftover is air; rounded data-end, square at baseline.
+     The number under every bar means color is never the sole signal. */
+  /* Explicit columns: two items span every row, so auto-placement would otherwise
+     decide where the body lands (it put the buttons between the meter and the
+     title). Scan line must be rank → title → meta, with actions parked right. */
+  .rail { grid-column: 1; grid-row: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  .pbody { grid-column: 2; min-width: 0; }
+  .meter { width: 18px; height: 46px; background: color-mix(in oklab, var(--accent) 15%, var(--bg));
+           border-radius: 3px; display: flex; align-items: flex-end; overflow: hidden; }
+  .meter i { display: block; width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; }
+  .rankn { font: 700 13px/1 var(--mono); color: var(--text); font-variant-numeric: tabular-nums; }
+  .rankl { font: 400 9px/1 var(--sans); color: var(--faint); letter-spacing: .08em; }
+
+  .hd { display: flex; align-items: flex-start; gap: 9px; flex-wrap: wrap; }
+  .p h3 { margin: 0; font: 600 15.5px/1.35 var(--sans); flex: 1; min-width: 220px; }
+  .p.top h3 { font-size: 18px; }
+  .crown { font-size: 11px; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px;
+           padding: 2px 6px; letter-spacing: .08em; font-weight: 700; }
+  .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 6px;
+          font: 400 11.5px/1.5 var(--mono); color: var(--muted); }
+  .meta .k { color: var(--faint); }
+  .meta .occ { color: var(--text); font-weight: 700; }
+  .ev { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+  .ev span { background: var(--panel-2); border-radius: 3px; padding: 1px 5px; font-size: 10.5px; color: var(--faint); }
+  /* Collapsed rationales are truncated in JS, not clipped with overflow:hidden —
+     so nothing on the page is ever visually cut off, and the layout audit stays
+     honest instead of reporting a permanent false positive. */
+  .rat { margin: 8px 0 0; font: 400 13.5px/1.55 var(--sans); color: var(--muted); white-space: pre-wrap; cursor: pointer; max-width: 78ch; }
+  .more { font: 500 11px/1 var(--sans); color: var(--accent); cursor: pointer; margin-top: 4px; display: inline-block; }
+
+  .acts { grid-column: 3; grid-row: 1 / -1; display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+  .acts button { width: 46px; height: 34px; font-size: 17px; border-radius: 6px; border: 1px solid var(--border);
+                 background: var(--panel-2); cursor: pointer; }
+  .acts .yes:hover, .acts .yes.on { border-color: var(--good); background: color-mix(in oklab, var(--good) 25%, var(--panel-2)); }
+  .acts .no:hover,  .acts .no.on  { border-color: var(--danger); background: color-mix(in oklab, var(--danger) 25%, var(--panel-2)); }
+  .acts .undo { height: 22px; font-size: 10px; color: var(--faint); }
+
+  /* ── Diff drawer ───────────────────────────────────────────────────────── */
+  .dtog { margin-top: 9px; font: 500 11.5px/1 var(--mono); color: var(--muted); cursor: pointer;
+          border: 1px solid var(--border); border-radius: 5px; padding: 5px 9px; display: inline-flex; gap: 9px; background: var(--bg); }
+  .dtog:hover { border-color: var(--accent); color: var(--accent); }
+  .dtog .add { color: var(--good); } .dtog .del { color: var(--danger); }
+  .diff { margin-top: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+          max-height: 460px; overflow: auto; font: 400 11.5px/1.5 var(--mono); }
+  .diff div { padding: 0 10px; white-space: pre; }
+  .diff .a { background: color-mix(in oklab, var(--good) 15%, transparent); color: var(--good); }
+  .diff .r { background: color-mix(in oklab, var(--danger) 15%, transparent); color: var(--danger); }
+  .diff .h { color: var(--c4); background: var(--panel); }
+  .diff .f { color: var(--muted); background: var(--panel-2); font-weight: 700; }
+  .diff .err { color: var(--danger); padding: 10px; white-space: pre-wrap; }
+
+  /* ── Conflict clusters ─────────────────────────────────────────────────── */
+  .cl { border: 2px solid var(--cc); border-radius: 10px; margin-bottom: 12px;
+        background: color-mix(in oklab, var(--cc) 7%, transparent); padding: 0 8px 8px; }
+  .cl > .clh { display: flex; align-items: center; gap: 10px; padding: 9px 6px; font: 700 11.5px/1 var(--sans);
+               letter-spacing: .09em; text-transform: uppercase; color: var(--cc); }
+  .cl > .clh .why { font: 400 11.5px/1.4 var(--sans); text-transform: none; letter-spacing: 0; color: var(--muted); }
+  .cl .p { background: var(--panel); }
+  .cbadge { border: 1px solid var(--cc); color: var(--cc); border-radius: 4px; padding: 2px 6px;
+            font: 700 10.5px/1 var(--sans); letter-spacing: .06em; }
+  .cwarn { margin-top: 7px; font: 500 11.5px/1.4 var(--sans); color: var(--warn);
+           border-left: 2px solid var(--warn); padding-left: 8px; }
+
+  /* ── Overlays ──────────────────────────────────────────────────────────── */
+  .veil { position: fixed; inset: 0; background: #000a; z-index: 60; display: flex;
+          align-items: center; justify-content: center; padding: 30px; }
+  .veil .box { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+               max-width: 860px; width: 100%; max-height: 80vh; overflow: auto; padding: 20px 22px; }
+  .veil h3 { margin: 0 0 12px; font-size: 16px; }
+  .veil pre { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px;
+              font: 400 11.5px/1.55 var(--mono); white-space: pre-wrap; overflow-x: auto; }
+  .kk { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 13px; align-items: baseline; }
+  .kk kbd { background: var(--panel-2); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px;
+            padding: 2px 7px; font: 600 11px/1.5 var(--mono); color: var(--text); justify-self: start; }
+  #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 70;
+           display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; }
+  #toast div { background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px;
+               padding: 7px 14px; font: 500 12.5px/1 var(--sans); }
+  #toast .bad { border-color: var(--danger); color: var(--danger); }
+  #toast .ok { border-color: var(--good); color: var(--good); }
+  #keys { position: fixed; bottom: 0; left: 0; right: 0; background: var(--panel); border-top: 1px solid var(--border);
+          padding: 5px 18px; font: 400 11px/1.5 var(--mono); color: var(--faint); z-index: 35;
+          display: flex; gap: 14px; flex-wrap: wrap; }
+  #keys b { color: var(--muted); font-weight: 700; }
+  .empty { color: var(--faint); padding: 40px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+  <div id="hb"><div class="in"><span class="lbl">reading heartbeat…</span></div></div>
+  <div id="fixbar" hidden></div>
+  <div id="bar"></div>
+  <main id="list"><div class="empty">loading…</div></main>
+  <div id="keys"></div>
+  <div id="toast"></div>
+
+<script type="module">
+import { $, $$, esc, saveHash, loadHash } from "/_kit/viz.js";
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let S = { proposals: [], heartbeat: null, env: {}, fixtures: false };
+let stats = {};                       // id -> {files, add, del} | {error}
+let openDiffs = new Set();            // ids whose diff drawer is open
+let diffCache = new Map();
+let expanded = new Set();             // ids whose rationale is unclamped
+let touched = new Set();              // decided in THIS session — kept visible so undo stays reachable
+let collapsedBands = new Set();
+let sel = null;                       // selected proposal id
+let hash = loadHash() || {};
+let filter = hash.f || "queue";
+let query = hash.q || "";
+
+// Rank bands. Absolute, because rank has a fixed meaning (occurrences × blast
+// weight, weights 3.0/1.5/1.0) — a relative/quantile split would re-label the same
+// proposal differently from night to night, which makes the queue unlearnable.
+const BANDS = [
+  { k: "loud",     min: 20, label: "Loud",     hint: "acting on these is the point of the whole system" },
+  { k: "strong",   min: 10, label: "Strong",   hint: "recurring, worth a look tonight" },
+  { k: "moderate", min: 5,  label: "Moderate", hint: "real but not urgent" },
+  { k: "faint",    min: -1, label: "Faint",    hint: "carried forward; skim when you have slack" },
+];
+const bandOf = (rank) => BANDS.findIndex((b) => rank >= b.min);
+// Meaning-free ramp slots only (--c4/--c5/--c7/--c8): this page already uses
+// good/warn/danger semantically, so a conflict marker in --c2 would read "success".
+const CC = ["var(--c4)", "var(--c5)", "var(--c7)", "var(--c8)"];
+
+// ── Data ──────────────────────────────────────────────────────────────────────
+const api = (p, opt) => fetch("api/" + p, opt).then((r) => r.json());
+
+async function load() {
+  S = await api("state");
+  render();
+  api("diffstat").then((d) => { if (d.ok) { stats = d.stats; render(); } }).catch(() => {});
+}
+
+/**
+ * Conflict clusters via union-find over conflicts_with (which is symmetric by
+ * contract, but treated as possibly one-sided here — a single-direction edge
+ * still has to group both members or the pair is invisible from one side).
+ */
+function clusters(items) {
+  const parent = new Map(items.map((p) => [p.id, p.id]));
+  const find = (x) => { while (parent.get(x) !== x) { parent.set(x, parent.get(parent.get(x))); x = parent.get(x); } return x; };
+  const join = (a, b) => { const ra = find(a), rb = find(b); if (ra !== rb) parent.set(ra, rb); };
+  for (const p of items) for (const other of p.conflicts_with) if (parent.has(other)) join(p.id, other);
+  const groups = new Map();
+  for (const p of items) {
+    const r = find(p.id);
+    groups.set(r, [...(groups.get(r) || []), p]);
+  }
+  let n = 0;
+  const byId = new Map();
+  for (const [, members] of groups) {
+    if (members.length < 2) continue;
+    const idx = n++;
+    for (const m of members) byId.set(m.id, { idx, letter: String.fromCharCode(65 + (idx % 26)), color: CC[idx % CC.length], members });
+  }
+  return byId;
+}
+
+/** What the current filter + search actually shows. Never truncated. */
+function visible() {
+  const q = query.trim().toLowerCase();
+  return S.proposals.filter((p) => {
+    if (filter === "queue" && p.status !== "pending" && !touched.has(p.id)) return false;
+    if (filter === "conflicts" && !p.conflicts_with.length) return false;
+    if (filter === "approved" && p.status !== "approved") return false;
+    if (!q) return true;
+    return (p.title + " " + p.rationale + " " + p.id + " " + p.branch).toLowerCase().includes(q);
+  });
+}
+
+/**
+ * Rows in display order. Conflicting proposals are pulled ADJACENT to each other
+ * and wrapped in one cluster block, positioned at their highest-ranked member —
+ * physical adjacency is what makes "these two edit the same thing, pick one"
+ * legible before thumbing, rather than a badge you have to go hunting from.
+ */
+function rows(items) {
+  const cl = clusters(S.proposals);
+  const shown = new Set(items.map((p) => p.id));
+  const out = [];
+  const placed = new Set();
+  for (const p of items) {
+    if (placed.has(p.id)) continue;
+    const c = cl.get(p.id);
+    if (!c) { out.push({ kind: "one", p }); placed.add(p.id); continue; }
+    // Bring in every cluster member the filter also shows, best rank first.
+    const members = c.members.filter((m) => shown.has(m.id)).sort((a, b) => b.rank - a.rank);
+    for (const m of members) placed.add(m.id);
+    out.push({ kind: "cluster", c, members, rank: members[0].rank });
+  }
+  return { out, cl };
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  renderHeartbeat();
+  renderBar();
+  renderKeys();
+
+  const items = visible();
+  const max = Math.max(1, ...S.proposals.map((p) => p.rank));
+  const { out, cl } = rows(items);
+  const list = $("#list");
+
+  if (!out.length) {
+    list.innerHTML = `<div class="empty">Nothing matches. ${S.proposals.length} proposal(s) on disk — try the <b>all</b> filter.</div>`;
+    return;
+  }
+
+  let html = "", lastBand = -1;
+  for (const row of out) {
+    const rank = row.kind === "one" ? row.p.rank : row.rank;
+    const b = bandOf(rank);
+    if (b !== lastBand) {
+      const inBand = out.filter((r) => bandOf(r.kind === "one" ? r.p.rank : r.rank) === b);
+      const n = inBand.reduce((a, r) => a + (r.kind === "one" ? 1 : r.members.length), 0);
+      const closed = collapsedBands.has(BANDS[b].k);
+      html += `<div class="band b${b}" data-band="${BANDS[b].k}">
+        <h2>${BANDS[b].label}</h2><span class="cnt">${n} proposal${n === 1 ? "" : "s"} · rank ${BANDS[b].min < 0 ? "&lt; 5" : "≥ " + BANDS[b].min}</span>
+        <span class="hint">${BANDS[b].hint}</span><span class="caret">${closed ? "▸ show" : "▾ hide"}</span></div>`;
+      lastBand = b;
+    }
+    if (collapsedBands.has(BANDS[b].k)) continue;
+    html += row.kind === "one" ? card(row.p, max, cl) : cluster(row, max, cl);
+  }
+  list.innerHTML = html;
+
+  // Auto-select the top row on first paint so a keystroke always has a target.
+  if (!sel || !items.some((p) => p.id === sel)) sel = items[0]?.id ?? null;
+  paintSelection();
+  wire();
+}
+
+function cluster(row, max, cl) {
+  const { c, members } = row;
+  const anyApproved = members.some((m) => m.status === "approved");
+  return `<div class="cl" style="--cc:${c.color}">
+    <div class="clh"><span class="cbadge">⚔ conflict ${c.letter}</span>
+      <span>pick one</span>
+      <span class="why">these ${members.length} branches touch the same lines — approving both would leave the loser <code>stale</code> after the first merge.</span>
+    </div>
+    ${members.map((m) => card(m, max, cl, anyApproved)).join("")}
+  </div>`;
+}
+
+function card(p, max, cl, clusterHasApproval = false) {
+  const c = cl.get(p.id);
+  const b = bandOf(p.rank);
+  const isTop = p.id === S.proposals[0]?.id;
+  const st = stats[p.id];
+  const pct = Math.max(6, Math.round((p.rank / max) * 100));
+  const openD = openDiffs.has(p.id);
+  const long = p.rationale.length > 260;
+  const clamp = long && !expanded.has(p.id);
+  // Cut at a word boundary so the preview reads as a sentence, not a fragment.
+  const shown = clamp ? p.rationale.slice(0, 260).replace(/\s+\S*$/, "") + " …" : p.rationale;
+
+  const pill = { pending: ["", "· pending"], approved: ["good", "✓ approved"], denied: ["danger", "✕ denied"],
+                 merged: ["accent", "⇢ merged"], stale: ["warn", "⚠ stale"] }[p.status] || ["", p.status];
+
+  // "stale" alone is ambiguous: losing a conflict and having trunk move underneath
+  // you call for completely different responses. Spell out which one happened.
+  const STALE_WHY = {
+    "rival-merged": "A conflicting proposal was approved first and merged; this branch lost the race. It will be re-derived on the next dream if the need is still real.",
+    "trunk-diverged": `${S.env.trunk || "private/trunk"} moved underneath this branch, so it no longer applies cleanly. Nothing was lost — the next dream re-derives it against the new base.`,
+  };
+  const staleNote = p.status === "stale"
+    ? `<div class="cwarn">${esc(STALE_WHY[p.stale_reason] || `Marked stale${p.stale_reason ? " (" + p.stale_reason + ")" : ""}.`)}</div>` : "";
+
+  const statBits = !st ? `<span class="k">sizing…</span>`
+    : st.error ? `<span class="k" title="${esc(st.error)}">unavailable</span>`
+    : `<span class="add">+${st.add}</span><span class="del">−${st.del}</span><span class="k">${st.files} file${st.files === 1 ? "" : "s"}</span>`;
+
+  return `<article class="p ${p.id === sel ? "sel" : ""} ${p.status !== "pending" ? "done" : ""} ${isTop ? "top" : ""}"
+    data-id="${p.id}" data-viz-id="proposal-${p.id}" data-label="${esc(p.title)}">
+    <div class="rail">
+      <div class="meter" title="rank ${p.rank} of ${max} (highest in the queue)"><i style="height:${pct}%"></i></div>
+      <span class="rankn">${p.rank}</span><span class="rankl">RANK</span>
+    </div>
+    <div class="pbody">
+      <div class="hd">
+        ${isTop ? `<span class="crown">TOP</span>` : ""}
+        <span class="pill ${pill[0]}">${pill[1]}</span>
+        ${c ? `<span class="cbadge" style="--cc:${c.color}">⚔ ${c.letter}</span>` : ""}
+        <h3>${esc(p.title)}</h3>
+      </div>
+      <div class="meta">
+        <span><span class="occ">×${p.occurrences}</span> <span class="k">occurrences</span></span>
+        <span class="k">·</span><span>${esc(p.blast_radius)}</span>
+        <span class="k">·</span><span class="ev">${p.evidence.slice(0, 6).map((e) => `<span title="${esc(e)}">${esc(e.slice(0, 8))}</span>`).join("")}${p.evidence.length > 6 ? `<span>+${p.evidence.length - 6}</span>` : ""}</span>
+        <span class="k">·</span><span class="k">${esc(p.id)}</span>
+        <span class="k">·</span><span class="k">${p.branch_ok ? esc(p.branch) : `⚠ invalid branch ${esc(p.branch || "(none)")}`}</span>
+      </div>
+      <p class="rat" data-rat="${p.id}">${esc(shown)}</p>
+      ${long ? `<span class="more" data-rat="${p.id}">${clamp ? `▸ full rationale (${p.rationale.length} chars)` : "▴ collapse"}</span>` : ""}
+      ${c && clusterHasApproval && p.status === "pending" ? `<div class="cwarn">A branch in conflict ${c.letter} is already approved — approving this one too will likely leave it <code>stale</code>.</div>` : ""}
+      ${staleNote}
+      <div><span class="dtog" data-diff="${p.id}">${openD ? "▾" : "▸"} diff ${statBits}</span></div>
+      ${openD ? `<div class="diff">${renderDiff(p.id)}</div>` : ""}
+    </div>
+    <div class="acts">
+      <button class="yes ${p.status === "approved" ? "on" : ""}" data-act="approved" data-id="${p.id}" title="Approve (a)">👍</button>
+      <button class="no ${p.status === "denied" ? "on" : ""}" data-act="denied" data-id="${p.id}" title="Deny (d)">👎</button>
+      ${p.status !== "pending" ? `<button class="undo" data-act="pending" data-id="${p.id}" title="Back to pending (u)">undo</button>` : ""}
+    </div>
+  </article>`;
+}
+
+function renderDiff(id) {
+  const d = diffCache.get(id);
+  if (!d) return `<div class="err">loading…</div>`;
+  if (d.error) return `<div class="err">${esc(d.error)}</div>`;
+  if (!d.diff) return `<div class="err">${esc(d.note || "empty diff")}</div>`;
+  const body = d.diff.split("\n").map((l) => {
+    const c = l.startsWith("+++") || l.startsWith("---") || l.startsWith("diff --git") ? "f"
+      : l.startsWith("@@") ? "h" : l.startsWith("+") ? "a" : l.startsWith("-") ? "r" : "";
+    return `<div class="${c}">${esc(l) || "&nbsp;"}</div>`;
+  }).join("");
+  return body + (d.truncated ? `<div class="err">… truncated (diff exceeds the display cap)</div>` : "");
+}
+
+function renderHeartbeat() {
+  const h = S.heartbeat, el = $("#hb");
+  if (!h) return;
+  el.className = h.level;
+  const d = h.whole_days;
+  const ago = !h.ok ? "never" : d === 0 ? "today" : d === 1 ? "1 day ago" : `${d} days ago`;
+  const alarm = h.level === "alarm" || h.level === "never";
+  // Status color never carries the meaning alone (dataviz): every level ships an
+  // icon AND a worded threshold label alongside the hue.
+  const icon = { fresh: "✓", warn: "⚠", alarm: "⛔", never: "⛔" }[h.level] || "";
+  const word = { fresh: "healthy", warn: "degraded", alarm: "STALLED", never: "NEVER SUCCEEDED" }[h.level] || "";
+
+  // A run that HAPPENED but FAILED is the dangerous case: the timestamp refreshes
+  // nightly while nothing is ever produced, which reads as healthy. Say it plainly.
+  const ranRecently = h.ran_days != null && h.ran_days <= 1;
+  const failing = h.ran_ok === false;
+  const steps = (h.failed_steps || []).map((s) => `${s.name} (exit ${s.exit ?? "?"})`).join(", ");
+  const failLine = failing
+    ? `<span class="say">⚠ The dream <b>did run ${ranRecently ? "today" : h.ran_days + " days ago"}</b> — and <b>failed</b>${h.run_status ? ` (status: <code>${esc(h.run_status)}</code>)` : ""}.
+       ${h.error ? `<code>${esc(h.error)}</code>. ` : ""}${steps ? `Failed step(s): <b>${esc(steps)}</b>. ` : ""}
+       A refreshing timestamp is not a working system — this is what silent rot looks like from the inside.</span>`
+    : "";
+
+  el.innerHTML = `<div class="in">
+    <span class="n">${icon} ${!h.ok ? "NEVER" : alarm ? `${d} DAYS` : ago}</span>
+    <span class="lbl">${word} — ${!h.ok ? "no dream has ever completed successfully" : alarm ? "since the last successful dream; the system is rotting" : `last successful dream ${ago}`}</span>
+    ${alarm ? `<span class="say">A dream is supposed to run every night. ${h.ok ? `No successful run since <b>${esc((h.iso || "").slice(0, 16).replace("T", " "))}</b> UTC.` : `Nothing in <code>${esc(h.file || "last-dream.json")}</code> records a successful run.`} Check the launchd agent — silent absence is exactly how the previous system died.</span>` : ""}
+    ${failLine}
+    <span class="meta">${h.ok ? "success: " + esc((h.iso || "").replace("T", " ").slice(0, 19)) + " UTC" : esc(h.reason || "")}
+      ${h.ran_iso ? `<br>last attempt: ${esc(h.ran_iso.replace("T", " ").slice(0, 19))} ${h.ran_ok === false ? "✕" : ""}` : ""}
+      ${h.counts ? `<br>${Object.entries(h.counts).map(([k, v]) => `${v ?? "—"} ${k}`).join(" · ")}` : ""}
+      ${h.extra?.sessions_scanned != null ? `<br>${h.extra.sessions_scanned} sessions · ${h.extra.candidates_found ?? "?"} candidates` : ""}</span>
+  </div>`;
+  document.title = alarm ? `⛔ ${!h.ok ? "NEVER" : d + "d"} — dream queue`
+    : failing ? "⚠ failing — dream queue" : "dream queue";
+  positionSticky();
+}
+
+function renderBar() {
+  const n = (s) => S.proposals.filter((p) => p.status === s).length;
+  const approved = n("approved"), pending = n("pending"), denied = n("denied");
+  const conf = S.proposals.filter((p) => p.conflicts_with.length).length;
+  const ready = S.env.merge_script_ready;
+  $("#bar").innerHTML = `
+    <span class="stat"><b>${pending}</b> pending</span>
+    <span class="stat"><b style="color:var(--good)">${approved}</b> approved</span>
+    <span class="stat"><b style="color:var(--danger)">${denied}</b> denied</span>
+    <span class="stat"><b>${S.proposals.length}</b> total</span>
+    ${conf ? `<span class="stat"><b style="color:var(--c4)">${conf}</b> in conflict</span>` : ""}
+    <span class="sep"></span>
+    ${["queue", "all", "conflicts", "approved"].map((f) => `<button class="chip ${filter === f ? "on" : ""}" data-f="${f}">${f}</button>`).join("")}
+    <input id="q" placeholder="search title / rationale / branch  ( / )" value="${esc(query)}">
+    ${S.tree?.dirty ? `<span class="stat" style="color:var(--warn)" title="${esc((S.tree.sample || []).join("\n"))}">⚠ ${S.tree.count} uncommitted — merge will refuse</span>` : ""}
+    <button class="btn go" id="merge" ${approved && ready ? "" : "disabled"}
+      title="${ready ? "Runs skills/dream/scripts/merge-approved.sh" : "merge-approved.sh does not exist yet"}">
+      Merge ${approved} approved${ready ? "" : " (script missing)"}</button>
+    <button class="btn" id="reload" title="Re-read from disk (r)">↻</button>
+    <button class="btn" id="helpb" title="Keyboard shortcuts (?)">?</button>`;
+  const fx = $("#fixbar");
+  fx.hidden = !S.fixtures;
+  if (S.fixtures) fx.textContent = `⚠ FIXTURE DATA — state/proposals/ is empty, so this is reading ${S.env.proposal_dir}. Decisions here write to fixture files, not real proposals.`;
+  positionSticky();
+}
+
+function renderKeys() {
+  $("#keys").innerHTML = ["<b>j/k</b> move", "<b>a</b> approve", "<b>d</b> deny", "<b>u</b> undo",
+    "<b>enter</b> diff", "<b>e</b> rationale", "<b>/</b> search", "<b>m</b> merge", "<b>r</b> reload", "<b>?</b> help"]
+    .join(" · ");
+}
+
+/** Sticky offsets depend on the heartbeat's height, which changes with its level. */
+function positionSticky() {
+  const h = $("#hb").offsetHeight + ($("#fixbar").hidden ? 0 : $("#fixbar").offsetHeight);
+  $("#bar").style.top = h + "px";
+  const total = h + $("#bar").offsetHeight;
+  document.querySelectorAll(".band").forEach((b) => (b.style.top = total + "px"));
+  document.querySelectorAll(".p").forEach((p) => (p.style.scrollMarginTop = total + 14 + "px"));
+}
+
+function paintSelection() {
+  $$(".p").forEach((el) => el.classList.toggle("sel", el.dataset.id === sel));
+  saveHash({ f: filter, q: query, sel });
+}
+
+function focusSel(smooth = true) {
+  const el = document.querySelector(`.p[data-id="${sel}"]`);
+  if (el) el.scrollIntoView({ block: "center", behavior: smooth ? "smooth" : "auto" });
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+function toast(msg, cls = "") {
+  const d = document.createElement("div");
+  d.className = cls; d.textContent = msg;
+  $("#toast").appendChild(d);
+  setTimeout(() => d.remove(), 3200);
+}
+
+async function decide(id, status) {
+  const p = S.proposals.find((x) => x.id === id);
+  if (!p) return;
+  const nextId = nextPending(id);
+  const before = p.status;
+  p.status = status;                      // optimistic — the row must not lag a keystroke
+  touched.add(id);
+  render();
+  try {
+    const r = await api("decide", { method: "POST", headers: { "content-type": "application/json" },
+                                    body: JSON.stringify({ id, status }) });
+    if (!r.ok) throw new Error(r.error || "write failed");
+    Object.assign(p, r.proposal);         // trust disk over the optimistic guess
+    toast(`${id} → ${status}`, status === "approved" ? "ok" : "");
+  } catch (e) {
+    p.status = before;
+    toast(`could not save ${id}: ${e.message}`, "bad");
+  }
+  if (status !== "pending" && nextId) sel = nextId;   // auto-advance: decide, decide, decide
+  render();
+  focusSel();
+}
+
+/** Next still-pending proposal after `id` in the visible order — the triage cursor. */
+function nextPending(id) {
+  const order = [];
+  for (const row of rows(visible()).out) {
+    if (row.kind === "one") order.push(row.p); else order.push(...row.members);
+  }
+  const i = order.findIndex((p) => p.id === id);
+  for (let j = i + 1; j < order.length; j++) if (order[j].status === "pending") return order[j].id;
+  for (let j = 0; j < i; j++) if (order[j].status === "pending") return order[j].id;
+  return null;
+}
+
+async function toggleDiff(id) {
+  if (openDiffs.has(id)) { openDiffs.delete(id); render(); return; }
+  openDiffs.add(id);
+  render();
+  if (!diffCache.has(id)) {
+    try {
+      const d = await api("diff?id=" + encodeURIComponent(id));
+      diffCache.set(id, d.ok ? d : { error: d.error || "diff unavailable" });
+    } catch (e) { diffCache.set(id, { error: String(e) }); }
+    render();
+  }
+}
+
+function move(step) {
+  const order = [];
+  for (const row of rows(visible()).out) {
+    if (row.kind === "one") order.push(row.p); else order.push(...row.members);
+  }
+  const shown = order.filter((p) => !collapsedBands.has(BANDS[bandOf(p.rank)].k));
+  if (!shown.length) return;
+  const i = shown.findIndex((p) => p.id === sel);
+  sel = shown[Math.min(shown.length - 1, Math.max(0, (i < 0 ? 0 : i) + step))].id;
+  paintSelection();
+  focusSel();
+}
+
+function overlay(html) {
+  const v = document.createElement("div");
+  v.className = "veil";
+  v.innerHTML = `<div class="box">${html}</div>`;
+  v.addEventListener("click", (e) => { if (e.target === v) v.remove(); });
+  document.body.appendChild(v);
+  return v;
+}
+
+function help() {
+  overlay(`<h3>Triage keys</h3><div class="kk">
+    ${[["j / ↓", "next proposal"], ["k / ↑", "previous"], ["a", "approve (auto-advances to the next pending)"],
+       ["d / x", "deny (auto-advances)"], ["u", "undo — back to pending"], ["enter / o", "toggle the diff"],
+       ["e", "expand / collapse the rationale"], ["/", "search"], ["esc", "leave search / close this"],
+       ["m", "merge approved"], ["r", "re-read from disk"], ["g / G", "first / last"], ["?", "this"]]
+      .map(([k, v]) => `<kbd>${k}</kbd><span>${v}</span>`).join("")}
+  </div>
+  <p style="color:var(--muted);font-size:12.5px;margin-top:16px">
+  Everything targets <code>${esc(S.env.trunk || "private/trunk")}</code>. This dashboard never performs a
+  network write and runs only read-only git commands plus <code>${esc(S.env.merge_script || "")}</code>.</p>`);
+}
+
+async function doMerge() {
+  const approved = S.proposals.filter((p) => p.status === "approved");
+  if (!approved.length) return toast("nothing approved", "bad");
+  if (!S.env.merge_script_ready) return toast("merge-approved.sh does not exist yet", "bad");
+  // Preflight: the script refuses on a dirty tree, which is this repo's normal
+  // state. Explaining it here beats letting the button look broken.
+  const dirty = S.tree?.dirty
+    ? `\n\n⚠ The working tree has ${S.tree.count} uncommitted change(s). merge-approved.sh will refuse to run until it is clean:\n` +
+      S.tree.sample.map((l) => "    " + l).join("\n") + (S.tree.count > S.tree.sample.length ? "\n    …" : "")
+    : "";
+  // Approval order decides conflict winners, so show it in the order it will run.
+  const order = [...approved].sort((a, b) => String(a.approved_at || "").localeCompare(String(b.approved_at || "")));
+  if (!confirm(`Merge ${approved.length} approved proposal(s) into ${S.env.trunk}, in approval order?\n\n` +
+               order.map((p, i) => `  ${i + 1}. ${p.title}`).join("\n") +
+               `\n\nThis runs ${S.env.merge_script} locally. Nothing is published.` + dirty)) return;
+  const v = overlay(`<h3>Merging ${approved.length} approved…</h3><pre>running ${esc(S.env.merge_script)}</pre>`);
+  try {
+    const r = await api("merge", { method: "POST" });
+    // A refusal (exit 1 with a message) is a normal, explainable state — most often
+    // a dirty working tree. Frame it as "declined, nothing changed", not a crash.
+    const declined = !r.ok && r.code === 1 && (r.out || r.err);
+    const head = r.ok ? ["var(--good)", "✓ merge finished"]
+      : declined ? ["var(--warn)", "⚠ merge declined — nothing was merged"]
+      : ["var(--danger)", "✕ merge failed"];
+    v.querySelector(".box").innerHTML =
+      `<h3 style="color:${head[0]}">${head[1]} (exit ${r.code ?? "?"}, ${r.ms ?? "?"}ms)</h3>` +
+      (declined ? `<p style="color:var(--muted);font-size:13px;margin:0 0 10px">
+         The merge script stopped before changing anything. Your approvals are still recorded on disk —
+         fix what it reports below and press <kbd>m</kbd> again.</p>` : "") +
+      `<pre>${esc((r.out || "") + (r.err ? "\n--- stderr ---\n" + r.err : "") || r.error || "(no output)")}</pre>` +
+      `<button class="btn" id="closev">close</button>`;
+    v.querySelector("#closev").onclick = () => v.remove();
+  } catch (e) {
+    v.querySelector(".box").innerHTML = `<h3 style="color:var(--danger)">merge request failed</h3><pre>${esc(String(e))}</pre>`;
+  }
+  await load();
+}
+
+// ── Wiring ────────────────────────────────────────────────────────────────────
+function wire() {
+  $$("[data-act]").forEach((b) => (b.onclick = () => { sel = b.dataset.id; decide(b.dataset.id, b.dataset.act); }));
+  $$("[data-diff]").forEach((b) => (b.onclick = () => { sel = b.dataset.diff; toggleDiff(b.dataset.diff); }));
+  $$("[data-rat]").forEach((b) => (b.onclick = () => {
+    const id = b.dataset.rat;
+    expanded.has(id) ? expanded.delete(id) : expanded.add(id);
+    render();
+  }));
+  $$(".band").forEach((b) => (b.onclick = () => {
+    const k = b.dataset.band;
+    collapsedBands.has(k) ? collapsedBands.delete(k) : collapsedBands.add(k);
+    render();
+  }));
+  $$(".p").forEach((el) => el.addEventListener("mousedown", () => { sel = el.dataset.id; paintSelection(); }));
+  $$("[data-f]").forEach((b) => (b.onclick = () => { filter = b.dataset.f; render(); }));
+  const q = $("#q");
+  if (q) q.oninput = () => { query = q.value; const at = q.selectionStart; render(); const nq = $("#q"); nq.focus(); nq.setSelectionRange(at, at); };
+  $("#merge").onclick = doMerge;
+  $("#reload").onclick = load;
+  $("#helpb").onclick = help;
+}
+
+addEventListener("keydown", (e) => {
+  const typing = /^(INPUT|TEXTAREA)$/.test(e.target.tagName);
+  if (e.key === "Escape") { if (typing) e.target.blur(); $$(".veil").forEach((v) => v.remove()); return; }
+  if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key;
+  if (k === "/") { e.preventDefault(); $("#q")?.focus(); return; }
+  if (k === "?") { e.preventDefault(); help(); return; }
+  if (k === "j" || k === "ArrowDown") { e.preventDefault(); move(1); return; }
+  if (k === "k" || k === "ArrowUp") { e.preventDefault(); move(-1); return; }
+  if (k === "g") { e.preventDefault(); move(-9999); return; }
+  if (k === "G") { e.preventDefault(); move(9999); return; }
+  if (k === "r") { e.preventDefault(); load(); return; }
+  if (k === "m") { e.preventDefault(); doMerge(); return; }
+  if (!sel) return;
+  if (k === "a") { e.preventDefault(); decide(sel, "approved"); }
+  else if (k === "d" || k === "x") { e.preventDefault(); decide(sel, "denied"); }
+  else if (k === "u") { e.preventDefault(); decide(sel, "pending"); }
+  else if (k === "Enter" || k === "o") { e.preventDefault(); toggleDiff(sel); }
+  else if (k === "e") { e.preventDefault(); expanded.has(sel) ? expanded.delete(sel) : expanded.add(sel); render(); }
+});
+
+addEventListener("resize", positionSticky);
+sel = hash.sel || null;
+load();
+</script>
+</body>
+</html>

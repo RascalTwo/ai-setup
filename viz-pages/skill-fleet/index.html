@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fleet — stop walking to ten panes</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="unlisted">
+<meta name="viz:title" content="fleet">
+<meta name="viz:description" content="A manager role any session can take: it reports which of your agent sessions are blocked, done, or waiting on you, spawns new ones, and relays messages.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* Poster + dive, same mechanics as skill-steelman: .og-card is a fixed
+     1200×630 clip target, the page scrolls beneath it. --s comes from poster.js. */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 95% -10%, color-mix(in srgb, var(--c4) 16%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c5) 14%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 470px; gap:38px; align-items:center; padding:56px 66px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:56px; line-height:1.04; margin:0 0 18px; letter-spacing:-1.5px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 18px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:14.5px; line-height:1.55; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the arbitration board = the "proof" slot. Two independent state sources per
+     pane, adjudicated into one verdict — plus the two panes nothing may write to. */
+  .lead{ font-family:var(--mono); font-size:17px; color:var(--text); margin-bottom:6px; }
+  .lead span{ color:var(--faint); }
+  .cap{ font-family:var(--mono); font-size:11px; letter-spacing:.13em; color:var(--faint); margin-bottom:12px; }
+  .cap b{ color:var(--muted); font-weight:400; }
+  .head{ display:grid; grid-template-columns:1fr 96px 128px; gap:8px; font-family:var(--mono);
+         font-size:10.5px; letter-spacing:.1em; color:var(--faint); padding:0 11px 6px; }
+  .head .ha{ color:var(--c4); } .head .hb{ color:var(--c5); }
+  .row{ background:color-mix(in srgb, var(--panel) 74%, transparent); border:1px solid var(--border);
+        border-radius:10px; padding:8px 11px 9px; margin-bottom:6px; }
+  .top{ display:grid; grid-template-columns:1fr 96px 128px; gap:8px; align-items:center; }
+  .lb{ font-family:var(--mono); font-size:14px; color:var(--text); }
+  .chip{ font-family:var(--mono); font-size:11.5px; text-align:center; border-radius:99px; padding:3px 0; }
+  .ca{ color:var(--c4); background:color-mix(in srgb, var(--c4) 13%, transparent);
+      border:1px solid color-mix(in srgb, var(--c4) 38%, transparent); }
+  .cb{ color:var(--c5); background:color-mix(in srgb, var(--c5) 13%, transparent);
+      border:1px solid color-mix(in srgb, var(--c5) 38%, transparent); }
+  .nul{ color:var(--faint); border:1px dashed var(--border); background:none; }
+  .vd{ font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-top:6px; }
+  .vd i{ font-style:normal; color:var(--faint); }
+  .row.win{ border-color:color-mix(in srgb, var(--warn) 45%, transparent); }
+  .row.win .vd{ color:var(--warn); }
+  .quiet{ font-family:var(--mono); font-size:11.5px; color:var(--faint); padding:2px 11px 10px; }
+  .lockcap{ font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; color:var(--danger);
+            padding:8px 11px 6px; border-top:1px solid var(--border); margin-top:4px; }
+  .row.lock{ background:color-mix(in srgb, var(--danger) 8%, transparent);
+             border-color:color-mix(in srgb, var(--danger) 35%, transparent); }
+  .row.lock .top{ grid-template-columns:1fr auto; }
+  .row.lock .lb{ color:var(--danger); white-space:nowrap; }
+  .row.lock .lb b{ font-weight:400; font-size:11.5px; color:color-mix(in srgb, var(--danger) 78%, var(--muted)); }
+  .row.lock .why{ font-family:var(--mono); font-size:11.5px; color:var(--muted); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  code{ font-family:var(--mono); font-size:.9em; color:var(--c5); }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--danger); background:color-mix(in srgb, var(--danger) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--danger); }
+  table{ width:100%; border-collapse:collapse; margin:0 0 16px; font-size:14.5px; }
+  th,td{ text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th{ font-family:var(--mono); font-size:11.5px; letter-spacing:.1em; text-transform:uppercase;
+      color:var(--faint); font-weight:400; }
+  td:first-child{ font-family:var(--mono); font-size:13px; white-space:nowrap; }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="fleet" data-viz-id="poster-card" data-label="fleet poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · FLEET</div>
+      <h1 class="hook">Stop walking<br>to <em>ten panes.</em></h1>
+      <p class="sub">A manager for every AI session running in herdr panes on this machine. It reports who is <b>blocked, done, or waiting on you</b>, spawns new sessions, and relays your messages — naming panes by the <b>label in your sidebar</b>, because a pane id like <code>w7:p51</code> is unclickable.</p>
+      <p class="not">It holds <b>no memory</b> of what your sessions are doing.<br>It looks, every time. Any session can be the manager.</p>
+      <div class="trigger"><span>say</span>&nbsp;"which sessions need me"</div>
+    </div>
+    <div>
+      <div class="lead">3 done <span>·</span> 1 blocked <span>·</span> 6 idle</div>
+      <div class="cap">EVERY PANE CARRIES <b>TWO</b> STATE SOURCES · THEY DISAGREE</div>
+      <div class="head"><span>LABEL</span><span class="ha">herdr_status</span><span class="hb">signal</span></div>
+      <div class="row">
+        <div class="top"><span class="lb">schema-v2</span><span class="chip ca">done</span><span class="chip nul">null</span></div>
+        <div class="vd">→ finished work you have <i>not looked at yet</i></div>
+      </div>
+      <div class="row">
+        <div class="top"><span class="lb">spec-port</span><span class="chip ca">blocked</span><span class="chip nul">null</span></div>
+        <div class="vd">→ herdr saw an approval or question menu <i>· not a Claude pane</i></div>
+      </div>
+      <div class="row win">
+        <div class="top"><span class="lb">prod-deploy</span><span class="chip ca">idle</span><span class="chip cb">permission_prompt</span></div>
+        <div class="vd">→ THEY DISAGREE. <b>BELIEVE <span class="chip cb" style="padding:1px 6px">signal</span></b> — it wants you.</div>
+      </div>
+      <div class="quiet">+2 done · 6 idle — idle panes get the count and nothing else</div>
+      <div class="lockcap">↓&nbsp; TWO PANES NOTHING MAY EVER BE WRITTEN TO</div>
+      <div class="row lock">
+        <div class="top"><span class="lb">css-bug <b>focused:true</b></span><span class="why">the user is in that pane right now</span></div>
+      </div>
+      <div class="row lock">
+        <div class="top"><span class="lb">(this pane) <b>— you</b></span><span class="why">excluded by $HERDR_PANE_ID</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;HOW IT WORKS</div>
+
+<div class="dive">
+  <h2>A role, not a process</h2>
+  <p>You are the CEO. The manager exists so you can ask one session what ten are doing instead of walking to ten panes — but <b>nothing it does may assume it is the only one talking to a session.</b> You can and will walk to a pane whenever you want.</p>
+  <p class="m">Any session can invoke the skill and become the manager. It keeps no memory of what sessions are doing; every invocation it runs <code>fleet</code> for a JSON snapshot, one object per pane, reads the ledger at <code>~/.claude/fleet/ledger.md</code>, and reconciles. An <code>In progress</code> row whose session has vanished from the snapshot gets <b>surfaced, not resolved</b> — a pane can die without the work being finished, so it asks you.</p>
+
+  <h2>Two sources, and the disagreement is information</h2>
+  <table>
+    <tr><th>Field</th><th>Source</th><th>Trust</th></tr>
+    <tr><td style="color:var(--c4)">herdr_status</td><td>herdr, by matching text on the terminal screen</td><td>works for every agent; <b>breaks silently</b> when Claude Code restyles its UI</td></tr>
+    <tr><td style="color:var(--c5)">signal</td><td>the session's own Claude Code hook</td><td>authoritative, but <b>null</b> for non-Claude panes and sessions older than the hooks</td></tr>
+  </table>
+  <p>So the rule is asymmetric: if <code>signal</code> says attention and <code>herdr_status</code> says <code>idle</code>, <b>believe <code>signal</code></b>. And if neither fires for days across the whole fleet, suspect herdr's detection rules broke rather than believing everyone is calm — <code>herdr agent explain &lt;pane&gt;</code> names the rule that matched.</p>
+  <p class="m"><code>done</code> and <code>idle</code> are the <b>same underlying state</b>, before and after you have looked at it. Reading a pane from the CLI does not mark it seen, so the manager cannot accidentally clear a <code>done</code> out from under you.</p>
+
+  <h2>Label, not pane id — and when they lie</h2>
+  <p>The label is what your sidebar shows, so it is the only name you can act on. The <b>title</b> tracks what the session is doing now; the <b>label</b> only changes when something renames the tab. <b>When they disagree, the report says so</b> — a tab labelled <code>fleet</code> running the orchestrator redesign, or one labelled <code>6</code>, sends you to the wrong pane or to no pane at all. It offers <code>herdr tab rename</code>; it <b>never renames on its own initiative</b>. If <code>label</code> is null it falls back to the pane id and tells you that is what it is doing.</p>
+  <p class="m">It also can't assume which pane it is: the manager session is <em>not</em> the tab labelled <code>fleet</code> unless it happens to be. It checks. (The sibling that keeps those labels honest automatically is <a href="../tool-herdr-autolabel/">herdr-autolabel</a>.)</p>
+
+  <h2>400 characters, then a subagent</h2>
+  <p><code>last_message</code> is truncated to 400 characters — enough to say what a session is <em>asking</em>, not enough to answer a real question about its work. For anything deeper it <b>dispatches a subagent</b> to read that session's transcript and report back in two sentences. Never a transcript into the manager's own context; they run to megabytes and it is holding ten of them. The untruncated text, if genuinely needed, is at <code>~/.claude/fleet/state/&lt;session&gt;.Stop.json</code>.</p>
+
+  <h2>Spawning and talking</h2>
+  <p>A new session is always its own tab and never steals focus:</p>
+  <pre>pane=$(herdr tab create --no-focus --cwd &lt;dir&gt; --label &lt;slug&gt; \
+       | jq -r '.result.root_pane.pane_id')
+herdr agent start &lt;name&gt; --kind claude --pane "$pane" -- --dangerously-skip-permissions
+herdr agent prompt &lt;name&gt; "&lt;the task&gt;"</pre>
+  <p class="m"><code>--kind</code> also takes <code>codex</code>, <code>gemini</code> and others — <b>this is not Claude-only</b>. Talking to a session already running is the same <code>prompt</code> call: it types the text and Enter into the pane, so if the session is mid-turn, Claude Code's own input queue catches it. <b>There is nothing to build for queueing and nothing to wait for.</b> Fanning out is just several <code>prompt</code> calls — no special mechanism.</p>
+
+  <div class="callout"><b>Every session runs <code>--dangerously-skip-permissions</code>.</b> A prompt sent to the wrong pane gets executed without anyone asking. Hence the two hard rules: never write to a pane whose <code>focused</code> is <code>true</code> — that is two writers on one stdin with no lock — and never target yourself. <code>fleet</code> already excludes <code>$HERDR_PANE_ID</code>; do not route around it.</div>
+
+  <h2>The ledger tracks tasks, not sessions</h2>
+  <p>Two sections, <code>In progress</code> and <code>Done</code>. Rows are <b>tasks</b>; only <code>In progress</code> rows carry a session UUID.</p>
+  <pre><span class="c">## In progress</span>
+- Evaluate steno codebase feasibility · `fbaa0618` · 2026-08-15
+
+<span class="c">## Done</span>
+- Schema v2 migration plan · closed 2026-08-16</pre>
+  <p><b>A session's status is never written into the ledger.</b> Status is read live and joined at display time, so the ledger cannot go stale about anything herdr already knows. herdr's <code>done</code> ("a turn finished") and the ledger's <code>Done</code> ("the work is finished") are different claims — <b>only you promote a task between them.</b> <code>Done</code> rows older than 7 days get swept at the top of an invocation; that is the only pruning, and there is no scheduled job.</p>
+  <p class="m">It is deliberately not a task manager. Backlog and parking-lot columns were considered and <b>cut</b> — if you want those, that is a separate tool and a separate conversation.</p>
+
+  <h2>Disposable on purpose</h2>
+  <p>No session state in the manager's head, ledger on disk — so <code>/clear</code> costs nothing and beats letting the context compact. When a round of work is finished and the ledger is written, it <b>tells you it is safe to clear</b>. At task boundaries, never at a token threshold: a threshold fires mid-thought and costs you the thread.</p>
+  <p class="m">herdr's own conventions — pane geometry, naming, targeting, lifecycle — are deliberately not duplicated here. <code>herdr --skill</code> ships with the binary and changes when herdr changes.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · alongside <a href="../tool-claude-tab/">claude-tab</a>, <a href="../tool-herdr-autolabel/">herdr-autolabel</a> and <a href="../tool-ttyimgspool/">ttyimgspool</a>.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

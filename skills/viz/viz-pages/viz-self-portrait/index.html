@@ -1,0 +1,1936 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta name="viz:triaged" content="true">
+<meta charset="utf-8">
+<title>/viz — self-portrait</title>
+<!-- this viz practices what it depicts: it's a live dashboard of the running server -->
+<meta name="viz:posture" content="local">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="/viz — self-portrait">
+<meta name="viz:description" content="The viz skill rendering itself — a three-band interactive guide you can stop at twice, and a live dashboard of every viz on the machine.">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="./guide.css">
+<style>
+  /* ---- Colour ------------------------------------------------------------
+     No :root here. Every colour on this page is a kit token from
+     /_kit/viz-kit.css, so a re-theme reaches all of it and nothing re-derives
+     a hex the kit already named.
+
+     This page used to declare its own parallel palette. Each of its three
+     custom colours turned out to be carrying three unrelated meanings at
+     once, which is why they're gone rather than renamed:
+
+       --green  → --good                        (public / ok / healthy)
+       --pink   → --c4 private posture · --c8 categorical · --danger errors
+       --orange → --warn caution · --danger errors · --c5 categorical
+
+     --orange was also a live accessibility bug: #f0883e is the exact hex
+     viz-kit.css documents as unusable — ΔE 1.5 from --warn under protanopia,
+     i.e. the same colour to a protanope. The kit has no orange slot for that
+     reason, so the categorical uses moved to --c5 (teal) and --c8 (magenta),
+     which are validated ≥ΔE 15 from every intent colour.
+
+     Tinted backgrounds are color-mix() over the token rather than a frozen
+     rgba() of the old hex, so they follow a re-theme too. */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  body { padding: 24px; max-width: 1500px; margin: 0 auto; }
+  header { margin-bottom: 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+  header .head-copy { min-width: 0; }
+  header h1 {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    font-size: 26px;
+    margin: 0 0 8px;
+  }
+  header p { margin: 0; color: var(--muted); }
+  .accent { color: var(--accent); }
+  code { background: var(--panel); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+  svg { display: block; width: 100%; height: auto; }
+
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 16px;
+    align-items: start;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .panel-wide {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .slug-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr); /* one column — minmax(0,…) lets rows truncate instead of overflowing */
+  }
+  /* Grid / cards view — parity with the lobby's card grid. Same row markup, CSS reflow only:
+     the thumb becomes a full-width hero, slug-id the body, slug-meta a wrapped footer. The
+     drawer (a sibling of .slug) spans the full row so it isn't wedged into a single cell. */
+  .slug-grid.cards { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+  .slug-grid.cards .slug {
+    flex-direction: column; align-items: stretch; justify-content: flex-start;
+    gap: 0; padding: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--bg);
+  }
+  .slug-grid.cards .slug-thumb {
+    width: 100%; aspect-ratio: 1200 / 630; align-self: stretch;
+    border: none; border-bottom: 1px solid var(--border); border-radius: 0;
+  }
+  .slug-grid.cards .slug-id { padding: 12px 14px 0; }
+  /* In card mode the badges sit on their own line between the host path above
+     and the meta footer below, and were crowding both. Give the row real
+     vertical space rather than inheriting the inline-row spacing, which was
+     tuned for list mode where the badges sit beside things, not under them. */
+  .slug-grid.cards .slug-axes { margin: 7px 0 2px; }
+  .slug-grid.cards .slug-tags { margin: 7px 0 2px; }
+  .slug-grid.cards .slug-meta { flex-wrap: wrap; justify-content: flex-start; gap: 10px 14px; padding: 12px 14px 12px; }
+  .slug-grid.cards .slug-size { min-width: 0; text-align: left; }
+  .slug-grid.cards .slug-drawer { grid-column: 1 / -1; }
+  .commits-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .panel h2 {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+  }
+  .panel-wide h2 {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+  }
+  .row:last-child { border-bottom: none; }
+  .row .k { color: var(--muted); }
+
+  .commit {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .commit:last-child { border-bottom: none; }
+  .commit-hash {
+    font-family: ui-monospace, monospace;
+    color: var(--accent);
+    margin-right: 8px;
+  }
+  .commit-when { color: var(--muted); font-size: 11px; }
+
+  .slug {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    gap: 12px;
+  }
+  .slug:last-child { border-bottom: none; }
+  .slug-id {
+    overflow: hidden;
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .slug-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .slug-name:hover { text-decoration: underline; }
+  .slug-host {
+    font-size: 10px;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Full path, revealed only while a search is active so path-only matches are visible. */
+  .slug-path {
+    font-size: 10px;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: ui-monospace, monospace;
+  }
+
+  /* Native search box — lives outside #slugs, so its value & focus survive the
+     5s re-render that wipes the browser's own Ctrl+F highlights. */
+  .slug-search-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    transition: border-color 0.15s;
+  }
+  .slug-search-wrap:focus-within { border-color: var(--accent); }
+  .search-icon { display: inline-flex; color: var(--muted); }
+  .search-icon svg { width: 14px; height: 14px; display: block; }
+  #slug-search {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    width: 240px;
+  }
+  #slug-search::placeholder { color: var(--muted); }
+  /* Hide the native clear "x" of type=search so our Esc-to-clear is the one path. */
+  #slug-search::-webkit-search-cancel-button { -webkit-appearance: none; }
+  .search-count {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 0;
+    white-space: nowrap;
+  }
+  .search-count.zero { color: var(--danger); }
+  #slugs mark {
+    background: color-mix(in srgb, var(--c5) 32%, transparent);
+    color: var(--text);
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 9px;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  .badge.central  { background: rgba(88,166,255,0.16);  color: var(--accent); border: 1px solid rgba(88,166,255,0.4); }
+
+  /* per-viz axes — posture (access) · listed (advertisement) */
+  .axis {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .axis svg { width: 10px; height: 10px; display: block; }
+  .axis.local    { background: color-mix(in srgb, var(--muted) 14%, transparent); color: var(--muted);  border: 1px solid color-mix(in srgb, var(--muted) 40%, transparent); }
+  .axis.public   { background: color-mix(in srgb, var(--good) 16%, transparent);   color: var(--good);  border: 1px solid color-mix(in srgb, var(--good) 45%, transparent); }
+  .axis.private  { background: color-mix(in srgb, var(--c4) 16%, transparent);  color: var(--c4);   border: 1px solid color-mix(in srgb, var(--c4) 45%, transparent); }
+  .axis.untagged { background: color-mix(in srgb, var(--danger) 14%, transparent);   color: var(--danger);       border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent); }
+  .axis.unlisted { background: transparent;            color: var(--muted);  border: 1px dashed color-mix(in srgb, var(--muted) 50%, transparent); }
+  /* Scaffold reads as a quiet structural note, not a status. Deliberately the
+     same muted outline pill the generated lobby uses for .tag--scaffold, so the
+     two surfaces are recognisably the same axis. It carries no posture colour
+     because it says nothing about who can reach the page. */
+  .axis.scaffold { background: transparent; color: var(--muted); border: 1px solid currentColor;
+                   border-radius: 999px; letter-spacing: .06em; }
+  .slug-axes { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; }
+  /* Description marker — native title tooltip on hover, no scroll noise. */
+  .slug-tags { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .tag-chip { font-size: 10px; color: var(--muted); background: var(--panel-2);
+    border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; white-space: nowrap; }
+  .tag-chip.more { cursor: help; }
+  .slug-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .slug-size {
+    font-size: 11px;
+    min-width: 64px;
+    text-align: right;
+  }
+  .slug-age {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 62px;
+    cursor: help;
+  }
+  .slug-age svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+  .icon-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    color: var(--muted);
+  }
+  .icon-badge svg { width: 16px; height: 16px; display: block; }
+  .icon-badge .count {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background: var(--accent);
+    color: #0d1117;
+    border-radius: 8px;
+    min-width: 14px;
+    height: 14px;
+    font-size: 9px;
+    line-height: 14px;
+    font-family: ui-monospace, monospace;
+    padding: 0 3px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .icon-badge.commits .count { background: var(--c5); }
+  .icon-badge.commits .count.pending { background: var(--border); color: var(--muted); }
+  .icon-only.api-on  { color: var(--good); }
+  .icon-only.api-off { color: var(--border); }
+  .icon-only.mirror-on  { color: var(--c8); }
+  .icon-only.mirror-src { color: var(--accent); }
+  .icon-only.mirror-off { color: var(--border); }
+  .icon-only.hero-on  { color: #bc8cff; }
+  .icon-only.hero-off { color: var(--border); }
+  a.icon-only { text-decoration: none; }
+  .icon-only svg { width: 16px; height: 16px; display: block; }
+  /* OG preview thumbnail at the row's left edge — only shown when an og image exists. */
+  .slug-thumb {
+    flex: none;
+    align-self: stretch;        /* height = the row's content height (driven by the text column, not the image) */
+    width: 84px;                /* fixed → left column stays aligned; the image is a background, so it can't inflate the row */
+    min-height: 0;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background-color: var(--panel);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .slug-thumb.empty { border-style: dashed; opacity: 0.4; }
+
+  /* ---- Stat band -------------------------------------------------------
+     The posture bar and the size histogram carry real magnitudes; the counts
+     column is for the numbers that genuinely have no distribution behind them. */
+  .stat-band { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.15fr) minmax(0, 1fr) auto;
+    gap: 20px; align-items: end; width: 100%; }
+  @media (max-width: 1000px) { .stat-band { grid-template-columns: 1fr; gap: 16px; } }
+  .stat-cap { font: 600 9.5px var(--mono); letter-spacing: .09em; text-transform: uppercase;
+    color: var(--faint); margin-bottom: 7px; }
+  .stat-cap span { text-transform: none; letter-spacing: 0; font-weight: 400; opacity: .8; margin-left: 6px; }
+
+  .posture-bar { display: flex; gap: 2px; height: 26px; }
+  .pb-seg { position: relative; min-width: 26px; border: 0; border-radius: 4px; cursor: pointer;
+    background: color-mix(in srgb, var(--tone) 32%, transparent);
+    border-bottom: 2px solid var(--tone); transition: background .18s; padding: 0; }
+  .pb-seg:hover { background: color-mix(in srgb, var(--tone) 55%, transparent); }
+  .pb-seg.on { background: var(--tone); }
+  .pb-n { font: 600 10.5px var(--mono); color: var(--text); }
+  .pb-seg.on .pb-n { color: var(--bg); }
+  .posture-legend { margin-top: 8px; gap: 12px; }
+
+  .scaffold-bar { display: flex; gap: 2px; height: 26px; }
+  .sb-seg { min-width: 30px; border: 1px solid color-mix(in srgb, var(--muted) 40%, transparent);
+    border-radius: 4px; background: transparent; cursor: pointer; padding: 0 4px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; gap: 5px; transition: all .18s; }
+  .sb-seg:hover { border-color: var(--text); }
+  .sb-seg.on { background: color-mix(in srgb, var(--muted) 26%, transparent); border-color: var(--text); }
+  .sb-n { font: 600 10.5px var(--mono); color: var(--muted); }
+  .sb-seg.on .sb-n { color: var(--text); }
+
+  .size-hist { display: flex; gap: 4px; align-items: flex-end; height: 26px; }
+  .sh-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end;
+    align-items: center; height: 100%; position: relative; }
+  .sh-col i { display: block; width: 100%; min-height: 2px; border-radius: 2px 2px 0 0;
+    background: color-mix(in srgb, var(--accent) 45%, transparent); }
+  .sh-col:hover i { background: var(--accent); }
+  .sh-col em { position: absolute; bottom: -15px; font-style: normal; font-size: 8.5px;
+    color: var(--faint); white-space: nowrap; }
+  .size-block { padding-bottom: 17px; }
+
+  .counts-block { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
+  .tnum { display: flex; flex-direction: column; line-height: 1.15; }
+  .tnum b { font: 600 13px var(--mono); color: var(--text); }
+  .tnum i { font-style: normal; font-size: 9px; color: var(--faint); letter-spacing: .04em; }
+  .total-item.srv { font-size: 11px; color: var(--faint); }
+
+  .slug-totals {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 4px 0 14px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    flex-wrap: wrap;
+  }
+  .total-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .total-item svg { width: 15px; height: 15px; display: block; }
+  .total-item .total-value {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .total-item .total-split {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 11px;
+  }
+  .total-item.slugs   svg { color: var(--accent); }
+  .total-item.files   svg { color: var(--accent); }
+  .total-item.commits svg { color: var(--c5); }
+  .total-item.size    svg { color: var(--muted); }
+  .total-item.posture svg { color: var(--good); }
+
+  .pulse-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--good);
+    border-radius: 50%;
+    margin-right: 8px;
+    box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.5);
+    animation: pulse 2s ease-out infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.7); }
+    70%  { box-shadow: 0 0 0 8px rgba(46, 160, 67, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(46, 160, 67, 0); }
+  }
+
+  .btn-rescan {
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--text);
+    background: var(--panel-2);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 7px 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .btn-rescan:hover:not(:disabled) { background: #232a33; }
+  .btn-rescan:disabled { opacity: 0.6; cursor: progress; border-color: var(--border); }
+  .btn-rescan svg { width: 14px; height: 14px; display: block; }
+  .btn-rescan.scanning svg { animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .dash-actions { display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex:none; }
+  /* Preview trigger lives inline in the scope filter — compact to match the control row. */
+  .ctl-btn {
+    font: inherit; font-size:11px; color:var(--text);
+    background:var(--panel-2); border:1px solid var(--accent); border-radius:5px;
+    padding:2px 8px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
+  }
+  .ctl-btn[hidden] { display:none; } /* author display:inline-flex would otherwise beat UA [hidden] */
+  .ctl-btn:hover:not(:disabled) { background:#232a33; }
+  .ctl-btn:disabled { opacity:.5; cursor:not-allowed; border-color:var(--border); }
+  .ctl-btn.scanning { cursor:progress; }
+  .ctl-btn svg { width:12px; height:12px; display:block; }
+  .ctl-btn.scanning svg { animation: spin 0.9s linear infinite; }
+  .preview-result { font-family:ui-monospace, monospace; font-size:11px; color:var(--muted); }
+  .preview-result a { color:var(--accent); text-decoration:none; }
+  .preview-result a:hover { text-decoration:underline; }
+  .preview-result.err { color:var(--danger); }
+
+  /* Lobby key panel — full-width row under the controls; the values are long and monospace,
+     so they get their own line rather than being squeezed into the inline result span. */
+  .lobby-key { flex-basis:100%; margin:6px 0 0; padding:8px 10px;
+    background:var(--panel-2); border:1px solid var(--border); border-left:2px solid var(--warn);
+    border-radius:5px; font-size:11px; }
+  .lobby-key[hidden] { display:none; }
+  .lobby-key h4 { margin:0 0 6px; font-size:11px; font-weight:600; color:var(--warn); letter-spacing:.02em; }
+  .lobby-key dl { display:grid; grid-template-columns:auto 1fr; gap:3px 10px; margin:0; align-items:baseline; }
+  .lobby-key dt { color:var(--muted); }
+  .lobby-key dd { margin:0; font-family:ui-monospace, monospace; word-break:break-all; }
+  .lobby-key dd a { color:var(--accent); text-decoration:none; }
+  .lobby-key dd a:hover { text-decoration:underline; }
+  .lobby-key .copy { font:inherit; font-size:10px; color:var(--muted); background:none;
+    border:1px solid var(--border); border-radius:4px; padding:0 5px; margin-left:6px; cursor:pointer; }
+  .lobby-key .copy:hover { color:var(--text); border-color:var(--accent); }
+  .lobby-key .note { margin:6px 0 0; color:var(--muted); }
+
+  .rescan-note {
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--muted);
+    font-weight: 400;
+    margin-left: 10px;
+  }
+  @keyframes dash { to { stroke-dashoffset: -20; } }
+
+  /* ---- surface management drawer (ADR 0009) ---- */
+  .manage-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 6px; cursor: pointer; font-size: 13px; line-height: 1;
+    padding: 2px 6px; opacity: 0; transition: opacity .12s, color .12s, border-color .12s;
+  }
+  .slug:hover .manage-btn { opacity: 1; }
+  .manage-btn:hover { color: var(--accent); border-color: var(--accent); }
+  /* Sink rows have no ⋯; reserve its exact box (invisible, hover-proof) so the meta cluster stays aligned. */
+  .manage-btn.spacer { visibility: hidden; }
+
+  .slug-drawer {
+    grid-column: 1 / -1; /* #slugs is a 2-col grid — span the full width as a band */
+    padding: 10px 14px 12px; margin: -1px 0 0; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 0 0 8px 8px;
+    display: flex; flex-direction: column; gap: 8px;
+    animation: drawer-in .12s ease-out;
+  }
+  @keyframes drawer-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+  .dg-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .dg { display: inline-flex; align-items: center; gap: 5px; }
+  .dg-l { color: var(--muted); font-size: 11px; min-width: 52px; text-transform: lowercase; }
+  .dg-b {
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 5px; cursor: pointer; font: inherit; font-size: 11.5px; padding: 3px 9px;
+    transition: background .1s, border-color .1s, color .1s;
+  }
+  .dg-b:hover { border-color: var(--accent); }
+  .dg-b.on { background: rgba(88,166,255,0.16); border-color: var(--accent); color: var(--accent); }
+  .dg-b.warn:hover { border-color: var(--warn); color: var(--warn); }
+  .dg-b.armed { background: color-mix(in srgb, var(--c5) 18%, transparent); border-color: var(--warn); color: var(--warn); }
+  .d-in, .d-sel {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    border-radius: 5px; font: inherit; font-size: 11.5px; padding: 3px 6px; max-width: 240px;
+  }
+  .d-in:focus, .d-sel:focus { outline: none; border-color: var(--accent); }
+  .d-in.wide { max-width: none; flex: 1; min-width: 180px; }
+  /* A .dg flagged .grow stretches to fill its row, and its input/select fills the dg —
+     so rename/move/title/desc use the band's full width instead of capping at ~180px. */
+  .dg.grow { flex: 1; }
+  .dg.grow .d-in, .dg.grow .d-sel { flex: 1; min-width: 0; max-width: none; }
+  .tag-edit { flex: 1; align-items: flex-start; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; flex: 1;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 3px 5px; min-height: 26px; }
+  .chips:focus-within { border-color: var(--accent); }
+  .chip { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; color: var(--text);
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 3px 1px 6px; }
+  .chip-x { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 10px; padding: 0 2px; line-height: 1; }
+  .chip-x:hover { color: var(--danger); }
+  .tag-input { flex: 1; min-width: 80px; background: transparent; border: none; outline: none;
+    color: var(--text); font: inherit; font-size: 11.5px; padding: 2px; }
+  .mirror-list { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .mchip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted);
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 5px; padding: 2px 4px 2px 8px; }
+  .mchip i { color: var(--accent); font-style: normal; }
+  .mx { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 0 3px; }
+  .mx:hover, .mx.armed { color: var(--warn); }
+  .mz { color: var(--muted); font-size: 11px; }
+  .drawer-status { font-size: 11px; color: var(--muted); min-height: 14px; font-family: ui-monospace, monospace; }
+  .drawer-status.ok  { color: var(--good); }
+  .drawer-status.err { color: var(--danger); }
+
+  /* ---- filter + sort controls ---- */
+  .slug-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 4px 0 12px; font-size: 11px; }
+  .slug-controls .ctl { display: inline-flex; align-items: center; gap: 5px; }
+  .slug-controls label { color: var(--muted); }
+  .slug-controls select, #sort-dir, .ctl-reset {
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 5px; font: inherit; font-size: 11px; padding: 2px 6px; cursor: pointer;
+    transition: border-color .1s, color .1s;
+  }
+  .slug-controls select:hover, #sort-dir:hover, .ctl-reset:hover { border-color: var(--accent); }
+  .slug-controls select:focus { outline: none; border-color: var(--accent); }
+  .slug-controls select.active { border-color: var(--accent); color: var(--accent); }
+  #sort-dir { min-width: 24px; text-align: center; line-height: 1; }
+  #f-scope { max-width: 240px; } /* a selected container path can be long — cap the closed select; the dropdown still shows full text */
+  .ctl-sep { width: 1px; height: 16px; background: var(--border); }
+  .ctl-check { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); cursor: pointer; }
+  .ctl-check.active { color: var(--accent); }
+  .ctl-check input { accent-color: var(--accent); margin: 0; }
+  .ctl-reset { color: var(--muted); }
+  /* tag filter: dropdown appends removable pills (OR within tags — parity with the lobby's Tags facet) */
+  .tag-pills { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  .tag-pill { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; color: var(--accent);
+    background: #11203a; border: 1px solid var(--accent); border-radius: 999px; padding: 1px 4px 1px 8px; }
+  .tag-pill button { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 10px; padding: 0 1px; line-height: 1; }
+  .tag-pill button:hover { color: var(--danger); }
+  /* list / grid view toggle */
+  .view-seg { display: inline-flex; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; margin-left: auto; }
+  .view-seg button { font: inherit; font-size: 11px; background: var(--panel-2); color: var(--muted);
+    border: none; padding: 3px 10px; cursor: pointer; }
+  .view-seg button + button { border-left: 1px solid var(--border); }
+  .view-seg button.on { color: var(--accent); background: #11203a; }
+
+  /* ============ tab shell ============ */
+  .tabbar { display:flex; gap:4px; margin:0 0 26px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .tabbar button { appearance:none; background:none; border:none; color:var(--muted); font:inherit;
+    font-size:14px; font-weight:600; padding:10px 16px; cursor:pointer; border-bottom:2px solid transparent;
+    margin-bottom:-1px; display:flex; align-items:center; gap:7px; }
+  .tabbar button:hover { color:var(--text); }
+  .tabbar button.active { color:var(--text); border-bottom-color:var(--accent); }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; animation:tabfade .25s ease; }
+  @keyframes tabfade { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+  .dash-intro { display:flex; align-items:flex-start; justify-content:space-between; gap:24px; margin-bottom:20px; }
+  .dash-intro p { margin:0; color:var(--muted); max-width:920px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-copy">
+    <h1>/viz <span class="accent">— self-portrait</span></h1>
+    <p>The skill rendering itself — an <strong>interactive guide</strong> to what <code>/viz</code> is and how to
+       use it, and a <strong>live dashboard</strong> of the running server. New here? The Guide starts with a
+       five-minute band you can stop at.</p>
+  </div>
+</header>
+
+<nav class="tabbar" role="tablist">
+  <button id="tabbtn-guide" onclick="showTab('guide')">📖 Guide</button>
+  <button id="tabbtn-dashboard" onclick="showTab('dashboard')">📊 Dashboard</button>
+</nav>
+
+<!-- ================= GUIDE =================
+     One guide, three gated bands, rendered by guide.js from the STOPS list so
+     the rail and the document cannot disagree about what the journey is. -->
+<section id="tab-guide" class="tab-panel">
+  <div class="guide">
+    <nav class="rail" id="guide-rail" aria-label="Guide progress and contents"></nav>
+    <div class="bands" id="guide-bands"></div>
+  </div>
+</section>
+
+
+<!-- ================= DASHBOARD ================= -->
+<section id="tab-dashboard" class="tab-panel">
+  <div class="dash-intro">
+    <p>The live operational view — the running server's status, every viz it's serving right now, and recent
+      history, read straight from your machine. <span style="color:var(--warn)">Live only: on a static copy this
+      shows nothing — run the skill locally for data.</span> New to all this? The
+      <a href="#guide" style="color:var(--accent);text-decoration:none" onclick="showTab('guide');return false">Guide</a> explains the whole system.</p>
+    <div class="dash-actions">
+      <button id="rescan-btn" class="btn-rescan" title="Re-run the deep scan over $HOME for viz-pages/ containers">
+        <span id="rescan-icon"></span><span id="rescan-label">Rescan $HOME</span>
+      </button>
+    </div>
+  </div>
+
+<div class="panel-wide">
+  <h2>
+    <span>Active vizzes <span id="git-status" class="rescan-note"></span></span>
+    <span class="slug-search-wrap" title="Filter the list by title or path. Survives the 5s auto-refresh (native browser find does not). Focus with / or ⌘/Ctrl+F · clear with Esc.">
+      <span id="search-icon" class="search-icon"></span>
+      <input id="slug-search" type="search" autocomplete="off" spellcheck="false"
+             placeholder="search title or path…  ( / )">
+      <span id="search-count" class="search-count"></span>
+    </span>
+  </h2>
+  <div id="slug-controls" class="slug-controls">
+    <span class="ctl"><label>sort</label>
+      <select id="sort-key">
+        <option value="modified">modified</option>
+        <option value="created">created</option>
+        <option value="name">name</option>
+        <option value="size">size</option>
+        <option value="files">files</option>
+        <option value="commits">commits</option>
+      </select>
+      <button id="sort-dir" data-dir="desc" title="toggle ascending / descending">↓</button>
+    </span>
+    <span class="ctl-sep"></span>
+    <span class="ctl"><label>posture</label>
+      <select id="f-posture"><option value="">all</option><option value="public">public</option><option value="private">private</option><option value="local">local</option><option value="untagged">untagged</option></select></span>
+    <span class="ctl"><label>listed</label>
+      <select id="f-listed"><option value="">all</option><option value="listed">listed</option><option value="unlisted">unlisted</option></select></span>
+    <span class="ctl"><label>triaged</label>
+      <select id="f-triaged"><option value="">all</option><option value="triaged">triaged</option><option value="untriaged">untriaged</option></select></span>
+    <span class="ctl"><label>api</label>
+      <select id="f-api"><option value="">all</option><option value="yes">has api</option><option value="no">no api</option></select></span>
+    <!-- "page" is the ABSENT case rendered as a real, selectable value, matching
+         the generated lobby. Without it you can filter TO posters but never to
+         plain pages — and plain is 71% of the corpus. -->
+    <span class="ctl"><label>scaffold</label>
+      <select id="f-scaffold" title="which built-in scaffold produced the page — a structural fact, fixed at birth">
+        <option value="">all</option><option value="page">page (plain)</option>
+        <option value="poster">poster</option><option value="poster-dive">poster-dive</option>
+        <option value="deck">deck</option><option value="exchange">exchange</option></select></span>
+    <span class="ctl"><label>tag</label>
+      <select id="f-tag" title="filter by tag — pick more than one (OR); each becomes a removable pill"><option value="">add tag…</option></select>
+      <span id="tag-pills" class="tag-pills"></span></span>
+    <span class="ctl"><label>scope</label>
+      <select id="f-scope" title="filter to one container (place)"><option value="">all</option></select>
+      <button id="preview-btn" class="ctl-btn" title="Build the selected container exactly as it would publish and serve it locally" disabled>
+        <span id="preview-icon"></span><span id="preview-label">preview</span>
+      </button>
+      <button id="preview-stop" class="ctl-btn" title="Take down the running preview" hidden>stop</button>
+      <button id="baseurl-btn" class="ctl-btn" title="Ask this container's base-url.sh where it deploys (no build needed)" disabled>deployed url</button>
+      <span id="preview-result" class="preview-result"></span></span>
+    <!-- Lobby key: only rendered when the previewed container has a _private-lobby. Persists
+         after the preview is stopped — you want to paste it exactly then. -->
+    <div id="lobby-key" class="lobby-key" hidden></div>
+    <label class="ctl-check" title="Hide mirrored-in copies — show only the origin viz of each mirror"><input type="checkbox" id="f-originals">originals only</label>
+    <button id="filters-reset" class="ctl-reset" title="clear all filters & reset sort">reset</button>
+    <span class="view-seg" id="slug-view" role="group" aria-label="list or grid view">
+      <button data-view="list" title="list view">list</button>
+      <button data-view="cards" title="grid view">grid</button>
+    </span>
+  </div>
+  <div id="slug-totals" class="slug-totals"></div>
+  <div id="slugs" class="slug-grid">loading…</div>
+</div>
+<div class="panels">
+  <div class="panel">
+    <h2><span class="pulse-dot"></span>Server</h2>
+    <div id="server-info">loading…</div>
+  </div>
+  <div class="panel">
+    <h2>Recent commits (central) <span id="commit-total" style="text-transform:none; letter-spacing:0; margin-left:6px; color:var(--muted)"></span></h2>
+    <div id="commits" class="commits-scroll">loading…</div>
+  </div>
+</div>
+</section><!-- /tab-dashboard -->
+
+<script>
+  // ---- tab shell: Guide / Dashboard ----
+  // README and Quick Start collapsed into the Guide's first two bands. Their
+  // old hashes still resolve — #quickstart lands on the band that replaced it,
+  // so links published before the rebuild don't 404 into an empty page.
+  const TABS = ['guide', 'dashboard'];
+  const HASH_ALIAS = { readme: ['guide', null], quickstart: ['guide', 'install'] };
+
+  // The hash exactly as the page was opened with, captured before anything
+  // rewrites it. Both the guide's "&stop=" deep link and the Dashboard's
+  // "&posture=…" filter state live in the tail, and this classic script runs
+  // BEFORE any module — so without snapshotting here, showTab() below would
+  // strip the tail and every deep link would silently degrade to defaults.
+  window.__initialHash = location.hash;
+
+  function showTab(name, stop) {
+    if (!TABS.includes(name)) name = 'guide';
+    for (const t of TABS) {
+      document.getElementById('tab-' + t).classList.toggle('active', t === name);
+      document.getElementById('tabbtn-' + t).classList.toggle('active', t === name);
+    }
+    try { localStorage.setItem('viz-sp-seen', '1'); } catch (e) {}
+    // Rewrite the hash only when the TAB actually changes. Comparing against
+    // the whole hash meant arriving at "#dashboard&posture=local" instantly
+    // rewrote it to "#dashboard", destroying the state before the Dashboard
+    // could restore from it.
+    const curTab = location.hash.replace('#', '').split('&')[0];
+    if (curTab !== name) history.replaceState(null, '', '#' + name);
+    if (name === 'guide') {
+      // the rail measures document geometry, which is only real once visible
+      window.dispatchEvent(new CustomEvent('guide:shown', { detail: { stop } }));
+    }
+    if (!stop) window.scrollTo(0, 0);
+  }
+  window.showTab = showTab;
+
+  function routeHash() {
+    const h = location.hash.replace('#', '').split('&')[0];
+    if (TABS.includes(h)) {
+      showTab(h);
+      // Re-apply any filter tail that came with it. Guarded on the function
+      // existing because the Dashboard script may not have initialised (or
+      // may have bailed out early when the api isn't live).
+      if (h === 'dashboard' && typeof restoreFilters === 'function' && filtersReady) {
+        filtersReady = false;
+        restoreFilters(location.hash);
+        if (typeof renderSlugs === 'function') renderSlugs(lastSlugs);
+      }
+      return;
+    }
+    if (HASH_ALIAS[h]) return showTab(...HASH_ALIAS[h]);
+  }
+  window.addEventListener('hashchange', routeHash);
+
+  (function initTab() {
+    const h = location.hash.replace('#', '').split('&')[0];
+    let seen = false;
+    try { seen = !!localStorage.getItem('viz-sp-seen'); } catch (e) {}
+    if (TABS.includes(h)) return showTab(h);
+    if (HASH_ALIAS[h]) return showTab(...HASH_ALIAS[h]);
+    // first-timers land on the Guide, returning visitors on the Dashboard
+    showTab(seen ? 'dashboard' : 'guide');
+  })();
+
+  function fmtUptime(s) {
+    if (s < 60) return s + 's';
+    if (s < 3600) return Math.floor(s/60) + 'm ' + (s%60) + 's';
+    return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
+  }
+  function fmtSize(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+    return (b / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+  // Compact two-unit relative age: "now", "12m", "5h 12m", "1d 5h", "3mo".
+  function fmtAgo(ms) {
+    if (!ms) return '—';
+    const m = (Date.now() - ms) / 60000, h = m / 60, d = h / 24;
+    if (m < 1) return 'now';
+    if (m < 60) return `${Math.floor(m)}m`;
+    if (h < 24) { const H = Math.floor(h), M = Math.floor(m - H * 60); return M ? `${H}h ${M}m` : `${H}h`; }
+    if (d < 30) { const D = Math.floor(d), H = Math.floor(h - D * 24); return H ? `${D}d ${H}h` : `${D}d`; }
+    return `${Math.floor(d / 30)}mo`;
+  }
+
+  const ICONS = {
+    file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+    commit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/></svg>',
+    zap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+    zapOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12.41 6.75 13 2 10.57 4.92"/><polyline points="18.57 12.91 21 10 15.66 10"/><polyline points="8 8 3 14 12 14 11 22 16 16"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
+    folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
+    hdd: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>',
+    refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>',
+    globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+    lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+    alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+  };
+
+  // Render the per-viz axis badges (posture · listed) read live from <head>.
+  const POSTURE_ICON = { public: 'globe', private: 'lock', local: 'home', untagged: 'alert' };
+  function axisBadges(s) {
+    const p = POSTURE_ICON[s.posture] ? s.posture : 'untagged';
+    const parts = [
+      `<span class="axis ${p}" title="posture: ${p} — ${p==='public'?'hosted as-is':p==='private'?'sealed, magic-link only':p==='local'?'never published':'no viz:posture — publish would refuse'}">${ICONS[POSTURE_ICON[p]]}${p}</span>`,
+    ];
+    if (s.listed === false)
+      parts.push(`<span class="axis unlisted" title="unlisted — built &amp; reachable by URL, but off the lobby">unlisted</span>`);
+    // viz:scaffold — badge ONLY when there is one. 166 of 235 vizzes are plain
+    // pages, so a "page" pill on every row is noise, not information. The
+    // generated lobby makes the same call; the axis is still *filterable* to
+    // `page` from the control above, which is where the absent case belongs.
+    if (s.scaffold)
+      parts.push(`<span class="axis scaffold" title="viz:scaffold = ${s.scaffold} — the built-in scaffold this page was born from. A structural fact, never edited afterwards.">${s.scaffold.replace('-', ' ')}</span>`);
+    return `<span class="slug-axes">${parts.join('')}</span>`;
+  }
+  // Tag chips: show up to 3 inline; the rest collapse into a +N that lists all on hover.
+  function tagChips(s) {
+    const tags = s.tags || [];
+    if (!tags.length) return '';
+    const shown = tags.slice(0, 3).map(t => `<span class="tag-chip" title="tag">${esc(t)}</span>`).join('');
+    const extra = tags.length > 3
+      ? `<span class="tag-chip more" title="${esc(tags.join(', '))}">+${tags.length - 3}</span>` : '';
+    return `<span class="slug-tags">${shown}${extra}</span>`;
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  // ---- Native search -----------------------------------------------------
+  // The list re-renders every 5s, which wipes the browser's own Ctrl+F
+  // highlights. This filter is re-applied on EVERY render from the live input
+  // value, so matches + highlights persist across the auto-refresh. It matches
+  // title (name) and path (id); space-separated terms are AND-ed.
+  function currentTerms() {
+    const q = (document.getElementById('slug-search')?.value || '').trim().toLowerCase();
+    return q ? q.split(/\s+/) : [];
+  }
+  function matchTerms(s, terms) {
+    if (!terms.length) return true;
+    const hay = (s.name + ' ' + s.id + ' ' + (s.title || '') + ' ' + (s.tags || []).join(' ')).toLowerCase();
+    return terms.every(t => hay.includes(t));
+  }
+  // Escape `text`, wrapping any term occurrences in <mark>. Works on raw text
+  // (merging overlapping ranges) and escapes each segment, so highlights never
+  // break HTML.
+  function hl(text, terms) {
+    text = String(text);
+    if (!terms.length) return esc(text);
+    const lower = text.toLowerCase();
+    const ranges = [];
+    for (const t of terms) {
+      for (let i = lower.indexOf(t); i !== -1; i = lower.indexOf(t, i + t.length))
+        ranges.push([i, i + t.length]);
+    }
+    if (!ranges.length) return esc(text);
+    ranges.sort((a, b) => a[0] - b[0]);
+    const merged = [];
+    for (const r of ranges) {
+      const last = merged[merged.length - 1];
+      if (last && r[0] <= last[1]) last[1] = Math.max(last[1], r[1]);
+      else merged.push(r.slice());
+    }
+    let out = '', pos = 0;
+    for (const [start, end] of merged) {
+      out += esc(text.slice(pos, start)) + '<mark>' + esc(text.slice(start, end)) + '</mark>';
+      pos = end;
+    }
+    return out + esc(text.slice(pos));
+  }
+
+  // ?hide= / ?hideSlug= / ?hideCommits= — match against id substrings now.
+  function parseHidden() {
+    const params = new URLSearchParams(location.search);
+    const split = (s) => (s || '').split(',').map(x => x.trim()).filter(Boolean);
+    const both = split(params.get('hide'));
+    const slugOnly = split(params.get('hideSlug'));
+    const commitOnly = split(params.get('hideCommits'));
+    return {
+      slugs: [...both, ...slugOnly],
+      commits: [...both, ...commitOnly],
+    };
+  }
+  const matchesAny = (hay, needles) => needles.some(n => hay.includes(n));
+
+  function commitSlug(subject) {
+    const create = subject.match(/^create viz:\s*(\S+)/);
+    if (create) return create[1];
+    const prefixed = subject.match(/^([a-z0-9][a-z0-9-]*):/);
+    return prefixed ? prefixed[1] : null;
+  }
+
+  // ---- Merge model -------------------------------------------------------
+  // gitFeed is the SLOW map (id -> {commitCount}); it arrives
+  // once on load and again after a rescan. The 5s fast loop NEVER touches it.
+  // Rows render the commit col as "—" until the matching id appears here.
+  let gitFeed = {};       // { [id]: { commitCount } }
+  let gitLoaded = false;  // have we ever resolved api/slugs-git?
+  let lastSlugs = [];     // last fast-feed snapshot, for re-render after git lands
+  // renderSlugs() rebuilds the stat band, which now OWNS the uptime/containers
+  // readouts. renderServer() runs first on every 5s poll, so without keeping the
+  // last payload here its values were wiped a moment after being written.
+  let lastServerInfo = null;
+  let openDrawerId = null;// which row's management drawer is expanded (ADR 0009)
+  let confirmKey = null;  // destructive button armed for its 2nd (confirming) click
+
+  function gitFor(id) {
+    return gitLoaded ? (gitFeed[id] ?? null) : null;
+  }
+
+  async function loadGit() {
+    try {
+      gitFeed = await fetch('api/slugs-git').then(r => r.json());
+      gitLoaded = true;
+      document.getElementById('git-status').textContent = '';
+      renderSlugs(lastSlugs);
+    } catch (e) {
+      console.error('loadGit failed:', e);
+    }
+  }
+
+  // Scope filter options = one per container (place). Label central as its own path,
+  // externals by their host repo path. Rebuilt only when the container set changes so
+  // it never clobbers the current selection or an open dropdown on the 5s poll.
+  let scopeSig = '';
+  function populateScope(slugs) {
+    const map = new Map();
+    for (const s of slugs) {
+      if (map.has(s.container)) continue;
+      map.set(s.container, { value: s.container, isCentral: s.isCentral,
+        label: s.isCentral ? '.claude/viz-pages' : (s.host ? s.host + '/viz-pages' : s.container) });
+    }
+    const conts = [...map.values()].sort((a, b) => (b.isCentral - a.isCentral) || a.label.localeCompare(b.label));
+    const sig = conts.map(c => c.value).join('|');
+    if (sig === scopeSig) return;
+    scopeSig = sig;
+    const sel = document.getElementById('f-scope'), cur = sel.value;
+    sel.innerHTML = '<option value="">all</option>' +
+      conts.map(c => `<option value="${esc(c.value)}">${esc(c.label)}</option>`).join('');
+    sel.value = conts.some(c => c.value === cur) ? cur : '';
+  }
+
+  // Tag filter — dropdown adds a tag to activeTags (OR semantics), each shown as a removable
+  // pill. Options rebuilt only when the (all-tags − active) set changes, so the 5s poll never
+  // clobbers an open dropdown.
+  const activeTags = new Set();
+  let tagSig = '';
+  function renderTagFilter(slugs) {
+    document.getElementById('tag-pills').innerHTML = [...activeTags].sort()
+      .map(t => `<span class="tag-pill">${esc(t)}<button data-tag-rm="${esc(t)}" title="remove">✕</button></span>`).join('');
+    const all = [...new Set(slugs.flatMap(s => s.tags || []))].filter(t => !activeTags.has(t)).sort();
+    const sig = all.join('|');
+    if (sig !== tagSig) {
+      tagSig = sig;
+      document.getElementById('f-tag').innerHTML =
+        '<option value="">add tag…</option>' + all.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+    }
+  }
+
+  function renderSlugs(allSlugs) {
+    const hidden = parseHidden();
+    const slugs = allSlugs.filter(s => !matchesAny(s.id, hidden.slugs));
+    lastSlugs = allSlugs;
+    populateScope(slugs);
+    renderTagFilter(slugs);
+
+    // Stats describe the real library — mirror rows are duplicate views, not vizzes.
+    const natives = slugs.filter(s => !s.isMirror);
+    const centralCount  = natives.filter(s => s.isCentral).length;
+    const externalCount = natives.length - centralCount;
+    const hostRepos = new Set(natives.filter(s => !s.isCentral).map(s => s.host));
+
+    // Totals — git-derived numbers only count ids that have landed in gitFeed.
+    const totals = natives.reduce((acc, s) => {
+      const g = gitFor(s.id);
+      const p = ['public','private','local'].includes(s.posture) ? s.posture : 'untagged';
+      acc.posture[p]++;
+      return {
+        ...acc,
+        files: acc.files + s.fileCount,
+        commits: acc.commits + (g ? g.commitCount : 0),
+        bytes: acc.bytes + s.sizeBytes,
+        centralCommits: acc.centralCommits + (g && s.isCentral ? g.commitCount : 0),
+      };
+    }, { files: 0, commits: 0, bytes: 0, centralCommits: 0,
+         posture: { public: 0, private: 0, local: 0, untagged: 0 } });
+
+    const pc = totals.posture;
+    const postureSplit = [
+      pc.local    ? pc.local + ' local'       : '',
+      pc.public   ? pc.public + ' public'     : '',
+      pc.private  ? pc.private + ' private'   : '',
+      pc.untagged ? pc.untagged + ' untagged' : '',
+    ].filter(Boolean).join(' / ') || '—';
+
+    const commitVal = gitLoaded ? totals.commits : '—';
+
+    // ---- Stat band ------------------------------------------------------
+    // These numbers used to be a row of text, which made the one tab that is
+    // otherwise a real instrument the worst offender on bar 1 of the skill's
+    // own standard. Now the two that have shape get shape:
+    //   posture   a stacked bar, segment width = share of the library. It is
+    //             also a CONTROL — clicking a segment drives the posture
+    //             filter, so the chart and the filter are one object.
+    //   size      a log-binned histogram, because viz sizes span 4 orders of
+    //             magnitude and a linear axis renders it as one bar.
+    // The rest stay as counts; a count with no distribution behind it is
+    // honestly just a number.
+    const POSTURE_TONE = { public: 'var(--good)', private: 'var(--c4)',
+                           local: 'var(--muted)', untagged: 'var(--danger)' };
+    const segs = ['public', 'private', 'local', 'untagged']
+      .map(k => ({ k, n: pc[k] })).filter(s => s.n > 0);
+    const nTot = natives.length || 1;
+    const curPosture = document.getElementById('f-posture')?.value || '';
+
+    // Scaffold. `page` is the absent case, named the way the lobby names it.
+    // Ordered biggest-first-but-fixed rather than by count, so the bar doesn't
+    // reshuffle under you as the library changes.
+    const SCAFFOLDS = ['page', 'poster-dive', 'poster', 'exchange', 'deck'];
+    const scaffoldCount = Object.fromEntries(SCAFFOLDS.map(k => [k, 0]));
+    for (const v of natives) scaffoldCount[v.scaffold || 'page'] =
+      (scaffoldCount[v.scaffold || 'page'] || 0) + 1;
+    const curScaffold = document.getElementById('f-scaffold')?.value || '';
+
+    // Log bins over viz size on disk.
+    const BINS = [
+      // Short labels: the stat band gained a fourth column when the scaffold
+      // axis landed, and the old "0.5–2 MB" style ran into its neighbours.
+      // Upper bound per bin, which reads fine left-to-right under a histogram.
+      { lo: 0,        hi: 32*1024,    label: '32K' },
+      { lo: 32*1024,  hi: 128*1024,   label: '128K' },
+      { lo: 128*1024, hi: 512*1024,   label: '512K' },
+      { lo: 512*1024, hi: 2048*1024,  label: '2M' },
+      { lo: 2048*1024, hi: Infinity,  label: '2M+' },
+    ];
+    for (const b of BINS) b.n = natives.filter(s => s.sizeBytes >= b.lo && s.sizeBytes < b.hi).length;
+    const binMax = Math.max(1, ...BINS.map(b => b.n));
+
+    document.getElementById('slug-totals').innerHTML = `
+      <div class="stat-band">
+        <div class="stat-block posture-block">
+          <div class="stat-cap">posture <span>${natives.length} vizzes · click to filter</span></div>
+          <div class="posture-bar" role="group" aria-label="Posture split, click a segment to filter">
+            ${segs.map(s => `
+              <button class="pb-seg${curPosture === s.k ? ' on' : ''}"
+                      style="--tone:${POSTURE_TONE[s.k]}; flex:${s.n}"
+                      data-posture="${s.k}" data-viz-id="posture-${s.k}"
+                      data-label="${s.n} ${s.k} vizzes"
+                      title="${s.n} ${s.k} — ${(s.n / nTot * 100).toFixed(1)}% of the library. Click to filter.">
+                <span class="pb-n">${s.n}</span>
+              </button>`).join('')}
+          </div>
+          <div class="legend posture-legend">
+            ${segs.map(s => `<span class="legend-item"><i class="swatch dot" style="background:${POSTURE_TONE[s.k]}"></i>${s.k}</span>`).join('')}
+          </div>
+        </div>
+
+        <div class="stat-block scaffold-block">
+          <div class="stat-cap">scaffold <span>width = share · click to filter</span></div>
+          <!-- Bar carries the magnitude, legend carries the vocabulary — the
+               same split the posture block above uses. Labels were originally
+               inside the segments, but the distribution is far too skewed for
+               that: plain pages are ~71% and the tail segments are ~30px, so
+               even "poster dive" clipped. verify's audit caught it; the fix is to
+               stop asking a 30px box to hold a two-word name. -->
+          <div class="scaffold-bar" role="group" aria-label="Scaffold split, click a segment to filter">
+            ${SCAFFOLDS.filter(k => scaffoldCount[k]).map(k => `
+              <button class="sb-seg${curScaffold === k ? ' on' : ''}"
+                      style="flex:${scaffoldCount[k]}" data-scaffold="${k}"
+                      data-viz-id="scaffold-${k}" data-label="${scaffoldCount[k]} ${k} vizzes"
+                      aria-label="${k.replace('-', ' ')}: ${scaffoldCount[k]} vizzes"
+                      title="${scaffoldCount[k]} ${k} — ${(scaffoldCount[k] / nTot * 100).toFixed(1)}% of the library. Click to filter.">
+                <span class="sb-n">${scaffoldCount[k]}</span>
+              </button>`).join('')}
+          </div>
+        </div>
+
+        <div class="stat-block size-block">
+          <div class="stat-cap">size on disk <span>${fmtSize(totals.bytes)} total · bin upper bound</span></div>
+          <div class="size-hist" role="img" aria-label="Distribution of viz sizes on disk">
+            ${BINS.map(b => `
+              <span class="sh-col" title="${b.n} viz${b.n===1?'':'zes'} between ${b.label}"
+                    data-viz-id="sizebin-${b.label}" data-label="${b.n} vizzes, ${b.label}">
+                <i style="height:${(b.n / binMax * 100).toFixed(1)}%"></i>
+                <em>${b.label}</em>
+              </span>`).join('')}
+          </div>
+        </div>
+
+        <!-- Every number says what it is, in place. These used to be bare
+             figures with the meaning hidden in a title, so "235  13c / 222x"
+             read as one run-on number you had to hover to decode. -->
+        <div class="stat-block counts-block">
+          <span class="tnum" title="${centralCount} in the central library, ${externalCount} living inside your own repos">
+            <b>${natives.length}</b><i>vizzes</i></span>
+          <span class="tnum" title="${totals.files.toLocaleString()} file${totals.files===1?'':'s'} on disk across every viz">
+            <b>${totals.files}</b><i>files</i></span>
+          <span class="tnum" title="${gitLoaded ? totals.commits.toLocaleString() + ' commits across all host repos' : 'git feed still loading…'}">
+            <b>${commitVal}</b><i>commits</i></span>
+          <span class="tnum" title="${totals.bytes.toLocaleString()} bytes on disk">
+            <b>${fmtSize(totals.bytes)}</b><i>on disk</i></span>
+          <span class="tnum" id="server-uptime" title="how long this viz server has been up">
+            <b>${lastServerInfo ? fmtUptime(lastServerInfo.uptimeSec) : '…'}</b><i>uptime</i></span>
+          <span class="tnum" id="server-containers" title="viz-pages folders this server is currently serving">
+            <b>${lastServerInfo ? lastServerInfo.containers : '…'}</b><i>containers</i></span>
+        </div>
+      </div>`;
+
+    // Search filters only the RENDERED rows — the totals + diagram stats above
+    // still describe the whole library, so they don't lurch around while typing.
+    const terms = currentTerms();
+    const f = filterState();
+    markActiveControls(f);
+    const shown = sortSlugs(applyFilters(slugs, f).filter(s => matchTerms(s, terms)), f);
+    // The row's age badge tracks whatever time axis you're sorting on; any non-time sort falls back to modified.
+    const timeField = f.sortKey === 'created' ? 'created' : 'modified';
+
+    const narrowed = terms.length > 0 || shown.length !== slugs.length;
+    const countEl = document.getElementById('search-count');
+    if (countEl) {
+      countEl.textContent = narrowed ? `${shown.length} / ${slugs.length}` : '';
+      countEl.classList.toggle('zero', narrowed && shown.length === 0);
+    }
+
+    document.getElementById('slugs').innerHTML = shown.length === 0
+      ? `<div style="color: var(--muted)">${terms.length
+            ? `no viz matches “${esc(terms.join(' '))}”`
+            : narrowed ? 'no viz matches the current filters' : 'none yet'}</div>`
+      : shown.map(s => {
+          const g = gitFor(s.originId || s.id);
+          const commitCount = g ? g.commitCount : null;
+          // Badge only the RARE case. 222 of 235 vizzes are repo-local, so an
+          // "external" pill on nearly every row carried ~5% signal — the exact
+          // failure ADR 0011 deleted viz:kind for. Where a repo-local viz lives
+          // is already on the row underneath, as its host path.
+          const badge = s.isCentral
+            ? '<span class="badge central" title="central — lives in the shared scratch library (~/.viz-pages), not inside one of your repos.">central</span>'
+            : '';
+          // While searching, show the full path (highlighted) instead of just the
+          // host — that's how a path-only match becomes visible. Otherwise keep
+          // the compact host line for external vizzes.
+          const sub = terms.length
+            ? `<span class="slug-path">${hl(s.id, terms)}</span>`
+            : s.isMirror
+              ? `<span class="slug-host" title="publish-mirror row from ${esc(s.mirrorFrom)} — single-file, build-time only">↳ mirror ← ${esc(s.mirrorFrom)}</span>`
+              : s.isVendored
+                ? `<span class="slug-host" title="vendored full copy of ${esc(s.mirrorFrom)} — runs standalone; edit the origin and re-sync">↳ vendored ← ${esc(s.mirrorFrom)}</span>`
+                : (!s.isCentral && s.host)
+                  ? `<span class="slug-host" title="host repo: ${esc(s.host)}">↳ ${esc(s.host)}</span>`
+                  : '';
+          const commitInner = commitCount === null
+            ? '<span class="count pending">—</span>'
+            : `<span class="count">${commitCount}</span>`;
+          const vizHref = '/' + (s.originId || s.id).split('/').map(encodeURIComponent).join('/') + '/';
+          const thumb = s.og
+            ? `<span class="slug-thumb" style="background-image:url('${vizHref}${s.og}')" title="${esc(s.description || 'OG preview (' + s.og + ')')}"></span>`
+            : `<span class="slug-thumb empty" title="no OG preview image"></span>`;
+          return `<div class="slug" data-id="${esc(s.id)}"
+                       data-viz-id="slug-${esc(s.id)}"
+                       data-label="${esc(s.title || s.name)} — ${s.posture || 'untagged'}, ${fmtSize(s.sizeBytes)}">
+            ${thumb}
+            <span class="slug-id">
+              <a class="slug-name" href="${vizHref}" target="_blank" rel="noopener"${s.description ? ` title="${esc(s.description)}"` : ''}>${badge}${hl(s.title || s.name, terms)}</a>
+              ${sub}
+              ${axisBadges(s)}${tagChips(s)}
+            </span>
+            <span class="slug-meta">
+              <span class="icon-badge files" title="${s.fileCount} file${s.fileCount===1?'':'s'}">
+                ${ICONS.file}<span class="count">${s.fileCount}</span>
+              </span>
+              <span class="icon-badge commits" title="${commitCount === null ? 'commits — git feed loading' : commitCount + ' commit' + (commitCount===1?'':'s')}">
+                ${ICONS.commit}${commitInner}
+              </span>
+              <span class="slug-age" title="showing ${timeField}&#10;modified ${new Date(s.mtime).toLocaleString()}${s.created ? '&#10;created  ' + new Date(s.created).toLocaleString() : ''}">
+                ${ICONS.clock}${fmtAgo(timeField === 'created' ? s.created : s.mtime)}
+              </span>
+              <span class="slug-size" title="${s.sizeBytes.toLocaleString()} bytes on disk">${fmtSize(s.sizeBytes)}</span>
+              <span class="icon-only ${s.hasApi ? 'api-on' : 'api-off'}" title="${s.hasApi ? 'has api.ts' : 'no api.ts'}">
+                ${s.hasApi ? ICONS.zap : ICONS.zapOff}
+              </span>
+              ${s.hero
+                ? `<a class="icon-only hero-on" href="${vizHref}hero.html" target="_blank" rel="noopener" title="has hero.html — the OG card source (click to open)">${ICONS.image}</a>`
+                : `<span class="icon-only hero-off" title="no hero.html OG card">${ICONS.image}</span>`}
+              ${s.mirroredIn
+                ? `<span class="icon-only mirror-on" title="${s.isVendored ? 'vendored full copy of ' + esc(s.mirrorFrom || '') + ' — runs standalone; edit the origin and re-sync' : 'mirrored-in copy from ' + esc(s.mirrorFrom || '') + ' — edit the origin viz, not this sink'}">${ICONS.link}</span>`
+                : (s.vendoredOut && s.vendoredOut.length)
+                  ? `<span class="icon-only mirror-src" title="origin viz — vendored (full copy) into: ${esc(s.vendoredOut.join(', '))}">${ICONS.link}</span>`
+                  : (s.mirrorsOut && s.mirrorsOut.length)
+                    ? `<span class="icon-only mirror-src" title="origin viz — publish-mirrored to: ${esc(s.mirrorsOut.join(', '))}">${ICONS.link}</span>`
+                    : `<span class="icon-only mirror-off" title="not mirrored">${ICONS.link}</span>`}
+              ${s.mirroredIn
+                ? '<span class="manage-btn spacer" aria-hidden="true">⋯</span>'
+                : `<button class="manage-btn" data-act="toggle" title="manage axes · rename · move · mirror">⋯</button>`}
+            </span>
+          </div>${s.id === openDrawerId ? drawerHtml(s) : ''}`;
+        }).join('');
+
+    // These fed the bottom row of the publish-lifecycle SVG on the old README
+    // tab. That diagram is gone — the Guide's posture figure covers the same
+    // ground interactively — so both targets are optional now. The counts are
+    // still computed because the stat row below uses them.
+    const cc = gitLoaded ? totals.centralCommits : '…';
+    const cEl = document.getElementById('central-stats');
+    if (cEl) cEl.textContent = `${centralCount} central viz${centralCount===1?'':'zes'} · ${cc} commits`;
+    const xEl = document.getElementById('external-stats');
+    if (xEl) xEl.textContent =
+      `${externalCount} external viz${externalCount===1?'':'zes'} across ${hostRepos.size} repo${hostRepos.size===1?'':'s'}`;
+  }
+
+  function renderCommits(allCommits) {
+    const hidden = parseHidden();
+    const commits = allCommits.filter(c => {
+      const slug = commitSlug(c.subject);
+      return !slug || !matchesAny(slug, hidden.commits);
+    });
+    document.getElementById('commit-total').textContent =
+      commits.length === 0 ? '' : '(' + commits.length + ')';
+    document.getElementById('commits').innerHTML = commits.length === 0
+      ? '<div style="color: var(--muted)">no commits yet</div>'
+      : commits.map(c => `<div class="commit">
+          <span class="commit-hash">${esc(c.hash)}</span>${esc(c.subject)}<br>
+          <span class="commit-when">${esc(c.when)}</span>
+        </div>`).join('');
+  }
+
+  function renderServer(info) {
+    document.getElementById('server-info').innerHTML = [
+      ['bun', info.bunVersion],
+      ['pid', info.pid],
+      ['uptime', fmtUptime(info.uptimeSec)],
+      ['port', info.port],
+      ['containers', info.containers],
+    ].map(([k,v]) => `<div class="row"><span class="k">${k}</span><span>${esc(v)}</span></div>`).join('');
+    // These two used to be <text> nodes inside the runtime architecture SVG on
+    // the old README tab. That diagram is gone (the Guide traces the runtime
+    // interactively instead), so they're optional now — re-homed into the
+    // Dashboard's stat row below. Guarded rather than deleted so the values
+    // stay wired if either element exists.
+    lastServerInfo = info;
+    // Write into the value element, not the whole cell — the cell carries its
+    // own <i> label now, and textContent on the parent would delete it.
+    const upEl = document.querySelector('#server-uptime b');
+    if (upEl) upEl.textContent = fmtUptime(info.uptimeSec);
+    const ctEl = document.querySelector('#server-containers b');
+    if (ctEl) ctEl.textContent = info.containers;
+  }
+
+  // ---- Fast loop (5s): server-info + slugs only. NO git feed here. -------
+  async function loadFast() {
+    try {
+      const [info, slugs] = await Promise.all([
+        fetch('api/server-info').then(r => r.json()),
+        fetch('api/slugs').then(r => r.json()),
+      ]);
+      renderServer(info);
+      // An open drawer holds live form state — don't clobber it on the 5s poll.
+      // Keep the snapshot fresh so closing/re-rendering shows current data.
+      if (openDrawerId) lastSlugs = slugs; else renderSlugs(slugs);
+    } catch (e) {
+      console.error('loadFast failed:', e);
+    }
+  }
+
+  async function loadCommits() {
+    try {
+      renderCommits(await fetch('api/log').then(r => r.json()));
+    } catch (e) {
+      console.error('loadCommits failed:', e);
+    }
+  }
+
+  // ---- Rescan button -----------------------------------------------------
+  const rescanBtn = document.getElementById('rescan-btn');
+  document.getElementById('rescan-icon').innerHTML = ICONS.refresh;
+  rescanBtn.addEventListener('click', async () => {
+    rescanBtn.disabled = true;
+    rescanBtn.classList.add('scanning');
+    document.getElementById('rescan-label').textContent = 'scanning…';
+    document.getElementById('git-status').textContent = '· git feed refreshing…';
+    gitLoaded = false; // force "—" placeholders until the fresh git feed lands
+    try {
+      // /_rescan is an ABSOLUTE server route (not under this viz's api/).
+      await fetch('/_rescan').then(r => r.json());
+      // Re-pull fast feed (slugs/containers may have changed) + slow git feed.
+      await loadFast();
+      await loadGit();
+    } catch (e) {
+      console.error('rescan failed:', e);
+    } finally {
+      rescanBtn.disabled = false;
+      rescanBtn.classList.remove('scanning');
+      document.getElementById('rescan-label').textContent = 'Rescan $HOME';
+    }
+  });
+
+  // ---- Live preview ------------------------------------------------------
+  const previewBtn = document.getElementById('preview-btn');
+  const previewStop = document.getElementById('preview-stop');
+  const previewScope = document.getElementById('f-scope'); // preview builds whatever the scope filter is pinned to
+  const previewResult = document.getElementById('preview-result');
+  document.getElementById('preview-icon').innerHTML = ICONS.refresh;
+  function setPreviewResult(html, isErr) {
+    previewResult.innerHTML = html || '';
+    previewResult.className = 'preview-result' + (isErr ? ' err' : '');
+  }
+  // "preview" needs a specific container — disabled while scope is "all". So does base-url.
+  const syncPreviewEnabled = () => {
+    previewBtn.disabled = !previewScope.value;
+    document.getElementById('baseurl-btn').disabled = !previewScope.value;
+  };
+  previewScope.addEventListener('change', syncPreviewEnabled);
+  syncPreviewEnabled();
+  previewBtn.addEventListener('click', async () => {
+    const container = previewScope.value;
+    if (!container) { setPreviewResult('pick a container first', true); return; }
+    previewBtn.disabled = true;
+    previewBtn.classList.add('scanning');
+    document.getElementById('preview-label').textContent = 'building…';
+    setPreviewResult('building the publishable tree — this can take a bit…');
+    const r = await mgmt('preview', { container }); // POST blocks until the build serves
+    previewBtn.classList.remove('scanning');
+    document.getElementById('preview-label').textContent = 'preview';
+    syncPreviewEnabled();
+    if (r && r.ok && r.url) {
+      setPreviewResult(`serving → <a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>`);
+      previewStop.hidden = false;
+      renderLobbyKey(r.lobby);
+    } else {
+      setPreviewResult('preview failed: ' + esc((r && r.err) || 'unknown error'), true);
+      previewStop.hidden = true;
+      renderLobbyKey(null);
+    }
+  });
+
+  // ---- Lobby key ---------------------------------------------------------
+  // Shown only for a container with a _private-lobby marker. The shim links are the
+  // hashtag-free form: a sealed page's <head> is encrypted and can't carry an OG card, so the
+  // shim is the only URL that unfurls. Their /<hash>/ segment depends solely on passphrase+salt,
+  // never the host, so swapping the 127.0.0.1 origin for the deployed one gives the real
+  // shareable link — that portability is why the localhost origin is not a dead end.
+  const lobbyKeyEl = document.getElementById('lobby-key');
+  // Remembered so "deployed url" can re-render the shims against the deployed origin without
+  // paying for another preview build. A shim's /<hash>/ segment is host-independent, so
+  // swapping the origin yields the real shareable link rather than an approximation of one.
+  let lastLobby = null, deployedBase = null;
+  function renderLobbyKey(lobby) {
+    lastLobby = lobby;
+    if (!lobby) { lobbyKeyEl.hidden = true; lobbyKeyEl.innerHTML = ''; return; }
+    const copy = (v) => `<button class="copy" data-copy="${esc(v)}">copy</button>`;
+    const row = (label, value, isLink) => `<dt>${esc(label)}</dt><dd>${
+      isLink ? `<a href="${esc(value)}" target="_blank" rel="noopener">${esc(value)}</a>` : esc(value)
+    }${copy(value)}</dd>`;
+    lobbyKeyEl.innerHTML =
+      `<h4>🔑 lobby key — this container is sealed behind one password</h4><dl>` +
+      row('passphrase', lobby.passphrase) +
+      row('hash', lobby.hash) +
+      lobby.shims.map((u, i) => row(i ? '' : 'shim link', u, true)).join('') +
+      // Once the deployed base is known, show the SHAREABLE form too — same hash, real origin.
+      (deployedBase
+        ? lobby.shims
+            .map((u) => deployedBase + new URL(u).pathname)
+            .map((u, i) => row(i ? '' : 'deployed', u, true))
+            .join('')
+        : '') +
+      `</dl>` +
+      (!lobby.shims.length
+        ? `<p class="note">No shim links in this build. The hash above is host-independent, so it works against any origin.</p>`
+        : deployedBase
+          ? `<p class="note">Deployed links are the shareable ones — a sealed page can't unfurl, so the shim carries the card. They 404 until you actually deploy.</p>`
+          : `<p class="note">Shim links open the site already unlocked, with no <code>#</code> fragment. Hit <b>deployed url</b> for the shareable form.</p>`);
+    lobbyKeyEl.hidden = false;
+  }
+  // Explicit click, never automatic on scope change: this executes base-url.sh out of the
+  // selected repo, and its answer becomes a link that carries the lobby key.
+  const baseurlBtn = document.getElementById('baseurl-btn');
+  baseurlBtn.addEventListener('click', async () => {
+    const container = previewScope.value;
+    if (!container) return;
+    baseurlBtn.disabled = true;
+    baseurlBtn.textContent = 'asking…';
+    const r = await mgmt('base-url', { container });
+    baseurlBtn.textContent = 'deployed url';
+    syncPreviewEnabled();
+    if (r && r.ok && r.url) {
+      deployedBase = r.url;
+      setPreviewResult(`deploys to → <a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>`);
+      if (lastLobby) renderLobbyKey(lastLobby); // re-render with the deployed shim links
+    } else {
+      deployedBase = null;
+      setPreviewResult(esc((r && r.err) || 'base-url.sh failed'), true);
+    }
+  });
+  // Scope change invalidates a base URL read from a different container.
+  previewScope.addEventListener('change', () => { deployedBase = null; });
+
+  // Delegated: the rows are re-rendered on every preview, so per-button listeners would die.
+  lobbyKeyEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button.copy');
+    if (!btn) return;
+    try {
+      await navigator.clipboard.writeText(btn.dataset.copy);
+      btn.textContent = 'copied';
+      setTimeout(() => { btn.textContent = 'copy'; }, 1200);
+    } catch { btn.textContent = 'copy failed'; }
+  });
+  previewStop.addEventListener('click', async () => {
+    previewStop.disabled = true;
+    await mgmt('preview-stop', {});
+    previewStop.disabled = false;
+    previewStop.hidden = true;
+    setPreviewResult('preview stopped');
+  });
+
+  // ---- Search wiring -----------------------------------------------------
+  const searchEl = document.getElementById('slug-search');
+  document.getElementById('search-icon').innerHTML = ICONS.search;
+  // Re-render rows from the last snapshot on every keystroke — no refetch.
+  searchEl.addEventListener('input', () => renderSlugs(lastSlugs));
+  searchEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { searchEl.value = ''; renderSlugs(lastSlugs); searchEl.blur(); }
+  });
+  // ⌘/Ctrl+F and "/" focus this box instead of the (futile) browser find.
+  window.addEventListener('keydown', (e) => {
+    const typing = document.activeElement === searchEl;
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
+      e.preventDefault(); searchEl.focus(); searchEl.select();
+    } else if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey) {
+      e.preventDefault(); searchEl.focus();
+    }
+  });
+
+  // ---- Surface management (ADR 0009): drawer → api/{update,move,mirror,vendor} ----
+  // Reads are local; every write shells out to manage.ts (one definition of the
+  // hard logic). The drawer is rendered inline by renderSlugs when its row is open.
+  const cssEsc = (s) => String(s).replace(/["\\]/g, '\\$&');
+  const drawerOf = (id) => document.querySelector(`.slug-drawer[data-id="${cssEsc(id)}"]`);
+  const chipHtml = (t) => `<span class="chip" data-tag="${esc(t)}">${esc(t)}<button class="chip-x" data-act="chip-rm" title="remove">✕</button></span>`;
+
+  // Sink/destination containers = every other container in the library.
+  function containerOptions(currentContainer) {
+    return [...new Set(lastSlugs.map(s => s.container))]
+      .filter(c => c !== currentContainer)
+      .map(c => ({ value: c, label: c.split('/').slice(-3).join('/') }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+      .map(({ value, label }) => `<option value="${esc(value)}">${esc(label)}</option>`).join('')
+      || '<option value="" disabled>no other containers</option>';
+  }
+
+  function drawerHtml(s) {
+    const cur = { posture: s.posture, listed: s.listed ? 'listed' : 'unlisted', triaged: s.triaged ? 'true' : 'false' };
+    const grp = (axis, label, opts) => `<div class="dg"><span class="dg-l">${label}</span>` +
+      opts.map(([v, t]) => `<button class="dg-b ${cur[axis] === v ? 'on' : ''}" data-act="axis" data-axis="${axis}" data-val="${v}">${t}</button>`).join('') + `</div>`;
+    return `<div class="slug-drawer" data-id="${esc(s.id)}">
+      <div class="dg-row">
+        ${grp('posture', 'posture', [['public','public'],['private','private'],['local','local']])}
+        ${grp('listed', 'listed', [['listed','listed'],['unlisted','unlisted']])}
+      </div>
+      <div class="dg-row">
+        ${grp('triaged', 'triaged', [['true','triaged'],['false','untriaged']])}
+      </div>
+      <div class="dg-row">
+        <div class="dg grow"><span class="dg-l">rename</span>
+          <input class="d-in" data-fld="name" value="${esc(s.name)}" spellcheck="false">
+          <button class="dg-b" data-act="rename">save</button></div>
+        <div class="dg grow"><span class="dg-l">move →</span>
+          <select class="d-sel" data-fld="toContainer">${containerOptions(s.container)}</select>
+          <button class="dg-b warn" data-act="move">move</button></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg grow"><span class="dg-l">title</span>
+          <input class="d-in wide" data-fld="title" value="${esc(s.title)}" placeholder="${esc(s.name)}" spellcheck="false"></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg grow"><span class="dg-l">desc</span>
+          <input class="d-in wide" data-fld="description" value="${esc(s.description)}" placeholder="one-line description" spellcheck="false"></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg tag-edit"><span class="dg-l">tags</span>
+          <span class="chips" data-fld="tags">${(s.tags || []).map(chipHtml).join('')}<input class="tag-input" list="all-tags" placeholder="add tag…" spellcheck="false"></span>
+          <button class="dg-b" data-act="meta-save" title="save title · description · tags">save</button></div>
+      </div>
+      <datalist id="all-tags">${[...new Set(lastSlugs.flatMap((x) => x.tags || []))].sort().map((t) => `<option value="${esc(t)}">`).join('')}</datalist>
+      <div class="dg-row">
+        <div class="dg"><span class="dg-l">mirror →</span>
+          <select class="d-sel" data-fld="to">${containerOptions(s.container)}</select>
+          <select class="d-sel" data-fld="access"><option value="public">public</option><option value="private">private</option></select>
+          <button class="dg-b" data-act="mirror-add">add</button></div>
+        <div class="dg"><span class="dg-l">mirrors</span><span class="mirror-list"><span class="mz">…</span></span></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg"><span class="dg-l">vendor →</span>
+          <select class="d-sel" data-fld="vto">${containerOptions(s.container)}</select>
+          <button class="dg-b" data-act="vendor-add" title="copy this viz as a self-contained, runnable copy into another repo (+ a drift-guard hook)">copy</button></div>
+        ${s.isVendored ? `<div class="dg"><span class="dg-l">origin</span>
+          <button class="dg-b" data-act="vendor-sync" title="re-pull this vendored copy from its origin — overwrites local edits">re-sync</button></div>` : ''}
+      </div>
+      <div class="dg-row">
+        <div class="dg"><span class="dg-l">danger</span>
+          <button class="dg-b warn" data-act="delete" title="delete this viz folder — click twice to confirm">delete viz</button></div>
+      </div>
+      <div class="drawer-status"></div>
+    </div>`;
+  }
+
+  function setStatus(id, msg, ok) {
+    const el = drawerOf(id)?.querySelector('.drawer-status');
+    if (el) { el.textContent = msg || ''; el.className = 'drawer-status' + (ok === true ? ' ok' : ok === false ? ' err' : ''); }
+  }
+  async function mgmt(route, body) {
+    try {
+      return await fetch('api/' + route, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
+    } catch (e) { return { ok: false, err: String(e) }; }
+  }
+  async function loadMirrors(id) {
+    const box = drawerOf(id)?.querySelector('.mirror-list');
+    if (!box) return;
+    const rows = await fetch('api/mirrors?id=' + encodeURIComponent(id)).then(r => r.json()).catch(() => []);
+    box.innerHTML = rows.length === 0 ? '<span class="mz">none</span>'
+      : rows.map(m => `<span class="mchip">${esc(m.to)} <i>[${esc(m.access)}]</i>${m.listed ? '' : ' ·unlisted'}<button class="mx" data-act="mirror-rm" data-to="${esc(m.to)}" title="remove mirror">✕</button></span>`).join('');
+  }
+  function reopenRender() { renderSlugs(lastSlugs); if (openDrawerId) loadMirrors(openDrawerId); }
+  async function refreshAfter() { await loadFast(); await loadGit(); }
+
+  document.getElementById('slugs').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const act = btn.dataset.act;
+    const id = btn.closest('.slug, .slug-drawer')?.dataset.id;
+    if (!id) return;
+
+    if (act === 'toggle') {
+      openDrawerId = openDrawerId === id ? null : id;
+      confirmKey = null;
+      reopenRender();
+      return;
+    }
+    if (act === 'chip-rm') { btn.closest('.chip')?.remove(); return; }
+    // Two-step confirm for destructive actions: first click arms, second within 2.5s commits.
+    const arm = (key) => {
+      if (confirmKey === key) { confirmKey = null; return true; }
+      confirmKey = key; btn.classList.add('armed');
+      if (btn.classList.contains('dg-b')) btn.textContent = 'confirm?';
+      setTimeout(() => { if (confirmKey === key) reopenRender(); }, 2500);
+      return false;
+    };
+    const drawer = drawerOf(id);
+
+    if (act === 'axis') {
+      const body = { id, [btn.dataset.axis]: btn.dataset.val };
+      setStatus(id, 'saving…');
+      const r = await mgmt('update', body);
+      setStatus(id, r.ok ? (r.out.split('\n')[0] || 'updated') : (r.err || 'failed'), r.ok);
+      if (r.ok) { await refreshAfter(); loadMirrors(id); }
+    } else if (act === 'meta-save') {
+      const val = (f) => drawer.querySelector(`input[data-fld="${f}"]`).value.trim();
+      const chips = [...drawer.querySelectorAll('[data-fld="tags"] .chip')].map(c => c.dataset.tag);
+      const pend = drawer.querySelector('.tag-input').value.trim(); // commit an un-entered tag too
+      if (pend && !chips.some(t => t.toLowerCase() === pend.toLowerCase())) chips.push(pend);
+      setStatus(id, 'saving…');
+      const r = await mgmt('update', { id, title: val('title'), description: val('description'), tags: chips.join(', ') });
+      setStatus(id, r.ok ? (r.out.split('\n')[0] || 'saved') : (r.err || 'failed'), r.ok);
+      if (r.ok) { await refreshAfter(); loadMirrors(id); }
+    } else if (act === 'rename') {
+      const name = drawer.querySelector('[data-fld="name"]').value.trim();
+      if (!name) return setStatus(id, 'name required', false);
+      setStatus(id, 'renaming…');
+      const r = await mgmt('move', { id, name });
+      if (r.ok) { openDrawerId = null; await refreshAfter(); } else setStatus(id, r.err || 'failed', false);
+    } else if (act === 'move') {
+      const to = drawer.querySelector('[data-fld="toContainer"]').value;
+      if (!to) return setStatus(id, 'no destination container', false);
+      if (!arm('move')) return setStatus(id, 'click move again to confirm');
+      setStatus(id, 'moving…');
+      const r = await mgmt('move', { id, toContainer: to });
+      if (r.ok) { openDrawerId = null; await refreshAfter(); } else setStatus(id, r.err || 'failed', false);
+    } else if (act === 'mirror-add') {
+      const to = drawer.querySelector('[data-fld="to"]').value;
+      if (!to) return setStatus(id, 'no sink container', false);
+      setStatus(id, 'mirroring…');
+      const r = await mgmt('mirror', { id, sub: 'add', to, access: drawer.querySelector('[data-fld="access"]').value });
+      setStatus(id, r.ok ? (r.out.split('\n')[0] || 'mirror added') : (r.err || 'failed'), r.ok);
+      if (r.ok) loadMirrors(id);
+    } else if (act === 'mirror-rm') {
+      if (!arm('rm:' + btn.dataset.to)) { btn.textContent = '✓?'; return setStatus(id, 'click ✕ again to confirm'); }
+      setStatus(id, 'removing…');
+      const r = await mgmt('mirror', { id, sub: 'rm', to: btn.dataset.to });
+      setStatus(id, r.ok ? 'mirror removed' : (r.err || 'failed'), r.ok);
+      if (r.ok) loadMirrors(id);
+    } else if (act === 'vendor-add') {
+      const to = drawer.querySelector('[data-fld="vto"]').value;
+      if (!to) return setStatus(id, 'no sink container', false);
+      if (!arm('vendor:' + to)) return setStatus(id, 'click copy again to confirm — writes a full copy + a pre-commit guard into the sink repo');
+      setStatus(id, 'vendoring…');
+      const r = await mgmt('vendor', { id, to });
+      setStatus(id, r.ok ? (r.out.split('\n')[0] || 'vendored') : (r.err || 'failed'), r.ok);
+      if (r.ok) await refreshAfter();
+    } else if (act === 'vendor-sync') {
+      if (!arm('vsync:' + id)) return setStatus(id, 'click re-sync again to confirm — overwrites this copy from its origin');
+      setStatus(id, 're-syncing…');
+      const r = await mgmt('vendor-sync', { id });
+      setStatus(id, r.ok ? (r.out.split('\n')[0] || 're-synced') : (r.err || 'failed'), r.ok);
+      if (r.ok) await refreshAfter();
+    } else if (act === 'delete') {
+      if (!arm('delete:' + id)) return setStatus(id, 'click delete again to confirm — this removes the folder');
+      setStatus(id, 'deleting…');
+      const r = await mgmt('delete', { id });
+      if (r.ok) { openDrawerId = null; await refreshAfter(); } else setStatus(id, r.err || 'failed', false);
+    }
+  });
+
+  // Tag chip entry: Enter/comma commits the typed tag (datalist suggests existing
+  // ones as you type); Backspace on an empty input removes the last chip.
+  document.getElementById('slugs').addEventListener('keydown', (e) => {
+    const input = e.target.closest('.tag-input');
+    if (!input) return;
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const v = input.value.trim().replace(/,+$/, '');
+      if (!v) return;
+      const chips = input.closest('.chips');
+      if (![...chips.querySelectorAll('.chip')].some(c => c.dataset.tag.toLowerCase() === v.toLowerCase()))
+        input.insertAdjacentHTML('beforebegin', chipHtml(v));
+      input.value = '';
+    } else if (e.key === 'Backspace' && !input.value) {
+      input.closest('.chips')?.querySelector('.chip:last-of-type')?.remove();
+    }
+  });
+
+  // ---- Filter + sort controls (client-side over the fast snapshot) -------
+  function filterState() {
+    const v = (id) => document.getElementById(id).value;
+    return {
+      sortKey: v('sort-key'),
+      sortDir: document.getElementById('sort-dir').dataset.dir,
+      posture: v('f-posture'), listed: v('f-listed'),
+      triaged: v('f-triaged'), api: v('f-api'), scope: v('f-scope'),
+      scaffold: v('f-scaffold'),
+      tags: [...activeTags],
+      originals: document.getElementById('f-originals').checked,
+    };
+  }
+  function applyFilters(list, f) {
+    return list.filter(s => {
+      if (f.tags.length && !(s.tags || []).some(t => f.tags.includes(t))) return false; // OR within tags
+      if (f.posture && (s.posture || 'untagged') !== f.posture) return false;
+      if (f.listed === 'listed' && !s.listed) return false;
+      if (f.listed === 'unlisted' && s.listed) return false;
+      if (f.triaged === 'triaged' && !s.triaged) return false;
+      if (f.triaged === 'untriaged' && s.triaged) return false;
+      if (f.api === 'yes' && !s.hasApi) return false;
+      if (f.api === 'no' && s.hasApi) return false;
+      // Empty string means "no viz:scaffold meta" = a plain page, which the
+      // lobby names `page`. Normalise here so the two surfaces agree.
+      if (f.scaffold && (s.scaffold || 'page') !== f.scaffold) return false;
+      if (f.scope && s.container !== f.scope) return false;
+      if (f.originals && s.mirroredIn) return false;
+      return true;
+    });
+  }
+  const SORT_KEYS = {
+    modified: s => s.mtime,
+    created:  s => s.created,
+    name:     s => s.name.toLowerCase(),
+    size:     s => s.sizeBytes,
+    files:    s => s.fileCount,
+    commits:  s => (gitFor(s.id)?.commitCount ?? -1),
+  };
+  const NATURAL_DIR = { modified: 'desc', created: 'desc', name: 'asc', size: 'desc', files: 'desc', commits: 'desc' };
+  function sortSlugs(list, f) {
+    const key = SORT_KEYS[f.sortKey] || SORT_KEYS.recent;
+    const dir = f.sortDir === 'asc' ? 1 : -1;
+    return [...list].sort((a, b) => {
+      const va = key(a), vb = key(b);
+      if (va < vb) return -dir;
+      if (va > vb) return dir;
+      return a.name.localeCompare(b.name); // stable tiebreak by name
+    });
+  }
+  function markActiveControls(f) {
+    for (const id of FILTER_IDS)
+      document.getElementById(id).classList.toggle('active', !!document.getElementById(id).value);
+    document.getElementById('f-tag').classList.toggle('active', activeTags.size > 0);
+    document.querySelector('.ctl-check').classList.toggle('active', f.originals);
+    persistFilters(f);
+  }
+
+  // ---- Filter state in the URL -----------------------------------------
+  // A filtered view is worth sharing, and the server's hot-reload is a full
+  // page refresh that would otherwise drop every filter you had set.
+  //
+  // NOT the kit's saveHash(): it serialises JSON into the hash, which would
+  // overwrite the "#dashboard" the tab shell routes on. The tab owns the
+  // hash; filters ride behind "&", which the tab router already splits off.
+  const FILTER_IDS = ['f-posture', 'f-listed', 'f-triaged', 'f-api', 'f-scope', 'f-scaffold'];
+  let filtersReady = false;
+
+  function persistFilters(f) {
+    if (!filtersReady) return;              // don't write during the restore pass
+    // The Dashboard re-renders every 5s whether or not you are looking at it,
+    // and this used to write "#dashboard&…" unconditionally — so reading the
+    // Guide silently rewrote the URL out from under you, clobbering the guide's
+    // own "&stop=" state. Only the visible tab owns the hash.
+    if (!document.getElementById('tab-dashboard').classList.contains('active')) return;
+    const q = new URLSearchParams();
+    for (const id of FILTER_IDS) {
+      const v = document.getElementById(id).value;
+      if (v) q.set(id.slice(2), v);
+    }
+    if (f.sortKey && f.sortKey !== 'recent') q.set('sort', f.sortKey);
+    if (f.sortDir === 'asc') q.set('dir', 'asc');
+    if (f.originals) q.set('originals', '1');
+    if (activeTags.size) q.set('tags', [...activeTags].join(','));
+    const search = document.getElementById('slug-search')?.value.trim();
+    if (search) q.set('q', search);
+    const tail = q.toString();
+    const next = '#dashboard' + (tail ? '&' + tail : '');
+    if (location.hash !== next) history.replaceState(null, '', next);
+  }
+
+  function restoreFilters(fromHash) {
+    // On boot, read the ORIGINAL hash (see window.__initialHash). On a later
+    // hashchange, read the new one — pasting a filtered link into an already
+    // open tab is a same-document navigation, so nothing re-inits by itself.
+    const tail = (fromHash ?? window.__initialHash ?? location.hash).replace(/^#[^&]*&?/, '');
+    if (tail) {
+      const q = new URLSearchParams(tail);
+      for (const id of FILTER_IDS) {
+        const v = q.get(id.slice(2));
+        if (v) document.getElementById(id).value = v;
+      }
+      if (q.get('sort')) document.getElementById('sort-key').value = q.get('sort');
+      if (q.get('dir') === 'asc') setSortDir('asc');
+      if (q.get('originals')) document.getElementById('f-originals').checked = true;
+      for (const t of (q.get('tags') || '').split(',').filter(Boolean)) activeTags.add(t);
+      const search = document.getElementById('slug-search');
+      if (search && q.get('q')) search.value = q.get('q');
+    }
+    filtersReady = true;
+  }
+  // The posture bar is a chart AND the posture filter. Delegated on the
+  // container, which survives every re-render of its contents. Clicking the
+  // segment that's already active clears the filter, so the bar is a toggle
+  // rather than a one-way trip that leaves you hunting for the reset button.
+  document.getElementById('slug-totals').addEventListener('click', e => {
+    const pseg = e.target.closest('.pb-seg');
+    if (pseg) {
+      const sel = document.getElementById('f-posture');
+      sel.value = sel.value === pseg.dataset.posture ? '' : pseg.dataset.posture;
+      return renderSlugs(lastSlugs);
+    }
+    const sseg = e.target.closest('.sb-seg');
+    if (sseg) {
+      const sel = document.getElementById('f-scaffold');
+      sel.value = sel.value === sseg.dataset.scaffold ? '' : sseg.dataset.scaffold;
+      return renderSlugs(lastSlugs);
+    }
+  });
+
+  function setSortDir(dir) {
+    const b = document.getElementById('sort-dir');
+    b.dataset.dir = dir; b.textContent = dir === 'asc' ? '↑' : '↓';
+  }
+  [...FILTER_IDS, 'f-originals']
+    .forEach(id => document.getElementById(id).addEventListener('change', () => renderSlugs(lastSlugs)));
+  // Tag dropdown ADDS to the active set (doesn't replace) — that's how one <select> gives the
+  // lobby's multi-tag behavior. Pills remove on click.
+  document.getElementById('f-tag').addEventListener('change', (e) => {
+    if (e.target.value) { activeTags.add(e.target.value); e.target.value = ''; renderSlugs(lastSlugs); }
+  });
+  document.getElementById('tag-pills').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tag-rm]');
+    if (b) { activeTags.delete(b.dataset.tagRm); renderSlugs(lastSlugs); }
+  });
+  // List / grid view toggle — flips a class on #slugs (same markup, CSS reflow); choice persists.
+  const viewSeg = document.getElementById('slug-view');
+  function setView(v) {
+    document.getElementById('slugs').classList.toggle('cards', v === 'cards');
+    for (const b of viewSeg.querySelectorAll('button')) b.classList.toggle('on', b.dataset.view === v);
+    try { localStorage.setItem('sp-view', v); } catch {}
+  }
+  viewSeg.addEventListener('click', (e) => { const b = e.target.closest('button[data-view]'); if (b) setView(b.dataset.view); });
+  setView((() => { try { return localStorage.getItem('sp-view') || 'list'; } catch { return 'list'; } })());
+  document.getElementById('sort-key').addEventListener('change', () => {
+    setSortDir(NATURAL_DIR[document.getElementById('sort-key').value] || 'desc'); // sensible default per key
+    renderSlugs(lastSlugs);
+  });
+  document.getElementById('sort-dir').addEventListener('click', () => {
+    setSortDir(document.getElementById('sort-dir').dataset.dir === 'asc' ? 'desc' : 'asc');
+    renderSlugs(lastSlugs);
+  });
+  document.getElementById('filters-reset').addEventListener('click', () => {
+    FILTER_IDS.forEach(id => document.getElementById(id).value = '');
+    activeTags.clear();
+    document.getElementById('f-originals').checked = false;
+    document.getElementById('sort-key').value = 'modified';
+    setSortDir('desc');
+    renderSlugs(lastSlugs);
+  });
+
+  // ---- Boot --------------------------------------------------------------
+  // Live data only means anything with a running server behind us. Detect the
+  // environment (this is the kit's vizEnv(), inlined since this standalone page
+  // doesn't import the module): a static publish (window.__VIZ_STATIC__, stamped
+  // by build.ts) or an unreachable server → show a "run me locally" placeholder in
+  // each live region and skip all fetching / auto-refresh. Live → business as usual.
+  async function vizEnv() {
+    if (window.__VIZ_STATIC__) return 'static';
+    try { return (await fetch('/_health', { cache: 'no-store' })).ok ? 'live' : 'offline'; }
+    catch { return 'offline'; }
+  }
+  (async function boot() {
+    const env = await vizEnv();
+    if (env !== 'live') {
+      const why = env === 'static'
+        ? "This is a static copy — there's no live server behind it."
+        : "The viz server isn't reachable right now.";
+      const ph = (what) =>
+        '<div style="padding:26px 20px; text-align:center; color:var(--muted); line-height:1.7; ' +
+        'border:1px dashed var(--border); border-radius:10px; background:var(--panel)">' +
+        '🔌 <b style="color:var(--text)">Live only.</b> ' + why + '<br>Run <code>/viz</code> locally and open the ' +
+        'self-portrait to see ' + what + ' here.</div>';
+      document.getElementById('slug-totals').innerHTML = '';
+      document.getElementById('git-status').textContent = '';
+      document.getElementById('slugs').innerHTML = ph('your live library');
+      document.getElementById('server-info').innerHTML = ph('server status');
+      document.getElementById('commits').innerHTML = ph('recent commits');
+      const rb = document.getElementById('rescan-btn'); if (rb) rb.style.display = 'none';
+      return;
+    }
+    document.getElementById('git-status').textContent = '· git feed loading…';
+    restoreFilters();   // must precede the first render, or it renders unfiltered
+    loadFast();
+    loadCommits();
+    loadGit();          // slow feed: once on load (and again after rescan)
+    setInterval(loadFast, 5000);
+    setInterval(loadCommits, 30000);
+  })();
+</script>
+
+<!-- The guide. Sibling modules are bundled into the page at publish time by
+     inline.ts, so authoring across files costs nothing in the built artifact. -->
+<script type="module">
+  import { buildRail, buildBands, positionRail, watchScroll, scrollScrub, jumpTo, stopFromHash } from './guide.js';
+  import { FIGURES } from './figures.js';
+
+  buildRail(document.getElementById('guide-rail'));
+  buildBands(document.getElementById('guide-bands'), FIGURES);
+
+  // Mount each figure and wire its step handler to the scrub driver. A figure
+  // never reads scroll itself — it is handed an index and renders it, which is
+  // what makes scroll, arrow keys and tick-clicks all drive the same code path.
+  for (const [id, fig] of Object.entries(FIGURES)) {
+    const el = document.getElementById('fig-' + id);
+    if (!el) continue;
+    let onStep = null;
+    try {
+      fig.render(el, { onStep: fn => { onStep = fn; } });
+    } catch (err) {
+      // One broken figure must not take the whole journey down with it.
+      el.innerHTML = '<p class="fig-foot">This figure failed to render — see the console.</p>';
+      console.error('[guide] figure "' + id + '" failed:', err);
+      continue;
+    }
+    if (fig.steps && onStep) scrollScrub(id, { n: fig.steps, onStep });
+    else if (onStep) onStep(0);
+  }
+
+  // The rail measures real document geometry, so it can only be laid out once
+  // the guide is actually visible — a display:none panel measures as zero.
+  const relayout = () => requestAnimationFrame(positionRail);
+  addEventListener('guide:shown', e => {
+    relayout();
+    if (e.detail?.stop) requestAnimationFrame(() => jumpTo(e.detail.stop));
+  });
+  addEventListener('load', () => {
+    relayout();
+    // Restore a deep link like #guide&stop=posture once geometry is real.
+    const s = stopFromHash();
+    if (s) requestAnimationFrame(() => jumpTo(s));
+  });
+  if (document.fonts?.ready) document.fonts.ready.then(relayout);
+  relayout();
+  watchScroll();
+</script>
+
+</body>
+</html>

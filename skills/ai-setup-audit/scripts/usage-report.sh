@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# usage-report.sh — Claude Code usage report from local session transcripts.
+#
+# Replaces the retired Prometheus/Loki/OTEL monitoring stack for ai-setup-audit
+# Phase 0. Every field comes from ~/.claude/projects/**/*.jsonl, which Claude
+# Code writes unconditionally — so there is no always-on collector to keep up
+# and no collection gap (the stack only had data while it was running; this
+# has 6+ months of history regardless).
+#
+# Usage: usage-report.sh [--days N]      # default 30
+#
+# Perf note: this greps ~1GB of transcripts at a 30d window (~1 min). grep, not
+# ripgrep: in this environment `rg` is a shell FUNCTION (routes through the
+# claude binary), so a plain bash script can't reach a real rg. Patterns are
+# kept as separate simple scans — a single mega-alternation is far SLOWER in
+# grep because quantifier branches (`[^"]+`, `[0-9]+`) don't Aho-Corasick.
+# Phase 0 should launch this in the background and read the result during the
+# Phase 1 discovery step.
+#
+# Answers the ai-setup-audit telemetry questions:
+#   - Skill invocation counts (most / least used)   -> Phase 0, Phase 3
+#   - Subagent invocation counts (owned reviewers)  -> Phase 0, Phase 4
+#   - MCP server/tool call distribution             -> Phase 0, Phase 5
+#   - Tool error signal                             -> Phase 0, Phase 3/4/5
+#   - basic-memory retrieval frequency              -> Phase 2, Phase 6
+#   - Token totals                                  -> holistic
+# "Least-used / dormant" = names in the Phase-1 inventory that DON'T appear
+# below (zero calls in the window). The audit does that diff; this just reports
+# what was actually used.
+
+set -uo pipefail
+DAYS=30
+[ "${1:-}" = "--days" ] && DAYS="${2:-30}"
+PROJ="$HOME/.claude/projects"
+TMP="$(mktemp)"
+trap 'rm -f "$TMP"' EXIT
+
+# Window: `-mtime -N` is POSIX (BSD macOS + GNU), unlike GNU-only `-newermt @epoch`.
+# Subagent transcripts land in the same dirs as real sessions and typically
+# outnumber them ~3:1, so count them separately — a combined total reads as
+# "N conversations" and silently inflates any per-session rate derived from it.
+NF=0
+NSIDE=0
+while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  cat "$f" >> "$TMP" 2>/dev/null
+  NF=$((NF + 1))
+  # -m1 stops at the first hit; no pipe, so no SIGPIPE on early exit.
+  grep -qm1 '"isSidechain":true' "$f" 2>/dev/null && NSIDE=$((NSIDE + 1))
+done < <(find "$PROJ" -name '*.jsonl' -mtime -"${DAYS}" 2>/dev/null)
+
+echo "# Claude Code usage — last ${DAYS}d  (${NF} transcripts: $((NF - NSIDE)) main sessions + ${NSIDE} subagent)"
+[ "$NF" -eq 0 ] && { echo "No sessions in window."; exit 0; }
+
+# Scan 1: names + skill params together (cheap 2-branch). Reduce to small lists.
+NS="$(grep -hoE '"(name|skill)":"[^"]+"' "$TMP" 2>/dev/null)"
+NAMES="$(printf '%s\n' "$NS" | grep '^"name"' | sed -E 's/"name":"([^"]+)"/\1/')"
+
+echo
+echo "## Skill invocations (via Skill tool)"
+printf '%s\n' "$NS" | grep '^"skill"' | sed -E 's/"skill":"([^"]+)"/\1/' | sort | uniq -c | sort -rn
+echo "  (skills installed but absent above = 0 calls this window)"
+
+echo
+echo "## Subagent invocations (via Task/Agent tool)"
+# subagent_type is the dispatch record on the parent side. Fold a namespaced
+# reviewer (r2-sdlc:code-reviewer) into its bare name (code-reviewer) so an owned
+# subagent counts once however it was addressed. Built-in agents (general-purpose,
+# Explore, Plan) show up here too — the owned reviewers are the audit's concern.
+grep -hoE '"subagent_type":"[^"]+"' "$TMP" 2>/dev/null \
+  | sed -E 's/"subagent_type":"([^"]+)"/\1/; s/^[A-Za-z0-9_-]+://' \
+  | sort | uniq -c | sort -rn
+echo "  (owned reviewers absent above = 0 calls this window)"
+
+echo
+echo "## MCP calls by server"
+# Server = between mcp__ and next __. Allow UPPERCASE (claude_ai_Atlassian_Rovo, claude_ai_Context7).
+printf '%s\n' "$NAMES" | grep '^mcp__' | sed -E 's/^mcp__([A-Za-z0-9_-]+)__.*/\1/' | sort | uniq -c | sort -rn
+echo "  (configured servers absent above = dormant / 0 calls)"
+
+echo
+echo "## MCP calls by full tool (top 25)"
+printf '%s\n' "$NAMES" | grep '^mcp__' | sort | uniq -c | sort -rn | head -25
+
+echo
+echo "## Top built-in tools (top 20)"
+printf '%s\n' "$NAMES" | grep -E '^[A-Z]' | sort | uniq -c | sort -rn | head -20
+
+echo
+echo "## Error signal"
+# Count signatures ONLY on tool-RESULT lines. Scanning the whole transcript also
+# counts lines that merely *discuss* an error -- prose, pasted logs, and this
+# report's own past output -- which inflated the signal ~7x and made an audit
+# session's own commentary show up as failures in the next audit.
+# All-literal alternation -> fast (Aho-Corasick), one scan.
+grep -h '"toolUseResult"\|"type":"tool_result"' "$TMP" 2>/dev/null \
+  | grep -hoE '"is_error":true|NOOP_EDIT|TEXT_NOT_FOUND|FILE_NOT_FOUND|String not found|out of range|hash mismatch|permission denied|tool_use_error|InputValidationError|ExpiredToken|Unable to locate credentials' \
+  | sort | uniq -c | sort -rn | sed -E 's/"is_error":true/errored tool_results (is_error:true)/'
+
+echo
+echo "## Tokens (window total)"
+grep -hoE '"(input_tokens|output_tokens|cache_read_input_tokens|cache_creation_input_tokens)":[0-9]+' "$TMP" 2>/dev/null \
+  | awk -F: '{gsub(/"/,"",$1); s[$1]+=$2}
+             END{split("input_tokens output_tokens cache_read_input_tokens cache_creation_input_tokens",K," ");
+                 for(i=1;i<=4;i++) printf "  %-30s %.0f\n", K[i], s[K[i]]+0}'

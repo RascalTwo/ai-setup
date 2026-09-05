@@ -1,0 +1,10 @@
+{
+  "name": "viz",
+  "version": "8.9.0",
+  "description": "Ad-hoc HTML visualizations for AI agents — CLI, MCP server and skill.",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "commander": "^15.0.0",
+    "puppeteer-core": "^25.2.1"
+  }
+}

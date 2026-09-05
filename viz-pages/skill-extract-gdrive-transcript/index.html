@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>extract-gdrive-transcript — the greyed-out button still clicks</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="extract-gdrive-transcript">
+<meta name="viz:description" content="Reads the transcript panel Google Drive's own video player already renders straight out of Chrome into a speaker-attributed .vtt — no OAuth, no download, no FFmpeg.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c5) 15%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c4) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 486px; gap:38px; align-items:center; padding:56px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:13px;
+            letter-spacing:.13em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:52px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 20px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the "proof" slot: ONE entry, page → .vtt. The left-hand class names are the
+     argument — they're fake because the real ones rotate, so they're discovered
+     per run rather than written down. */
+  .cap{ font-family:var(--mono); font-size:11.5px; letter-spacing:.13em; color:var(--muted); margin-bottom:10px; }
+  .cap b{ color:var(--c5); }
+  .pane{ background:color-mix(in srgb, var(--panel) 74%, transparent); border:1px solid var(--border);
+         border-radius:12px; padding:12px 13px 13px; }
+  .plbl{ display:flex; align-items:baseline; gap:8px; font-family:var(--mono); font-size:10.5px;
+         letter-spacing:.12em; color:var(--c4); margin-bottom:9px; }
+  .plbl span{ margin-left:auto; letter-spacing:.06em; color:var(--faint); text-transform:none; }
+  .row{ display:grid; grid-template-columns:1fr auto; gap:9px; align-items:center; margin-bottom:5px; }
+  .row:last-child{ margin-bottom:0; }
+  .row code{ font-family:var(--mono); font-size:12px; line-height:1.4; color:var(--muted); white-space:nowrap; }
+  .row code i{ font-style:normal; color:var(--c8); }
+  .row code u{ text-decoration:none; color:var(--text); }
+  .chip{ font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; padding:2px 7px; border-radius:99px;
+         white-space:nowrap; color:var(--c4); border:1px dashed color-mix(in srgb, var(--c4) 55%, transparent); }
+  .mid{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:10.5px;
+        letter-spacing:.1em; color:var(--faint); padding:9px 2px; }
+  .mid b{ color:var(--c4); letter-spacing:.1em; }
+  .mid .ar{ color:var(--c5); font-size:15px; }
+  .pane.out{ border-color:color-mix(in srgb, var(--c5) 45%, transparent); }
+  .pane.out .plbl{ color:var(--c5); }
+  .vtt{ font-family:var(--mono); font-size:12px; line-height:1.55; color:var(--muted); margin:0; }
+  .vtt .t{ color:var(--c5); }
+  .vtt .v{ color:var(--c8); }
+  .vtt .w{ color:var(--text); }
+  .pfoot{ font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; color:var(--faint); margin-top:10px; }
+  .pfoot b{ color:var(--c5); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  code{ font-family:var(--mono); font-size:.92em; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="extract-gdrive-transcript" data-viz-id="poster-card" data-label="extract-gdrive-transcript poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · EXTRACT-GDRIVE-TRANSCRIPT</div>
+      <h1 class="hook">The button is<br>greyed out. <em>It still<br>answers a click.</em></h1>
+      <p class="sub">Google Drive already renders a transcript panel for a Meet recording — speakers, timestamps, the lot. This reads it <b>out of the browser</b>. But a recording with no captions still shows a <b>disabled</b> Transcript button that a <code>find</code> still matches and a click still lands on. So it checks <code>disabled</code> first, and <b>stops</b> rather than hunting a panel that will never open.</p>
+      <p class="not">No OAuth. No video download. No FFmpeg.<br><b>Chrome, logged in, and the DOM.</b></p>
+      <div class="trigger"><span>give it</span>&nbsp;drive.google.com/file/d/…/view</div>
+    </div>
+    <div>
+      <div class="cap">ONE ENTRY · THE PANEL &nbsp;→&nbsp; <b>A .VTT CUE</b></div>
+      <div class="pane">
+        <div class="plbl">IN THE PAGE <span>Google's class names rotate</span></div>
+        <div class="row"><code>&lt;div class="<i>a3Xq</i>"&gt;</code><span class="chip">ENTRY_CLASS</span></div>
+        <div class="row"><code>&nbsp;&nbsp;&lt;div class="<i>p9Kb</i>"&gt;<u>0:08</u>&lt;/div&gt;</code><span class="chip">TIMESTAMP_CLASS</span></div>
+        <div class="row"><code>&nbsp;&nbsp;&lt;div class="<i>w2Lm</i>"&gt;<u>(Amara)</u></code><span class="chip">TEXT_CLASS</span></div>
+        <div class="row"><code>&nbsp;&nbsp;&nbsp;&nbsp;<u>so the migration lands</u> (Amara)&lt;/div&gt;</code></div>
+      </div>
+      <div class="mid"><span class="ar">↓</span> THE THREE CLASSES ARE <b>DISCOVERED PER RUN</b>, NEVER HARDCODED</div>
+      <div class="pane out">
+        <div class="plbl">DOWNLOADED .VTT <span>via a Blob, straight from the tab</span></div>
+        <p class="vtt">WEBVTT<br>Kind: captions<br><br><span class="t">00:00:08.000 --&gt; 00:00:21.000</span><br><span class="v">&lt;v Amara&gt;</span><span class="w">so the migration lands</span></p>
+      </div>
+      <div class="pfoot">SPEAKER LABEL STRIPPED · CUE ENDS AT THE <b>NEXT</b> ENTRY'S START</div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>The transcript is already there</h2>
+  <p>A Google Meet recording on Drive plays in Google's own viewer, and that viewer has a <b>Transcript panel</b>: auto-generated captions, timestamped, with speaker names attached. The whole premise of this skill is that you don't need to get the video out of Google to get the words out of the video. It drives Chrome, reads the panel's DOM, and writes a WebVTT file.</p>
+  <p class="m">What that buys you: <b>no OAuth flow, no Drive API, no download, no FFmpeg, no transcription run</b>. What it costs you: three hard requirements. Chrome MCP has to be connected, you have to be logged into Google in that Chrome with access to the recording, and the recording has to actually have captions.</p>
+
+  <h2>Play it, then pause it</h2>
+  <p>The panel frequently isn't there — or is there and empty — until the video has started. So the flow is: navigate, screenshot, <b>hit play, wait three to five seconds, pause</b>, screenshot again. A login or access-denied screen is a full stop; the skill tells you to sign in rather than trying to work around it.</p>
+
+  <div class="callout"><b>The greyed-out button.</b> A recording with no captions still gets a Transcript bar, and the button in it is <b>disabled</b> — which does <em>not</em> stop a <code>find</code> from matching it or a <code>left_click</code> from landing on it. An agent that trusts the click will sit there retrying and DOM-hunting for a panel that cannot open. The check is explicit and it happens <em>before</em> the click.</div>
+
+  <pre><span class="c">// run this first — the click will lie to you, the property won't</span>
+const t = Array.from(document.querySelectorAll('button'))
+  .find(b =&gt; b.textContent.trim() === 'Transcript');
+JSON.stringify({ found: !!t, disabled: t?.disabled,
+                 ariaDisabled: t?.getAttribute('aria-disabled') });</pre>
+  <p class="m">If <code>disabled</code> is true or <code>aria-disabled</code> is <code>"true"</code>, the browser flow is over: <b>no clicks, no retries, no DOM discovery.</b> There is no Google transcript to extract, and every further step is wasted motion.</p>
+
+  <h2>What it does instead of giving up</h2>
+  <p>Absent captions still leave you a recording full of speech. So the skill hands off: download the file from Drive and run <a href="../skill-transcribe-media/">transcribe-media</a> over it.</p>
+  <pre>skills/transcribe-media/transcribe.sh &lt;downloaded-file&gt; --format vtt</pre>
+  <p class="m">Same output shape, different provenance — the words are there, but the <b>speaker names aren't</b>, because those came from Google, not from the audio. This is a genuine fallback, not an alternative: it only fires when Google's own captions are proven absent.</p>
+
+  <h2>Nothing about the DOM is written down</h2>
+  <p>Google's class names are obfuscated and <b>change periodically</b>, so hardcoding them would produce a skill that works until it silently doesn't. Instead it finds the leaf elements whose whole text matches a timestamp, and reads the entry, timestamp and text class names off the survivors.</p>
+  <p class="m">With one deliberate discard: <b>skip the first two matches.</b> Those are the player's own current-time and duration readouts, not transcript entries. Real entries are the ones whose parent class repeats across many elements.</p>
+  <p>Parsing is equally unglamorous and equally specific. The speaker name arrives in parentheses and <b>repeats inside the same block</b> — it's a label, not speech — so it's captured once, stripped everywhere, and re-emitted as a WebVTT <code>&lt;v&gt;</code> tag. An entry with no name inherits the last speaker seen. Each cue ends where the next one begins; the final cue is padded to <code>59:59</code>.</p>
+
+  <h2>Why the file comes out of the browser, not the tool</h2>
+  <p>The extracted VTT is built in the page and downloaded via a Blob and a synthetic <code>&lt;a download&gt;</code> click, so it lands in your Downloads folder. That's not decoration — returning a long transcript as a JavaScript return value gets it <b>truncated</b>. The Blob route sidesteps the size limit entirely; only a small receipt comes back (entry count, speaker list, filename).</p>
+
+  <h2>The things that go wrong</h2>
+  <ul>
+    <li><b>Very few entries for a long video</b> — the panel lazy-loads. Scroll it, then re-extract.</li>
+    <li><b>Panel opens empty</b> — captions may still be processing on Google's side. Try later.</li>
+    <li><b>Zero timestamp elements found</b> — the DOM has moved. Fall back to reading the panel visually and adapt.</li>
+    <li><b>Wrong or missing speaker names</b> — Meet's speaker detection isn't perfect. The skill doesn't pretend to fix that; you edit the file.</li>
+  </ul>
+  <p class="m">And the boundary: this one is for a recording sitting behind the Drive player. If the video is <b>already on disk</b>, that's <a href="../skill-extract-video-subtitles/">extract-video-subtitles</a>' job, not this one.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

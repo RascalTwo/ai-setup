@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>port-terraform-provider-to-powershell-dsc — the IaC was already on the box</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="port-terraform-provider-to-powershell-dsc">
+<meta name="viz:description" content="Ports a Terraform provider's whole resource surface into PowerShell DSC class resources — Get/Test/Set written by hand, no state file, proven by live drift-and-converge cycles.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c5) 15%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c4) 14%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 472px; gap:36px; align-items:center; padding:54px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:13px;
+            letter-spacing:.13em; color:var(--c5); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--c5);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--c5) 22%, transparent); }
+  h1.hook{ font-size:53px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c5); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 18px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:14.5px; line-height:1.5; color:var(--muted); margin:0 0 18px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--c5);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* PROOF SLOT — the drift-and-converge oracle loop. With no state file there is
+     no plan to read, so the only proof a resource works is Test()'s boolean
+     flipping the right way against a live service. The booleans ARE the argument. */
+  .cap{ font-family:var(--mono); font-size:11.5px; letter-spacing:.1em; color:var(--muted);
+        margin-bottom:10px; white-space:nowrap; }
+  .cap b{ color:var(--c5); }
+  .cyc{ position:relative; display:flex; flex-direction:column; gap:5px; }
+  .cyc::before{ content:""; position:absolute; left:7px; top:14px; bottom:14px; width:2px;
+                background:linear-gradient(180deg, color-mix(in srgb, var(--c5) 55%, var(--border)),
+                                                  color-mix(in srgb, var(--c4) 50%, var(--border))); }
+  .beat{ display:grid; grid-template-columns:16px 1fr; gap:12px; align-items:center; }
+  .beat .node{ width:8px; height:8px; border-radius:50%; background:var(--faint); margin:0 auto; }
+  .row{ display:flex; align-items:baseline; gap:9px; background:color-mix(in srgb, var(--panel) 70%, transparent);
+        border:1px solid var(--border); border-radius:9px; padding:7px 11px; }
+  .row .k{ font-family:var(--mono); font-size:12px; letter-spacing:.06em; color:var(--text); white-space:nowrap; }
+  .row .d{ font-size:12px; color:var(--muted); line-height:1.3; }
+  .row .b{ margin-left:auto; font-family:var(--mono); font-size:11px; letter-spacing:.06em;
+           padding:2px 8px; border-radius:99px; white-space:nowrap; }
+  .beat.act .node{ background:var(--c4); }
+  .beat.act .row .k{ color:var(--c4); }
+  .beat.drift .node{ background:var(--warn); box-shadow:0 0 0 4px color-mix(in srgb, var(--warn) 22%, transparent); }
+  .beat.drift .row{ border-color:color-mix(in srgb, var(--warn) 50%, transparent); }
+  .beat.drift .row .k{ color:var(--warn); }
+  .beat.t .node{ background:var(--good); }
+  .beat.t .row .b{ color:var(--good); background:color-mix(in srgb, var(--good) 13%, transparent);
+                   border:1px solid color-mix(in srgb, var(--good) 42%, transparent); }
+  .beat.f .node{ background:var(--danger); box-shadow:0 0 0 4px color-mix(in srgb, var(--danger) 22%, transparent); }
+  .beat.f .row .b{ color:var(--danger); background:color-mix(in srgb, var(--danger) 13%, transparent);
+                   border:1px solid color-mix(in srgb, var(--danger) 42%, transparent); }
+  .pfoot{ font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; color:var(--faint); margin-top:10px; }
+  .pfoot b{ color:var(--c5); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="port-terraform-provider-to-powershell-dsc" data-viz-id="poster-card" data-label="port-terraform-provider-to-powershell-dsc poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · PORT-TERRAFORM-PROVIDER-TO-POWERSHELL-DSC</div>
+      <h1 class="hook">They banned Terraform.<br><em>The IaC was already<br>on the box.</em></h1>
+      <p class="sub">Windows ships PowerShell + DSC <b>in the box</b> — so a shop that bans Terraform and Ansible can still do IaC with <b>zero install</b>. This ports a mature provider's whole resource surface into <b>one <code>[DscResource()]</code> class per resource</b>: three methods, <b>Get / Test / Set</b>, and the diff logic is yours to write.</p>
+      <p class="not">There is no state file.<br>So: <b>no plan, no prune-on-removal, no dependency graph.</b></p>
+      <div class="trigger"><span>say</span>&nbsp;"port the provider to DSC"</div>
+    </div>
+    <div>
+      <div class="cap">PER RESOURCE, LIVE SERVICE &nbsp;·&nbsp; <b>TEST()</b> IS THE ORACLE</div>
+      <div class="cyc">
+        <div class="beat act">
+          <span class="node"></span>
+          <div class="row"><span class="k">SCAFFOLD</span><span class="d">parents, in its own throwaway realm</span></div>
+        </div>
+        <div class="beat act">
+          <span class="node"></span>
+          <div class="row"><span class="k">CREATE</span><span class="d">Set()</span></div>
+        </div>
+        <div class="beat t">
+          <span class="node"></span>
+          <div class="row"><span class="k">TEST</span><span class="d">reality matches desired</span><span class="b">$true</span></div>
+        </div>
+        <div class="beat drift">
+          <span class="node"></span>
+          <div class="row"><span class="k">DRIFT</span><span class="d">change it out-of-band, behind DSC's back</span></div>
+        </div>
+        <div class="beat f">
+          <span class="node"></span>
+          <div class="row"><span class="k">TEST</span><span class="d">it has to notice</span><span class="b">$false</span></div>
+        </div>
+        <div class="beat act">
+          <span class="node"></span>
+          <div class="row"><span class="k">CONVERGE</span><span class="d">Set() again</span></div>
+        </div>
+        <div class="beat t">
+          <span class="node"></span>
+          <div class="row"><span class="k">TEST</span><span class="d">back in line</span><span class="b">$true</span></div>
+        </div>
+        <div class="beat act">
+          <span class="node"></span>
+          <div class="row"><span class="k">ABSENT</span><span class="d">delete it</span></div>
+        </div>
+        <div class="beat t">
+          <span class="node"></span>
+          <div class="row"><span class="k">TEST</span><span class="d">desired state is "gone"</span><span class="b">$true</span></div>
+        </div>
+      </div>
+      <div class="pfoot">THE ORCHESTRATOR RUNS THIS. <b>"I TESTED IT" IS NOT A PASS.</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>The constraint that makes this lane exist</h2>
+  <p>Two sibling skills point the same Terraform provider at Ansible and at a Kubernetes operator. This one exists for a narrower reason: <b>a hardened Windows shop that bans Terraform and Ansible but allows PowerShell</b>. Nothing needs approving, procuring or installing, because the runtime is already sitting on the machine.</p>
+  <p class="m">Battle-tested on <code>terraform-provider-keycloak</code> v5.8.0 → a <b>101/101 resource surface</b> of class-based DSC resources, proven live against a local Keycloak.</p>
+
+  <h2>Two ways to run the same classes</h2>
+  <ul>
+    <li><b>Windows, in-box:</b> <code>Invoke-DscResource -Method Set</code> — <b>no MOF compile, no LCM service, no install.</b></li>
+    <li><b>Portable, any pwsh 7 (including Linux CI):</b> call the class's <code>Get/Test/Set</code> directly through a tiny factory function — <b>no DSC engine at all</b>. Same classes; the <code>[DscResource()]</code> tag is kept for the Windows path.</li>
+  </ul>
+  <p class="m">The classic <code>Configuration{}</code> + MOF + <code>Start-DscConfiguration</code> + LCM path still exists, and the skill says to <b>avoid it</b>: it runs as SYSTEM, and it's legacy.</p>
+
+  <h2>What you permanently give up</h2>
+  <p>DSC has <b>no state file</b>. That isn't a gap to close later — it's the deal. No plan. No prune-on-removal. No automatic dependency graph. The bundled runner reads a declarative <code>.psd1</code> source-of-truth and loops <b>Test-then-Set in a dependency order you declared yourself</b>. The skill's instruction is to <b>say so on the scorecard</b> rather than let it be discovered.</p>
+
+  <h2>Port, don't invent — but read the Go, not just the schema</h2>
+  <p>A mature provider is years of pre-discovered knowledge; the provider <i>is</i> the spec. But <code>terraform providers schema -json</code> gives you the field <b>surface only</b>. It does not encode the REST path, the HTTP verb, how references resolve, or server-side transforms — those live in the Go and only prove out live.</p>
+  <div class="callout"><b>Two traps that cost real time:</b> session/token lifespans are <b>duration strings in the schema but integer seconds in the API</b> (send a string → 400). Realm roles <b>PUT/DELETE by name, not by <code>/{id}</code></b>. A field named correctly but typed or pathed wrong <b>passes a name audit and fails live.</b></div>
+
+  <h2>Two gates, both executed — never self-reported</h2>
+  <p>The fan-out is parallel family agents, and the skill is blunt about why the gates can't live in their prompts: one "behavioral fix-wave" reported <b>"88/93 green" and had changed nothing</b> — 85k tokens across 11 agents that no-op'd. <b>A gate that lives in a prompt gets gamed; a gate the orchestrator executes cannot.</b></p>
+  <ul>
+    <li><b>Field parity</b> — a deterministic audit comparing each class's <code>[DscProperty]</code> names against the schema's non-computed inputs, excluding TF-only mechanics (<code>import</code>, <code>internal_id</code>, <code>*deletion_protection</code>). Loop until it prints 0 missing. Expect your own hand-built exemplars — the big core resources — to be <b>the guiltiest</b>.</li>
+    <li><b>Behavioral parity</b> — the live cycle on the card, run by the workflow. Only a real green counts.</li>
+  </ul>
+  <p class="m">Agents also never write the shared module: <b>the <code>.psm1</code> must stay a single file</b> (DSC discovery scans it), so families write to per-family scratch files and the orchestrator splices them in. Parallel edits to one file collided in a real build.</p>
+
+  <h2>The ceiling is written down too</h2>
+  <p>Resources that genuinely need absent infrastructure — real LDAP, SMTP, an external IdP, enterprise features — are marked <b>blocked, with the captured error attached</b>, and that ceiling goes in <code>PARITY.md</code> in bold. The two shipped documents are usually the point: <code>PARITY.md</code> (the precise claim, how it was proven, known deltas, the state/plan/prune losses) and <code>EFFORT.md</code> (timeline, LOC, agent and token counts, honest caveats — an AI swarm is not human effort, porting a mature provider is easy mode, and <b>ownership plus CI is the recurring cost</b>).</p>
+  <p class="m">Final verification is a real end-to-end config replayed through the runner on the new module alone, asserting round-2 idempotency: <b>0 changed</b>.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

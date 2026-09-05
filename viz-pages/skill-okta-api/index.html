@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>okta-api — the token never enters the chat</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="okta-api">
+<meta name="viz:description" content="A one-script wrapper for the Okta REST API that keeps the admin token out of every tool call, and greps Okta's 80k-line OpenAPI spec instead of loading it into context.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c5) 15%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c4) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 476px; gap:38px; align-items:center; padding:56px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:58px; line-height:1.04; margin:0 0 20px; letter-spacing:-1.5px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c5); }
+  p.sub{ font-size:19px; line-height:1.46; color:var(--muted); margin:0 0 22px; max-width:540px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  p.sub code{ font-family:var(--mono); font-size:16px; color:var(--text); }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the boundary trace = the "proof" slot. One call, drawn top-to-bottom, with a
+     line across it: everything above is recorded forever, the secret only ever
+     exists below. The argument is which side of that line each string is on. */
+  .cap{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; color:var(--muted); margin-bottom:11px; }
+  .cap b{ color:var(--c5); }
+  .zone{ background:color-mix(in srgb, var(--panel) 74%, transparent); border:1px solid var(--border);
+         border-radius:11px; padding:13px 15px; }
+  .zone .zl{ font-family:var(--mono); font-size:10.5px; letter-spacing:.13em; margin-bottom:9px; }
+  .zone .cmd{ display:block; font-family:var(--mono); font-size:14px; line-height:1.35;
+              color:var(--text); word-break:break-all; }
+  .zone .cmd .k{ color:var(--muted); }
+  .zone .note{ font-size:12px; color:var(--muted); margin-top:7px; line-height:1.35; }
+  /* above the line — public */
+  .zone.open{ border-left:3px solid var(--accent); }
+  .zone.open .zl{ color:var(--accent); }
+  /* below the line — the secret side */
+  .zone.sealed{ border-left:3px solid var(--c5);
+                background:color-mix(in srgb, var(--c5) 8%, color-mix(in srgb, var(--panel) 74%, transparent)); }
+  .zone.sealed .zl{ color:var(--c5); }
+  .zone.sealed .cmd .tok{ color:var(--c4); letter-spacing:.08em; }
+  .bound{ display:flex; align-items:center; gap:11px; margin:11px 0; }
+  .bound .ln{ flex:1; height:0; border-top:2px dashed color-mix(in srgb, var(--c4) 55%, transparent); }
+  .bound .t{ font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; color:var(--c4); white-space:nowrap; }
+  .stack{ display:flex; flex-direction:column; gap:10px; }
+  .pfoot{ font-family:var(--mono); font-size:11px; letter-spacing:.09em; color:var(--faint); margin-top:13px; }
+  .pfoot b{ color:var(--text); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  .dive code{ font-family:var(--mono); font-size:14.5px; color:var(--c5); }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="okta-api" data-viz-id="poster-card" data-label="okta-api poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · OKTA-API</div>
+      <h1 class="hook">The token never<br><em>enters the chat.</em></h1>
+      <p class="sub">Every Okta call goes through one wrapper script. It reads <code>~/.okta/okta.yaml</code> itself and builds the auth header inside <b>curl</b> — so what lands in the tool call, the transcript and your shell history is a <b>method and a path</b>.</p>
+      <p class="not">No SDK. No <b>list-users</b>. You bring the verb and the URL —<br>a grep over Okta's own spec tells you which.</p>
+      <div class="trigger"><span>call</span>&nbsp;okta-api.sh GET /idps</div>
+    </div>
+    <div>
+      <div class="cap">ONE CALL &nbsp;·&nbsp; <b>WHERE THE SECRET ACTUALLY IS</b></div>
+      <div class="stack">
+        <div class="zone open">
+          <div class="zl">WHAT THE AGENT TYPES — RECORDED FOREVER</div>
+          <span class="cmd">scripts/okta-api.sh <span class="k">GET /users/me | jq '.'</span></span>
+          <div class="note">Method, path, optional JSON body. Nothing else fits.</div>
+        </div>
+      </div>
+      <div class="bound"><span class="ln"></span><span class="t">THE TOKEN NEVER CROSSES UP</span><span class="ln"></span></div>
+      <div class="stack">
+        <div class="zone sealed">
+          <div class="zl">ON DISK — THE SCRIPT READS IT, NEVER ECHOES IT</div>
+          <span class="cmd">~/.okta/okta.yaml <span class="k">→</span> orgUrl <span class="k">+</span> <span class="tok">token</span></span>
+          <div class="note">Two keys. You write them once, by hand.</div>
+        </div>
+        <div class="zone sealed">
+          <div class="zl">ON THE WIRE — ASSEMBLED INSIDE THE CURL ARGS</div>
+          <span class="cmd">Authorization: SSWS <span class="tok">••••••••••••••••</span></span>
+          <div class="note">Built at call time. Never printed back.</div>
+        </div>
+      </div>
+      <div class="pfoot">SKIP THE WRAPPER, INLINE THE CURL → IT'S IN THE LOG <b>FOR GOOD</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>The one failure it prevents</h2>
+  <p>An agent that knows curl and knows your Okta token will, sooner or later, write the obvious thing: <code>curl -H "Authorization: SSWS ..."</code>. That command is now permanent. It's in the transcript, in the approval prompt you clicked through, in shell history, in whatever the harness logs. Rotating the token is the only fix, and you have to notice first.</p>
+  <p>So the skill's rule is blunt: <b>always use <code>scripts/okta-api.sh</code> — never inline the token in a curl command.</b> The script takes three positional arguments, pulls <code>orgUrl</code> and <code>token</code> out of <code>~/.okta/okta.yaml</code>, and assembles the header itself. The secret exists in a file and in a subprocess's argument array. It never exists in a string anyone reads back.</p>
+
+  <h2>It is a passthrough, not a client</h2>
+  <p class="m">There are no verbs to learn. There's one script, and the path you give it is appended to <code>&lt;orgUrl&gt;/api/v1</code>:</p>
+  <pre>scripts/okta-api.sh &lt;METHOD&gt; &lt;API_PATH&gt; [JSON_BODY] | jq '.'
+
+scripts/okta-api.sh GET /users/me | jq '.'
+scripts/okta-api.sh DELETE /idps/0oa123abc
+scripts/okta-api.sh POST /groups '{"profile":{"name":"My Group","description":""}}'
+scripts/okta-api.sh PUT /idps/0oa123abc "$(cat body.json)"</pre>
+  <p class="m">Identity providers, users, groups, apps, policies — whatever the REST API exposes, this reaches, because it doesn't model any of them. The cost of that is that you have to know the path.</p>
+
+  <h2>The 80,000-line problem</h2>
+  <p>Okta publishes an official OpenAPI spec (<code>okta/okta-management-openapi-spec</code>), and it is roughly <b>80k lines</b>. Reading it to answer "what shape is an IdP body" would eat the context window that was supposed to hold the actual work.</p>
+  <p>So the second script never loads it. <code>okta-lookup.sh</code> caches the spec at <code>~/.okta/spec-cache/management-minimal.yaml</code> and <b>greps</b> it, returning line numbers:</p>
+  <pre>scripts/okta-lookup.sh "/api/v1/idps"     <span class="c"># paths</span>
+scripts/okta-lookup.sh "IdentityProvider" <span class="c"># schemas</span>
+<span class="c"># then Read the cache file at that offset for full context</span></pre>
+  <p class="m">Grep for the hit, then read a window around it. The cache auto-refreshes when it's older than <b>7 days</b> — which is also the size of the staleness window you're accepting.</p>
+
+  <h2>What it doesn't do</h2>
+  <p>Okta paginates large result sets through <code>Link</code> response headers. The wrapper prints the response <b>body only</b> — so those headers never reach you, and there is no cursor to follow. The skill's answer isn't auto-pagination; it's <b>ask for a bigger page</b>:</p>
+  <pre>scripts/okta-api.sh GET /users?limit=200 | jq '.[].profile.login'</pre>
+  <p class="m">Honest framing: for an org that overflows one page, this skill gets you the first page. Walking the rest is on you.</p>
+
+  <div class="callout"><b>The config is parsed by grep, not by a YAML parser.</b> <code>orgUrl</code> and <code>token</code> are pulled with <code>grep | awk '{print $2}'</code>. Exactly one line of each — a second <code>token:</code> anywhere in the file, even commented differently than expected, concatenates into a credential that can't work. It's a two-key convention wearing a <code>.yaml</code> extension.</div>
+
+  <h2>Setup is deliberately manual</h2>
+  <p>Nothing here mints credentials. You either write <code>~/.okta/okta.yaml</code> by hand with an admin-console token (Security → API → Tokens → Create Token), or run <code>okta login</code> if the Okta CLI happens to be installed. If the file is missing, the script exits with an error pointing at <code>setup.md</code> rather than guessing.</p>
+  <p class="m">Same shape, different vendor: <a href="../skill-ping-api/">ping-api</a> does this for the PingOne Management API.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

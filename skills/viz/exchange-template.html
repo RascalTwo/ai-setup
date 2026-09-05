@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__SLUG__</title>
+<meta name="viz:posture" content="local">
+<meta name="viz:listed" content="unlisted">
+<meta name="viz:title" content="__SLUG__">
+<meta name="viz:description" content="">
+<!-- viz:scaffold — which built-in scaffold generated this page. NOT "what I forked from"
+     (that is --from, which can start from any viz). A --from fork inherits this, correctly:
+     a fork of a deck is still a deck. Keep the line. -->
+<meta name="viz:scaffold" content="exchange">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/exchange.css">
+<style>
+  /* ---- THIS page's vocabulary only ------------------------------------
+     Everything shared lives in /_kit/exchange.css. Put styling here when it
+     carries meaning specific to this exchange — a colour for one actor, a
+     class you attach to one wire with {cls:'…'}. Never add it to the kit:
+     every exchange in every repo shares that file.
+
+     Three kinds of line are worth keeping distinct in panel bodies, because
+     blurring them is how a diagram starts lying:
+       .src   what a specification says, cited
+       .ours  your own inference or deployment choice
+       .dive  a doorway to a page that draws the detail */
+  .src { margin-top:8px; padding-top:7px; border-top:1px solid #22314e;
+         color:#7a8699; font-size:9.5px; line-height:1.45 }
+  .src b { color:#93a4c0; font-weight:700 }
+  .ours { margin-top:7px; padding-left:8px; border-left:1px dashed var(--warn);
+          color:#d9a95c; font-size:9.5px; line-height:1.45 }
+  .ours b { color:var(--warn); text-transform:uppercase; letter-spacing:.04em }
+  .dive { display:block; margin-top:10px; padding:8px 10px; border-radius:7px;
+          background:#151f3a; border:1px solid #3a5288; color:#9fc6ff;
+          font-family:var(--sans); text-decoration:none; font-size:10.5px;
+          line-height:1.4 }
+  .dive:hover { background:#1d2c50; border-color:var(--accent); color:#cfe4ff }
+
+  .panelbox .body { font-size:10.5px; line-height:1.5 }
+  .note { color:#c6d4e8; font-size:10.5px; line-height:1.55 }
+  .note b { color:#fff }
+  .note code, .body code { font-family:var(--mono); font-size:9.5px; color:#7fd7ff }
+
+  /* An empty panel is scaffolding the reader should not see. ONE RULE PER ID —
+     a single combined `:has()` selector latches in Chrome and stops
+     re-evaluating when the runtime rewrites `.body`. Add an id per panel. */
+  /* #p-one,#p-two { transition:opacity .35s ease }
+     #p-one:has(.body:empty) { opacity:0 }
+     #p-two:has(.body:empty) { opacity:0 } */
+</style>
+</head>
+<body>
+<!-- Content lives entirely in content.js; this file only bolts it to the shared
+     runtime and holds this page's own styling. See /_kit/EXCHANGE.md for the
+     data shape, and run check-exchange.mjs before opening a browser. -->
+<script type="module">
+  import { mount } from '/_kit/exchange.js';
+  import content from './content.js';
+  mount(content);
+</script>
+</body>
+</html>

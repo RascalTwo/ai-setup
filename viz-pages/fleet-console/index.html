@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>fleet console</title>
+<!-- Publish posture — the SOLE source of truth for build.ts. Default "local" = stays
+     on this machine, never published. Change to "public" (open web) or "private"
+     (magic-link sealed) ONLY when you intend to share this viz. -->
+<meta name="viz:posture" content="local">
+<meta name="viz:listed" content="unlisted">
+<meta name="viz:title" content="fleet console">
+<meta name="viz:description" content="Mobile control panel for the herdr session fleet.">
+<!-- NEVER publish this one. It is a control surface for sessions running
+     --dangerously-skip-permissions, and an api-backed viz publishes as a recorded
+     tape — which would bake real session labels and messages into a public page. -->
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<style>
+  /* Mobile-first: used one-handed on a phone, so every target clears 44px and
+     nothing depends on hover. Desktop gets a wider column of the same layout. */
+  body { margin: 0; padding: 0 12px calc(16px + env(safe-area-inset-bottom)); }
+  .wrap { max-width: 620px; margin: 0 auto; }
+
+  header.bar { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 12px 0 0; }
+  .titlerow { display: flex; align-items: baseline; gap: 10px; }
+  .titlerow h1 { font-size: 17px; margin: 0; letter-spacing: .3px; }
+  .titlerow .age { margin-left: auto; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .tabs { display: flex; gap: 6px; margin-top: 10px; border-bottom: 1px solid var(--border); }
+  .tabs button {
+    flex: 1; min-height: 44px; background: none; border: 0; border-bottom: 2px solid transparent;
+    color: var(--muted); font: inherit; font-size: 14px; cursor: pointer;
+  }
+  .tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+  .view[hidden] { display: none; }
+
+  /* ---- fleet view ---- */
+  .counts { display: flex; gap: 8px; margin-top: 12px; }
+  .count { flex: 1; text-align: center; padding: 8px 4px; border-radius: 10px; background: var(--panel); border: 1px solid var(--border); }
+  .count b { display: block; font-size: 22px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .count span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+  .count.attn b { color: var(--danger); } .count.done b { color: var(--good); } .count.idle b { color: var(--muted); }
+
+  .cards { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+  .sess { border: 1px solid var(--border); border-left-width: 4px; border-radius: 10px; background: var(--panel); padding: 11px 12px; }
+  .sess.attn { border-left-color: var(--danger); }
+  .sess.done { border-left-color: var(--good); }
+  .sess.work { border-left-color: var(--accent); }
+  .sess .top { display: flex; align-items: center; gap: 8px; }
+  .sess .label { font-weight: 600; font-size: 15px; }
+  .sess .when { margin-left: auto; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .sess .title { font-size: 13px; color: var(--muted); margin-top: 3px; line-height: 1.35; }
+  .sess .cta { margin-top: 7px; font-size: 13px; font-weight: 600; color: var(--danger); }
+  .sess.done .cta { color: var(--good); }
+
+  /* ---- manager view ---- */
+  .mgr { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; color: var(--muted); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+  .dot.ok { background: var(--good); } .dot.warn { background: var(--warn); } .dot.dead { background: var(--danger); }
+  .mgr .grow { flex: 1; }
+  .mgrbtns { display: flex; gap: 8px; margin-top: 10px; }
+  .mgrbtns .mini { flex: 1; min-height: 40px; }
+  .mini.danger { color: var(--danger); border-color: var(--danger); }
+  .mini { min-height: 34px; padding: 0 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+
+  .chat { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .chat:empty::before {
+    content: "Ask what's happening, or tell a session what to do.\A Dictate with the mic key on your keyboard.";
+    white-space: pre-line; color: var(--muted); font-size: 13px; text-align: center; padding: 32px 16px; line-height: 1.6;
+  }
+  .msg { border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .msg.me { background: var(--accent); color: #06121f; align-self: flex-end; max-width: 85%; font-weight: 500; }
+  .msg.them { background: var(--panel); border: 1px solid var(--border); align-self: flex-start; max-width: 95%; }
+  .msg.sys { align-self: center; color: var(--muted); font-size: 12px; background: none; padding: 2px; }
+  .msg.sys.stuck { color: var(--danger); }
+
+  .composer { display: flex; gap: 8px; margin-top: 12px; position: sticky; bottom: 0; background: var(--bg); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); }
+  .composer textarea {
+    flex: 1; min-height: 46px; max-height: 140px; resize: none; padding: 12px;
+    border: 1px solid var(--border); border-radius: 10px; background: var(--panel);
+    color: var(--text); font: inherit; font-size: 16px; /* 16px stops iOS zoom-on-focus */
+  }
+  .composer button { min-width: 64px; min-height: 46px; border: 1px solid var(--border); border-radius: 10px; background: var(--accent); color: #06121f; font: inherit; font-weight: 600; cursor: pointer; }
+  .composer button:disabled { background: var(--panel); color: var(--muted); }
+
+  /* Full-screen on a phone: a long agent message is unreadable in a card, and
+     the whole point of tapping through is to actually read the thing. */
+  .sheet {
+    position: fixed; inset: 0; z-index: 20; background: var(--bg);
+    display: flex; flex-direction: column; padding: 0 12px calc(8px + env(safe-area-inset-bottom));
+  }
+  .sheet[hidden] { display: none; }
+  .sheethdr { display: flex; align-items: center; gap: 10px; padding: 12px 0 10px; border-bottom: 1px solid var(--border); }
+  .sheethdr .back { min-width: 44px; min-height: 44px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); color: var(--text); font: inherit; font-size: 18px; cursor: pointer; }
+  .sheethdr .who { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sheethdr .st { margin-left: auto; font-size: 12px; color: var(--muted); flex: none; }
+  .smsg { flex: 1; overflow-y: auto; padding: 12px 0; font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .smsg .none { color: var(--muted); font-style: italic; }
+  .squick { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 8px; }
+  .squick button { min-height: 36px; padding: 0 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--panel); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+  .sess { cursor: pointer; }
+
+  /* The viz review layer is an authoring aid; on a phone its floating button
+     sits exactly on top of Send. This page is a control panel, not a viz to be
+     reviewed, so it's hidden here rather than worked around. */
+  #viz-comments, .vc-toggle { display: none !important; }
+
+  .smsg h4 { margin: 14px 0 4px; font-size: 14px; color: var(--accent); }
+  .smsg pre.code { background: #000; border: 1px solid var(--border); border-radius: 8px;
+                   padding: 9px 10px; font-size: 12px; overflow-x: auto; margin: 8px 0; white-space: pre; }
+
+  .quiet { color: var(--muted); font-size: 13px; text-align: center; padding: 22px 0; }
+  .err { border: 1px solid var(--danger); border-radius: 10px; padding: 11px 12px; color: var(--danger); font-size: 13px; margin-top: 14px; }
+  pre.tail { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 11px; overflow-x: auto; color: var(--muted); }
+
+  footer.acts { display: flex; gap: 10px; margin-top: 14px; }
+  footer.acts a, footer.acts button.f {
+    flex: 1; min-height: 44px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); border-radius: 10px; background: var(--panel);
+    color: var(--text); font: inherit; font-size: 14px; text-decoration: none; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="bar">
+    <div class="titlerow">
+      <h1>fleet console</h1>
+      <div class="age" id="age">…</div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button id="tab-mgr"   role="tab" aria-selected="true"  aria-controls="view-mgr">Manager</button>
+      <button id="tab-fleet" role="tab" aria-selected="false" aria-controls="view-fleet">Fleet</button>
+    </div>
+  </header>
+
+  <section class="view" id="view-mgr" role="tabpanel">
+    <div class="mgr">
+      <span class="dot" id="mdot"></span>
+      <span id="mstat">checking…</span>
+      <span class="grow"></span>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer">
+        <input type="checkbox" id="tts" checked> speak
+      </label>
+    </div>
+    <div class="mgrbtns">
+      <button class="mini" id="showpane" type="button">Pane</button>
+      <button class="mini" id="clear" type="button">Clear</button>
+      <button class="mini" id="power" type="button">…</button>
+    </div>
+    <div id="mextra"></div>
+    <div class="chat" id="chat"></div>
+    <div class="composer">
+      <textarea id="box" rows="1" placeholder="Ask the manager…"></textarea>
+      <button id="send" type="button">Send</button>
+    </div>
+  </section>
+
+  <section class="view" id="view-fleet" role="tabpanel" hidden>
+    <div class="counts" id="counts"></div>
+    <div class="cards" id="cards"></div>
+    <div id="err"></div>
+    <footer class="acts">
+      <!-- The escape hatch. ttyd is already tailnet-served at the root, and it
+           does "show me the raw pane" better than anything rebuilt here. -->
+      <a href="/" target="_blank" rel="noopener">Open terminal</a>
+      <button class="f" id="refresh" type="button">Refresh</button>
+    </footer>
+  </section>
+
+  <section class="sheet" id="sheet" hidden>
+    <div class="sheethdr">
+      <button class="back" id="sback" type="button" aria-label="Back">&larr;</button>
+      <span class="who" id="swho"></span>
+      <span class="st" id="sst"></span>
+    </div>
+    <div class="smsg" id="smsg"></div>
+    <div class="squick">
+      <button type="button" data-fill="Continue.">Continue</button>
+      <button type="button" data-fill="Yes, go ahead.">Yes, go ahead</button>
+      <button type="button" data-fill="Stop and tell me what you found.">Stop &amp; report</button>
+      <button type="button" id="spane">Raw pane</button>
+    </div>
+    <div class="composer">
+      <textarea id="sbox" rows="1" placeholder="Reply to this session…"></textarea>
+      <button id="ssend" type="button">Send</button>
+    </div>
+  </section>
+
+</div>
+
+<script type="module">
+  import { $, esc } from "/_kit/viz.js";
+
+  /* ============================ fleet view ============================ */
+
+  const POLL_MS = 5000;
+  let lastOk = null;
+
+  // Two independent state sources that disagree sometimes, and the disagreement
+  // is information — `signal` is the session's own hook (authoritative but null
+  // for non-Claude panes), `herdr_status` is herdr matching text on screen.
+  //
+  // `idle_prompt` is emitted by every Claude session sitting at its prompt, so
+  // treating it as attention marks the whole fleet urgent and the counts stop
+  // meaning anything. Age separates them: a finish 30s ago is news, the same
+  // finish four hours ago has already been seen. A genuine block or question is
+  // urgent at any age — nobody stops needing an answer.
+  const FRESH_S = 1800;
+  const fresh = (p) => p.reported_age_s != null && p.reported_age_s < FRESH_S;
+  const BLOCKING = new Set(["permission_prompt", "agent_needs_input"]);
+
+  const classOf = (p) =>
+    BLOCKING.has(p.signal) || p.herdr_status === "blocked" ? "attn"
+    : p.herdr_status === "done" || (p.signal === "idle_prompt" && fresh(p)) ? "done"
+    : p.herdr_status === "working" ? "work"
+    : "idle";
+
+  // "not looked at yet" is herdr's OWN meaning for `done` — it flips to `idle`
+  // once the pane has been viewed. It is NOT a claim this app gets to make about
+  // a session that merely finished a turn recently.
+  const ctaOf = (p) =>
+    p.signal === "permission_prompt" ? "Waiting on your approval"
+    : p.signal === "agent_needs_input" ? "Asking you a question"
+    : p.herdr_status === "blocked" ? "Blocked — needs a ruling"
+    : p.herdr_status === "done" ? "Finished — not looked at yet"
+    : classOf(p) === "done" ? "Just finished"
+    : "";
+
+  // `reported_age_s` is the only field separating "just finished" from "idle
+  // since breakfast". null means a pane with no hook state at all — pre-hooks or
+  // non-Claude — which is NOT the same as a silent one, so say so.
+  function age(s) {
+    if (s == null) return "no hook";
+    if (s < 60) return `${Math.round(s)}s`;
+    if (s < 3600) return `${Math.round(s / 60)}m`;
+    return `${Math.round(s / 3600)}h`;
+  }
+
+  function renderFleet(panes) {
+    const g = { attn: [], done: [], work: [], idle: [] };
+    for (const p of panes) g[classOf(p)].push(p);
+
+    $("#counts").innerHTML = [
+      ["attn", g.attn.length, "need you"],
+      ["done", g.done.length, "done"],
+      ["idle", g.idle.length + g.work.length, "quiet"],
+    ].map(([k, n, l]) => `<div class="count ${k}"><b>${n}</b><span>${l}</span></div>`).join("");
+
+    // Idle panes get a count and nothing else — you asked so you would not have
+    // to read ten panes.
+    const shown = [...g.attn, ...g.done, ...g.work];
+    $("#cards").innerHTML = shown.length === 0
+      ? `<div class="quiet">Nothing wants you.<br>${g.idle.length} session${g.idle.length === 1 ? "" : "s"} idle.</div>`
+      : shown.map((p) => {
+          const label = p.label ?? p.pane, cta = ctaOf(p);
+          return `<div class="sess ${classOf(p)}" data-pane="${esc(p.pane)}" data-viz-id="sess-${esc(p.session ?? p.pane)}" data-label="${esc(label)}">
+            <div class="top"><span class="label">${esc(label)}</span><span class="when">${esc(age(p.reported_age_s))}</span></div>
+            <div class="title">${esc(p.title ?? "")}</div>
+            ${cta ? `<div class="cta">${esc(cta)}</div>` : ""}
+          </div>`;
+        }).join("");
+  }
+
+  /* ------------------------ one session, in full ------------------------ */
+
+  // What the sheet was rendered against. `at` is the session's Stop mtime when
+  // you opened it — if that has moved by the time you hit Send, the thing you
+  // were answering is gone. See /tell.
+  let sheet = null;
+
+  async function openSession(pane) {
+    $("#sheet").hidden = false;
+    $("#swho").textContent = "…"; $("#sst").textContent = "";
+    $("#smsg").innerHTML = `<div class="none">loading…</div>`;
+    try {
+      const r = await fetch(`api/session?pane=${encodeURIComponent(pane)}`, { signal: AbortSignal.timeout(10000) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? `HTTP ${r.status}`);
+      sheet = { pane, at: d.at };
+      $("#swho").textContent = d.label ?? d.pane;
+      $("#sst").textContent = `${d.herdr_status}${d.signal ? ` · ${d.signal}` : ""} · ${age(d.reported_age_s)}`;
+      $("#smsg").innerHTML = d.text?.trim()
+        ? md(d.text)
+        : `<div class="none">This session hasn't said anything the hooks captured — it may predate them, or not be a Claude session. Try Raw pane.</div>`;
+      $("#smsg").scrollTop = 0;
+    } catch (e) {
+      $("#smsg").innerHTML = `<div class="err">${esc(e.message)}</div>`;
+    }
+  }
+
+  // Agent messages are markdown, and raw ##/**/``` is noise to read on a phone.
+  // This escapes FIRST and only then adds tags, so nothing in a session's output
+  // can inject markup — the input here is agent-generated and untrusted.
+  function md(text) {
+    const out = [];
+    for (const block of esc(text).split(/```/)) {
+      if (out.length % 2) { out.push(`<pre class="code">${block.replace(/^\w*\n/, "")}</pre>`); continue; }
+      out.push(block
+        .replace(/\n*^#{1,6}\s*(.+)$\n?/gm, "<h4>$1</h4>")   // eat surrounding blank lines: pre-wrap keeps them
+        .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+        .replace(/`([^`\n]+)`/g, "<code>$1</code>"));
+    }
+    return out.join("");
+  }
+
+  const closeSheet = () => { $("#sheet").hidden = true; sheet = null; $("#sbox").value = ""; };
+  $("#sback").addEventListener("click", closeSheet);
+
+  for (const b of document.querySelectorAll(".squick button[data-fill]")) {
+    // Fill the box rather than sending. These are shortcuts past typing, not
+    // blind keystrokes into a session running --dangerously-skip-permissions.
+    b.addEventListener("click", () => { $("#sbox").value = b.dataset.fill; $("#sbox").focus(); });
+  }
+
+  $("#spane").addEventListener("click", async () => {
+    if (!sheet) return;
+    $("#smsg").innerHTML = `<div class="none">reading pane…</div>`;
+    try {
+      const r = await fetch(`api/pane?pane=${encodeURIComponent(sheet.pane)}`, { signal: AbortSignal.timeout(15000) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? `HTTP ${r.status}`);
+      $("#smsg").innerHTML = `<pre class="tail">${esc(d.tail)}</pre>`;
+    } catch (e) { $("#smsg").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  });
+
+  async function tellSession(force = false) {
+    const text = $("#sbox").value.trim();
+    if (!sheet || !text) return;
+    const btn = $("#ssend"); btn.disabled = true;
+    try {
+      const r = await fetch("api/tell", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ pane: sheet.pane, text, expect: sheet.at, force }),
+        signal: AbortSignal.timeout(15000),
+      });
+      const d = await r.json();
+      if (d.moved) {
+        // Don't silently send into a changed session, and don't silently drop
+        // it either — hand the decision over.
+        btn.textContent = "Send anyway";
+        btn.onclick = () => { btn.onclick = null; btn.textContent = "Send"; tellSession(true); };
+        $("#sst").textContent = "moved on since you looked";
+        return;
+      }
+      if (!r.ok) throw new Error(d.error ?? `HTTP ${r.status}`);
+      $("#sbox").value = "";
+      $("#sst").textContent = "sent";
+      setTimeout(() => openSession(sheet.pane), 1500);
+    } catch (e) { $("#sst").textContent = e.message; }
+    finally { btn.disabled = false; }
+  }
+  $("#ssend").addEventListener("click", () => tellSession(false));
+
+  async function tickFleet() {
+    try {
+      const r = await fetch("api/state", { signal: AbortSignal.timeout(8000) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? `HTTP ${r.status}`);
+      renderFleet(d.panes);
+      lastOk = Date.now();
+      $("#err").innerHTML = "";
+    } catch (e) {
+      // Never let a failed poll look like a calm fleet.
+      $("#err").innerHTML = `<div class="err">Can't reach the fleet — ${esc(e.message)}</div>`;
+    }
+    $("#age").textContent = lastOk ? `${age((Date.now() - lastOk) / 1000)} ago` : "never";
+  }
+
+  /* ========================== manager channel ========================== */
+
+  const chat = $("#chat");
+  let waiting = false;
+
+  const say = (cls, text) => {
+    const d = document.createElement("div");
+    d.className = `msg ${cls}`;
+    d.textContent = text;
+    chat.append(d);
+    d.scrollIntoView({ block: "end" });
+    return d;
+  };
+
+  // Android/iOS block speech that isn't tied to a user gesture. The reply
+  // arrives seconds after the tap, so the synth is primed on the tap itself
+  // with a silent utterance — otherwise the first spoken reply is swallowed.
+  function primeTTS() {
+    if (!$("#tts").checked || !window.speechSynthesis) return;
+    const u = new SpeechSynthesisUtterance("");
+    u.volume = 0;
+    speechSynthesis.speak(u);
+  }
+
+  function speak(reply) {
+    if (!$("#tts").checked || !window.speechSynthesis) return;
+    // The overlay is optional by design: the Stop file is hook-written and can't
+    // be forgotten, this one is manager-written and can be. Falling back to the
+    // opening of the text beats going silent.
+    const words = reply.speech ?? reply.text.split(/(?<=[.!?])\s+/).slice(0, 3).join(" ");
+    if (!words.trim()) return;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(new SpeechSynthesisUtterance(words.slice(0, 600)));
+  }
+
+  async function refreshManager() {
+    try {
+      const r = await fetch("api/manager", { signal: AbortSignal.timeout(8000) });
+      const m = await r.json();
+      if (!r.ok) throw new Error(m.error ?? `HTTP ${r.status}`);
+
+      if (!m.found) {
+        $("#mdot").className = "dot dead";
+        $("#mstat").textContent = "stopped";
+        $("#mextra").innerHTML = "";
+        setPower("start");
+        return;
+      }
+      $("#mextra").innerHTML = "";
+      setPower("stop", m.herdr_status === "working");
+
+      // Heartbeat, not a guess. `reported_age_s` is when the session last wrote
+      // hook state; a manager that has said nothing for a long time is the
+      // "alive but wedged" case, which nothing else can detect.
+      const s = m.reported_age_s;
+      const stale = s == null || s > 3600;
+      $("#mdot").className = `dot ${m.focused ? "warn" : stale ? "warn" : "ok"}`;
+      $("#mstat").textContent = m.focused
+        ? "you are in that pane — type there"
+        : `last active ${age(s)} ago`;
+    } catch (e) {
+      $("#mdot").className = "dot dead";
+      $("#mstat").textContent = e.message;
+    }
+  }
+
+  // One button whose label is the state. Stopping mid-turn would discard work,
+  // so that case takes two taps — but it is never *blocked*, because a wedged
+  // manager also reads as "working" and that is exactly when you need to kill it.
+  let powerMode = "start", armed = false, armedTimer = null;
+  function setPower(mode, working = false) {
+    powerMode = mode;
+    const b = $("#power");
+    if (armed) return;
+    b.textContent = mode === "start" ? "Start manager" : working ? "Stop (busy)" : "Stop";
+    b.className = mode === "start" ? "mini" : "mini danger";
+  }
+  $("#power").addEventListener("click", async () => {
+    const b = $("#power");
+    if (powerMode === "start") return spawn();
+    if (!armed) {
+      armed = true; b.textContent = "Stop — tap again"; b.className = "mini danger";
+      clearTimeout(armedTimer);
+      armedTimer = setTimeout(() => { armed = false; setPower(powerMode); }, 4000);
+      return;
+    }
+    armed = false; clearTimeout(armedTimer);
+    const note = say("sys", "stopping the manager…");
+    try {
+      const r = await fetch("api/stop", { method: "POST", signal: AbortSignal.timeout(20000) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? `HTTP ${r.status}`);
+      note.textContent = d.alreadyStopped ? "already stopped"
+        : d.wasWorking ? "stopped — it was mid-turn" : "stopped";
+    } catch (e) { note.className = "msg sys stuck"; note.textContent = `stop failed — ${e.message}`; }
+    refreshManager();
+  });
+
+  async function spawn() {
+    const note = say("sys", "spawning a manager…");
+    try {
+      const r = await fetch("api/spawn", { method: "POST", signal: AbortSignal.timeout(60000) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? `HTTP ${r.status}`);
+      note.textContent = d.adopted ? "adopted the existing manager" : d.landed
+        ? "manager started" : "manager started but the prompt may not have landed — check the pane";
+      refreshManager();
+    } catch (e) { note.className = "msg sys stuck"; note.textContent = `spawn failed — ${e.message}`; }
+  }
+
+  async function send() {
+    const box = $("#box"), text = box.value.trim();
+    if (!text || waiting) return;
+    primeTTS();
+    box.value = "";
+    say("me", text);
+    waiting = true; $("#send").disabled = true;
+    const status = say("sys", "sent…");
+
+    try {
+      const r = await fetch("api/say", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text }), signal: AbortSignal.timeout(15000),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? `HTTP ${r.status}`);
+
+      // Poll for the manager's Stop hook to advance. herdr reporting success
+      // means it *typed*, not that the session received anything — a new Stop
+      // file is the only honest proof a turn actually happened.
+      const deadline = Date.now() + 90_000;
+      while (Date.now() < deadline) {
+        await new Promise((r2) => setTimeout(r2, 2000));
+        const rr = await fetch(`api/reply?since=${d.since}`, { signal: AbortSignal.timeout(8000) });
+        const dd = await rr.json();
+        if (dd.reply) {
+          status.remove();
+          say("them", dd.reply.text);
+          speak(dd.reply);
+          return;
+        }
+        status.textContent = dd.status === "working" ? "thinking…" : "sent…";
+      }
+      status.className = "msg sys stuck";
+      status.textContent = "no reply in 90s — it may not have landed. Tap Pane to look.";
+    } catch (e) {
+      status.className = "msg sys stuck";
+      status.textContent = `failed — ${e.message}`;
+    } finally { waiting = false; $("#send").disabled = false; refreshManager(); }
+  }
+
+  $("#showpane").addEventListener("click", async () => {
+    const note = say("sys", "reading pane…");
+    try {
+      const r = await fetch("api/pane", { signal: AbortSignal.timeout(15000) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? `HTTP ${r.status}`);
+      note.className = "msg them";
+      note.innerHTML = `<pre class="tail">${esc(d.tail)}</pre>`;
+    } catch (e) { note.className = "msg sys stuck"; note.textContent = e.message; }
+  });
+
+  // Clears the VIEW only — the manager's conversation is untouched, and the
+  // pane still holds the real history. This is for dismissing a pane dump or a
+  // wall of earlier replies on a small screen, not for resetting the session.
+  $("#clear").addEventListener("click", () => {
+    chat.innerHTML = "";
+    window.speechSynthesis?.cancel();
+  });
+
+  $("#send").addEventListener("click", send);
+  $("#box").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); send(); }
+  });
+
+  /* ============================== chrome ============================== */
+
+  for (const [btn, view] of [["#tab-mgr", "#view-mgr"], ["#tab-fleet", "#view-fleet"]]) {
+    $(btn).addEventListener("click", () => {
+      for (const [b, v] of [["#tab-mgr", "#view-mgr"], ["#tab-fleet", "#view-fleet"]]) {
+        const on = b === btn;
+        $(b).setAttribute("aria-selected", String(on));
+        $(v).hidden = !on;
+      }
+    });
+  }
+
+  $("#cards").addEventListener("click", (e) => {
+    const card = e.target.closest(".sess");
+    if (card?.dataset.pane) openSession(card.dataset.pane);
+  });
+
+  $("#refresh").addEventListener("click", tickFleet);
+  setInterval(tickFleet, POLL_MS);
+  setInterval(refreshManager, 15000);
+  setInterval(() => { if (lastOk) $("#age").textContent = `${age((Date.now() - lastOk) / 1000)} ago`; }, 1000);
+  tickFleet(); refreshManager();
+</script>
+</body>
+</html>

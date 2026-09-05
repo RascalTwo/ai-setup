@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tldraw-canvas — the read says clean, the label still overlaps</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="tldraw-canvas">
+<meta name="viz:description" content="Reads and edits a tldraw whiteboard over the sync server's agent API or through Chrome, planning the layout first and verifying it against two separate oracles.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c5) 15%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c4) 14%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 486px; gap:36px; align-items:center; padding:56px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:53px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c5); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 18px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the truth matrix = the "proof" slot. Two questions × two oracles; the answer
+     is the DIAGONAL, and the off-diagonal is where the skill's bugs come from. */
+  .cap{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; color:var(--muted); margin-bottom:12px; }
+  .cap b{ color:var(--accent); }
+  .mx{ display:grid; grid-template-columns:96px 1fr 1fr; gap:8px; }
+  .mx .rh{ font-family:var(--mono); font-size:11.5px; letter-spacing:.06em; color:var(--text);
+           align-self:center; line-height:1.35; }
+  .mx .rh s{ display:block; color:var(--faint); text-decoration:none; font-size:10.5px; letter-spacing:.1em; }
+  .ch{ font-family:var(--mono); font-size:12.5px; letter-spacing:.09em; padding-bottom:2px; }
+  .ch s{ display:block; text-decoration:none; font-size:10.5px; color:var(--faint); letter-spacing:.06em; margin-top:3px; }
+  .ch.rec{ color:var(--c4); } .ch.tab{ color:var(--c5); }
+  .cell{ border-radius:11px; padding:11px 12px; font-size:12.5px; line-height:1.38; color:var(--muted);
+         background:color-mix(in srgb, var(--panel) 70%, transparent); border:1px solid var(--border); }
+  .cell .m{ display:block; font-family:var(--mono); font-size:12px; letter-spacing:.06em; margin-bottom:5px; }
+  .cell.yes{ border-color:color-mix(in srgb, var(--good) 48%, transparent);
+             background:color-mix(in srgb, var(--good) 10%, transparent); color:var(--text); }
+  .cell.yes .m{ color:var(--good); }
+  .cell.no{ border-style:dashed; }
+  .cell.no .m{ color:var(--danger); }
+  .pfoot{ font-family:var(--mono); font-size:11px; letter-spacing:.09em; color:var(--faint); margin-top:12px; }
+  .pfoot b{ color:var(--text); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  table.diff{ width:100%; border-collapse:collapse; margin:0 0 16px; font-size:14.5px; }
+  table.diff th, table.diff td{ text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); }
+  table.diff thead th{ font-family:var(--mono); font-size:12px; letter-spacing:.1em; }
+  table.diff thead th.h{ color:var(--c4); } table.diff thead th.b{ color:var(--c5); }
+  table.diff td:first-child{ color:var(--muted); }
+  table.diff td{ color:var(--text); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="tldraw-canvas" data-viz-id="poster-card" data-label="tldraw-canvas poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · TLDRAW-CANVAS</div>
+      <h1 class="hook">The read says clean.<br><em>The label still<br>overlaps.</em></h1>
+      <p class="sub">Draws on a real whiteboard — boxes, sticky notes, arrows, frames — over the sync server's agent API, or through Chrome when the board hasn't got one. But an authoritative read just <b>echoes back the x/y/w you asked for</b>, so text that overflowed its box comes back perfectly clean. Layout has exactly one oracle, and it isn't the records.</p>
+      <p class="not">It won't guess a board URL.<br>It won't delete a shape <b>it didn't draw</b>.</p>
+      <div class="trigger"><span>say</span>&nbsp;"draw this on tldraw"</div>
+    </div>
+    <div>
+      <div class="cap">VERIFY &nbsp;·&nbsp; TWO ORACLES, <b>NEVER COLLAPSED</b></div>
+      <div class="mx">
+        <div></div>
+        <div class="ch rec">THE RECORDS<s>GET /agent/room/:roomId</s></div>
+        <div class="ch tab">THE TAB<s>a screenshot</s></div>
+
+        <div class="rh">DOES IT<br>EXIST?<s>presence</s></div>
+        <div class="cell yes"><span class="m">✓ SOURCE OF TRUTH</span>Every shape present, every arrow carrying <b>two</b> bindings.</div>
+        <div class="cell no"><span class="m">✗ NEVER THIS ORACLE</span>A hidden tab defers incoming sync — it calls a shape missing long after the write landed.</div>
+
+        <div class="rh">DOES IT<br>FIT?<s>layout</s></div>
+        <div class="cell no"><span class="m">✗ PROVES NOTHING</span>It echoes back the numbers you sent. On HTTP nothing measured the text at all.</div>
+        <div class="cell yes"><span class="m">✓ THE ONLY PROOF</span>Anything text-heavy gets a screenshot — including over HTTP.</div>
+      </div>
+      <div class="pfoot">RECORDS FOR <b>WHAT EXISTS</b> &nbsp;·&nbsp; PIXELS FOR <b>HOW IT LAYS OUT</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;HOW IT DRAWS</div>
+
+<div class="dive">
+  <h2>Pick the transport before anything else</h2>
+  <p>Two ways to reach a board, and the choice comes first because the two differ in <b>what you write and what you can do</b>, not just in how you send it. Direct HTTP is preferred: faster, works on boards nobody has open, and it hands back an authoritative read to verify against.</p>
+  <pre>Does the board's sync server expose the agent API?
+├─ yes, or TLDRAW_SYNC_URL is already set  →  HTTP
+└─ no  (tldraw.com, or a deployment without those routes)
+                                          →  Chrome MCP</pre>
+  <p class="m">In order: <code>TLDRAW_SYNC_URL</code> set → HTTP. A board on <b>tldraw.com</b> → browser, because tldraw.com has no agent API — say so rather than guessing at endpoints. Self-hosted → ask or probe. Nothing known → <b>ask</b>. Don't guess a URL, and don't reuse one from a previous session.</p>
+
+  <table class="diff">
+    <thead><tr><th></th><th class="h">HTTP</th><th class="b">BROWSER</th></tr></thead>
+    <tbody>
+      <tr><td>Needs a tab open</td><td>no</td><td>yes</td></tr>
+      <tr><td>Records you write</td><td>complete</td><td>partials + helpers</td></tr>
+      <tr><td>Text auto-sizing</td><td>no — explicit <code>w</code>/<code>h</code></td><td>yes</td></tr>
+      <tr><td>Camera / <code>zoomToFit</code></td><td>no</td><td>yes</td></tr>
+      <tr><td>Image export</td><td>no</td><td>yes</td></tr>
+      <tr><td>Who else is watching</td><td><code>viewers</code> count</td><td>unavailable</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Plan the layout before placing a single shape</h2>
+  <p>Anything over ~5 shapes gets a plan written out <em>in the response</em> first: <b>grid coordinates</b> for every shape, <b>arrow routes</b> as source/target pairs with one question each — does this path cross another shape's bounding box? — and a <b>whitespace budget</b> where shapes don't touch, arrow lanes get a shape-width of clearance, and children stay inside their frame's bounds.</p>
+  <p class="m">Sizing is a heuristic, not a measurement: a 2-line rectangle wants 260×110, a diamond with 2+ lines 320×200, an arrow carrying a 2-word label needs ≥300px of free path. On HTTP that is the <b>only</b> sizing you get.</p>
+  <div class="callout"><b>The failure mode isn't forgetting the check — it's writing it out and not applying it.</b> The skill says so in as many words, then tells you to actually run the arithmetic against your own numbers.</div>
+  <p><b>Background furniture</b> — gridlines, bands, axis rules, backdrops — is bounded by the content region it annotates, <b>never</b> by the layout's total extent. It underlaps content by design, so the overlap check above reads clean and tells you nothing about it. Get it wrong and a chart's deadline line runs straight down through the legend prose sitting below the chart.</p>
+
+  <h2>Every id it writes starts with <code>shape:ai-</code></h2>
+  <p>That prefix is the safety boundary: cleanup targets only the skill's own work, never the user's. And the ids are <b>derived deterministically</b> — from position, or from the source record they represent — rather than from a counter that restarts each run.</p>
+  <p class="m">Which buys re-rendering. A board generated by a script can be re-run as an overwrite in place, and the delete sweep fires only on shapes that genuinely went away — so a rebuild that shifts <em>every</em> shape on the page still comes back <code>put 409, delete 0</code>.</p>
+
+  <h2>Two oracles, and the arithmetic nobody else will do</h2>
+  <p>Verification is three claims: every shape you meant to create exists, every arrow has <b>two</b> bindings, and no two bounding boxes overlap. That last one is arithmetic on the coordinates — do it explicitly, <b>because nothing else will catch it</b>.</p>
+  <p class="m">Then the split on the card: records are the oracle for what exists, pixels are the oracle for how it lays out, and the two don't collapse into one. A browser tab is never the presence oracle — hidden, it defers applying incoming sync messages and reports a shape missing long after every visible viewer already has it. An authoritative read is never the layout oracle — it echoes your own numbers back, so a label that overflowed its box and collided with the shape below reads perfectly clean.</p>
+
+  <h2>Other people are looking at this board</h2>
+  <ul>
+    <li><b>Never delete a shape whose id doesn't start with <code>shape:ai-</code></b> without explicit confirmation. That's the user's work, and someone may be watching it live.</li>
+    <li><b>Check who's watching before a bulk edit</b>, where the transport can tell you. Humans see every intermediate state.</li>
+    <li>Deleting shapes <em>this session</em> created needs no confirmation — that's correcting your own output.</li>
+    <li>Don't navigate away from a board with unsaved user intent — selected shapes, half-typed text — without asking.</li>
+  </ul>
+  <p class="m">Same reason a build gets split into a few logical batches when people are watching: it animates in front of them instead of appearing all at once.</p>
+
+  <h2>Then it hands the board back</h2>
+  <p>The report is the link, what got made, and the shape count — plus the note that saying <b>"clean up"</b> removes the <code>shape:ai-</code> shapes. Or you can just hit undo.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

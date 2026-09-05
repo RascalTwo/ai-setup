@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>viz — text in colored boxes is not a visualization</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="viz">
+<meta name="viz:description" content="Renders arbitrary HTML/CSS/JS as a live hot-reloading page, picks a real spatial form before writing a line, and refuses to call it done until headless Chrome says it actually rendered.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. Scale-to-fit mechanics come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c4) 16%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 472px; gap:38px; align-items:center; padding:56px 66px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:54px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 20px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* The fallback ladder = the "proof" slot. Each rung steps down and to the right,
+     dimmer than the last — the descent IS the rule. The floor is the point: the
+     skill has no exit that produces nothing. */
+  .cap{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; color:var(--muted); margin-bottom:11px; }
+  .cap b{ color:var(--accent); }
+  .rung{ background:color-mix(in srgb, var(--panel) 72%, transparent); border:1px solid var(--border);
+         border-radius:10px; padding:10px 12px 11px; margin-bottom:7px; }
+  .head{ display:flex; align-items:baseline; gap:9px; }
+  .head .k{ font-family:var(--mono); font-size:11px; width:17px; height:17px; line-height:17px; text-align:center;
+            border-radius:5px; color:var(--bg); font-weight:700; flex:none; align-self:center; }
+  .head .n{ font-family:var(--mono); font-size:13px; letter-spacing:.06em; color:var(--text); }
+  .head .tag{ margin-left:auto; font-family:var(--mono); font-size:10px; letter-spacing:.12em;
+              padding:2px 7px; border-radius:99px; white-space:nowrap; }
+  .rung .d{ font-size:12px; line-height:1.42; color:var(--muted); margin-top:6px; }
+  .map{ margin-top:8px; display:grid; gap:4px; }
+  .map .pair{ display:flex; gap:8px; font-size:12px; line-height:1.35; color:var(--muted); }
+  .map .pair i{ font-style:normal; font-family:var(--mono); font-size:11.5px; color:var(--text);
+                width:112px; flex:none; }
+  .r1{ border-color:color-mix(in srgb, var(--c4) 52%, transparent); }
+  .r1 .k{ background:var(--c4); }
+  .r1 .tag{ color:var(--c4); background:color-mix(in srgb, var(--c4) 14%, transparent);
+            border:1px solid color-mix(in srgb, var(--c4) 45%, transparent); }
+  .r2{ margin-left:26px; }
+  .r2 .k{ background:var(--c5); }
+  .r2 .n{ color:var(--muted); }
+  .r2 .tag{ color:var(--c5); border:1px dashed color-mix(in srgb, var(--c5) 55%, transparent); }
+  .r3{ margin-left:52px; padding:8px 12px; }
+  .r3 .k{ background:var(--faint); }
+  .r3 .n{ color:var(--faint); }
+  .r3 .tag{ color:var(--faint); border:1px solid var(--border); }
+  .floor{ margin-top:11px; border-top:1px solid color-mix(in srgb, var(--good) 40%, transparent);
+          padding-top:10px; font-family:var(--mono); font-size:11.5px; letter-spacing:.1em;
+          color:var(--muted); text-align:center; }
+  .floor b{ color:var(--good); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  pre .w{ color:var(--warn); }
+  pre .g{ color:var(--good); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="viz" data-viz-id="poster-card" data-label="viz poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · VIZ</div>
+      <h1 class="hook">Text in colored<br>boxes <em>is not a<br>visualization.</em></h1>
+      <p class="sub">It renders arbitrary HTML/CSS/JS at a live, hot-reloading URL — but first it makes itself <b>name the spatial form</b> the content wants, out loud, before writing a line. Then it drives headless Chrome and refuses to call it done until the page has actually rendered.</p>
+      <p class="not">Not for a static SVG that fits inline.<br>Not for a freeform canvas — that's <b>tldraw</b>.<br>Not for your real production UI.</p>
+      <div class="trigger"><span>run</span>&nbsp;/viz [name] [--deck|--poster|--exchange|…]</div>
+    </div>
+    <div>
+      <div class="cap">PICK THE FORM <b>BEFORE</b> YOU WRITE — THEN FALL BACK</div>
+      <div class="rung r1">
+        <div class="head"><span class="k">1</span><span class="n">A REAL SPATIAL FORM</span><span class="tag">TRY THIS FIRST</span></div>
+        <div class="map">
+          <div class="pair"><i>magnitudes</i>bar · line · area · histogram · sparkline grid</div>
+          <div class="pair"><i>relationships</i>force graph · arc · adjacency matrix · Sankey</div>
+          <div class="pair"><i>sequence / state</i>flowchart · sequence diagram · state machine</div>
+          <div class="pair"><i>hierarchy</i>tree · dendrogram · icicle · treemap</div>
+          <div class="pair"><i>part-to-whole</i>treemap · sunburst · stacked bar · donut</div>
+          <div class="pair"><i>3D / physical</i>three.js · WebGL</div>
+        </div>
+      </div>
+      <div class="rung r2">
+        <div class="head"><span class="k">2</span><span class="n">A STYLED PAGE</span><span class="tag">ONLY IF NOTHING FITS</span></div>
+        <div class="d">Cards, colored tables, typographic hierarchy. Acceptable — <b>&ldquo;the bottom of the barrel, not banned.&rdquo;</b></div>
+      </div>
+      <div class="rung r3">
+        <div class="head"><span class="k">3</span><span class="n">TERMINAL TEXT</span><span class="tag">NOT THIS SKILL</span></div>
+      </div>
+      <div class="floor">NEVER EXITS SAYING <b>&ldquo;THIS ISN'T VISUALIZABLE&rdquo;</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2>Name the form, then write</h2>
+  <p>The failure mode this skill is built against is an agent asked to &ldquo;visualize&rdquo; something and returning styled text — a page of colored boxes with words in them. So Step 2 is a hard sequence: <b>name the spatial form, announce the choice in one sentence, then open the editor.</b> Not a question — a checkpoint you can interrupt. <em>&ldquo;Rendering this as a force-directed graph, edges weighted by call count.&rdquo;</em></p>
+  <p class="m">The fallback ladder on the card is deliberately generous at the bottom: a styled page is <b>allowed</b>, and beats text in a terminal. But if the content has magnitudes, relationships, sequences, hierarchy or topology, there is a real form for it, and that's what you go find. One exception — if you asked for a <b>UI</b> to be designed, the UI is the artifact.</p>
+
+  <h2>Five scaffolds, so the chrome isn't rebuilt each time</h2>
+  <p class="m">A blank page is the default. When the viz has a known shape, a scaffold replaces it — each one stamps <code>viz:scaffold</code> so the page states what generated it, and each carries its authoring guide inline.</p>
+  <ul>
+    <li><code>--deck</code> — an arrow-key presentation: scale-to-fit 16:9, fullscreen, progress bar, reversible per-slide fragments.</li>
+    <li><code>--poster</code> — a page that <em>is</em> its own 1200×630 share card, clipped straight to <code>og.auto.png</code>.</li>
+    <li><code>--poster-dive</code> — that card as the <b>top</b> of a scrollable page, with the deep dive below it. <em>This page is one.</em></li>
+    <li><code>--exchange</code> — an animated diagram of something passed or proven between parties: actors in phase bands, packets on declared wires, stepped narration.</li>
+    <li><code>--hero</code> — not a scaffold but an add-on: a share card for a viz that stays an ordinary page.</li>
+  </ul>
+
+  <h2>Boxes and arrows, without the rework</h2>
+  <p>Hand-drawn SVG diagrams are where past vizzes bled the most iteration: labels overflowing, arrows pointing at empty space, whole layouts redone late. Always the same root cause — coordinates typed as independent literals, then guessed wrong. The fix is structural.</p>
+  <ul>
+    <li>Define each node <b>once</b> as <code>{x, y, w, h}</code>; derive every arrow endpoint and label from that geometry with <code>connect(a, b)</code> / <code>side(node, "right")</code>. Now moving a box can't strand its arrows.</li>
+    <li><code>labelBox()</code> for anything multi-word — a <code>&lt;foreignObject&gt;</code>, so the browser wraps and text <em>cannot</em> spill. Raw <code>&lt;text&gt;</code> has no overflow protection.</li>
+    <li>Past <b>~5 nodes with crossing edges</b>, stop hand-placing: hand nodes and edges to <b>elkjs</b>, get coordinates back, and still draw the SVG yourself. (Not <code>dagre</code> — unmaintained, last release 2019.)</li>
+  </ul>
+  <div class="callout"><b>The silent one:</b> <code>{x, y, w, h}</code> is the node shape, not the SVG attribute set. <code>&lt;rect w= h=&gt;</code> is not an error — SVG ignores unknown attributes, so the box renders at zero size: invisible, clean console, nothing to debug. It's <code>width</code>/<code>height</code>. The tell is verify's census saying <code>rendered: 0 rect</code> when you drew twelve.</div>
+
+  <h2>Done means rendered, and something else checks</h2>
+  <p>A viz isn't finished when the code is written — it's finished when it renders. <code>verify.ts</code> drives headless Chrome once (your installed Chrome, no Chromium download) and writes a screenshot, console, network log and final DOM. Every run also prints a <b>layout report</b>, no opt-in:</p>
+  <pre><span class="g">✓ 0 error(s)</span> — .verify/{console.txt, latest.png, network.txt, dom.html}
+<span class="w">⚠ 3 layout finding(s)</span> · rendered: 17 rect, 11 path, 40 text
+  text-overflow: text.nsub "Claude Haiku 4.5 · cloud twin" spills 37px past its box
+  clipped: div.vsvg-label "build/dependency-graph-data.json…" is cut off by 87px
+  og-card-overflow: 1 element(s) escape the card frame — div.stat-row</pre>
+  <p class="m">It checks what eyes are bad at: text past its own box, content silently clipped by an <code>overflow:hidden</code> ancestor, anything wider than the viewport, content escaping a 1200×630 card, a blank render. The mark census separates <em>rendered nothing</em> from <em>rendered wrong</em> instantly.</p>
+  <p><b>And the report is explicit that it is not taste:</b> <code>⚠ 0 layout finding(s)</code> means &ldquo;nothing is broken&rdquo;, not &ldquo;it looks good&rdquo;. Spacing rhythm, hierarchy, whether the thing actually reads — that's still a human or an agent looking at the PNG, which the skill requires at least once before finishing.</p>
+  <p class="m">A plain run only ever sees state 1 — which is how nearly every interactive viz in the corpus shipped unlooked-at past its opening frame. Drop a disposable <code>verify.interactions.ts</code> beside the page to click through steps, tabs and drawers and snap your own extra PNGs. And <code>--commit</code> commits <b>only</b> on a clean run, so a broken render can't quietly reach the history.</p>
+
+  <h2>A kit, so nobody re-derives the palette again</h2>
+  <p>Every color is a token — <code>--accent</code>, <code>--good</code>, <code>--warn</code>, <code>--danger</code>, <code>--c1…--c8</code> — and <code>var()</code> works in SVG presentation attributes, so <code>fill="var(--accent)"</code> follows a re-theme. Want a different palette? Override the <code>:root</code> block in six lines and keep every component; don't rebuild.</p>
+  <p class="m">The discipline that goes with it: <b>override the property, don't restate the rule.</b> Re-declaring a whole kit block is how a component silently becomes a fork — its values get retyped, then stop tracking the kit when it improves. Measured across the corpus, <b>more than half</b> of all kit-component overrides restate six or more properties to change one. New helpers get jotted in <code>CANDIDATES.md</code> and only promoted once a pattern has actually recurred (~3+ vizzes).</p>
+
+  <h2>One server, many roots, and posture is never inherited</h2>
+  <p>A single Bun server on <code>127.0.0.1:5180</code> serves from many roots: the central library plus any <code>viz-pages/</code> folder inside your own repos. A viz's identity <em>is</em> its path relative to home, which is also its URL — so two repos can both have a <code>dashboard</code> viz and never collide. A repo-local viz is registered on creation, so the central server serves it immediately; <code>--runtime</code> additionally vendors a self-contained server into the repo, so a <em>cloner</em> can run it with <b>no skill installed</b>.</p>
+  <p class="m">That vendoring is deliberately <b>opt-in</b>, and it used to be automatic. Until 2026-08-17 every <code>--local</code> run committed the whole serve runtime into the host repo; an audit found <b>two</b> repos where the standalone property was actually used and <b>eight</b> carrying tracked files nothing read, quietly drifting from canonical. Ask for it only when a cloner really will run the vizzes without the skill.</p>
+  <p class="m">Every page is stamped <code>viz:posture</code> / <code>viz:listed</code> as <code>&lt;meta&gt;</code> tags — there are no CLI flags for them, and an undeclared posture makes the whole build refuse. New pages start <code>local</code> + <code>unlisted</code>; forking a page copies everything but <b>always resets to local/unlisted</b>, because posture is a trust decision and is never inherited. <code>build.ts</code> writes artifacts and <b>never deploys</b> — that stays a separate, human-confirmed step.</p>
+
+  <h2>The comment layer has a rule about who deletes</h2>
+  <p>Every live viz injects a review layer: Alt-click any element to pin a comment that anchors to it and follows it through animation. It's how located visual feedback gets handed back to the agent. The division of labour is fixed — <b>you resolve; you never delete. The user deletes; the user never resolves.</b> Comments live beside the page in <code>comments.json</code>, git-ignored, never committed.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

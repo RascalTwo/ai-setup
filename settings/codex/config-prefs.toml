@@ -1,0 +1,9 @@
+# Codex top-level preference scalars. install.ts merges these into the TOP region
+# of ~/.codex/config.toml — above the first [table], because a bare TOML key after
+# a table header binds to that table. Codex's own machine-managed tables
+# ([plugins], [projects], [mcp_servers], [tui], ...) are left untouched.
+#
+# PUBLIC core keeps only SAFE, portable prefs. Personal/aggressive ones
+# (approval_policy, sandbox_mode = danger-full-access) live in a private overlay's
+# settings/codex/config-prefs.toml, which overrides/extends this file.
+model_reasoning_effort = "high"
