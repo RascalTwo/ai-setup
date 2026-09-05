@@ -1,0 +1,1554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script type="importmap">{"imports":{"/_kit/viz.js":"data:text/javascript;base64,Ly8gdml6LmpzIOKAlCBzaGFyZWQgaGVscGVycyBmb3IgL3ZpeiBwYWdlcy4gTG9hZCB3aXRoOgovLyAgIDxzY3JpcHQgdHlwZT0ibW9kdWxlIj4KLy8gICAgIGltcG9ydCB7IGFycm93TWFya2VycywgY29ubmVjdCwgc2lkZSwgbGFiZWxCb3gsIHZpekF1ZGl0LCAkLCAkJCwgZXNjLCBzYXZlSGFzaCwgbG9hZEhhc2gsIHZpekVudiB9IGZyb20gIi9fa2l0L3Zpei5qcyI7Ci8vICAgPC9zY3JpcHQ+Ci8vIFNlcnZlZCBieSB0aGUgdml6IHNlcnZlciBhdCAvX2tpdC92aXouanMgZnJvbSB0aGUgc2tpbGwncyBvd24ga2l0LyBkaXIsIHNvIGl0J3MKLy8gb25lIHNvdXJjZSBvZiB0cnV0aCBhY3Jvc3MgZXZlcnkgdml6LiBQYWlycyB3aXRoIC9fa2l0L3Zpei1raXQuY3NzLgoKZXhwb3J0IGNvbnN0IFNWR05TID0gImh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIjsKCi8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQovLyBTVkcgZGlhZ3JhbXMg4oCUIGdlb21ldHJ5IGZpcnN0LgovLwovLyBUaGUgcmVjdXJyaW5nIHJld29yayBpbiBib3hlcy1hbmQtYXJyb3dzIGRpYWdyYW1zIGNvbWVzIGZyb20gdHlwaW5nIGxhYmVsIGFuZAovLyBhcnJvdyBjb29yZGluYXRlcyBhcyBpbmRlcGVuZGVudCBsaXRlcmFsczogYSBib3ggZ2V0cyByZXNpemVkIG9yIG1vdmVkLCBidXQgdGhlCi8vIGFycm93IGVuZHBvaW50IGFuZCB0aGUgbGFiZWwgcG9zaXRpb24gd2VyZSBndWVzc2VkIGFnYWluc3QgdGhlICpvbGQqIGdlb21ldHJ5LAovLyBzbyB0aGUgYXJyb3cgbm93IHBvaW50cyBhdCBlbXB0eSBzcGFjZSAob3IgdGhlIHdyb25nIGJveCkgYW5kIHRoZSBsYWJlbCBzcGlsbHMKLy8gb3V0LiBUaGUgZml4IGlzIHRvIG5ldmVyIGhhbmQtcGxhY2UgdGhvc2U6IGRlZmluZSBlYWNoIG5vZGUgT05DRSBhcyB7eCx5LHcsaH0KLy8gYW5kIGNvbXB1dGUgZXZlcnl0aGluZyBlbHNlIGZyb20gaXQuCi8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQoKLy8gRGVmYXVsdCBhcnJvd2hlYWQgcGFsZXR0ZSwga2V5ZWQgdG8gdGhlIHZpei1raXQgaW50ZW50IHRva2Vucy4gU1ZHIG1hcmtlcnMgY2FuJ3QKLy8gaW5oZXJpdCB0aGUgc3Ryb2tlIGNvbG9yIG9mIHRoZSBsaW5lIHRoYXQgdXNlcyB0aGVtLCBzbyB5b3UgZ2VudWluZWx5IG5lZWQgb25lCi8vIG1hcmtlciBwZXIgY29sb3Ig4oCUIHRoaXMgZW1pdHMgdGhlbSBhbGwgd2l0aCBzdGFibGUgaWRzIHNvIHlvdSBzdG9wIHJlLWRlcml2aW5nCi8vIHRoZSBzYW1lIDxtYXJrZXI+IGJsb2NrIHBlciBkaWFncmFtLiBSZWZlcmVuY2UgYXMgbWFya2VyLWVuZD0idXJsKCNhaC1hY2NlbnQpIi4KLy8KLy8gVGhlc2UgYXJlIHZhcigpIHJlZmVyZW5jZXMsIG5vdCBoZXhlcywgT04gUFVSUE9TRTogYSBwYWdlIHRoYXQgb3ZlcnJpZGVzIHRoZQovLyB0b2tlbnMgKHNlZSBraXQvUkVBRE1FLm1kKSByZS10aGVtZXMgaXRzIGFycm93aGVhZHMgZm9yIGZyZWUuIEhhcmRjb2RpbmcgdGhlCi8vIGhleGVzIGhlcmUgd291bGQgc2lsZW50bHkgc3RyYW5kIGV2ZXJ5IG1hcmtlciBhdCB0aGUgZGVmYXVsdCBwYWxldHRlLgpjb25zdCBERUZBVUxUX01BUktFUlMgPSB7CiAgYWg6ICJ2YXIoLS1tdXRlZCkiLCAvLyB0aGUgZGVmYXVsdCBlZGdlCiAgImFoLWFjY2VudCI6ICJ2YXIoLS1hY2NlbnQpIiwKICAiYWgtZ29vZCI6ICJ2YXIoLS1nb29kKSIsCiAgImFoLXdhcm4iOiAidmFyKC0td2FybikiLAogICJhaC1kYW5nZXIiOiAidmFyKC0tZGFuZ2VyKSIsCn07CgovLyBSZXR1cm5zIGEgPGRlZnM+4oCmPC9kZWZzPiBzdHJpbmcuIERyb3AgaXQgb25jZSBhdCB0aGUgdG9wIG9mIHlvdXIgPHN2Zz4uCmV4cG9ydCBmdW5jdGlvbiBhcnJvd01hcmtlcnMocGFsZXR0ZSA9IERFRkFVTFRfTUFSS0VSUykgewogIGNvbnN0IG1hcmtlcnMgPSBPYmplY3QuZW50cmllcyhwYWxldHRlKQogICAgLm1hcCgKICAgICAgKFtpZCwgZmlsbF0pID0+CiAgICAgICAgYDxtYXJrZXIgaWQ9IiR7aWR9IiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9IjkiIHJlZlk9IjUiIGAgKwogICAgICAgIGBtYXJrZXJXaWR0aD0iNyIgbWFya2VySGVpZ2h0PSI3IiBvcmllbnQ9ImF1dG8tc3RhcnQtcmV2ZXJzZSI+YCArCiAgICAgICAgYDxwYXRoIGQ9Ik0wLDAgTDEwLDUgTDAsMTAgeiIgZmlsbD0iJHtmaWxsfSIvPjwvbWFya2VyPmAsCiAgICApCiAgICAuam9pbigiIik7CiAgcmV0dXJuIGA8ZGVmcz4ke21hcmtlcnN9PC9kZWZzPmA7Cn0KCi8vIEEgbm9kZSBpcyBqdXN0IHt4LCB5LCB3LCBofS4gY2VudGVyKCkgYW5kIHNpZGUoKSBkZXJpdmUgY29ubmVjdGlvbiBwb2ludHMgZnJvbQovLyBpdCwgc28gYW4gZWRnZSBzdGF5cyBhdHRhY2hlZCB0byB0aGUgYm94IG5vIG1hdHRlciBob3cgdGhlIGJveCBjaGFuZ2VzLgpleHBvcnQgY29uc3QgY2VudGVyID0gKG4pID0+ICh7IHg6IG4ueCArIG4udyAvIDIsIHk6IG4ueSArIG4uaCAvIDIgfSk7CgpleHBvcnQgY29uc3Qgc2lkZSA9IChuLCB3aGVyZSkgPT4KICAoewogICAgdG9wOiB7IHg6IG4ueCArIG4udyAvIDIsIHk6IG4ueSB9LAogICAgYm90dG9tOiB7IHg6IG4ueCArIG4udyAvIDIsIHk6IG4ueSArIG4uaCB9LAogICAgbGVmdDogeyB4OiBuLngsIHk6IG4ueSArIG4uaCAvIDIgfSwKICAgIHJpZ2h0OiB7IHg6IG4ueCArIG4udywgeTogbi55ICsgbi5oIC8gMiB9LAogIH0pW3doZXJlXTsKCi8vIFN0cmFpZ2h0IGVkZ2UgYmV0d2VlbiB0d28gbm9kZXMsIGF1dG8tcGlja2luZyB0aGUgZmFjaW5nIHNpZGVzIGJhc2VkIG9uIHRoZWlyCi8vIHJlbGF0aXZlIHBvc2l0aW9uLiBSZXR1cm5zIGFuIFNWRyBwYXRoICJkIiBzdHJpbmc7IHNldCB0aGUgbWFya2VyIHlvdXJzZWxmIHZpYQovLyB0aGUgZWxlbWVudCdzIG1hcmtlci1lbmQgYXR0cmlidXRlLiBGb3IgPjUgbm9kZXMgd2l0aCBjcm9zc2luZyBlZGdlcywgcmVhY2ggZm9yCi8vIGEgbGF5b3V0IGVuZ2luZSAoZGFncmUgLyBkMy1kYWcgLyBtZXJtYWlkKSBpbnN0ZWFkIG9mIHBsYWNpbmcgbm9kZXMgYnkgaGFuZCDigJQKLy8gdGhhdCdzIHRoZSBwb2ludCB3aGVyZSBtYW51YWwgY29vcmRpbmF0ZXMgc3RvcCBiZWluZyB3b3J0aCBpdC4KZXhwb3J0IGZ1bmN0aW9uIGNvbm5lY3QoYSwgYikgewogIGNvbnN0IGNhID0gY2VudGVyKGEpLAogICAgY2IgPSBjZW50ZXIoYik7CiAgY29uc3QgaG9yaXogPSBNYXRoLmFicyhjYi54IC0gY2EueCkgPiBNYXRoLmFicyhjYi55IC0gY2EueSk7CiAgY29uc3QgcGEgPSBob3JpegogICAgPyBzaWRlKGEsIGNiLnggPiBjYS54ID8gInJpZ2h0IiA6ICJsZWZ0IikKICAgIDogc2lkZShhLCBjYi55ID4gY2EueSA/ICJib3R0b20iIDogInRvcCIpOwogIGNvbnN0IHBiID0gaG9yaXoKICAgID8gc2lkZShiLCBjYi54ID4gY2EueCA/ICJsZWZ0IiA6ICJyaWdodCIpCiAgICA6IHNpZGUoYiwgY2IueSA+IGNhLnkgPyAidG9wIiA6ICJib3R0b20iKTsKICByZXR1cm4gYE0gJHtwYS54fSAke3BhLnl9IEwgJHtwYi54fSAke3BiLnl9YDsKfQoKLy8gQSBsYWJlbCB0aGF0IENBTk5PVCBvdmVyZmxvdyBpdHMgYm94LiA8Zm9yZWlnbk9iamVjdD4gbGV0cyB0aGUgYnJvd3NlciB3cmFwIGFuZAovLyBlbGxpcHNpemUgSFRNTCBuYXRpdmVseSwgdW5saWtlIHJhdyA8dGV4dD4gd2hpY2ggeW91J2QgaGF2ZSB0byBtZWFzdXJlIGJ5IGhhbmQKLy8gKGFuZCBoaXN0b3JpY2FsbHkgZ3Vlc3NlZCB3cm9uZykuIFVzZSB0aGlzIGZvciBhbnkgbXVsdGktd29yZCBsYWJlbCBpbnNpZGUgYQovLyBmaXhlZC13aWR0aCBib3guIFN0eWxlIHZpYSB0aGUgLnZzdmctbGFiZWwgY2xhc3MgaW4gdml6LWtpdC5jc3MuCmV4cG9ydCBmdW5jdGlvbiBsYWJlbEJveChub2RlLCBodG1sLCBjbHMgPSAiIikgewogIHJldHVybiAoCiAgICBgPGZvcmVpZ25PYmplY3QgeD0iJHtub2RlLnh9IiB5PSIke25vZGUueX0iIHdpZHRoPSIke25vZGUud30iIGhlaWdodD0iJHtub2RlLmh9Ij5gICsKICAgIGA8ZGl2IHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hodG1sIiBjbGFzcz0idnN2Zy1sYWJlbCAke2Nsc30iPiR7aHRtbH08L2Rpdj5gICsKICAgIGA8L2ZvcmVpZ25PYmplY3Q+YAogICk7Cn0KCi8vIFZlcmlmaWNhdGlvbiBiYWNrc3RvcC4gSWYgeW91IERPIGhhbmQtcm9sbCA8dGV4dD4sIGNhbGwgdGhpcyBvbmNlIGFmdGVyIHJlbmRlcjoKLy8gaXQgb3V0bGluZXMgKGluIHJlZCkgYW55IDx0ZXh0PiB3aG9zZSBib3VuZGluZyBib3ggc3BpbGxzIHBhc3QgdGhlIDxyZWN0PiBpbiBpdHMKLy8gZ3JvdXAsIGFuZCBkcm9wcyBhIGZpeGVkIGJhbm5lciBzbyBhbiBvdmVyZmxvdyBpcyBpbXBvc3NpYmxlIHRvIG1pc3MgaW4gdGhlIG9wZW4KLy8gYnJvd3NlciDigJQgb3IgaW4gYW55IHNjcmVlbnNob3QgeW91IHRha2UgdG8gdmVyaWZ5IHRoZSBwYWdlLiBSZXR1cm5zIHRoZSBsaXN0IG9mCi8vIG9mZmVuZGluZyBzdHJpbmdzIChlbXB0eSA9IGNsZWFuKS4gVGhlIHJlY3QtaW4tc2FtZS08Zz4gcGFpcmluZyBpcyBhIGhldXJpc3RpYzsKLy8gaXQgY2F0Y2hlcyB0aGUgY29tbW9uIGNhc2Ugd2hlcmUgZWFjaCBib3grbGFiZWwgbGl2ZSBpbiBvbmUgPGc+LgpleHBvcnQgZnVuY3Rpb24gdml6QXVkaXQocm9vdCA9IGRvY3VtZW50KSB7CiAgY29uc3QgYmFkID0gW107CiAgZm9yIChjb25zdCB0IG9mIHJvb3QucXVlcnlTZWxlY3RvckFsbCgidGV4dCIpKSB7CiAgICBjb25zdCByZWN0ID0gdC5jbG9zZXN0KCJnIik/LnF1ZXJ5U2VsZWN0b3IoInJlY3QiKTsKICAgIGlmICghcmVjdCkgY29udGludWU7CiAgICBjb25zdCB0YiA9IHQuZ2V0QkJveCgpOwogICAgY29uc3QgcmIgPSByZWN0LmdldEJCb3goKTsKICAgIGNvbnN0IHNwaWxscyA9CiAgICAgIHRiLnggPCByYi54IC0gMSB8fAogICAgICB0Yi55IDwgcmIueSAtIDEgfHwKICAgICAgdGIueCArIHRiLndpZHRoID4gcmIueCArIHJiLndpZHRoICsgMSB8fAogICAgICB0Yi55ICsgdGIuaGVpZ2h0ID4gcmIueSArIHJiLmhlaWdodCArIDE7CiAgICBpZiAoc3BpbGxzKSB7CiAgICAgIHQuc3R5bGUub3V0bGluZSA9ICIxcHggc29saWQgI2Y4NTE0OSI7CiAgICAgIGJhZC5wdXNoKHQudGV4dENvbnRlbnQpOwogICAgfQogIH0KICBpZiAoYmFkLmxlbmd0aCkgewogICAgY29uc29sZS5lcnJvcigiW3ZpekF1ZGl0XSB0ZXh0IG92ZXJmbG93OiIsIGJhZCk7CiAgICBjb25zdCBiYW5uZXIgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCJkaXYiKTsKICAgIGJhbm5lci50ZXh0Q29udGVudCA9IGDimqAgJHtiYWQubGVuZ3RofSB0ZXh0IG92ZXJmbG93KHMpIOKAlCBzZWUgcmVkIG91dGxpbmVzYDsKICAgIGJhbm5lci5zdHlsZS5jc3NUZXh0ID0KICAgICAgInBvc2l0aW9uOmZpeGVkO2xlZnQ6OHB4O2JvdHRvbTo4cHg7ei1pbmRleDo5OTk5O2JhY2tncm91bmQ6I2Y4NTE0OTtjb2xvcjojZmZmOyIgKwogICAgICAiZm9udDoxMnB4LzEgc2Fucy1zZXJpZjtwYWRkaW5nOjZweCAxMHB4O2JvcmRlci1yYWRpdXM6NnB4IjsKICAgIGRvY3VtZW50LmJvZHkuYXBwZW5kQ2hpbGQoYmFubmVyKTsKICB9CiAgcmV0dXJuIGJhZDsKfQoKLy8gLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCi8vIFNtYWxsIHV0aWxpdGllcyB0aGF0IGV2ZXJ5IHZpeiByZS1kZXJpdmVzLgovLyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KCmV4cG9ydCBjb25zdCAkID0gKHNlbCwgcm9vdCA9IGRvY3VtZW50KSA9PiByb290LnF1ZXJ5U2VsZWN0b3Ioc2VsKTsKZXhwb3J0IGNvbnN0ICQkID0gKHNlbCwgcm9vdCA9IGRvY3VtZW50KSA9PiBbLi4ucm9vdC5xdWVyeVNlbGVjdG9yQWxsKHNlbCldOwoKLy8gRXNjYXBlIGJlZm9yZSBpbmplY3RpbmcgdGV4dCBpbnRvIGlubmVySFRNTC4KZXhwb3J0IGNvbnN0IGVzYyA9IChzKSA9PgogIFN0cmluZyhzKS5yZXBsYWNlKAogICAgL1smPD4iJ10vZywKICAgIChjKSA9PiAoeyAiJiI6ICImYW1wOyIsICI8IjogIiZsdDsiLCAiPiI6ICImZ3Q7IiwgJyInOiAiJnF1b3Q7IiwgIiciOiAiJiMzOTsiIH0pW2NdLAogICk7CgovLyBIb3QtcmVsb2FkIChhbmQgZXZlcnkgc2F2ZSkgZG9lcyBhIGZ1bGwgcGFnZSByZWZyZXNoLCBzbyBpbi1wYWdlIHN0YXRlIGlzIHdpcGVkLgovLyBQZXJzaXN0IGFueXRoaW5nIHlvdSB3YW50IHRvIHN1cnZpdmUg4oCUIG9wZW4gcGFuZWwsIHNlbGVjdGVkIHN0ZXAsIGFjdGl2ZSBmaWx0ZXJzIOKAlAovLyB0byB0aGUgVVJMIGhhc2guIEJvbnVzOiB0aGUgVVJMIGJlY29tZXMgc2hhcmVhYmxlL2RlZXAtbGlua2FibGUgZm9yIGZyZWUuCi8vIFJvdW5kLXRyaXBzIGEgcGxhaW4gb2JqZWN0LgpleHBvcnQgY29uc3Qgc2F2ZUhhc2ggPSAob2JqKSA9PgogIGxvY2F0aW9uLnJlcGxhY2UoIiMiICsgZW5jb2RlVVJJQ29tcG9uZW50KEpTT04uc3RyaW5naWZ5KG9iaikpKTsKCmV4cG9ydCBjb25zdCBsb2FkSGFzaCA9ICgpID0+IHsKICB0cnkgewogICAgcmV0dXJuIEpTT04ucGFyc2UoZGVjb2RlVVJJQ29tcG9uZW50KGxvY2F0aW9uLmhhc2guc2xpY2UoMSkpIHx8ICJ7fSIpOwogIH0gY2F0Y2ggewogICAgcmV0dXJuIHt9OwogIH0KfTsKCi8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQovLyBTdGVwcGVkIHdhbGt0aHJvdWdocyDigJQgdGhlIHNlY29uZC1tb3N0IHJlLWRlcml2ZWQgdGhpbmcgYWZ0ZXIgU1ZHIGdlb21ldHJ5LgovLwovLyB+MjAgdml6emVzIGhhbmQtcm9sbGVkIGFycm93LWtleSBzdGVwcGluZyBhbmQgZWFjaCBnb3QgYSBkaWZmZXJlbnQgc3Vic2V0Ci8vIHJpZ2h0OiBzb21lIGNhbGxlZCBwcmV2ZW50RGVmYXVsdCAoc28gdGhlIHBhZ2UgZGlkbid0IGFsc28gc2Nyb2xsKSwgc29tZQovLyBjbGFtcGVkIGF0IHRoZSBlbmRzLCBzb21lIHdyYXBwZWQsIHNvbWUgbGVmdCBhbiBhdXRvcGxheSB0aW1lciBydW5uaW5nIGFmdGVyCi8vIHRoZSB1c2VyIG1hbnVhbGx5IG5hdmlnYXRlZC4gVGhpcyBpcyB0aGF0IGxvZ2ljIG9uY2UsIHdpdGggdGhlIFVSTC1oYXNoCi8vIHJvdW5kLXRyaXAgd2lyZWQgaW4gc28gYSBzdGVwIHN1cnZpdmVzIGhvdC1yZWxvYWQuCi8vCi8vICAgY29uc3QgcyA9IHN0ZXBwZXIoeyBuOiBTVEVQUy5sZW5ndGgsIG9uU3RlcDogaSA9PiByZW5kZXIoaSkgfSk7Ci8vCi8vIEJpbmRzIOKGkC/ihpIv4oaRL+KGkywgU3BhY2UsIFBhZ2VVcC9Eb3duLCBIb21lL0VuZCBvbiB0aGUgZG9jdW1lbnQuIEF1dG9wbGF5IHBhdXNlcwovLyBvbiBhbnkgbWFudWFsIG5hdmlnYXRpb24uIFJldHVybnMgaGFuZGxlcyBzbyB5b3UgY2FuIGRyaXZlIGl0IGZyb20gYnV0dG9ucyB0b28uCmV4cG9ydCBmdW5jdGlvbiBzdGVwcGVyKHsgbiwgb25TdGVwLCBhdXRvcGxheU1zID0gMCwgaGFzaEtleSA9ICJzdGVwIiwgdGFyZ2V0ID0gZG9jdW1lbnQgfSA9IHt9KSB7CiAgbGV0IGkgPSBNYXRoLm1pbihNYXRoLm1heChsb2FkSGFzaCgpW2hhc2hLZXldID8/IDAsIDApLCBuIC0gMSk7CiAgbGV0IHRpbWVyID0gbnVsbDsKCiAgY29uc3QgZW1pdCA9ICgpID0+IHsKICAgIHNhdmVIYXNoKHsgLi4ubG9hZEhhc2goKSwgW2hhc2hLZXldOiBpIH0pOwogICAgb25TdGVwPy4oaSk7CiAgfTsKICBjb25zdCBnbyA9ICh0bywgbWFudWFsID0gdHJ1ZSkgPT4gewogICAgY29uc3QgbmV4dCA9IE1hdGgubWluKE1hdGgubWF4KHRvLCAwKSwgbiAtIDEpOwogICAgaWYgKG1hbnVhbCkgcGF1c2UoKTsgLy8gYSBtYW51YWwgbmF2IGFsd2F5cyB3aW5zIG92ZXIgYXV0b3BsYXkKICAgIGlmIChuZXh0ID09PSBpKSByZXR1cm47CiAgICBpID0gbmV4dDsKICAgIGVtaXQoKTsKICB9OwogIGNvbnN0IHBsYXkgPSAoKSA9PiB7CiAgICBpZiAodGltZXIgfHwgIWF1dG9wbGF5TXMpIHJldHVybjsKICAgIHRpbWVyID0gc2V0SW50ZXJ2YWwoKCkgPT4gewogICAgICBpZiAoaSA+PSBuIC0gMSkgcmV0dXJuIHBhdXNlKCk7CiAgICAgIGdvKGkgKyAxLCBmYWxzZSk7CiAgICB9LCBhdXRvcGxheU1zKTsKICB9OwogIGNvbnN0IHBhdXNlID0gKCkgPT4gewogICAgY2xlYXJJbnRlcnZhbCh0aW1lcik7CiAgICB0aW1lciA9IG51bGw7CiAgfTsKCiAgY29uc3QgS0VZUyA9IHsKICAgIEFycm93UmlnaHQ6IDEsIEFycm93RG93bjogMSwgUGFnZURvd246IDEsICIgIjogMSwKICAgIEFycm93TGVmdDogLTEsIEFycm93VXA6IC0xLCBQYWdlVXA6IC0xLAogIH07CiAgdGFyZ2V0LmFkZEV2ZW50TGlzdGVuZXIoImtleWRvd24iLCAoZSkgPT4gewogICAgaWYgKGUubWV0YUtleSB8fCBlLmN0cmxLZXkgfHwgZS5hbHRLZXkpIHJldHVybjsKICAgIGlmICgvXihJTlBVVHxURVhUQVJFQXxTRUxFQ1QpJC8udGVzdChlLnRhcmdldC50YWdOYW1lKSB8fCBlLnRhcmdldC5pc0NvbnRlbnRFZGl0YWJsZSkgcmV0dXJuOwogICAgaWYgKGUua2V5IGluIEtFWVMpIHsKICAgICAgZS5wcmV2ZW50RGVmYXVsdCgpOyAvLyBlbHNlIFNwYWNlL1BhZ2VEb3duIHNjcm9sbHMgdGhlIHBhZ2UgdG9vCiAgICAgIGdvKGkgKyBLRVlTW2Uua2V5XSk7CiAgICB9IGVsc2UgaWYgKGUua2V5ID09PSAiSG9tZSIpIHsKICAgICAgZS5wcmV2ZW50RGVmYXVsdCgpOwogICAgICBnbygwKTsKICAgIH0gZWxzZSBpZiAoZS5rZXkgPT09ICJFbmQiKSB7CiAgICAgIGUucHJldmVudERlZmF1bHQoKTsKICAgICAgZ28obiAtIDEpOwogICAgfQogIH0pOwoKICBlbWl0KCk7CiAgaWYgKGF1dG9wbGF5TXMpIHBsYXkoKTsKCiAgcmV0dXJuIHsKICAgIGdvLAogICAgbmV4dDogKCkgPT4gZ28oaSArIDEpLAogICAgcHJldjogKCkgPT4gZ28oaSAtIDEpLAogICAgcGxheSwKICAgIHBhdXNlLAogICAgZ2V0IGN1cnJlbnQoKSB7CiAgICAgIHJldHVybiBpOwogICAgfSwKICB9Owp9CgovLyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KLy8gRGlyZWN0IG1hbmlwdWxhdGlvbiDigJQgZHJhZyB0aGUgYXJ0d29yaywgbm90IGEgc2xpZGVyLgovLwovLyBUaGUgYmVzdCBpbnRlcmFjdGl2ZSBleHBsYWluZXJzIG9uIHRoZSB3ZWIgKENpZWNoYW5vd3NraSdzLCBub3RhYmx5KSBjb250YWluCi8vIGFsbW9zdCB6ZXJvIDxpbnB1dCB0eXBlPSJyYW5nZSI+LiBJbnN0ZWFkIHlvdSBkcmFnIHRoZSBmaWd1cmUgSVRTRUxGLCBhbmQgb25lCi8vIHBvaW50ZXIgZHJhZyBkcml2ZXMgdHdvIHBhcmFtZXRlcnMgYXQgb25jZS4gQSBzbGlkZXIgcHV0cyBhIHN0cmlwIG9mIFVJIGNocm9tZQovLyBiZXR3ZWVuIHRoZSByZWFkZXIgYW5kIHRoZSBwaGVub21lbm9uOyBkcmFnZ2luZyB0aGUgdGhpbmcgcmVtb3ZlcyBpdC4KLy8KLy8gICB0d29BeGlzKHN2ZywgewovLyAgICAgeDogWzAsIDFdLCB5OiBbLTkwLCA5MF0sICAgICAgICAgIC8vIGNsYW1wZWQgcmFuZ2VzCi8vICAgICBvbkNoYW5nZTogKHgsIHkpID0+IHJlZHJhdyh4LCB5KSwKLy8gICB9KTsKLy8KLy8gVXNlcyBwb2ludGVyIGV2ZW50cyArIHNldFBvaW50ZXJDYXB0dXJlLCBzbyBtb3VzZS90b3VjaC9wZW4gYWxsIHdvcmsgYW5kIGEgZHJhZwovLyB0aGF0IGxlYXZlcyB0aGUgZWxlbWVudCBzdGlsbCB0cmFja3MuIFNldCBgc3BlZWRgIHRvIHR1bmUgc2Vuc2l0aXZpdHkuCmV4cG9ydCBmdW5jdGlvbiB0d29BeGlzKGVsLCB7IHg6IHhyID0gWzAsIDFdLCB5OiB5ciA9IFswLCAxXSwgc3RhcnQsIG9uQ2hhbmdlLCBzcGVlZCA9IDEgfSA9IHt9KSB7CiAgY29uc3QgY2xhbXAgPSAodiwgW2xvLCBoaV0pID0+IE1hdGgubWluKGhpLCBNYXRoLm1heChsbywgdikpOwogIGNvbnN0IHNwYW4gPSAocikgPT4gclsxXSAtIHJbMF07CiAgbGV0IHggPSBzdGFydCA/IHN0YXJ0WzBdIDogKHhyWzBdICsgeHJbMV0pIC8gMjsKICBsZXQgeSA9IHN0YXJ0ID8gc3RhcnRbMV0gOiAoeXJbMF0gKyB5clsxXSkgLyAyOwogIGxldCBweCA9IG51bGwsIHB5ID0gbnVsbDsKCiAgZWwuc3R5bGUudG91Y2hBY3Rpb24gPSAibm9uZSI7IC8vIGVsc2UgdGhlIGJyb3dzZXIgc2Nyb2xscyBpbnN0ZWFkIG9mIGRyYWdnaW5nCiAgZWwuc3R5bGUuY3Vyc29yID0gImdyYWIiOwoKICBlbC5hZGRFdmVudExpc3RlbmVyKCJwb2ludGVyZG93biIsIChlKSA9PiB7CiAgICBweCA9IGUuY2xpZW50WDsgcHkgPSBlLmNsaWVudFk7CiAgICBlbC5zZXRQb2ludGVyQ2FwdHVyZShlLnBvaW50ZXJJZCk7CiAgICBlbC5zdHlsZS5jdXJzb3IgPSAiZ3JhYmJpbmciOwogIH0pOwogIGVsLmFkZEV2ZW50TGlzdGVuZXIoInBvaW50ZXJtb3ZlIiwgKGUpID0+IHsKICAgIGlmIChweCA9PT0gbnVsbCkgcmV0dXJuOwogICAgY29uc3QgciA9IGVsLmdldEJvdW5kaW5nQ2xpZW50UmVjdCgpOwogICAgLy8gTm9ybWFsaXplIGJ5IGVsZW1lbnQgc2l6ZSBzbyBzZW5zaXRpdml0eSBkb2Vzbid0IGRlcGVuZCBvbiByZW5kZXIgc2NhbGUuCiAgICB4ID0gY2xhbXAoeCArICgoZS5jbGllbnRYIC0gcHgpIC8gci53aWR0aCkgKiBzcGFuKHhyKSAqIHNwZWVkLCB4cik7CiAgICB5ID0gY2xhbXAoeSArICgoZS5jbGllbnRZIC0gcHkpIC8gci5oZWlnaHQpICogc3Bhbih5cikgKiBzcGVlZCwgeXIpOwogICAgcHggPSBlLmNsaWVudFg7IHB5ID0gZS5jbGllbnRZOwogICAgb25DaGFuZ2U/Lih4LCB5KTsKICB9KTsKICBjb25zdCBlbmQgPSAoKSA9PiB7CiAgICBweCA9IHB5ID0gbnVsbDsKICAgIGVsLnN0eWxlLmN1cnNvciA9ICJncmFiIjsKICB9OwogIGVsLmFkZEV2ZW50TGlzdGVuZXIoInBvaW50ZXJ1cCIsIGVuZCk7CiAgZWwuYWRkRXZlbnRMaXN0ZW5lcigicG9pbnRlcmNhbmNlbCIsIGVuZCk7CgogIG9uQ2hhbmdlPy4oeCwgeSk7CiAgcmV0dXJuIHsKICAgIHNldDogKG54LCBueSkgPT4gewogICAgICB4ID0gY2xhbXAobngsIHhyKTsgeSA9IGNsYW1wKG55LCB5cik7CiAgICAgIG9uQ2hhbmdlPy4oeCwgeSk7CiAgICB9LAogICAgZ2V0IHZhbHVlKCkgewogICAgICByZXR1cm4gW3gsIHldOwogICAgfSwKICB9Owp9CgovLyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KLy8gRmlndXJlIGxpZmVjeWNsZSDigJQgb25seSByZW5kZXIgd2hhdCdzIG9uIHNjcmVlbiwgYW5kIGdpdmUgT05FIGZpZ3VyZSBmb2N1cy4KLy8KLy8gQSBsb25nIGV4cGxhaW5lciB3aXRoIG1hbnkgYW5pbWF0ZWQgZmlndXJlcyB3aWxsIG1lbHQgYSBsYXB0b3AgaWYgdGhleSBhbGwgcnVuCi8vIGF0IG9uY2UuIFR3byBzZXBhcmF0ZSBzaWduYWxzIGZpeCBpdCwgYW5kIHRoZSBzZWNvbmQgaXMgYSBuYXJyYXRpdmUgZGV2aWNlIGFzCi8vIG11Y2ggYXMgYSBwZXJmIG9uZToKLy8gICB2aXNpYmxlIOKAlCBpcyB0aGlzIGZpZ3VyZSBvbiBzY3JlZW4gYXQgYWxsPyAg4oaSIHN0b3AgZHJhd2luZyB3aGVuIGl0IGlzbid0Ci8vICAgYWN0aXZlICDigJQgaXMgdGhpcyB0aGUgZmlndXJlIHRoZSByZWFkZXIgaXMgTE9PS0lORyBhdCAobW9zdCBjZW50ZXJlZCk/Ci8vICAgICAgICAgICAgIOKGkiBleGFjdGx5IG9uZSBhdCBhIHRpbWU7IHVzZSBpdCB0byBydW4gdGhlICJoZXJvIiBhbmltYXRpb24sIHNob3cKLy8gICAgICAgICAgICAgICBjb250cm9scywgb3Igc3RhcnQgYXVkaW8sIHNvIHRoZSBwYWdlIHRlbGxzIHlvdSB3aGVyZSB0byBsb29rLgovLwovLyAgIGZpZ3VyZUxpZmVjeWNsZShbeyBlbCwgc2V0VmlzaWJsZSwgc2V0QWN0aXZlIH0sIC4uLl0pOwovLwovLyBBbHNvIHBhdXNlcyBldmVyeXRoaW5nIHdoZW4gdGhlIHRhYiBpcyBoaWRkZW4g4oCUIGJhY2tncm91bmQgdGFicyB0aHJvdHRsZQovLyByZXF1ZXN0QW5pbWF0aW9uRnJhbWUgdG8gfjFmcHMsIHdoaWNoIHNpbGVudGx5IHN0YWxscyBhbmltYXRpb24gbG9vcHMuCmV4cG9ydCBmdW5jdGlvbiBmaWd1cmVMaWZlY3ljbGUoZmlndXJlcywgeyByb290ID0gbnVsbCB9ID0ge30pIHsKICBjb25zdCBzZWVuID0gbmV3IE1hcCgpOwoKICBjb25zdCBpbyA9IG5ldyBJbnRlcnNlY3Rpb25PYnNlcnZlcigKICAgIChlbnRyaWVzKSA9PiB7CiAgICAgIGZvciAoY29uc3QgZSBvZiBlbnRyaWVzKSB7CiAgICAgICAgY29uc3QgZiA9IGZpZ3VyZXMuZmluZCgoZikgPT4gZi5lbCA9PT0gZS50YXJnZXQpOwogICAgICAgIGlmICghZikgY29udGludWU7CiAgICAgICAgc2Vlbi5zZXQoZiwgZS5pc0ludGVyc2VjdGluZyk7CiAgICAgICAgZi5zZXRWaXNpYmxlPy4oZS5pc0ludGVyc2VjdGluZyAmJiAhZG9jdW1lbnQuaGlkZGVuKTsKICAgICAgfQogICAgICBwaWNrQWN0aXZlKCk7CiAgICB9LAogICAgeyByb290LCB0aHJlc2hvbGQ6IDAgfSwKICApOwogIGZpZ3VyZXMuZm9yRWFjaCgoZikgPT4gaW8ub2JzZXJ2ZShmLmVsKSk7CgogIGxldCBhY3RpdmVGID0gbnVsbDsKICBmdW5jdGlvbiBwaWNrQWN0aXZlKCkgewogICAgY29uc3QgbWlkID0gd2luZG93LmlubmVySGVpZ2h0IC8gMjsKICAgIGxldCBiZXN0ID0gbnVsbCwgYmVzdEQgPSBJbmZpbml0eTsKICAgIGZvciAoY29uc3QgZiBvZiBmaWd1cmVzKSB7CiAgICAgIGlmICghc2Vlbi5nZXQoZikpIGNvbnRpbnVlOwogICAgICBjb25zdCByID0gZi5lbC5nZXRCb3VuZGluZ0NsaWVudFJlY3QoKTsKICAgICAgY29uc3QgZCA9IE1hdGguYWJzKHIudG9wICsgci5oZWlnaHQgLyAyIC0gbWlkKTsKICAgICAgaWYgKGQgPCBiZXN0RCkgeyBiZXN0RCA9IGQ7IGJlc3QgPSBmOyB9CiAgICB9CiAgICBpZiAoYmVzdCA9PT0gYWN0aXZlRikgcmV0dXJuOwogICAgYWN0aXZlRj8uc2V0QWN0aXZlPy4oZmFsc2UpOwogICAgYWN0aXZlRiA9IGJlc3Q7CiAgICBhY3RpdmVGPy5zZXRBY3RpdmU/Lih0cnVlKTsKICB9CgogIGxldCBxdWV1ZWQgPSBmYWxzZTsKICBjb25zdCBvblNjcm9sbCA9ICgpID0+IHsKICAgIGlmIChxdWV1ZWQpIHJldHVybjsKICAgIHF1ZXVlZCA9IHRydWU7CiAgICByZXF1ZXN0QW5pbWF0aW9uRnJhbWUoKCkgPT4geyBxdWV1ZWQgPSBmYWxzZTsgcGlja0FjdGl2ZSgpOyB9KTsKICB9OwogIGFkZEV2ZW50TGlzdGVuZXIoInNjcm9sbCIsIG9uU2Nyb2xsLCB7IHBhc3NpdmU6IHRydWUgfSk7CiAgYWRkRXZlbnRMaXN0ZW5lcigicmVzaXplIiwgb25TY3JvbGwsIHsgcGFzc2l2ZTogdHJ1ZSB9KTsKICBkb2N1bWVudC5hZGRFdmVudExpc3RlbmVyKCJ2aXNpYmlsaXR5Y2hhbmdlIiwgKCkgPT4gewogICAgZm9yIChjb25zdCBmIG9mIGZpZ3VyZXMpIGYuc2V0VmlzaWJsZT8uKCFkb2N1bWVudC5oaWRkZW4gJiYgISFzZWVuLmdldChmKSk7CiAgfSk7CgogIHBpY2tBY3RpdmUoKTsKICByZXR1cm4gewogICAgZ2V0IGFjdGl2ZSgpIHsgcmV0dXJuIGFjdGl2ZUY7IH0sCiAgICBkZXN0cm95KCkgewogICAgICBpby5kaXNjb25uZWN0KCk7CiAgICAgIHJlbW92ZUV2ZW50TGlzdGVuZXIoInNjcm9sbCIsIG9uU2Nyb2xsKTsKICAgICAgcmVtb3ZlRXZlbnRMaXN0ZW5lcigicmVzaXplIiwgb25TY3JvbGwpOwogICAgfSwKICB9Owp9CgovLyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KLy8gUnVudGltZSBlbnZpcm9ubWVudCDigJQgaXMgdGhlcmUgYSBsaXZlIHZpeiBzZXJ2ZXIgYmVoaW5kIHRoaXMgcGFnZT8KLy8KLy8gQSB2aXogY2FuIHJ1biBpbiB0aHJlZSB3b3JsZHMsIGFuZCBsaXZlLWRhdGEgVUkgbmVlZHMgdG8ga25vdyB3aGljaDoKLy8gICAic3RhdGljIiAg4oCUIGEgcHVibGlzaGVkL2lubGluZWQgYnVpbGQuIFRoZXJlIGlzIE5PIHNlcnZlciBhbmQgbmV2ZXIgd2lsbCBiZQovLyAgICAgICAgICAgICAgIG9uZSB0aGlzIHNlc3Npb247IGJ1aWxkLnRzIHN0YW1wcyB3aW5kb3cuX19WSVpfU1RBVElDX18gaW50byB0aGUKLy8gICAgICAgICAgICAgICBzZWxmLWNvbnRhaW5lZCBIVE1MIGl0IGVtaXRzLgovLyAgICJsaXZlIiAgICDigJQgc2VydmVkIGJ5IHRoZSB2aXogZGV2IHNlcnZlciwgYW5kIGl0IGFuc3dlcnMgKGZldGNoIGFwaS8qIHdpbGwgd29yaykuCi8vICAgIm9mZmxpbmUiIOKAlCBzZXJ2ZWQgYXMgaWYgYnkgYSBzZXJ2ZXIsIGJ1dCBpdCBpc24ndCBhbnN3ZXJpbmcgcmlnaHQgbm93IChkZXYKLy8gICAgICAgICAgICAgICBzZXJ2ZXIgc3RvcHBlZCwgb3BlbmVkIGZyb20gZGlzaywgZXRjLikg4oCUIHRyZWF0IGxpa2Ugc3RhdGljLgovLwovLyBQcm9iZXMgdGhlIHNlcnZlci1nbG9iYWwgL19oZWFsdGggb25jZSBhbmQgY2FjaGVzIHRoZSBwcm9taXNlLiBVc2UgaXQgdG8gZ2F0ZQovLyBhbnl0aGluZyB0aGF0IGZldGNoZXMgYXBpLyo6IHJlbmRlciByZWFsIGRhdGEgb25seSBvbiAibGl2ZSIsIG90aGVyd2lzZSBzaG93IGEKLy8gInJ1biBtZSBsb2NhbGx5IGZvciBsaXZlIGRhdGEiIHBsYWNlaG9sZGVyIGluc3RlYWQgb2Ygc3Bpbm5pbmcgZm9yZXZlci4KLy8gICBjb25zdCBlbnYgPSBhd2FpdCB2aXpFbnYoKTsKLy8gICBpZiAoZW52ICE9PSAibGl2ZSIpIHsgc2hvd1BsYWNlaG9sZGVyKCk7IHJldHVybjsgfQpsZXQgX3ZpekVudlA7CmV4cG9ydCBmdW5jdGlvbiB2aXpFbnYoKSB7CiAgcmV0dXJuIChfdml6RW52UCA/Pz0gKGFzeW5jICgpID0+IHsKICAgIGlmICh0eXBlb2Ygd2luZG93ICE9PSAidW5kZWZpbmVkIiAmJiB3aW5kb3cuX19WSVpfU1RBVElDX18pIHJldHVybiAic3RhdGljIjsKICAgIHRyeSB7CiAgICAgIGNvbnN0IHIgPSBhd2FpdCBmZXRjaCgiL19oZWFsdGgiLCB7IGNhY2hlOiAibm8tc3RvcmUiIH0pOwogICAgICByZXR1cm4gci5vayA/ICJsaXZlIiA6ICJvZmZsaW5lIjsKICAgIH0gY2F0Y2ggewogICAgICByZXR1cm4gIm9mZmxpbmUiOwogICAgfQogIH0pKCkpOwp9Cg=="}}</script>
+<script>window.__VIZ_STATIC__=true;</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How I Use AI</title>
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="How I Use AI">
+<meta name="viz:description" content="An explorable of Rascal's AI usage philosophy — fifteen principles across three arcs, scored against the four things I think the work asks of me: teacher, leader, expert, owner.">
+<link rel="icon" href="data:,">
+<style>
+/* viz-kit.css — the /viz house style. Load with:
+     <link rel="stylesheet" href="/_kit/viz-kit.css">
+   Served by the viz server at /_kit/viz-kit.css from the skill's own kit/ dir.
+
+   Why this exists: nearly every viz independently re-derived the same dark theme
+   (a GitHub-dark palette), re-guessed the exact hexes (so the "same" background
+   drifted across files), and invented its own variable names (--txt vs --text vs
+   --ink) for identical concepts. This file fixes the palette and the names ONCE so
+   you can reach for var(--accent) / var(--good) instead of re-picking colors.
+
+   The dark GitHub-ish palette is the DEFAULT, not a constraint. Every rule below
+   reads its colors through var() — there is not one hardcoded hex outside :root —
+   so a page needing a brand or one-off palette overrides the tokens in a later
+   :root and keeps every component. Re-theme; don't fork. See kit/README.md. */
+
+:root {
+  /* Surfaces, back to front */
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel-2: #21262d;
+  --border: #30363d;
+
+  /* Text — three tiers. --faint is for de-emphasized chrome (axis ticks, units,
+     footnotes, "n of m" counters); 72 vizzes re-derived a third tier by hand
+     before it existed here, at half a dozen different grays. */
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --faint: #6e7681;
+
+  /* Intent — accents that carry meaning */
+  --accent: #58a6ff; /* primary / links / selection */
+  --good: #3fb950; /* success / healthy / "yes" */
+  --warn: #d29922; /* caution / pending */
+  --danger: #f85149; /* error / blocked / "no" */
+
+  /* Categorical ramp — visually separable hues for diagram categories / series.
+     Use these when you need N separable colors, NOT meaning.
+
+     ⚠ ALIASING TRAP — c1/c2/c3/c6 are byte-identical to the intent colors above:
+       --c1 == --accent   --c2 == --good   --c3 == --warn   --c6 == --danger
+     So a categorical series rendered in --c2 reads as "success" next to anything
+     using --good, and --c6 reads as "error". Only --c4, --c5, --c7, --c8 are
+     unique to this ramp. This has already caused rework (a poster themed on --c2
+     went monochrome against a --good meter and had to be re-themed to --c5).
+     If your viz mixes categorical series WITH semantic color, pick from
+     --c4/--c5/--c7/--c8 first, then reach for the aliased four knowingly.
+
+     The four aliased slots are DEFINED AS the intent colors rather than repeating
+     their hexes. That's deliberate: the aliasing is self-evident wherever you read
+     this file, it cannot drift, and a re-theme keeps them in sync automatically.
+     The slots with a literal hex are the meaning-free ones. */
+  --c1: var(--accent); /* blue  — ALIAS, reads as "primary/selected" */
+  --c2: var(--good); /* green — ALIAS, reads as "success" */
+  --c3: var(--warn); /* amber — ALIAS, reads as "caution" */
+  --c4: #bc8cff; /* purple — meaning-free */
+  --c5: #4ec9b0; /* teal   — meaning-free */
+  --c6: var(--danger); /* red — ALIAS, reads as "error" */
+  --c7: #5d52b4; /* indigo  — meaning-free (ΔE 21.3 from the nearest intent color) */
+  --c8: #b70385; /* magenta — meaning-free (ΔE 20.9) */
+  /* No orange slot exists on purpose: every orange sits between --danger (hue 27°)
+     and --warn (80°), and none clears ΔE 15 from both under CVD simulation. The
+     obvious #f0883e is ΔE 1.5 from --warn to a protanope — indistinguishable. */
+
+  /* Type */
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Spacing rhythm */
+  --r: 8px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+html {
+  /* Paint the canvas itself. body is height:100% (one viewport), so on a page taller
+     than the viewport the area BELOW the body box would otherwise reveal the browser's
+     default (lighter) canvas when scrolled — showing as a horizontal "line" mid-page
+     where body's --bg ends. Putting --bg on the root keeps the whole canvas dark. */
+  background-color: var(--bg);
+}
+
+body {
+  /* A faint top-glow over the flat background — the recurring "radial-gradient at
+     60% 0%" idiom, standardized. Sized large and faded to transparent well past the
+     fold (color-mix dilutes --panel) so the glow→--bg transition never forms a
+     visible edge mid-page — the earlier tight 600px gradient left a "boundary" band. */
+  background:
+    radial-gradient(1600px 1000px at 50% -30%, color-mix(in srgb, var(--panel) 55%, transparent), transparent 75%),
+    var(--bg);
+  color: var(--text);
+  font: 14px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Links. There was no bare `a` rule here until 2026-08-19, so every naked anchor
+   in every viz fell through to the user-agent default: #0000EE on a #0d1117
+   background (2.3:1 — below the 4.5:1 floor), and #551A8B once visited, which is
+   1.5:1 and effectively invisible. Both tiers now come from tokens, so they follow
+   a re-theme. --c4 keeps the "visited is purple" convention at 8.2:1 instead of
+   abandoning it. Lowest possible specificity, so any component rule still wins. */
+a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+a:visited { color: var(--c4); }
+a:hover { color: var(--text); text-decoration-thickness: 2px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+/* Header: title + one-line muted subtitle — the chrome ~19/22 vizzes open with. */
+.viz-header {
+  padding: 20px 24px;
+}
+.viz-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.viz-header .sub,
+.sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* Panels / cards */
+.panel,
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--r) * 1.5);
+  padding: 16px;
+}
+
+/* Slide-in detail drawer (click a node → details). Toggle .open. */
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(420px, 90vw);
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  transform: translateX(100%);
+  transition: transform 0.2s ease;
+  overflow: auto;
+  padding: 20px;
+  z-index: 50;
+}
+.drawer.open {
+  transform: none;
+}
+
+/* Legend: the single most common component (~16/22), reinvented differently each
+   time. Two swatch shapes: a filled square for nodes, a short rule for edge types. */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex: none;
+  background: var(--accent);
+}
+/* Colour comes from `background` (inherited from .swatch), NOT border-top. It was
+   `height:0` + `border-top` until 2026-08-19, which made the documented way to
+   colour a swatch — an inline `background:` — a silent no-op: every line swatch in
+   the corpus rendered accent-blue regardless of what it was labelling. All 5
+   usages passed `background`; none passed `border-top-color`. */
+.swatch.line {
+  width: 16px;
+  height: 2px;
+  border-radius: 0;
+}
+/* Round swatch. Its absence is why 25 vizzes abandoned .swatch entirely and
+   hand-rolled a .dot/.sw at five different sizes — the shape was the blocker,
+   not the component. */
+.swatch.dot {
+  border-radius: 50%;
+}
+
+/* Status / label pill — uppercase micro-badge. Recurs in ~120 files (the
+   border-radius:999px + text-transform:uppercase idiom) and was re-derived at a
+   different size almost every time. Modifiers tint text + border together. */
+.pill {
+  display: inline-block;
+  font: 700 11px var(--sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.pill.accent {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+.pill.good {
+  color: var(--good);
+  border-color: color-mix(in srgb, var(--good) 50%, transparent);
+}
+.pill.warn {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 50%, transparent);
+}
+.pill.danger {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 50%, transparent);
+}
+
+/* Animated "flow" edge — dashed line whose dashes drift along the path. The
+   @keyframes was identical everywhere but for the offset magnitude; here it's one
+   class. Apply to an SVG <path>/<line>: <path class="flow" .../>. */
+@keyframes viz-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+.flow {
+  stroke-dasharray: 6 4;
+  animation: viz-dash 1s linear infinite;
+}
+
+/* Reduced motion. 108 of 161 corpus vizzes animate (rAF, @keyframes, transitions,
+   setInterval); 3 guarded it. Guarding per-viz was never going to happen, so the
+   kit does it once for everyone that links this file.
+
+   Motion is not removed, it is collapsed: near-zero durations keep transition/
+   animation END events firing, so state machines that advance on `transitionend`
+   still advance instead of deadlocking (the usual bug in a naive
+   `animation: none !important` reset).
+
+   This cannot reach a JS rAF loop. If your viz animates in JS, gate it yourself:
+     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+   and jump to the end state instead of tweening to it. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* The dashed-edge drift reads as decoration, not information — stop it dead
+     rather than freezing it mid-dash. */
+  .flow {
+    animation: none !important;
+  }
+}
+
+/* Auto-wrapping SVG label (see labelBox() in viz.js). Fills its <foreignObject>
+   and centers; overflow is clipped, never spilled. */
+.vsvg-label {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text);
+  font: 12px/1.25 var(--sans);
+  overflow: hidden;
+  padding: 2px 6px;
+}
+
+/* --- .elsewhere — third-party explainers -------------------------------------
+   A pointer to somebody ELSE explaining the same thing. Deliberately its own
+   look, because a page that cites standards needs three visually distinct
+   kinds of evidence and a reader must never mistake one for another:
+
+     normative   what makes the claim true      (RFC / NIST / regulator)
+     first-party what we read or decided        (source code, our own choice)
+     elsewhere   a second teacher               <- this
+
+   Uses --c5 (teal, one of the meaning-free categorical slots) so it reads as
+   "a different kind of thing" rather than as success or warning.
+
+   Convention that makes it worth having: the `.why` line says what the source
+   is actually good for, INCLUDING where it is thinner than its reputation. An
+   unread link presented as authoritative is the exact impression this component
+   exists to prevent. Pair it with a rot checker — external pages 404.  */
+.elsewhere {
+  border-left: 2px solid var(--c5);
+  padding: 8px 0 2px 12px;
+  margin-top: 12px;
+}
+.elsewhere > .lbl {
+  display: block;
+  font: 700 9px/1 var(--sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c5);
+  margin-bottom: 5px;
+}
+.elsewhere a {
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid var(--c5);
+}
+.elsewhere a:hover { color: var(--c5) }
+.elsewhere .who { color: var(--faint); font-size: 0.85em; margin-left: 6px }
+.elsewhere .why {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.92em;
+  line-height: 1.55;
+}
+
+</style>
+<style>
+  :root{
+    --rail-w: 306px;
+    --glass: color-mix(in srgb, var(--panel) 72%, transparent);
+    --arc1: var(--c1);
+    --arc2: var(--c2);
+    --arc3: var(--c3);
+    /* The four values. Kit slots c2/c3/c6 alias good/warn/danger — a scorecard
+       must not render a value in error-red — and c7/c8 are too dark to read on
+       --panel at this cell size, so those two are re-themed brighter here. */
+    --v-teacher: var(--c4);   /* violet   */
+    --v-leader:  var(--c5);   /* teal     */
+    --v-expert:  #8ea2ff;     /* periwinkle — brighter sibling of c7 */
+    --v-owner:   #f2789f;     /* rose      — brighter sibling of c8 */
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; margin:0; }
+  body{
+    background:
+      radial-gradient(1100px 620px at 82% -8%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 60%),
+      radial-gradient(900px 520px at -6% 108%, color-mix(in srgb, var(--c4) 12%, transparent), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    overflow:hidden;
+  }
+  .app{ display:grid; grid-template-rows:auto 1fr; height:100dvh; }
+
+  /* ---- header ---- */
+  header.top{
+    display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+    padding:16px 26px 14px; border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg, color-mix(in srgb, var(--panel) 55%, transparent), transparent);
+  }
+  header.top h1{ font-size:20px; margin:0; letter-spacing:.2px; }
+  header.top h1 .q{ color:var(--muted); font-weight:500; }
+  header.top .spacer{ flex:1; }
+  header.top .hint{ color:var(--muted); font-size:12px; font-family:var(--mono); }
+  header.top .hint kbd{
+    font-family:var(--mono); background:var(--panel-2); border:1px solid var(--border);
+    border-bottom-width:2px; border-radius:5px; padding:1px 6px; color:var(--text); font-size:11px;
+  }
+
+  /* ---- body layout ---- */
+  .body{ display:grid; grid-template-columns:var(--rail-w) 1fr; min-height:0; }
+
+  /* ---- rail ---- */
+  nav.rail{
+    border-right:1px solid var(--border); padding:16px 14px; overflow-y:auto;
+    background:linear-gradient(180deg, color-mix(in srgb, var(--panel) 40%, transparent), transparent);
+  }
+  .rail-title{ font-size:11px; text-transform:uppercase; letter-spacing:.14em; color:var(--muted); margin:2px 8px 12px; }
+  .arc-head{
+    display:flex; align-items:center; gap:8px; margin:16px 8px 6px;
+    font-size:10.5px; text-transform:uppercase; letter-spacing:.13em; color:var(--muted);
+  }
+  .arc-head .bar{ width:16px; height:3px; border-radius:2px; background:var(--ac, var(--accent)); flex:none; }
+  .arc-head .cnt{ margin-left:auto; font-family:var(--mono); opacity:.6; }
+  .step{
+    position:relative; display:flex; gap:11px; align-items:center; width:100%;
+    text-align:left; cursor:pointer; color:var(--text);
+    background:transparent; border:1px solid transparent; border-radius:11px;
+    padding:7px 10px; margin:1px 0; font:inherit; transition:background .15s, border-color .15s;
+  }
+  .step:hover{ background:var(--panel); }
+  .step .chip{
+    flex:none; width:25px; height:25px; border-radius:8px; display:grid; place-items:center;
+    font-family:var(--mono); font-size:11.5px; font-weight:600;
+    background:var(--panel-2); border:1px solid var(--border); color:var(--muted);
+  }
+  .step .lbl{ font-size:13px; line-height:1.25; }
+  .step.active{ background:color-mix(in srgb, var(--ac, var(--accent)) 16%, transparent); border-color:color-mix(in srgb, var(--ac, var(--accent)) 48%, transparent); }
+  .step.active .chip{ background:var(--ac, var(--accent)); border-color:var(--ac, var(--accent)); color:#04121f; }
+  .step.active .lbl{ color:var(--text); font-weight:600; }
+  .step.seen .chip{ color:var(--ac, var(--accent)); border-color:color-mix(in srgb, var(--ac, var(--accent)) 45%, transparent); }
+  .step.dim{ opacity:.28; }
+  .rail-foot{ margin:18px 8px 6px; padding-top:14px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; line-height:1.55; }
+  .rail-foot a{ color:var(--accent); text-decoration:none; }
+  .rail-foot a:hover{ text-decoration:underline; }
+
+  /* ---- stage ----
+     The footer lives OUTSIDE the scroll container so Prev/Next hold the same
+     screen position on every stop, instead of tracking each stop's height. */
+  main.stage{ display:grid; grid-template-rows:minmax(0,1fr) auto; min-height:0; }
+  .stage-scroll{ position:relative; min-height:0; overflow-y:auto; padding:32px 40px 26px; }
+  .watermark{
+    position:absolute; top:-14px; right:26px; font-family:var(--mono); font-weight:700;
+    font-size:190px; line-height:1; color:color-mix(in srgb, var(--ac, var(--accent)) 9%, transparent);
+    pointer-events:none; user-select:none; letter-spacing:-6px;
+  }
+  .stage-grid{ position:relative; display:grid; grid-template-columns:minmax(0,1fr) 356px; gap:34px; max-width:1120px; align-items:start; }
+  .eyebrow{ display:inline-flex; align-items:center; gap:9px; color:var(--ac, var(--accent)); font-family:var(--mono); font-size:12px; letter-spacing:.05em; margin-bottom:11px; }
+  .eyebrow .dot{ width:7px; height:7px; border-radius:50%; background:currentColor; box-shadow:0 0 0 4px color-mix(in srgb, currentColor 22%, transparent); }
+  h2.title{ font-size:29px; line-height:1.13; margin:0 0 14px; letter-spacing:-.3px; }
+
+  /* serves badges */
+  .serves{ display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin:0 0 16px; }
+  .serves .sl{ font-size:11px; color:var(--muted); font-family:var(--mono); letter-spacing:.06em; text-transform:uppercase; }
+  .vtag{
+    display:inline-flex; align-items:center; gap:6px; cursor:pointer; font:inherit; font-size:11.5px;
+    background:transparent; color:var(--vc); border:1px solid color-mix(in srgb, var(--vc) 45%, transparent);
+    border-radius:999px; padding:3px 11px 3px 8px; font-family:var(--mono); letter-spacing:.03em;
+    transition:background .15s;
+  }
+  .vtag:hover{ background:color-mix(in srgb, var(--vc) 16%, transparent); }
+  .vtag i{ width:6px; height:6px; border-radius:50%; background:var(--vc); font-style:normal; }
+
+  .lead{
+    font-size:18px; line-height:1.5; color:var(--text); margin:0 0 20px;
+    padding-left:16px; border-left:3px solid color-mix(in srgb, var(--ac, var(--accent)) 60%, transparent);
+  }
+  .lead em{ color:var(--ac, var(--accent)); font-style:italic; }
+  ul.points{ list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+  ul.points li{ position:relative; padding-left:26px; font-size:14.5px; line-height:1.5; color:var(--text); }
+  ul.points li::before{
+    content:""; position:absolute; left:4px; top:8px; width:8px; height:8px; border-radius:2px;
+    background:var(--ac, var(--accent)); transform:rotate(45deg);
+  }
+  ul.points li b{ color:#fff; font-weight:600; }
+  ul.points li .m{ color:var(--muted); }
+  .visual{ position:sticky; top:0; }
+  .visual .frame{
+    background:var(--glass); border:1px solid var(--border); border-radius:16px; padding:16px;
+    box-shadow:0 20px 50px -30px rgba(0,0,0,.9); backdrop-filter:blur(3px);
+  }
+  .visual svg{ width:100%; height:auto; display:block; }
+  .visual .cap{ margin-top:10px; color:var(--muted); font-size:12px; text-align:center; font-family:var(--mono); line-height:1.5; }
+  .visual .cap b{ color:var(--ac, var(--accent)); font-weight:600; }
+  /* No opacity here — it dropped the only instruction for the only control to
+     3.94:1. Plain --muted on --bg is 6.19:1 and passes AA. */
+  .visual .drivehint{
+    margin-top:9px; text-align:center; font-size:11px; font-family:var(--mono);
+    color:var(--muted); letter-spacing:.04em;
+  }
+  ul.points li a, .rail-foot a, .lead a{ color:var(--ac, var(--accent)); text-decoration:underline; text-underline-offset:2px; }
+  ul.points li a:hover{ text-decoration-thickness:2px; }
+
+  /* svg shared bits */
+  .s-stroke{ stroke:var(--ac, var(--accent)); fill:none; stroke-width:2; }
+  .s-mut{ stroke:var(--muted); fill:none; stroke-width:1.6; }
+  .s-fill{ fill:var(--ac, var(--accent)); }
+  .s-mfill{ fill:var(--muted); }
+  .s-txt{ fill:var(--text); font-family:var(--mono); font-size:12px; }
+  .s-txtm{ fill:var(--muted); font-family:var(--mono); font-size:11px; }
+  .s-good{ stroke:var(--good); }
+  .s-danger{ stroke:var(--danger); }
+  .dash{ stroke-dasharray:5 5; }
+
+  /* ---- landing ---- */
+  .creed-lead{ font-size:21px; line-height:1.45; max-width:820px; margin:0 0 8px; }
+  .creed-lead b{ color:var(--accent); }
+  .sec-h{
+    display:flex; align-items:baseline; gap:12px; margin:30px 0 4px; max-width:1120px;
+    font-size:12px; font-family:var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--accent);
+  }
+  .sec-h .rule{ flex:1; height:1px; background:var(--border); }
+  .sec-sub{ color:var(--muted); font-size:13.5px; margin:0 0 16px; max-width:820px; line-height:1.55; }
+
+  /* matrix */
+  .matrix-wrap{
+    background:var(--glass); border:1px solid var(--border); border-radius:16px;
+    padding:18px 20px 14px; max-width:1120px; backdrop-filter:blur(3px);
+  }
+  .matrix-wrap svg{ width:100%; height:auto; display:block; overflow:visible; }
+  .mcell{ cursor:pointer; transition:opacity .15s; }
+  .mrow-lbl{ cursor:pointer; }
+  .mrow-lbl:hover text{ fill:#fff; }
+  .mcol-lbl{ cursor:pointer; }
+  .m-dim{ opacity:.16; }
+  .matrix-read{
+    display:flex; align-items:center; gap:12px; margin-top:12px; padding-top:12px;
+    border-top:1px solid var(--border); font-size:13.5px; line-height:1.5; color:var(--text); min-height:42px;
+  }
+  .matrix-read .badge{
+    flex:none; font-family:var(--mono); font-size:11px; padding:3px 10px; border-radius:999px;
+    border:1px solid color-mix(in srgb, var(--rc, var(--accent)) 45%, transparent); color:var(--rc, var(--accent));
+  }
+  .matrix-read .m{ color:var(--muted); }
+
+  /* creed */
+  .creed-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(252px,1fr)); gap:11px; max-width:1120px; }
+  .creed-card{
+    background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--c-l, var(--accent));
+    border-radius:11px; padding:12px 14px; font-size:13.5px; line-height:1.45; cursor:pointer;
+    transition:transform .12s, background .15s;
+  }
+  .creed-card:hover{ transform:translateY(-2px); background:var(--panel-2); }
+  .creed-card .n{ font-family:var(--mono); font-size:11px; color:var(--muted); display:block; margin-bottom:4px; }
+  .creed-card b{ color:#fff; }
+
+  /* ---- footer nav (pinned) ---- */
+  .stage-foot{
+    display:flex; align-items:center; gap:16px;
+    padding:13px 40px; border-top:1px solid var(--border);
+    background:linear-gradient(0deg, color-mix(in srgb, var(--panel) 60%, transparent), transparent);
+  }
+  .btn{
+    display:inline-flex; align-items:center; gap:8px; cursor:pointer; font:inherit; font-size:13.5px;
+    background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:9px 15px;
+    transition:background .15s, border-color .15s, opacity .15s;
+  }
+  .btn:hover{ background:var(--panel-2); border-color:var(--accent); }
+  .btn[disabled]{ opacity:.35; pointer-events:none; }
+  .btn.primary{ background:var(--ac, var(--accent)); color:#04121f; border-color:var(--ac, var(--accent)); font-weight:600; }
+  .dots{ display:flex; gap:6px; flex:1; justify-content:center; flex-wrap:wrap; }
+  .dots button{ width:9px; height:9px; padding:0; border-radius:50%; border:none; cursor:pointer; background:var(--border); transition:transform .15s; }
+  .dots button:hover{ transform:scale(1.4); }
+  .dots button.on{ background:var(--dc, var(--accent)); }
+  .counter{ color:var(--muted); font-family:var(--mono); font-size:12px; min-width:60px; text-align:right; }
+
+  .reveal{ animation:rise .32s cubic-bezier(.2,.7,.2,1) both; }
+  @keyframes rise{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:none;} }
+  @media (prefers-reduced-motion: reduce){ .reveal{ animation:none; } }
+
+  @media (max-width:980px){
+    .body{ grid-template-columns:1fr; }
+    nav.rail{ display:none; }
+    .stage-grid{ grid-template-columns:1fr; }
+    .visual{ position:static; order:-1; }
+    .watermark{ font-size:120px; right:12px; }
+    .stage-scroll{ padding:22px 20px 20px; }
+    .stage-foot{ padding:12px 20px; }
+  }
+</style>
+<meta property="og:type" content="website">
+<meta property="og:title" content="How I Use AI">
+<meta property="og:description" content="An explorable of Rascal's AI usage philosophy — fifteen principles across three arcs, scored against the four things I think the work asks of me: teacher, leader, expert, owner.">
+<meta property="og:url" content="https://rascaltwo.github.io/ai-setup/how-i-use-ai/">
+<meta property="og:image" content="https://rascaltwo.github.io/ai-setup/how-i-use-ai/og.auto.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>How I Use AI <span class="q">— the working philosophy</span></h1>
+    <div class="spacer"></div>
+    <div class="hint"><kbd>←</kbd> <kbd>→</kbd> move · <kbd>Home</kbd> start</div>
+  </header>
+  <div class="body">
+    <nav class="rail" id="rail"></nav>
+    <main class="stage">
+      <div class="stage-scroll" id="stage"></div>
+      <div class="stage-foot" id="foot"></div>
+    </main>
+  </div>
+</div>
+
+<script type="module">
+import { saveHash, loadHash, esc } from "/_kit/viz.js";
+
+/* ============================================================
+   THE FOUR VALUES — the columns everything gets scored against.
+   Not my invention; they're what I think the work asks of me,
+   and the reason this page is arranged the way it is.
+   ============================================================ */
+/* The page tells you to go and take the setup; it had better say where from. */
+const REPO = "https://github.com/RascalTwo/ai-setup";
+const TOUR = "../rascal-ai-setup-tour/";
+
+const VALUES = [
+  { key:"teacher", label:"Be a teacher", c:"var(--v-teacher)",
+    blurb:"AI amplifies whatever pattern you already follow, so somebody has to set the pattern — and then hand it on." },
+  { key:"leader",  label:"Be a leader",  c:"var(--v-leader)",
+    blurb:"Model the use deliberately wherever you have influence. Finding a better way to work is part of the job, not a hobby." },
+  { key:"expert",  label:"Be an expert", c:"var(--v-expert)",
+    blurb:"It is fluent without understanding. It answers the question you asked, not the one you should have — you're the difference." },
+  { key:"owner",   label:"Be an owner",  c:"var(--v-owner)",
+    blurb:"Accountability doesn't transfer. Authorship is never an alibi, and 'the agent wrote it' has never once been a defence." },
+];
+const VC = Object.fromEntries(VALUES.map(v => [v.key, v.c]));
+
+/* ---------- bespoke SVG metaphors (300 x 240 viewBox) ---------- */
+const V = (inner) => `<svg viewBox="0 0 300 240" role="img">${inner}</svg>`;
+const AH = (id, col) => `<marker id="${id}" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="${col}"/></marker>`;
+
+const ART = {
+  /* 1 — RACI: keep the A, delegate the R */
+  raci: V(`
+    <text x="150" y="20" text-anchor="middle" class="s-txtm">means → end</text>
+    <rect x="34" y="70" width="86" height="58" rx="10" class="s-stroke" data-viz-id="raci-a" data-label="accountability, kept"/>
+    <text x="77" y="100" text-anchor="middle" class="s-fill" style="font-family:var(--mono);font-weight:700;font-size:22px">A</text>
+    <text x="77" y="118" text-anchor="middle" class="s-txtm">accountable</text>
+    <line x1="77" y1="128" x2="77" y2="192" class="s-stroke"/>
+    <path d="M67 186 h20 l-10 14 Z" class="s-fill"/>
+    <text x="77" y="222" text-anchor="middle" class="s-txtm">stays on me</text>
+    <rect x="180" y="70" width="86" height="58" rx="10" class="s-mut dash" data-viz-id="raci-r" data-label="responsibility, delegated"/>
+    <text x="223" y="100" text-anchor="middle" class="s-mfill" style="font-family:var(--mono);font-weight:700;font-size:22px">R</text>
+    <text x="223" y="118" text-anchor="middle" class="s-txtm">the doing</text>
+    <path d="M126 99 h48" class="s-stroke" marker-end="url(#ah-raci)"/>
+    <text x="150" y="58" text-anchor="middle" class="s-txt">delegate ▸</text>
+    <rect x="196" y="176" width="54" height="34" rx="8" class="s-mut"/>
+    <text x="223" y="197" text-anchor="middle" class="s-txtm">AI</text>
+    <line x1="223" y1="128" x2="223" y2="172" class="s-mut dash"/>
+    <defs>${AH("ah-raci","var(--ac, var(--accent))")}</defs>`),
+
+  /* 2 — make it yours: only your key fits */
+  key: V(`
+    <text x="150" y="24" text-anchor="middle" class="s-txtm">only the you-shaped key fits</text>
+    <path d="M150 54 a34 34 0 1 0 .1 0 M150 88 v96 M150 150 h20 M150 170 h14" class="s-stroke" stroke-width="2.4" data-viz-id="key-mine" data-label="my own setup"/>
+    <circle cx="150" cy="88" r="9" fill="var(--bg)" class="s-stroke"/>
+    <g class="s-mut dash" opacity=".6">
+      <path d="M58 150 a20 20 0 1 0 .1 0 M58 170 v34 M58 190 h12" data-viz-id="key-other-a" data-label="borrowed framework"/>
+      <path d="M242 150 a20 20 0 1 0 .1 0 M242 170 v34 M242 188 h12" data-viz-id="key-other-b" data-label="borrowed framework"/>
+    </g>
+    <text x="58" y="222" text-anchor="middle" class="s-txtm">someone</text>
+    <text x="242" y="222" text-anchor="middle" class="s-txtm">else's</text>
+    <text x="150" y="214" text-anchor="middle" class="s-txt">you</text>`),
+
+  /* 3 — atrophy vs re-engaged practice */
+  atrophy: V(`
+    <line x1="40" y1="200" x2="272" y2="200" class="s-mut"/>
+    <line x1="40" y1="40" x2="40" y2="200" class="s-mut"/>
+    <text x="30" y="46" text-anchor="end" class="s-txtm">skill</text>
+    <path d="M40 70 C110 120, 190 165, 272 195" class="s-mut dash" data-viz-id="atrophy-slide" data-label="passive acceptance"/>
+    <text x="252" y="214" text-anchor="middle" class="s-txtm">let it slide</text>
+    <path d="M40 70 C110 74, 190 66, 272 60" class="s-stroke s-good" data-viz-id="atrophy-held" data-label="reps put back"/>
+    <g fill="var(--good)">
+      <rect x="96" y="62" width="7" height="7" rx="1.5" transform="rotate(45 99 65)"/>
+      <rect x="160" y="58" width="7" height="7" rx="1.5" transform="rotate(45 163 61)"/>
+      <rect x="224" y="55" width="7" height="7" rx="1.5" transform="rotate(45 227 58)"/>
+    </g>
+    <text x="150" y="30" text-anchor="middle" class="s-txt">demo · talk · teach = reps back</text>`),
+
+  /* 4 — three lanes, not a fan: curved branches put labels on top of their own
+         paths at this size, so the question sits above a straight lane instead. */
+  fork: V(`
+    <text x="150" y="22" text-anchor="middle" class="s-txtm">three answers, not two</text>
+    <circle cx="24" cy="126" r="6" class="s-fill"/>
+    <path d="M30 126 H44" class="s-stroke"/>
+    <path d="M44 62 V190" class="s-stroke"/>
+
+    <text x="48" y="54" class="s-txtm" style="font-size:9px">"can it do the WHOLE thing?"</text>
+    <line x1="44" y1="62" x2="204" y2="62" class="s-mut" data-viz-id="fork-whole" data-label="can it do the whole thing — the wrong question"/>
+    <line x1="214" y1="54" x2="230" y2="70" class="s-danger" stroke-width="2.4"/>
+    <line x1="230" y1="54" x2="214" y2="70" class="s-danger" stroke-width="2.4"/>
+    <text x="238" y="66" class="s-txtm" style="font-size:9px" fill="var(--danger)">wrong Q</text>
+
+    <text x="48" y="118" class="s-txtm" style="font-size:9px">"can it HELP with the worst part?"</text>
+    <line x1="44" y1="126" x2="206" y2="126" class="s-stroke s-good" data-viz-id="fork-help" data-label="help with the worst part — ship it"/>
+    <path d="M206 119 l13 7 l-13 7" class="s-stroke s-good"/>
+    <text x="228" y="130" class="s-txtm" style="font-size:9px" fill="var(--good)">ship</text>
+
+    <text x="48" y="182" class="s-txtm" style="font-size:9px">"or is this one mine to do?"</text>
+    <line x1="44" y1="190" x2="204" y2="190" stroke="var(--warn)" stroke-width="1.8" data-viz-id="fork-stop" data-label="set it down — this one is mine"/>
+    <line x1="216" y1="182" x2="216" y2="198" stroke="var(--warn)" stroke-width="3"/>
+    <line x1="226" y1="182" x2="226" y2="198" stroke="var(--warn)" stroke-width="3"/>
+    <text x="238" y="194" class="s-txtm" style="font-size:9px" fill="var(--warn)">mine</text>`),
+
+  /* 5 — lead the trail vs correct it */
+  trail: V(`
+    <text x="150" y="22" text-anchor="middle" class="s-txtm">blaze it, then it follows</text>
+    <path d="M40 150 C100 150, 200 150, 260 150" class="s-stroke" stroke-dasharray="2 9" stroke-linecap="round" data-viz-id="trail-led" data-label="trail laid in advance"/>
+    <path d="M256 143 l12 7 l-12 7" class="s-fill"/>
+    <circle cx="70" cy="150" r="8" class="s-fill"/><text x="70" y="176" text-anchor="middle" class="s-txt">you</text>
+    <circle cx="150" cy="150" r="6" class="s-mut"/><text x="150" y="174" text-anchor="middle" class="s-txtm">it</text>
+    <path d="M40 208 L80 196 L110 214 L150 198 L190 214 L230 200" class="s-mut dash" opacity=".55" data-viz-id="trail-zigzag" data-label="move-by-move correction"/>
+    <text x="150" y="232" text-anchor="middle" class="s-txtm">not: left · right · left</text>`),
+
+  /* 6 — INTERACTIVE: the depth x width plane (built in JS below) */
+  plane: null,
+
+  /* 7 — verification: pay once vs pay every time */
+  verify: V(`
+    <text x="150" y="20" text-anchor="middle" class="s-txtm">cost of one more check</text>
+    <line x1="52" y1="196" x2="286" y2="196" class="s-mut"/>
+    <line x1="52" y1="40" x2="52" y2="196" class="s-mut"/>
+    <text x="44" y="48" text-anchor="end" class="s-txtm">cost</text>
+    <!-- by eye: linear, never stops -->
+    <path d="M52 188 L286 56" class="s-mut" stroke="var(--danger)" stroke-width="2.2" data-viz-id="verify-eye" data-label="checking by eye"/>
+    <circle cx="110" cy="155" r="3.5" fill="var(--danger)"/>
+    <circle cx="168" cy="122" r="3.5" fill="var(--danger)"/>
+    <circle cx="226" cy="89" r="3.5" fill="var(--danger)"/>
+    <text x="238" y="50" text-anchor="end" class="s-txtm" fill="var(--danger)">by eye</text>
+    <!-- by machine: one hump, then flat -->
+    <path d="M52 188 C64 120, 78 104, 100 104 L286 104" class="s-stroke s-good" stroke-width="2.2" data-viz-id="verify-machine" data-label="deterministic check"/>
+    <circle cx="86" cy="107" r="3.5" fill="var(--good)"/>
+    <text x="286" y="98" text-anchor="end" class="s-txtm" fill="var(--good)">by machine</text>
+    <text x="98" y="92" class="s-txtm" fill="var(--good)" style="font-size:10px">write it once</text>
+    <text x="169" y="214" text-anchor="middle" class="s-txtm">→ number of checks</text>`),
+
+  /* 8 — restraint: the brake used to be typing */
+  lazy: V(`
+    <text x="150" y="20" text-anchor="middle" class="s-txtm">what stops the code growing</text>
+    <!-- before: effort as a brake -->
+    <text x="82" y="46" text-anchor="middle" class="s-txtm">before</text>
+    <rect x="52" y="140" width="60" height="46" rx="6" class="s-mut" data-viz-id="lazy-before" data-label="code written by hand"/>
+    <path d="M82 132 v-24" class="s-mut"/>
+    <rect x="56" y="82" width="52" height="24" rx="5" fill="none" stroke="var(--good)" stroke-width="2"/>
+    <text x="82" y="98" text-anchor="middle" class="s-txtm" fill="var(--good)" style="font-size:10px">effort</text>
+    <text x="82" y="204" text-anchor="middle" class="s-txtm" style="font-size:10px">held it down</text>
+    <!-- after: brake removed -->
+    <text x="218" y="46" text-anchor="middle" class="s-txtm">now</text>
+    <rect x="180" y="78" width="76" height="108" rx="6" class="s-mut dash" opacity=".55" data-viz-id="lazy-after-bloat" data-label="what it grows to unchecked"/>
+    <rect x="188" y="140" width="60" height="46" rx="6" class="s-stroke" data-viz-id="lazy-after-kept" data-label="what actually ships"/>
+    <path d="M218 132 v-24" class="s-mut dash" opacity=".5"/>
+    <rect x="192" y="82" width="52" height="24" rx="5" fill="none" stroke="var(--warn)" stroke-width="2" stroke-dasharray="4 4"/>
+    <text x="218" y="98" text-anchor="middle" class="s-txtm" fill="var(--warn)" style="font-size:10px">me</text>
+    <text x="218" y="204" text-anchor="middle" class="s-txtm" style="font-size:10px">has to hold it</text>
+    <text x="150" y="228" text-anchor="middle" class="s-txtm">the brake is mine now</text>`),
+
+  /* 9 — the loop: generate vs generate-and-land */
+  loop: V(`
+    <text x="150" y="20" text-anchor="middle" class="s-txtm">a loop needs a landing</text>
+    <!-- broken loop -->
+    <text x="76" y="46" text-anchor="middle" class="s-txtm" fill="var(--danger)">no gate</text>
+    <circle cx="76" cy="106" r="30" class="s-mut" stroke-dasharray="4 4" data-viz-id="loop-old" data-label="generates, never lands"/>
+    <text x="76" y="110" text-anchor="middle" class="s-txtm">89</text>
+    <path d="M76 140 v22" class="s-mut" stroke="var(--danger)"/>
+    <path d="M62 158 l14 12 l14 -12" fill="none" stroke="var(--danger)" stroke-width="2"/>
+    <line x1="46" y1="182" x2="106" y2="182" class="s-mut" stroke="var(--danger)" stroke-width="2"/>
+    <text x="76" y="202" text-anchor="middle" class="s-txtm" fill="var(--danger)" style="font-size:10px">0 landed</text>
+    <text x="76" y="216" text-anchor="middle" class="s-txtm" style="font-size:10px">floor</text>
+    <!-- working loop -->
+    <text x="216" y="46" text-anchor="middle" class="s-txtm" fill="var(--good)">gated</text>
+    <circle cx="216" cy="106" r="30" class="s-stroke" data-viz-id="loop-new" data-label="proposes, then lands"/>
+    <path d="M216 76 a30 30 0 0 1 26 15" class="s-stroke s-good"/>
+    <path d="M239 86 l6 9 l-11 2 z" fill="var(--good)"/>
+    <text x="216" y="110" text-anchor="middle" class="s-txt" style="font-size:10px">dream</text>
+    <path d="M216 140 v18" class="s-stroke"/>
+    <rect x="180" y="158" width="72" height="22" rx="5" fill="none" stroke="var(--good)" stroke-width="2" data-viz-id="loop-gate" data-label="approval gate"/>
+    <text x="216" y="173" text-anchor="middle" class="s-txtm" fill="var(--good)" style="font-size:10px">I clear it</text>
+    <path d="M216 180 v14" class="s-stroke s-good"/>
+    <path d="M209 190 l7 10 l7 -10" fill="var(--good)"/>
+    <text x="216" y="216" text-anchor="middle" class="s-txtm" style="font-size:10px">in the setup</text>`),
+
+  /* 10 — tool-agnostic hub */
+  hub: V(`
+    <rect x="112" y="98" width="76" height="46" rx="11" class="s-stroke" data-viz-id="hub-core" data-label="the config, which is mine"/>
+    <text x="150" y="118" text-anchor="middle" class="s-txt" fill="var(--ac, var(--accent))">YOU</text>
+    <text x="150" y="134" text-anchor="middle" class="s-txtm">the config</text>
+    ${[["Claude",54,44],["Codex",246,44],["local",54,200],["memory",246,200]].map(([t,x,y])=>{
+      const cx=x<150?112:188, cy=y<120?104:138;
+      const px=x<150?x+30:x-30, py=y;
+      return `<line x1="${cx}" y1="${cy}" x2="${px}" y2="${py}" class="s-mut"/>
+              <rect x="${x-32}" y="${y-15}" width="64" height="30" rx="7" class="s-mut" data-viz-id="hub-${t}" data-label="swappable: ${t}"/>
+              <text x="${x}" y="${y+4}" text-anchor="middle" class="s-txtm">${t}</text>`;
+    }).join("")}
+    <text x="150" y="228" text-anchor="middle" class="s-txtm">swap the tool, keep the you</text>`),
+
+  /* 11 — shadow work becomes a named agreement */
+  charter: V(`
+    <text x="150" y="20" text-anchor="middle" class="s-txtm">the same practice, twice</text>
+    <!-- shadow -->
+    <rect x="30" y="46" width="104" height="150" rx="12" class="s-mut dash" opacity=".7" data-viz-id="charter-shadow" data-label="unspoken norms"/>
+    <text x="82" y="66" text-anchor="middle" class="s-txtm">implicit</text>
+    ${[92,116,140,164].map((y,i)=>`<line x1="46" y1="${y}" x2="${118-i*14}" y2="${y}" class="s-mut" opacity=".5" stroke-dasharray="3 4"/>`).join("")}
+    <text x="82" y="212" text-anchor="middle" class="s-txtm" style="font-size:10px">assumed</text>
+    <!-- explicit -->
+    <rect x="166" y="46" width="104" height="150" rx="12" class="s-stroke" data-viz-id="charter-explicit" data-label="named in the charter"/>
+    <text x="218" y="66" text-anchor="middle" class="s-txt" fill="var(--ac, var(--accent))">explicit</text>
+    ${[92,116,140,164].map(y=>`<line x1="182" y1="${y}" x2="254" y2="${y}" class="s-stroke" stroke-width="1.6"/><circle cx="176" cy="${y}" r="3" class="s-fill"/>`).join("")}
+    <text x="218" y="212" text-anchor="middle" class="s-txtm" style="font-size:10px">agreed</text>
+    <path d="M138 121 h22" class="s-stroke" marker-end="url(#ah-ch)"/>
+    <defs>${AH("ah-ch","var(--ac, var(--accent))")}</defs>`),
+
+  /* 12 — three cascading repos */
+  publicRepos: V(`
+    <text x="150" y="20" text-anchor="middle" class="s-txtm">smash them together = the real thing</text>
+    ${[["public core",56,"var(--good)"],["employer",100,"var(--c1)"],["this machine",144,"var(--muted)"]].map(([t,y,c],i)=>`
+      <rect x="${40+i*14}" y="${y}" width="${180-i*8}" height="34" rx="8" fill="none" stroke="${c}" stroke-width="2" ${i===2?'stroke-dasharray="5 4"':''} data-viz-id="repo-${i}" data-label="${t} overlay"/>
+      <text x="${52+i*14}" y="${y+22}" class="s-txtm" fill="${c}">${t}</text>`).join("")}
+    <path d="M240 73 C266 73, 266 161, 240 161" class="s-mut"/>
+    <path d="M266 112 h16" class="s-stroke" marker-end="url(#ah-pr)"/>
+    <text x="150" y="212" text-anchor="middle" class="s-txt">= my true setup</text>
+    <line x1="60" y1="192" x2="240" y2="192" class="s-stroke"/>
+    <text x="150" y="232" text-anchor="middle" class="s-txtm">take it · it's a link, not a meeting</text>
+    <defs>${AH("ah-pr","var(--ac, var(--accent))")}</defs>`),
+
+  /* 13 — pairing: the shape that works vs the invisible failure */
+  pair: V(`
+    <text x="150" y="20" text-anchor="middle" class="s-txtm">two shapes that look identical</text>
+    <!-- working: shared screen -->
+    <circle cx="52" cy="76" r="13" class="s-stroke"/><circle cx="106" cy="76" r="13" class="s-stroke"/>
+    <path d="M52 89 L79 112 L106 89" class="s-stroke"/>
+    <rect x="55" y="112" width="48" height="30" rx="6" class="s-stroke" data-viz-id="pair-shared" data-label="one screen, both reading"/>
+    <text x="79" y="132" text-anchor="middle" class="s-txtm" style="font-size:10px">AI</text>
+    <text x="79" y="164" text-anchor="middle" class="s-txtm" fill="var(--good)" style="font-size:10px">both can explain it</text>
+    <path d="M64 176 l10 10 l20 -22" fill="none" stroke="var(--good)" stroke-width="2.4"/>
+    <!-- broken: two agents, one call -->
+    <circle cx="194" cy="76" r="13" class="s-mut"/><circle cx="248" cy="76" r="13" class="s-mut"/>
+    <line x1="194" y1="89" x2="194" y2="112" class="s-mut"/><line x1="248" y1="89" x2="248" y2="112" class="s-mut"/>
+    <rect x="172" y="112" width="44" height="30" rx="6" class="s-mut dash" data-viz-id="pair-split-a" data-label="their own agent"/>
+    <rect x="226" y="112" width="44" height="30" rx="6" class="s-mut dash" data-viz-id="pair-split-b" data-label="my own agent"/>
+    <path d="M216 127 h10" class="s-mut" stroke-dasharray="2 3"/>
+    <text x="221" y="164" text-anchor="middle" class="s-txtm" fill="var(--danger)" style="font-size:10px">neither can</text>
+    <line x1="207" y1="176" x2="235" y2="196" class="s-danger" stroke-width="2.4"/>
+    <line x1="235" y1="176" x2="207" y2="196" class="s-danger" stroke-width="2.4"/>
+    <text x="150" y="228" text-anchor="middle" class="s-txtm">busy is not the same as pairing</text>`),
+
+  /* 14 — promotion tiers */
+  promote: V(`
+    <text x="150" y="20" text-anchor="middle" class="s-txtm">rigor follows reliance</text>
+    ${[
+      ["mine",176,60,"var(--muted)","built it the 3rd time"],
+      ["asked for",124,110,"var(--c1)","someone wanted it"],
+      ["depended on",72,168,"var(--good)","the estimate assumes it"],
+    ].map(([t,y,w,c,sub],i)=>`
+      <rect x="${150-w/2}" y="${y}" width="${w}" height="40" rx="8" fill="none" stroke="${c}" stroke-width="2" data-viz-id="tier-${i}" data-label="${t} tier"/>
+      <text x="150" y="${y+18}" text-anchor="middle" class="s-txtm" fill="${c}" style="font-size:11px">${t}</text>
+      <text x="150" y="${y+32}" text-anchor="middle" class="s-txtm" style="font-size:9px">${sub}</text>`).join("")}
+    <path d="M150 176 v-12" class="s-mut"/><path d="M144 168 l6 -8 l6 8" fill="var(--muted)"/>
+    <path d="M150 124 v-12" class="s-mut"/><path d="M144 116 l6 -8 l6 8" fill="var(--muted)"/>
+    <text x="286" y="196" text-anchor="end" class="s-txtm" style="font-size:10px">source control</text>
+    <text x="286" y="208" text-anchor="end" class="s-txtm" style="font-size:10px">review · evals</text>
+    <line x1="222" y1="188" x2="222" y2="60" class="s-mut" stroke-dasharray="3 5"/>
+    <text x="228" y="56" class="s-txtm" style="font-size:9px">↑ rigor</text>`),
+
+  /* 15 — teaching: concept head → head */
+  teach: V(`
+    <path d="M74 168 c-30 0 -34 -34 -14 -46 c-6 -34 44 -46 58 -20 c26 -6 30 30 8 40 c4 20 -18 30 -30 22 z" class="s-mut" data-viz-id="teach-mine" data-label="the concept, in my head"/>
+    <path d="M226 168 c30 0 34 -34 14 -46 c6 -34 -44 -46 -58 -20 c-26 -6 -30 30 -8 40 c-4 20 18 30 30 22 z" class="s-stroke" data-viz-id="teach-yours" data-label="the concept, in yours"/>
+    <path d="M118 120 H182" class="s-stroke dash"/>
+    <path d="M175 113 l12 7 l-12 7" class="s-fill"/>
+    <circle cx="150" cy="120" r="6" class="s-fill"/>
+    <text x="74" y="200" text-anchor="middle" class="s-txtm">mine</text>
+    <text x="226" y="200" text-anchor="middle" class="s-txt" fill="var(--ac, var(--accent))">yours</text>
+    <text x="150" y="34" text-anchor="middle" class="s-txtm">teach it → you know it</text>`),
+};
+
+/* ---------- arcs ---------- */
+const ARCS = [
+  { id:1, name:"You and the machine", c:"var(--arc1)", note:"The frame. What the tool is for, and what stays mine." },
+  { id:2, name:"The dials",           c:"var(--arc2)", note:"How far, how wide, how sure, how much." },
+  { id:3, name:"You and other people",c:"var(--arc3)", note:"Where the leverage actually compounds." },
+];
+
+/* ---------- the principles ---------- */
+const P = [
+  /* ===================== ARC 1 ===================== */
+  {
+    arc:1, tag:"The frame", art:"raci", serves:["owner","expert"],
+    title:"Problem solver, not syntax memorizer",
+    creed:"I'm not a syntax memorizer, and I'm not Google. I'm the person who finds the solution — I keep the <b>A</b>, I delegate the <b>R</b>.",
+    lead:"I'm not an Ansible developer — <em>I'm a problem solver.</em> My value was never in reciting syntax; it's in finding the solution.",
+    cap:"keep the <b>A</b> · delegate the <b>R</b>",
+    points:[
+      "<b>Hold the A, delegate the R.</b> Accountability for anything I ship stays with me; the doing is what gets handed off.",
+      "Know the material well enough to <b>catch a hallucination on sight</b> — and to be right about it.",
+      "<b>Better still, build the system that catches it first.</b> Spotting one by eye is the fallback. The real work is arranging things so the setup surfaces its own errors before they ever reach me.",
+      "<b>Own it before it reaches a human.</b> After an autonomous fix, I have it walk me through every step until the work is genuinely mine.",
+      "<b>First-party evidence, always</b> <span class='m'>— it ran and saw it, or read it at the source. Training-data confidence doesn't count.</span>",
+      "<b>Authorship is not an alibi.</b> \"The agent wrote it\" has never once worked as a defence, and I'd rather not be the first to try.",
+    ],
+  },
+  {
+    arc:1, tag:"The core lesson", art:"key", serves:["leader"],
+    title:"Make it yours",
+    creed:"It has to work with <b>you</b>. Someone else's excellent framework is worthless if it fights your grain.",
+    lead:"Every borrowed methodology <em>worked</em> — and not one of them worked <em>with me.</em> That took months to learn, and it's the lesson I'd most like to save you the time on.",
+    cap:"the you-shaped key",
+    points:[
+      "Spec-Kit, the spec-driven workflows, the famous personal frameworks — all of them produced good results, and all of them ran against my grain.",
+      "So I built my own — the <b><a href=\"../rascal-ai-setup-tour/#%7B%22stop%22%3A%22pipeline%22%7D\">R2 SDLC</a></b>, modelled on how I already pair-program. Mine, which is the only reason I actually use it.",
+      "Their tools fit them because <b>they built them.</b> Admiring the result is fine; trying to <b>be</b> the person is the mistake.",
+      "The tooling cannot know you. <b>You have to put yourself into it</b> — and that is the one part nothing off the shelf will ever hand you.",
+      "<b>Bring it to you, not you to it.</b> I tried reshaping how I work to suit the tool. It doesn't hold, and it was never the deal.",
+    ],
+  },
+  {
+    arc:1, tag:"Beat the atrophy", art:"atrophy", serves:["expert","teacher"],
+    title:"Learn while you delegate",
+    creed:"If you can't teach it to someone, you don't actually know it — so put the reps back in on purpose.",
+    lead:"The real risk is that AI absorbs <em>exactly the practice</em> that used to build my judgment. So I put the reps back deliberately.",
+    cap:"reps back in, deliberately",
+    points:[
+      "<b>Acceptance criteria means it demos to me.</b> Not a summary — a demo. Everything, from a one-line PR to an entire proof of concept.",
+      "<b>Make the demo interactive</b> <span class='m'>— I'm the one clicking deploy and running the before and after.</span>",
+      "<b>Think out loud.</b> The stream is messy and the model handles messy fine — and <b>speaking makes it stick</b> far better than typing does.",
+      "<b>The teaching test</b> <span class='m'>— could I hand this to a person right now and have it land? If not, it goes in the bin.</span>",
+      "<b>The 51% rule</b> <span class='m'>— keep half of it familiar. When the other half is new, have it explained through a domain I already know cold, so the analogy carries the weight the unfamiliar part can't yet.</span>",
+      "<b>Reading code is a rep too.</b> There is far more of it to read now, which makes skipping the read a decision rather than an oversight.",
+    ],
+  },
+  {
+    arc:1, tag:"The reframe — and its limit", art:"fork", serves:["leader","expert"],
+    title:"Why couldn't AI help me with that?",
+    creed:"The better question isn't \"can AI do the whole thing?\" — it's \"why couldn't AI <b>help</b> me with that?\"",
+    lead:"Most people poke at AI, decide it can't do the <em>whole</em> thing, and conclude the work must stay manual. <em>Wrong question.</em> But reaching is a default, not a reflex.",
+    cap:"reach · help · set down",
+    points:[
+      "The aggressive framing: <b>find the blocker and remove it.</b> <span class='m'>No inbox access? Grant it. Can't watch the video? There's a skill for that.</span>",
+      "The one I actually recommend: <b>\"why couldn't AI <i>help</i> me with that?\"</b> Find the worst part — the bottleneck, the step you dread — and hand over that.",
+      "Before ChatGPT existed, we just called this <b>automation.</b>",
+      "<b>Don't let perfect be the enemy of good.</b> Past that point it's ordinary engineering.",
+      "<b>And the third branch: set it down.</b> When failure is irreversible, when I can't evaluate what comes back, or when the problem itself is still unshaped, reaching costs more than it saves.",
+      "<b>Knowing which branch you're on is the expert part.</b> The reframe is a habit; the abstention is judgment.",
+    ],
+  },
+  {
+    arc:1, tag:"Lead, don't correct", art:"trail", serves:["leader"],
+    title:"Lead the trail, don't correct the trail",
+    creed:"Lead the trail and let it follow, rather than correcting it move by move.",
+    lead:"Lay the trail down first and have it follow — rather than nudging it <em>left, right, left.</em> Show it where the picture goes; don't guide its hand forever.",
+    cap:"blaze it, then follow",
+    points:[
+      "<b>Front-load the agreement.</b> I stress-test the idea first — these days via the <b><a href=\"../rascal-ai-setup-tour/#skillsTitle\">Wayfinder</a></b> skill, the evolution of <a href=\"../rascal-ai-setup-tour/#skillsTitle\">grilling</a>.",
+      "The goal is a <b>shared understanding</b> before I trust the underlying decisions.",
+      "If I led clearly and it still went wrong, <b>that's signal</b> — either I under-communicated, or my own thinking is off.",
+      "The more trail I lay up front, the less correcting later.",
+      "<b>It will take the framing you give it.</b> It is not going to supply the friction, so the friction has to be built in before the prompt, not hoped for after.",
+    ],
+  },
+
+  /* ===================== ARC 2 ===================== */
+  {
+    arc:2, tag:"Two axes, not one", art:"plane", serves:["owner"], interactive:true,
+    title:"Climb the ladder, cap the width",
+    creed:"Depth is earned a rung at a time. Width you simply <b>choose</b> — which is why it's the one that bites.",
+    lead:"You don't start at the top — <em>every rung is earned.</em> But depth is only one axis, and for a long time it was the only one I had a principle for. The second axis is how many at once, and that's the one that does the damage.",
+    cap:"depth you earn · width you choose",
+    points:[
+      "Chat → autocomplete → it writes functions → it writes tests → <b>you're just the user,</b> asking for the feature.",
+      "Early on I specified every test scenario by hand. After enough iteration it landed <b>very close</b> to what I'd have written — close, never identical.",
+      "<b>Review the reasoning, not just the deliverable.</b> The moment the reasoning goes wrong I stop reading the output entirely: correct the behaviour first, then re-check.",
+      "<b>The stakes set the altitude</b> <span class='m'>— sometimes you climb all the way back down and read every line.</span>",
+      "<b>Width is the axis I got wrong.</b> Depth is a decision I make once and can walk back. Width is a decision I make accidentally, by opening one more session, and it doesn't announce itself.",
+      "Seven at once is well past the point where I could explain any single one of them. <b>The work I can't explain carries my name exactly as much as the work I can.</b>",
+      "<b>So the cap is whatever keeps the teaching test true.</b> This isn't a productivity preference; it's the precondition for nearly every other principle on this page.",
+    ],
+  },
+  {
+    arc:2, tag:"Trust, but instrument", art:"verify", serves:["owner","expert"],
+    title:"Verify by machine, not by eye",
+    creed:"\"I verified it\" is a <b>claim</b>, not a check. Build the check once instead of performing it forever.",
+    lead:"It will tell you it verified everything. <em>That is a claim, not a check.</em> A compiler that lied even occasionally would have a test harness around it inside a week — this deserves the same.",
+    cap:"pay once, not every time",
+    points:[
+      "<b>Self-report is the thing under test</b>, not the proof of it.",
+      "<b>Eyeballing is the expensive check.</b> It costs the scarcest thing I have, and it quietly degrades exactly when I'm tired enough to need it.",
+      "<b>Make the check deterministic and cheap</b> <span class='m'>— a script, a linter, a hook that fires on the way out and returns pass or fail.</span>",
+      "<b>Every check I build is permanent; every check I perform by hand I pay for again tomorrow.</b>",
+      "<b>Name the falsifier first.</b> What observation would prove this wrong? If nothing could, it was never a check.",
+      "<b>It optimises for \"is this possible\", not \"is this right\".</b> Plenty of wrong things are possible, and it will find them cheerfully.",
+    ],
+  },
+  {
+    arc:2, tag:"Restraint", art:"lazy", serves:["expert"],
+    title:"Ship the laziest thing that works",
+    creed:"Typing used to be the brake on over-building. It isn't there anymore, so <b>the restraint has to be mine.</b>",
+    lead:"When generating code is nearly free, <em>volume stops being evidence of value.</em> The effort that used to stop me over-building is gone, and nothing replaced it by default.",
+    cap:"the brake is mine now",
+    points:[
+      "<b>Ask whether the task needs to exist</b> before asking how to do it well.",
+      "<b>Standard library before a dependency, native platform before a library, one line before fifty.</b>",
+      "<b>\"Works\" has to be defined before it can be satisfied.</b> A test, or an acceptance criterion — which is only a test wearing different clothes. Write that first and the laziest sufficient implementation stops being a matter of taste.",
+      "<b>This is what XP — Extreme Programming — has always taught; AI just made skipping it cheap.</b> The disciplines didn't stop working. The shortcut around them got easier, and that is a different problem with the same symptom.",
+      "<b>Small slices stay reviewable.</b> A change that outgrows what I can hold in my head is one I can no longer honestly claim to own.",
+      "<b>Cheap to write is not cheap to keep.</b> Everything generated still has to be read, understood and maintained by somebody — usually me.",
+      "So it runs as a standing rule rather than a mood: <b><a href=\"../rascal-ai-setup-tour/#%7B%22stop%22%3A%22rules%22%7D\">the laziness bias</a> is on by default</b> for every coding task, and yields only when I explicitly say so.",
+    ],
+  },
+  {
+    arc:2, tag:"The engine", art:"loop", serves:["leader"],
+    title:"Close the loop",
+    creed:"Correct it once, then make the correction permanent — but <b>a loop with no landing is just a diary.</b>",
+    lead:"Correct it once — then <em>make the correction permanent.</em> What I had to learn the hard way is that a machine which only <em>produces</em> improvements produces nothing at all.",
+    cap:"89 proposed · 0 landed · then fixed",
+    points:[
+      "Every miss becomes a <b>new skill, a rule edit, or a memory.</b>",
+      "It learns the patterns <span class='m'>— \"Rascal really doesn't like it when I do this.\"</span>",
+      "<b>I approve the changes.</b> The tooling does not get to rewrite itself unsupervised.",
+      "<b>It audits its own setup, too.</b> On a schedule, the whole configuration goes back under review: is this rule still earning the tokens it costs? Strip it out, re-run the work, and find out whether anything actually breaks.",
+      "<b>Pruning is part of the loop, not cleanup after it.</b> The same pass that proposes additions proposes removals, because otherwise a setup only ever grows.",
+      "<b>The lesson that cost me most:</b> my old per-session retro wrote 89 proposals over two months and landed exactly zero of them, then sat dormant for three and a half months before I noticed. Generation was never the bottleneck.",
+      "So it now runs nightly as <b><a href=\"../skill-dream/\">dream</a></b>, and every proposal has to clear a dashboard I actually work through. <b>The gate is the feature.</b>",
+      "I close the loop on <b>life</b> too — daily, weekly, per project. A New Year's resolution is the same idea with a much worse landing rate.",
+    ],
+  },
+  {
+    arc:2, tag:"Guard your future", art:"hub", serves:["leader"],
+    title:"Tool-agnostic, lean, portable",
+    creed:"Tools, prices and vendors all turn. <b>Build so that leaving costs a port, not a rewrite.</b>",
+    lead:"Build it portable and keep it lean — <em>the current economics won't last forever,</em> and I'd rather not be stranded when they turn.",
+    cap:"swap the tool, keep the you",
+    points:[
+      "<b>Tool-agnostic</b> — move between Claude Code and Codex, push cheap work down to a local model, and re-tool nothing to do it.",
+      "Memory lives in <b><a href=\"../rascal-ai-setup-tour/#%7B%22stop%22%3A%22memory%22%7D\">basic-memory</a></b>, an MCP server, rather than any single vendor's built-in memory.",
+      "<b>But portable is not the same as lowest-common-denominator.</b> Refusing anything tool-specific means never using the good new thing the day it ships. Use it — then ask whether its <i>shape</i> can be made general, so leaving costs a port instead of a rewrite.",
+      "<b>Spend is a per-task judgment.</b> Reserve the expensive model for the genuinely hard problem and push bulk, mechanical and vision work somewhere local and free.",
+      "<b>An outage is a diagnostic, not just an inconvenience.</b> If work stops dead when the tool does, that's a capability I've quietly handed over without deciding to.",
+      "<b>You pay the most when you switch models</b>, which is the moment lean config stops being tidiness and starts being leverage.",
+      "Avoid the <b>meta-tooling trap</b> <span class='m'>— don't polish the setup so hard you never use it. Aim for a Unix shape: one job each, composable.</span>",
+    ],
+  },
+
+  /* ===================== ARC 3 ===================== */
+  {
+    arc:3, tag:"Say it out loud", art:"charter", serves:["teacher","leader"],
+    title:"Make it explicit, not implicit",
+    creed:"The work went explicit long before the conversation did. <b>An assumption is a decision nobody got to make.</b>",
+    lead:"AI use arrived the way shadow IT did — <em>real, everywhere, and unnamed.</em> The practice became explicit long before the conversation about it did.",
+    cap:"shadow → named",
+    points:[
+      "<b>The norms belong in the chartering conversation</b>, the collective agreements and the retro — not in an offhand remark after the fact.",
+      "<b>Name the awkward ones deliberately.</b> Do we mind being handed a fully AI-written PR description? People genuinely differ, and almost nobody has been asked.",
+      "<b>An assumption is a decision nobody got to make</b> — and it surfaces later as resentment rather than disagreement.",
+      "<b>This isn't new governance.</b> It's communication, feedback and psychological safety, pointed at a new thing. The fundamentals already cover it.",
+      "<b>Concerns are part of advocacy, not opposition to it.</b> A team where nobody can say \"this worries me\" hasn't agreed about anything; it's just quiet.",
+    ],
+  },
+  {
+    arc:3, tag:"Raise the floor", art:"publicRepos", serves:["leader","teacher"],
+    title:"Develop in public",
+    creed:"People shared dotfiles for a decade. <b>Do the same with your AI setup</b> — it's a link, not a meeting.",
+    lead:"People published their dotfiles for a decade and everyone got better for it. <em>Do the same with your setup.</em> The fastest way to raise the floor is to let people steal from you.",
+    cap:"public · employer · this machine",
+    points:[
+      "<b>Three repos, cascading</b> — a public core, an employer overlay, a machine-local one with no remote at all. Smash them together and you get my real setup.",
+      "<b>Publish what can legitimately be published</b>, and be precise about where the boundary is instead of defaulting to silence because the boundary is fuzzy.",
+      "<b><a href=\"https://github.com/RascalTwo/ai-setup\">Go point your agent at my setup</a> and take what you want</b> — that beats a walkthrough. It costs me nothing and it scales without my calendar.",
+      "<b>The setup is a living document</b>, not a configuration file. It gets groomed, pruned and rewritten in the open, and the history is the interesting part.",
+      "<b>Unshared tooling is unused tooling.</b> A shared skills repo where almost nothing is used by more than one person is the ordinary outcome, not a surprising one.",
+    ],
+  },
+  {
+    arc:3, tag:"It changed shape", art:"pair", serves:["teacher"],
+    title:"Pairing didn't die",
+    creed:"When code arrives faster than one person can read it, <b>someone still has to actually read it.</b>",
+    lead:"The advantages of pairing didn't disappear when AI arrived — <em>they changed shape.</em> When output lands faster than one person can absorb it, shared judgment matters more, not less.",
+    cap:"both of you, or neither",
+    points:[
+      "<b>The AI is a third participant, not a deliverable the pair prepares.</b> Driver still prompts; navigator still reads what comes back.",
+      "<b>Use the think time.</b> While the agent works, talk about why you went that way and what you expect back — that's the teaching window, not dead air.",
+      "<b>The test I use:</b> if only one of us could explain, right now, why the code on screen looks like that, we took turns. If neither of us could, the AI paired with itself.",
+      "<b>The new failure mode is invisible.</b> Two people, two agents, one call — both busy, both producing, neither pairing. The old version was easy to spot because somebody looked bored.",
+      "<b>Mobbing — the whole team on one problem, one screen — is the client-facing proof.</b> Take the room, pair in it, and let people notice what comes out of it rather than arguing for it in the abstract.",
+      "<b>\"Just pair with the AI, it's good enough\"</b> is the sentence worth arguing with. It can challenge me; it cannot be accountable alongside me.",
+    ],
+  },
+  {
+    arc:3, tag:"Rigor follows reliance", art:"promote", serves:["leader","owner"],
+    title:"Promote on evidence",
+    creed:"A skill on my laptop and a skill your estimate depends on are <b>not the same artifact.</b>",
+    lead:"Something I built for myself and something the team's estimates quietly depend on are <em>not the same artifact,</em> and pretending otherwise fails in both directions.",
+    cap:"mine → asked for → depended on",
+    points:[
+      "<b>Personal tier:</b> built the third time I do a thing by hand. Cheap, disposable, and nobody else needs to care.",
+      "<b>Team tier starts when somebody asks how I did that.</b> Not at a count, not on a schedule — at a request. That's the signal it's useful to someone who isn't me.",
+      "<b>Load-bearing tier is when the estimate assumes it</b> — when a three-point story is three points <i>because</i> the tooling exists. That earns source control, review and evals like any other code, because it now is.",
+      "<b>Groom it or it rots.</b> As models improve, yesterday's careful instruction stops being help and starts being context you pay for on every single call.",
+      "<b>Unused for two weeks, it goes.</b> It's all in git, so deleting is reversible — and keeping it isn't free.",
+    ],
+  },
+  {
+    arc:3, tag:"The point of it all", art:"teach", serves:["teacher"],
+    title:"Teaching is the whole point",
+    creed:"Everything above is in service of one question: <b>how do you move a concept into someone else's head, losing nothing?</b>",
+    lead:"Underneath all of it runs a single question, the one I've been chasing since my start in tutoring and education: <em>how do you move a concept out of your head and into someone else's — fast, and losing nothing on the way?</em>",
+    cap:"teach it → you know it",
+    points:[
+      "That question is why I came up through tutoring, and why I've made a great many attempts at it since — visualization libraries, live explorables, whatever might carry a concept across intact. <b>All of it long before AI.</b>",
+      "AI is the tool that finally made it cheap. <b>\"Teach me about this\"</b> lands the concept directly, at whatever depth I ask for.",
+      "It's why I demo rather than read, why I build explorables, and why the teaching test is a gate rather than a nice idea.",
+      "<b>If you can't comfortably teach it, you don't yet know the whole of it</b> — and everything on this page exists in service of that.",
+      "<b>Which is why it ends here rather than at the tooling.</b> The setup is the machinery. This is the reason any of it was worth building.",
+    ],
+  },
+];
+
+/* Stops are not principles. Stop 0 is the thesis + scorecard, stop 1 is the
+   compressed creed, and principles 1..N live at stops 2..N+1 — so the numbering
+   the reader sees (1/15) stays independent of how many intro views there are. */
+const N = P.length;
+const TOTAL = N + 2;
+const pnum   = (s) => s - 1;        // stop -> principle number
+const stopOf = (p) => p + 1;        // principle number -> stop
+const isP    = (s) => s >= 2;
+const arcOf  = (p) => ARCS.find(a => a.id === P[p-1].arc);
+const seen = new Set();
+let filterValue = null;   // active value lens from the scorecard
+
+/* ---------- DOM ---------- */
+const rail  = document.getElementById("rail");
+const stage = document.getElementById("stage");
+const foot  = document.getElementById("foot");
+
+/* ============================================================
+   RAIL
+   ============================================================ */
+function buildRail(){
+  const out = [`<div class="rail-title">The journey</div>`];
+  out.push(`<button class="step" data-i="0" style="--ac:var(--accent)"><span class="chip">◆</span><span class="lbl">Thesis &amp; the scorecard</span></button>`);
+  out.push(`<button class="step" data-i="1" style="--ac:var(--accent)"><span class="chip">≡</span><span class="lbl">The compressed version</span></button>`);
+  ARCS.forEach(a => {
+    const idxs = P.map((p,i)=>({p,i:i+1})).filter(x => x.p.arc === a.id);
+    out.push(`<div class="arc-head" style="--ac:${a.c}"><span class="bar"></span>${esc(a.name)}<span class="cnt">${idxs.length}</span></div>`);
+    idxs.forEach(({p,i}) => {
+      out.push(`<button class="step" data-i="${stopOf(i)}" style="--ac:${a.c}"><span class="chip">${i}</span><span class="lbl">${esc(p.title)}</span></button>`);
+    });
+  });
+  // The alt-click comment layer is injected by the dev server and never ships in a
+  // frozen build, so the instruction for it must not ship either.
+  const DEV = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+  out.push(`<div class="rail-foot">
+      <span id="filterNote"></span>
+      Fifteen principles, three arcs.<br>Dictated out loud, then made explorable.<br><br>
+      <a href=\"../rascal-ai-setup-tour/\">See the machinery →</a><br>
+      <a href="${REPO}">Take the setup ↗</a>
+      ${DEV ? `<br><br><span style="opacity:.7">Alt-click anything to leave me a note.</span>` : ""}
+    </div>`);
+  rail.innerHTML = out.join("");
+  rail.querySelectorAll(".step").forEach(b => b.addEventListener("click", () => go(+b.dataset.i)));
+}
+
+function paintRail(i){
+  rail.querySelectorAll(".step").forEach(b => {
+    const bi = +b.dataset.i;
+    b.classList.toggle("active", bi === i);
+    b.classList.toggle("seen", seen.has(bi) && bi !== i);
+    const off = filterValue && isP(bi) && !P[pnum(bi)-1].serves.includes(filterValue);
+    b.classList.toggle("dim", !!off);
+  });
+  const note = document.getElementById("filterNote");
+  if(note){
+    const v = filterValue && VALUES.find(x => x.key === filterValue);
+    note.innerHTML = v
+      ? `<span style="color:${v.c}">● lens: ${esc(v.label)}</span> — <a href="#" id="clearFilter">clear</a><br><br>`
+      : "";
+    const c = document.getElementById("clearFilter");
+    if(c) c.onclick = (e) => { e.preventDefault(); clearFilter(); };
+  }
+}
+
+function clearFilter(){
+  filterValue = null;
+  paintRail(cur);
+  if(cur === 0) go(0);
+}
+
+/* ============================================================
+   LANDING — thesis + the coverage matrix + the creed
+   ============================================================ */
+const MX = { padL:132, cellW:36, gap:5, rowH:30, rowGap:6, top:52 };
+
+function matrixSVG(){
+  const w = MX.padL + N * (MX.cellW + MX.gap) + 26;
+  const h = MX.top + VALUES.length * (MX.rowH + MX.rowGap) + 34;
+  const cellX = (i) => MX.padL + (i - 1) * (MX.cellW + MX.gap);
+  const rowY = (r) => MX.top + r * (MX.rowH + MX.rowGap);
+  const parts = [];
+
+  // arc bands across the top
+  ARCS.forEach(a => {
+    const idxs = P.map((p,i)=>({p,i:i+1})).filter(x => x.p.arc === a.id).map(x => x.i);
+    const x0 = cellX(idxs[0]), x1 = cellX(idxs[idxs.length-1]) + MX.cellW;
+    parts.push(`<rect x="${x0}" y="14" width="${x1-x0}" height="4" rx="2" fill="${a.c}" opacity=".85"/>`);
+    parts.push(`<text x="${(x0+x1)/2}" y="9" text-anchor="middle" class="s-txtm" style="font-size:9.5px">${esc(a.name)}</text>`);
+  });
+
+  // column headers (principle numbers)
+  for(let i=1;i<=N;i++){
+    parts.push(`<g class="mcol-lbl" data-jump="${stopOf(i)}"><rect x="${cellX(i)}" y="26" width="${MX.cellW}" height="18" fill="transparent"/>
+      <text x="${cellX(i)+MX.cellW/2}" y="40" text-anchor="middle" class="s-txtm" style="font-size:10.5px">${i}</text></g>`);
+  }
+
+  // rows
+  VALUES.forEach((v, r) => {
+    const y = rowY(r);
+    parts.push(`<g class="mrow-lbl" data-value="${v.key}">
+      <rect x="0" y="${y}" width="${MX.padL-10}" height="${MX.rowH}" rx="6" fill="transparent"/>
+      <rect x="0" y="${y+MX.rowH/2-8}" width="4" height="16" rx="2" fill="${v.c}"/>
+      <text x="14" y="${y+MX.rowH/2+4}" class="s-txt" style="font-size:12px">${esc(v.label)}</text>
+    </g>`);
+    for(let i=1;i<=N;i++){
+      const on = P[i-1].serves.includes(v.key);
+      parts.push(`<rect class="mcell" data-value="${v.key}" data-jump="${stopOf(i)}"
+        data-viz-id="cell-${v.key}-${i}" data-label="${esc(v.label)} × principle ${i}: ${on?'serves':'does not serve'}"
+        x="${cellX(i)}" y="${y}" width="${MX.cellW}" height="${MX.rowH}" rx="6"
+        fill="${on ? v.c : "var(--panel-2)"}" opacity="${on ? .88 : .5}"
+        stroke="${on ? v.c : "var(--border)"}" stroke-width="1"/>`);
+    }
+  });
+
+  // footer note
+  const y = rowY(VALUES.length) + 12;
+  parts.push(`<text x="0" y="${y}" class="s-txtm" style="font-size:10.5px">filled = this principle is doing that job</text>`);
+  parts.push(`<text x="${w-26}" y="${y}" text-anchor="end" class="s-txtm" style="font-size:10.5px">click a row to highlight it · click a column to jump</text>`);
+
+  return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Coverage matrix: four values by fifteen principles">${parts.join("")}</svg>`;
+}
+
+function renderThesis(){
+  return `
+    <div class="reveal" style="--ac:var(--accent)">
+      <div class="eyebrow"><span class="dot"></span>THE ONE-PARAGRAPH VERSION</div>
+      <p class="creed-lead">AI is a <b>means to an end</b> — a tool, not the solution. My job is to stay the <b>problem solver</b>; the tool does the typing. The leverage only showed up once I stopped wearing other people's setups and <b>built one that fits how I work</b> — and then again, later, once I stopped treating it as a thing I did alone.</p>
+
+      <div class="sec-h">Scored against the four<span class="rule"></span></div>
+      <p class="sec-sub">There are four things this work asks of me: <b>be a teacher, be a leader, be an expert, be an owner.</b> Every principle here is doing at least one of those jobs. Drawing this scorecard is what told me the third arc was missing — until I did, nearly everything I'd written down was about me alone at a keyboard, and one whole row had almost nothing pointing at it.</p>
+      <div class="matrix-wrap">
+        ${matrixSVG()}
+        <div class="matrix-read" id="mread">
+          <span class="badge">hover</span>
+          <span class="m">Point at a row to read what that value asks for. Click it to highlight which principles serve it; click a column to jump to that principle.</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderCreed(){
+  return `
+    <div class="reveal" style="--ac:var(--accent)">
+      <div class="eyebrow"><span class="dot"></span>THE COMPRESSED VERSION</div>
+      <p class="creed-lead">Fifteen one-liners, in order — <b>the whole philosophy at a glance.</b></p>
+      <p class="sec-sub">Colour is the arc it belongs to. Click any card to jump straight to its principle.</p>
+      <div class="creed-grid">
+        ${P.map((p,i)=>`
+          <div class="creed-card" data-jump="${stopOf(i+1)}" style="--c-l:${arcOf(i+1).c}">
+            <span class="n">${String(i+1).padStart(2,"0")} · ${esc(p.tag)}</span>${p.creed}
+          </div>`).join("")}
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   PRINCIPLE SCREEN
+   ============================================================ */
+function servesRow(p){
+  return `<div class="serves"><span class="sl">serves</span>${
+    p.serves.map(k => {
+      const v = VALUES.find(x => x.key === k);
+      return `<button class="vtag" data-value="${k}" style="--vc:${v.c}" title="${esc(v.blurb)}"><i></i>${esc(v.label)}</button>`;
+    }).join("")
+  }</div>`;
+}
+
+function renderPrinciple(n){
+  const p = P[n-1], a = arcOf(n);
+  const idx = n;
+  return `
+    <div class="reveal" style="--ac:${a.c}">
+      <div class="watermark">${idx}</div>
+      <div class="stage-grid">
+        <div>
+          <div class="eyebrow"><span class="dot"></span>${String(idx).padStart(2,"0")} · ${esc(p.tag).toUpperCase()} <span style="color:var(--muted)">· ${esc(a.name)}</span></div>
+          <h2 class="title">${esc(p.title)}</h2>
+          ${servesRow(p)}
+          <p class="lead">${p.lead}</p>
+          <ul class="points">${p.points.map(pt=>`<li>${pt}</li>`).join("")}</ul>
+        </div>
+        <aside class="visual">
+          <div class="frame">
+            <div id="artslot">${p.interactive ? "" : ART[p.art]}</div>
+            <div class="cap" id="artcap">${p.cap}</div>
+            ${p.interactive ? `<div class="drivehint">drag the marker</div>` : ""}
+          </div>
+        </aside>
+      </div>
+    </div>`;
+}
+
+/* The footer is rendered into its own pinned row, never inside the scroll area. */
+function renderFoot(s){
+  const dots = Array.from({length:TOTAL}, (_,i)=>{
+    const c = isP(i) ? arcOf(pnum(i)).c : "var(--accent)";
+    const t = i===0 ? "Thesis & the scorecard" : i===1 ? "The compressed version" : esc(P[pnum(i)-1].title);
+    return `<button class="${i===s?'on':''}" data-i="${i}" style="--dc:${c}" title="${t}"></button>`;
+  }).join("");
+  const counter = isP(s) ? `${pnum(s)} / ${N}` : (s===0 ? "thesis" : "creed");
+  const last = s === TOTAL - 1;
+  foot.innerHTML = `
+    <button class="btn" id="prev" ${s===0?'disabled':''}>← ${s===0?'':'Prev'}</button>
+    <div class="dots">${dots}</div>
+    <button class="btn primary" id="next" ${last?'disabled':''} style="--ac:${isP(s)?arcOf(pnum(s)).c:'var(--accent)'}">${last?'End':'Next'} →</button>
+    <span class="counter">${counter}</span>`;
+  document.getElementById("prev").onclick = () => go(s-1);
+  document.getElementById("next").onclick = () => go(s+1);
+  foot.querySelectorAll(".dots button").forEach(d => d.onclick = () => go(+d.dataset.i));
+}
+
+/* ============================================================
+   THE INTERACTIVE PLANE (principle: climb the ladder, cap the width)
+   x = concurrent sessions (1..8) · y = autonomy depth (1..5)
+   shaded = where I can still explain any one of them
+   ============================================================ */
+/* This boundary is a rule of thumb I drew, not a measurement — and it is labelled
+   as one on the page, because principle 07 is on the same site.
+   The one thing it does encode is the asymmetry principle 06 argues for: an extra
+   session costs TWICE what an extra rung of depth does, because depth is a choice
+   you can walk back and width is one you make by accident. An earlier version used
+   w * d <= 6, which is symmetric — it quietly claimed a rung and a session trade
+   one-for-one, contradicting the very text it sat beside. */
+const PLANE = { x0:40, x1:284, y0:190, y1:60, maxW:8, maxD:5, base:3.5, depthCost:0.5 };
+const RUNGS = ["chat","autocomplete","it writes fns","it writes tests","you're just the user"];
+let plane = { w:2, d:3 };
+
+const px = (w) => PLANE.x0 + (w - 1) / (PLANE.maxW - 1) * (PLANE.x1 - PLANE.x0);
+const py = (d) => PLANE.y0 - (d - 1) / (PLANE.maxD - 1) * (PLANE.y0 - PLANE.y1);
+const safeW  = (d) => PLANE.base - (d - 1) * PLANE.depthCost;
+const isSafe = (w, d) => w + (d - 1) * PLANE.depthCost <= PLANE.base;
+
+function planeSVG(){
+  const pts = [];
+  for(let d = PLANE.maxD; d >= 1; d -= 0.25) pts.push(`${px(Math.max(1, safeW(d))).toFixed(1)},${py(d).toFixed(1)}`);
+  const region = `M${px(1)},${py(PLANE.maxD)} L${pts.join(" L")} L${px(1)},${py(1)} Z`;
+  const g = [];
+
+  g.push(`<rect x="${PLANE.x0}" y="${PLANE.y1}" width="${PLANE.x1-PLANE.x0}" height="${PLANE.y0-PLANE.y1}" fill="var(--panel-2)" opacity=".35" rx="4"/>`);
+  g.push(`<path d="${region}" fill="var(--good)" opacity=".16" stroke="var(--good)" stroke-width="1.5" data-viz-id="plane-safe" data-label="my rule-of-thumb boundary — where I reckon I can still explain the work"/>`);
+
+  // rung gridlines — labels sit INSIDE the plot, above their line, so they can't
+  // spill off the left edge the way an outside axis label does at this width.
+  for(let d=1; d<=PLANE.maxD; d++){
+    g.push(`<line x1="${PLANE.x0}" y1="${py(d)}" x2="${PLANE.x1}" y2="${py(d)}" stroke="var(--border)" stroke-width=".8"/>`);
+    g.push(`<text x="${PLANE.x0+4}" y="${py(d)-4}" class="s-txtm" style="font-size:8px" opacity=".85">${RUNGS[d-1]}</text>`);
+  }
+  for(let w=1; w<=PLANE.maxW; w++){
+    g.push(`<text x="${px(w)}" y="${PLANE.y0+13}" text-anchor="middle" class="s-txtm" style="font-size:9px">${w}</text>`);
+  }
+
+  // axes + region labels. The shaded region hugs the lower-left, so that is where
+  // "still yours" belongs — the upper-right is the corner that bites.
+  g.push(`<text x="${(PLANE.x0+PLANE.x1)/2}" y="${PLANE.y0+27}" text-anchor="middle" class="s-txtm">concurrent sessions →</text>`);
+  g.push(`<text x="${(PLANE.x0+PLANE.x1)/2}" y="${PLANE.y0+42}" text-anchor="middle" class="s-txtm" style="font-size:9px">one more session costs 2× one more rung</text>`);
+  g.push(`<text x="${PLANE.x0}" y="${PLANE.y1-14}" class="s-txtm" style="font-size:9px">autonomy depth ↑</text>`);
+  g.push(`<text x="${px(2.4)}" y="${py(1.55)}" class="s-txtm" style="font-size:8.5px" fill="var(--good)">still yours</text>`);
+  g.push(`<text x="${PLANE.x1-4}" y="${PLANE.y1+14}" text-anchor="end" class="s-txtm" style="font-size:8.5px" fill="var(--danger)">carries your name anyway</text>`);
+
+  // marker
+  const ok = isSafe(plane.w, plane.d);
+  const c = ok ? "var(--good)" : "var(--danger)";
+  g.push(`<line x1="${px(plane.w)}" y1="${PLANE.y0}" x2="${px(plane.w)}" y2="${py(plane.d)}" stroke="${c}" stroke-width="1" stroke-dasharray="3 3" opacity=".7"/>`);
+  g.push(`<line x1="${PLANE.x0}" y1="${py(plane.d)}" x2="${px(plane.w)}" y2="${py(plane.d)}" stroke="${c}" stroke-width="1" stroke-dasharray="3 3" opacity=".7"/>`);
+  g.push(`<circle cx="${px(plane.w)}" cy="${py(plane.d)}" r="9" fill="${c}" opacity=".22"/>`);
+  g.push(`<circle cx="${px(plane.w)}" cy="${py(plane.d)}" r="5.5" fill="${c}" stroke="var(--bg)" stroke-width="1.5"
+            data-viz-id="plane-marker" data-label="${plane.w} session(s) at depth ${plane.d}"/>`);
+
+  return `<svg viewBox="0 0 300 240" role="img" id="planeSvg"
+            style="touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none"
+            aria-label="Depth versus width plane">${g.join("")}</svg>`;
+}
+
+function planeCaption(){
+  const ok = isSafe(plane.w, plane.d);
+  const msg = ok
+    ? `I'd still back myself to explain <b>every one of them.</b>`
+    : `<span style="color:var(--danger)">I would not back myself to explain all ${plane.w} — and they'd carry my name regardless.</span>`;
+  return `<b>${plane.w}</b> session${plane.w>1?"s":""} × <b>${RUNGS[plane.d-1]}</b><br>${msg}`
+       + `<br><span style="opacity:.7;font-size:11px">my line, drawn — not a measurement</span>`;
+}
+
+function mountPlane(){
+  const slot = document.getElementById("artslot");
+  const cap  = document.getElementById("artcap");
+  if(!slot) return;
+
+  // Listeners bind to the CONTAINER, once — not to the <svg>. Re-rendering used to
+  // replace the very element that held the pointer capture, so a drag died on its
+  // first redraw and the control silently degraded to click-to-set.
+  const draw = () => { slot.innerHTML = planeSVG(); cap.innerHTML = planeCaption(); };
+
+  const set = (ev) => {
+    const svg = slot.querySelector("#planeSvg");
+    if(!svg) return;
+    const r = svg.getBoundingClientRect();
+    const sx = (ev.clientX - r.left) / r.width  * 300;
+    const sy = (ev.clientY - r.top)  / r.height * 240;
+    const w = Math.round(1 + (sx - PLANE.x0) / (PLANE.x1 - PLANE.x0) * (PLANE.maxW - 1));
+    const d = Math.round(1 + (PLANE.y0 - sy) / (PLANE.y0 - PLANE.y1) * (PLANE.maxD - 1));
+    const nw = Math.max(1, Math.min(PLANE.maxW, w));
+    const nd = Math.max(1, Math.min(PLANE.maxD, d));
+    if(nw !== plane.w || nd !== plane.d){ plane = { w:nw, d:nd }; draw(); }
+  };
+
+  let down = false;
+  slot.addEventListener("pointerdown", e => {
+    down = true;
+    try{ slot.setPointerCapture(e.pointerId); }catch(_){}
+    set(e);
+  });
+  slot.addEventListener("pointermove", e => { if(down) set(e); });
+  const release = (e) => {
+    down = false;
+    if(e && e.pointerId != null){ try{ slot.releasePointerCapture(e.pointerId); }catch(_){} }
+  };
+  slot.addEventListener("pointerup", release);
+  slot.addEventListener("pointercancel", release);
+
+  draw();
+}
+
+/* ============================================================
+   MATRIX INTERACTION
+   ============================================================ */
+function wireMatrix(){
+  const read = document.getElementById("mread");
+  if(!read) return;
+
+  const show = (key) => {
+    const v = VALUES.find(x => x.key === key);
+    const n = P.filter(p => p.serves.includes(key)).length;
+    read.style.setProperty("--rc", v.c);
+    read.innerHTML = `<span class="badge">${esc(v.label)}</span><span>${esc(v.blurb)} <span class="m">— ${n} of ${N} principles.</span></span>`;
+  };
+  const reset = () => {
+    read.style.removeProperty("--rc");
+    read.innerHTML = `<span class="badge">${filterValue ? "filtering" : "hover"}</span><span class="m">${
+      filterValue
+        ? `Highlighting the principles that serve <b>${esc(VALUES.find(v=>v.key===filterValue).label)}</b>. Click the row again to clear.`
+        : "Point at a row to read what that value asks for. Click it to highlight which principles serve it; click a column to jump to that principle."
+    }</span>`;
+  };
+
+  const paint = () => {
+    stage.querySelectorAll(".mcell").forEach(c => {
+      c.classList.toggle("m-dim", !!filterValue && c.dataset.value !== filterValue);
+    });
+    paintRail(cur);
+  };
+
+  stage.querySelectorAll(".mrow-lbl, .mcell").forEach(el => {
+    el.addEventListener("mouseenter", () => show(el.dataset.value));
+    el.addEventListener("mouseleave", reset);
+  });
+  stage.querySelectorAll(".mrow-lbl").forEach(el => {
+    el.addEventListener("click", () => {
+      filterValue = filterValue === el.dataset.value ? null : el.dataset.value;
+      paint(); reset();
+    });
+  });
+  stage.querySelectorAll(".mcell, .mcol-lbl").forEach(el => {
+    el.addEventListener("click", (e) => { e.stopPropagation(); go(+el.dataset.jump); });
+  });
+  paint(); reset();
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+let cur = 0;
+function go(s){
+  s = Math.max(0, Math.min(TOTAL - 1, s));
+  cur = s; seen.add(s);
+  stage.innerHTML = s === 0 ? renderThesis() : s === 1 ? renderCreed() : renderPrinciple(pnum(s));
+  stage.scrollTop = 0;
+  renderFoot(s);
+  paintRail(s);
+
+  stage.querySelectorAll(".creed-card[data-jump]").forEach(c => c.onclick = () => go(+c.dataset.jump));
+  stage.querySelectorAll(".vtag").forEach(t => t.onclick = () => { filterValue = t.dataset.value; go(0); });
+
+  if(s === 0) wireMatrix();
+  if(isP(s) && P[pnum(s)-1].interactive) mountPlane();
+
+  // role="img" with no accessible name is worse than no role at all — it hides the
+  // contents and substitutes nothing. The caption already describes each metaphor,
+  // so name every illustration from it (the plane sets its own label).
+  if(isP(s)){
+    const art = stage.querySelector(".visual svg");
+    if(art && !art.getAttribute("aria-label")){
+      art.setAttribute("aria-label", "Illustration: " + P[pnum(s)-1].cap.replace(/<[^>]+>/g, ""));
+    }
+  }
+
+  saveHash({ p:s });
+}
+
+document.addEventListener("keydown", (e) => {
+  if(e.target.matches("input,textarea")) return;
+  // Space is deliberately NOT bound: the stage scrolls, and hijacking it also broke
+  // Space-to-activate on a focused Prev/Next button (which then navigated forwards).
+  if(e.key === "ArrowRight"){ e.preventDefault(); go(cur+1); }
+  else if(e.key === "ArrowLeft"){ e.preventDefault(); go(cur-1); }
+  else if(e.key === "Home"){ go(0); }
+  else if(e.key === "End"){ go(TOTAL-1); }
+  else if(e.key === "Escape" && filterValue){ clearFilter(); }
+});
+
+buildRail();
+const h = loadHash();
+go(typeof h.p === "number" ? h.p : 0);
+</script>
+<a id="__viz_dl" href="#" role="button" aria-label="Save a copy of this page"
+title="Save a copy" style="position:fixed;bottom:14px;right:14px;z-index:2147483646;
+width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+border-radius:8px;background:rgba(20,20,22,.55);color:#fff;opacity:.35;
+backdrop-filter:blur(4px);transition:opacity .15s;text-decoration:none"
+onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.35">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/>
+<line x1="12" y1="15" x2="12" y2="3"/></svg></a>
+<script>(function(){
+  var a=document.getElementById("__viz_dl");
+  var name=(document.title||"visualization").toLowerCase()
+    .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60)||"visualization";
+  var plain="<!DOCTYPE html>\n"+document.documentElement.outerHTML;
+  function save(text){
+    var url=URL.createObjectURL(new Blob([text],{type:"text/html"}));
+    var t=document.createElement("a"); t.href=url; t.download=name+".html";
+    document.body.appendChild(t); t.click(); t.remove();
+    setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  }
+  a.addEventListener("click",function(e){
+    e.preventDefault();
+    fetch(location.href).then(function(r){return r.text();})
+      .then(function(t){ save(t.indexOf("staticrypt"+"Config")>0?plain:t); })
+      .catch(function(){ save(plain); });
+  });
+})();</script>
+</body>
+</html>
