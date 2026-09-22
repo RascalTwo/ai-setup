@@ -1,0 +1,15 @@
+**/__pycache__/
+node_modules/
+.DS_Store
+
+# viz mirror config: sibling-repo paths — local-only, never commit
+skills/viz/viz-pages/mirrors.json
+
+# viz build output
+.viz-dist/
+
+# The self-portrait's source of truth is the skill bundle
+# (skills/viz/viz-pages/viz-self-portrait/, committed). This is a GENERATED mirror
+# projected in by `build.ts <bundle>` before a gh-pages deploy — never hand-edit,
+# never commit. Same convention as the explorables container.
+viz-pages/viz-self-portrait/

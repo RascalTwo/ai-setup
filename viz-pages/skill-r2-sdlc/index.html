@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>r2-sdlc — it stops for you exactly three times</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:uid" content="v-e9b8a6109822">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="r2-sdlc">
+<meta name="viz:description" content="Drives a raw story through understand, design, strict TDD, simplify and two tiers of review into a change that's ready for a PR you open yourself.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c4) 16%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 466px; gap:38px; align-items:center; padding:56px 66px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:54px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 20px; max-width:530px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:530px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the gated pipeline = the "proof" slot. The phases are the skill; the DOTS are
+     the argument — three of eight stop for a human, and one of those is a maybe. */
+  .cap{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; color:var(--muted); margin-bottom:11px; }
+  .cap b{ color:var(--accent); }
+  .rail{ position:relative; display:flex; flex-direction:column; gap:6px; }
+  .rail::before{ content:""; position:absolute; left:9px; top:16px; bottom:16px; width:2px;
+                 background:linear-gradient(180deg, color-mix(in srgb, var(--c4) 55%, var(--border)),
+                                                    color-mix(in srgb, var(--c5) 45%, var(--border))); }
+  .ph{ display:grid; grid-template-columns:20px 1fr; gap:11px; align-items:center; }
+  .node{ width:10px; height:10px; border-radius:50%; background:var(--faint); margin:0 auto; position:relative; }
+  .body{ display:flex; align-items:baseline; gap:9px; background:color-mix(in srgb, var(--panel) 72%, transparent);
+         border:1px solid var(--border); border-radius:9px; padding:8px 11px; }
+  .body .n{ font-family:var(--mono); font-size:12.5px; letter-spacing:.05em; color:var(--text); white-space:nowrap; }
+  .body .d{ font-size:12px; color:var(--muted); line-height:1.3; }
+  .body .d em{ font-style:normal; font-family:var(--mono); font-size:11.5px; color:var(--text); }
+  .tag{ margin-left:auto; font-family:var(--mono); font-size:10px; letter-spacing:.12em; padding:2px 7px;
+        border-radius:99px; white-space:nowrap; }
+  /* human stop */
+  .ph.you .node{ background:var(--c4); box-shadow:0 0 0 4px color-mix(in srgb, var(--c4) 26%, transparent); }
+  .ph.you .body{ border-color:color-mix(in srgb, var(--c4) 55%, transparent); }
+  .ph.you .tag{ color:var(--c4); background:color-mix(in srgb, var(--c4) 14%, transparent);
+                border:1px solid color-mix(in srgb, var(--c4) 45%, transparent); }
+  /* conditional human stop */
+  .ph.maybe .node{ background:var(--bg); box-shadow:inset 0 0 0 2px var(--c4); }
+  .ph.maybe .tag{ color:var(--c4); border:1px dashed color-mix(in srgb, var(--c4) 55%, transparent); }
+  /* machine gate */
+  .ph.gate .node{ background:var(--good); }
+  .ph.gate .tag{ color:var(--good); background:color-mix(in srgb, var(--good) 12%, transparent);
+                 border:1px solid color-mix(in srgb, var(--good) 40%, transparent); }
+  .ph.end .node{ background:var(--c5); }
+  .ph.end .tag{ color:var(--c5); border:1px solid color-mix(in srgb, var(--c5) 40%, transparent); }
+  .pfoot{ font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--faint); margin-top:11px; }
+  .pfoot b{ color:var(--c4); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  /* ── poster standard: beat-4 table, beat-5 figure ── */
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .stage svg{ width:100%; height:auto; display:block; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--accent); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="r2-sdlc" data-viz-id="poster-card" data-label="r2-sdlc poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · R2-SDLC</div>
+      <h1 class="hook">It stops for you<br><em>exactly three times.</em></h1>
+      <p class="sub">One raw sentence goes in. It gets understood, designed, built under <b>strict TDD</b>, simplified, then run past two tiers of reviewers. It <b>infers instead of interviewing</b> — so the only places it comes back to you are the two documents you approve, and a design pivot if one turns out to be needed.</p>
+      <p class="not">It writes no commit. It opens no PR.<br><b>You</b> ship.</p>
+      <div class="trigger"><span>run</span>&nbsp;/r2-sdlc &lt;story&gt;</div>
+    </div>
+    <div>
+      <div class="cap">PHASE 0 → 7 &nbsp;·&nbsp; <b>THREE</b> HUMAN STOPS, NO OTHERS</div>
+      <div class="rail">
+        <div class="ph">
+          <span class="node"></span>
+          <div class="body"><span class="n">0 SETUP</span><span class="d">resume or restart a run</span></div>
+        </div>
+        <div class="ph you">
+          <span class="node"></span>
+          <div class="body"><span class="n">1 UNDERSTAND</span><span class="d">drafts <em>understood.md</em></span><span class="tag">YOU APPROVE</span></div>
+        </div>
+        <div class="ph you">
+          <span class="node"></span>
+          <div class="body"><span class="n">2 DESIGN</span><span class="d">drafts <em>design.md</em></span><span class="tag">YOU APPROVE</span></div>
+        </div>
+        <div class="ph maybe">
+          <span class="node"></span>
+          <div class="body"><span class="n">3 IMPLEMENT</span><span class="d">one test at a time, red first</span><span class="tag">PIVOT?</span></div>
+        </div>
+        <div class="ph">
+          <span class="node"></span>
+          <div class="body"><span class="n">4 SIMPLIFY</span><span class="d">undo what TDD left behind</span></div>
+        </div>
+        <div class="ph gate">
+          <span class="node"></span>
+          <div class="body"><span class="n">5 TIER 1</span><span class="d">fidelity + QA, in parallel</span><span class="tag">MUST BE CLEAN</span></div>
+        </div>
+        <div class="ph">
+          <span class="node"></span>
+          <div class="body"><span class="n">6 TIER 2</span><span class="d">the full gauntlet, on quality</span></div>
+        </div>
+        <div class="ph end">
+          <span class="node"></span>
+          <div class="body"><span class="n">7 DONE</span><span class="d">a summary, not a pull request</span><span class="tag">NO PR</span></div>
+        </div>
+      </div>
+      <div class="pfoot">↑ THE <b>THIRD</b> STOP ONLY FIRES IF THE DESIGN TURNS OUT WRONG</div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">Inference over interview</h2>
+  <p>You described the thing once. A pipeline that answers with twenty clarifying questions has made you do the work twice. r2-sdlc's first cardinal rule is to try to answer every question <b>itself</b> — from your input, the codebase, <code>CLAUDE.md</code>, the project's conventions — and ask only what it genuinely cannot determine.</p>
+  <p class="m">So it doesn't quiz, it <b>redlines</b>: it hands you a finished draft and you edit or approve it. <code>understood.md</code> gets a problem, a solution, acceptance criteria as GIVEN/WHEN/THEN, and — crucially — an <b>Assumptions</b> list, so what it inferred is visible and you can catch a miss. Its Ambiguities section is for genuine A/B questions only; the skill says outright that <b>zero is acceptable and often correct</b>.</p>
+
+  <h2 data-beat="using">One command, one story</h2>
+  <p><code>/r2-sdlc &lt;story&gt;</code>, or ask for the pipeline by name. The story is a sentence, a blurb, a ticket body — whatever you have. Nothing else is passed in; the repo you're standing in is the scope.</p>
+  <p>The manifest sets <code>disable-model-invocation: true</code>, so nothing pulls this in by accident. An eight-phase pipeline with two approval gates is not something an agent should start on your behalf because a request looked vaguely feature-shaped.</p>
+  <p class="m">Re-run the same story and Phase 0 notices: it finds the existing run directory, reads <code>pipeline-state.md</code>, and asks <b>resume or restart</b>. Restart doesn't delete — it renames the old run with an <code>.abandoned-&lt;timestamp&gt;</code> suffix and starts beside it.</p>
+
+  <h2 data-beat="limits">It hands the change back</h2>
+  <p>Phase 7 produces a summary — what was built, each acceptance criterion met or not, tests added, both tiers' results, which reviewer suggestions were applied and which are yours to triage, files touched. Then it stops. <b>No auto-commit, no auto-push, no auto-PR. Ever.</b> The summary is a decent PR description; opening the PR is your move.</p>
+  <ul>
+    <li><b>Three human stops, and only three.</b> <code>understood.md</code>, <code>design.md</code>, and a design pivot. It will not invent a fourth to check in with you, and it will not skip one because the change looked small.</li>
+    <li><b>Reviewers never touch the code.</b> They are read-only truth-tellers; the pipeline synthesizes and acts. Every finding gets an explicit applied-or-deferred call — "they mostly agreed, close enough" is named as an anti-pattern.</li>
+    <li><b>Two iterations per tier, then it gives up to you.</b> Fix-and-re-review is capped. Still failing after two rounds and it escalates with the outstanding findings rather than grinding.</li>
+    <li><b>It doesn't skip phases for small work.</b> The scale scales instead: a five-line fix gets a two-line design.</li>
+    <li><b>Abandoning leaves everything standing.</b> Say stop and it marks the run abandoned; it does not revert your code, which is yours to keep or discard.</li>
+  </ul>
+  <div class="callout"><b>On Codex, Tier 2 is a fallback.</b> The gauntlet hasn't been ported yet, so there it spawns the five <code>.codex/agents</code> quality reviewers directly — <code>test-reviewer</code>, <code>code-reviewer</code>, <code>docs-currency-reviewer</code>, <code>security-reviewer</code>, <code>reuse-reviewer</code> — and synthesizes their findings by hand. Same phase, smaller panel.</div>
+
+  <h2 data-beat="where">Everything is written down, and none of it is in your repo</h2>
+  <table class="where"><tbody>
+    <tr><td>The skill</td><td><code>skills/r2-sdlc/SKILL.md</code> — eight cardinal rules, then Phase 0 through Phase 7 with a gate on each.</td></tr>
+    <tr><td>Declared</td><td><code>kind: skill</code>, <code>state: true</code>, <code>deletion-policy: retain</code>, plus <code>disable-model-invocation: true</code>.</td></tr>
+    <tr><td>Its state</td><td><code>~/.agents/state/r2-sdlc/&lt;repo-id&gt;/&lt;slug&gt;/</code> — <code>understood.md</code>, <code>design.md</code>, and <code>pipeline-state.md</code> holding phase, approval flags and per-tier iteration counts. <code>&lt;repo-id&gt;</code> comes from the git remote's path (<code>github.com/user/repo</code> → <code>user--repo</code>), falling back to the sanitized directory name. <b>Never inside the repo, never committed.</b></td></tr>
+    <tr><td>Two writers</td><td><a href="../skill-r2-gauntlet/">r2-gauntlet</a> has no store of its own — its manifest declares <code>state-owner: r2-sdlc</code> — so it writes into this one, at <code>~/.agents/state/r2-sdlc/&lt;repo-id&gt;/gauntlet-&lt;YYYYMMDD-HHMMSS&gt;/</code>, leaving a <code>gauntlet-scope.diff</code> and a <code>gauntlet-report.md</code> per run. It reads the other direction too: a standalone gauntlet finds the change's design by taking the most recent <code>&lt;repo-id&gt;/*/design.md</code> out of this store.</td></tr>
+    <tr><td>Safe to delete?</td><td><b>No — <code>retain</code>.</b> Those two documents are the output of the only two approval gates in the pipeline: they carry a human's judgment about what to build and how, which is the one thing in the directory that cannot be regenerated. Even a restart preserves them under <code>.abandoned-&lt;timestamp&gt;</code>.</td></tr>
+    <tr><td>Invokes</td><td><a href="../skill-steelman/">steelman</a> in Phase 2 on hard-to-reverse choices · <a href="../skill-r2-sdlc-testing-paradigm/">r2-sdlc-testing-paradigm</a> and <a href="../skill-r2-sdlc-documentation-philosophy/">r2-sdlc-documentation-philosophy</a> in Phase 3 · the built-in <code>simplify</code> in Phase 4 · <code>fidelity-reviewer</code> and <code>qa-validator</code> in Phase 5 · <a href="../skill-r2-gauntlet/">r2-gauntlet</a> in Phase 6.</td></tr>
+    <tr><td>Requires</td><td>The manifest declares none. In practice: a git remote to derive <code>&lt;repo-id&gt;</code> from — and without one it uses the working directory's name — plus a runtime that can spawn parallel subagents for the review tiers.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">Eight phases, and where each one can stop</h2>
+  <p class="m">One story from the command line to a change you can open a PR against. Green is what the phase produces; red is a gate it will not walk past.</p>
+
+  <div class="fig" data-viz-id="phase-figure" data-label="stepper: phases 0 through 7 of an r2-sdlc run">
+    <div class="stage" id="stage"></div>
+    <p class="lede" id="lede"></p>
+    <div class="ctrl">
+      <button id="prev" aria-label="previous step">‹ back</button>
+      <button id="play">▶ play</button>
+      <button id="next" aria-label="next step">next ›</button>
+      <span class="pos" id="pos"></span>
+      <span class="hint">← → arrow keys</span>
+    </div>
+  </div>
+
+  <h3>The three stops</h3>
+  <ul>
+    <li><b>Approving <code>understood.md</code></b> — what we're building. Nothing proceeds until you say so.</li>
+    <li><b>Approving <code>design.md</code></b> — how. Approach, touch points, an ordered test plan, style notes lifted from neighbouring files, technical risks. Approval can be terse.</li>
+    <li><b>A design pivot</b> — and only that. If implementation or a Tier-1 reviewer discovers the design is actually wrong, it <b>stops</b>, describes the gap, and proposes a specific change for you to approve. It doesn't forge ahead.</li>
+  </ul>
+  <p>If the design rests on something hard to reverse — an architectural pattern, a new dependency, a migration — Phase 2 invokes <a href="../skill-steelman/">steelman</a> on it <em>before</em> the draft ever reaches you, so what you're redlining is already pressure-tested. Skipped for small, mechanical changes.</p>
+
+  <h3>Strict TDD means strict</h3>
+  <p>Phase 3 walks the test plan <b>vertically</b> — one full red→green cycle per behavior, easiest first, so the cycles start cheap. No bulk-writing tests then bulk-implementing.</p>
+  <pre><span class="c"># per behavior, in test-plan order</span>
+write the test        <span class="c">GWT, one behavior, committed to a layer</span>
+run it                <span class="c">must FAIL — and fail for the RIGHT reason</span>
+write the impl        <span class="c">minimum to pass. no speculative cases.</span>
+run it                <span class="c">green</span>
+run everything prior  <span class="c">no regressions</span> → next behavior</pre>
+  <p class="m">"Fails for the right reason" is the inviolable part: a missing import or a syntax error is <b>not</b> a red test, and the fix goes in the test, not the implementation. Refactoring stays local here — trivial renames, obvious duplication. Architecture is Phase 4's job.</p>
+
+  <h3>Two tiers, and the order is the point</h3>
+  <p><b>Tier 1 asks "is it right?"</b> Two read-only reviewers run in parallel, each with a different oracle: <code>fidelity-reviewer</code> checks the implementation against <code>design.md</code>; <code>qa-validator</code> exercises the feature against <code>understood.md</code>. <b>Tier 2 asks "is it good?"</b> — and rather than hardcoding a roster, it hands the change to <a href="../skill-r2-gauntlet/">r2-gauntlet</a>, which fans out the whole quality panel and returns one deduped, consensus-ranked report.</p>
+  <p class="m">Tier 2 does not run until Tier 1 is clean, because polishing code that's about to change is spent tokens. When a Tier-2 fix lands, only the touched reviewers re-run — <code>r2-gauntlet --only test-reviewer,ln-55-test-suite-auditor</code> after editing tests, rather than the whole panel again.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+<script type="module">
+  import { stepper, $ } from "/_kit/viz.js";
+
+  const S = [
+    { t: "PHASE 0 · SETUP",
+      rows: [["&lt;repo-id&gt;", "git remote path → user--repo", "ok"], ["run dir", "~/.agents/state/r2-sdlc/…", "ok"],
+             ["dir already there", "resume or restart?", "ok"], ["deleting the old run", "renamed .abandoned-&lt;ts&gt;", "ok"]],
+      lede: "Before anything is read, the run gets a home <b>outside the repo</b> and a <code>pipeline-state.md</code> holding phase, approval flags and iteration counts. Nothing here is ever committed." },
+    { t: "PHASE 1 · UNDERSTAND",
+      rows: [["understood.md", "drafted, not asked for", "ok"], ["acceptance criteria", "GIVEN / WHEN / THEN", "ok"],
+             ["Assumptions", "listed, so you can catch a miss", "ok"], ["open-ended questions", "refused", "bad"]],
+      lede: "Escalation point <b>#1</b>. You redline a finished draft rather than answering a quiz — and the Ambiguities section is for genuine A/B forks only, where <b>zero is acceptable and often correct</b>." },
+    { t: "PHASE 2 · DESIGN",
+      rows: [["design.md", "approach · touch points · risks", "ok"], ["test plan", "ordered, easiest first", "ok"],
+             ["style notes", "lifted from neighbouring files", "ok"], ["hard-to-reverse choice", "steelman it first", "ok"]],
+      lede: "Escalation point <b>#2</b>. If the approach rests on an architecture, a dependency or a migration, <a href='../skill-steelman/'>steelman</a> runs <i>before</i> the draft reaches you — so what you redline is already pressure-tested." },
+    { t: "PHASE 3 · IMPLEMENT",
+      rows: [["one behavior at a time", "red → green → regress", "ok"], ["the red test", "must fail for the RIGHT reason", "ok"],
+             ["bulk-writing tests", "refused", "bad"], ["design turns out wrong", "stop → escalation #3", "ok"]],
+      lede: "Vertical, not horizontal. A missing import is not a red test, and the fix for one goes in the <b>test</b>, not the implementation. Refactoring stays local; architecture is the next phase's job." },
+    { t: "PHASE 4 · SIMPLIFY",
+      rows: [["simplify skill", "invoked on the change", "ok"], ["duplication, hedge-code", "collapsed", "ok"],
+             ["full test suite", "must be green to continue", "ok"]],
+      lede: "Feature-level cleanup, deliberately after TDD rather than during it — what one red-green cycle produces is not yet enough information to know what the abstraction should be." },
+    { t: "PHASE 5 · REVIEW TIER 1",
+      rows: [["fidelity-reviewer", "oracle: design.md", "ok"], ["qa-validator", "oracle: understood.md", "ok"],
+             ["both", "parallel, read-only", "ok"], ["design-may-be-wrong", "stop → escalation #3", "bad"]],
+      lede: "\"Is it right?\" — two reviewers with two different oracles, so <i>matches the design</i> and <i>solves the ask</i> can fail independently. Capped at two fix-and-re-review rounds, then it escalates." },
+    { t: "PHASE 6 · REVIEW TIER 2",
+      rows: [["r2-gauntlet --quality-only", "the full roster, deduped", "ok"], ["consensus findings", "acted on first", "ok"],
+             ["re-run after a fix", "--only &lt;touched reviewers&gt;", "ok"], ["running before Tier 1 is clean", "refused", "bad"]],
+      lede: "\"Is it good?\" — delegated rather than hardcoded, so the pipeline inherits every reviewer <a href='../skill-r2-gauntlet/'>the gauntlet</a> gains. Polishing code that is about to change is spent tokens, so this gate waits." },
+    { t: "PHASE 7 · DONE",
+      rows: [["summary", "ACs · tests · both tiers · files", "ok"], ["deferred suggestions", "handed to you verbatim", "ok"],
+             ["link to the run dir", "included", "ok"], ["commit · push · PR", "refused. ever.", "bad"]],
+      lede: "It stops holding the change. The summary reads as a PR description on purpose — but <b>opening the PR is yours</b>, and the run directory stays on disk under the retain policy." },
+  ];
+
+  const stage = $("#stage"), lede = $("#lede"), pos = $("#pos");
+  const render = (i) => {
+    const s = S[i];
+    stage.innerHTML =
+      `<div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent);margin-bottom:12px">${s.t}</div>` +
+      s.rows.map(([k, v, st]) => `
+        <div style="display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:13px;
+                    padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text)">${k}</span>
+          <span style="color:${st === "ok" ? "var(--good)" : "var(--danger)"};white-space:nowrap">${st === "ok" ? "✓" : "✗"} ${v}</span>
+        </div>`).join("");
+    lede.innerHTML = s.lede;
+    pos.textContent = `${i + 1} / ${S.length}`;
+  };
+
+  const st = stepper({ n: S.length, onStep: render, autoplayMs: 3000, hashKey: "phase" });
+  $("#next").onclick = () => st.next();
+  $("#prev").onclick = () => st.prev();
+  const play = $("#play");
+  let on = false;
+  play.onclick = () => { on = !on; on ? st.play() : st.pause(); play.textContent = on ? "❚❚ pause" : "▶ play"; };
+  for (const el of [$("#next"), $("#prev")])
+    el.addEventListener("click", () => { on = false; play.textContent = "▶ play"; });
+</script>
+
+</body>
+</html>

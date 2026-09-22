@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Restarts com.rascaltwo.viz-server once a night at 04:00.
+
+  RECONSTRUCTED 2026-08-17 from launchd's in-memory copy of the job
+  (`launchctl print gui/501/com.rascaltwo.viz-server-restart`) after the on-disk
+  plist was overwritten. Every key below was read back from that dump: program
+  and arguments, both log paths, the 04:00 calendar trigger, and ExitTimeOut 5
+  (launchd's default is 20, so 5 was set explicitly).
+
+  Deliberately NO RunAtLoad: the dump could not confirm it either way, and a
+  restart job that fires on load would bounce the viz server every time this
+  plist is loaded. Add it back if that was the intent.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.rascaltwo.viz-server-restart</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/launchctl</string>
+        <string>kickstart</string>
+        <string>-k</string>
+        <string>gui/501/com.rascaltwo.viz-server</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>4</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/viz-server-restart.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/viz-server-restart.log</string>
+
+    <key>ExitTimeOut</key>
+    <integer>5</integer>
+</dict>
+</plist>

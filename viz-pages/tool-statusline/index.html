@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>statusline — the window is 7% used, but by whom?</title>
+<meta name="viz:uid" content="v-f2de06cb8ab8">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="statusline">
+<meta name="viz:description" content="Eight widgets on one Claude Code status line. rate_limits says the account window is 7% used and never says who used it — a detached scanner reconstructs this session's share from the transcripts, without a network call or an OAuth token.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* Card + dive. transform:scale() does not shrink the layout box, so poster.css
+     collapses #fit's height off the same --s. */
+  :root{ --s:1; --w-gray:#8a95a3; --w-yellow:#ffd033; --w-orange:#ff9d3d; --w-red:#ff5a52; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 94% -10%, color-mix(in srgb, var(--c4) 16%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c5) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 604px; gap:30px; align-items:center; padding:46px 48px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:13.5px;
+            letter-spacing:.14em; color:var(--c4); margin-bottom:16px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--c4);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--c4) 22%, transparent); }
+  h1.hook{ font-size:46px; line-height:1.06; margin:0 0 16px; letter-spacing:-1.3px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c5); }
+  p.sub{ font-size:17px; line-height:1.45; color:var(--muted); margin:0 0 14px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:13.5px; line-height:1.5; color:var(--muted); margin:0 0 16px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .chip{ display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12.5px;
+         background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--c4);
+         border-radius:9px; padding:9px 13px; color:var(--text); }
+
+  /* ── the proof slot: the actual line, then the two numbers that carry meaning ── */
+  .rig{ background:color-mix(in srgb, var(--panel) 88%, transparent); border:1px solid var(--border);
+        border-radius:14px; padding:15px 17px 16px; font-family:var(--mono); }
+  .rig .cap{ display:flex; justify-content:space-between; font-size:10.5px; letter-spacing:.13em;
+             color:var(--c4); margin-bottom:12px; }
+  .rig .cap span:last-child{ color:var(--faint); }
+  .line{ background:#0b0f16; border:1px solid var(--border); border-radius:9px;
+         padding:9px 10px; font-size:11.5px; line-height:1.55; white-space:nowrap; overflow:hidden; }
+  .line + .line{ margin-top:5px; }
+  .line .sep{ color:#39414d; }
+  .g{ color:var(--w-gray); } .y{ color:var(--w-yellow); } .o{ color:var(--w-orange); } .r{ color:var(--w-red); }
+  .line .hit{ background:color-mix(in srgb, var(--c5) 28%, transparent); border-radius:3px; padding:1px 2px; }
+
+  .ticks{ display:grid; gap:4px; margin-top:6px; font-size:9px;
+          letter-spacing:.06em; color:var(--faint); text-align:center; }
+  .ticks.t3{ grid-template-columns:repeat(3, 1fr); }
+  .ticks.t4{ grid-template-columns:repeat(4, 1fr); }
+  .ticks i{ font-style:normal; border-top:1px solid var(--border); padding-top:4px; }
+
+  .decode{ margin-top:13px; display:grid; gap:8px; }
+  .dec{ display:grid; grid-template-columns:132px 1fr; gap:12px; align-items:start;
+        border-left:2px solid var(--c5); padding-left:11px; }
+  .dec .k{ font-size:13px; color:#fff; }
+  .dec .v{ font-size:11.5px; line-height:1.5; color:var(--muted); }
+  .dec .v b{ color:var(--text); }
+  .dec.warn{ border-left-color:var(--w-red); }
+  .dec.warn .k{ color:var(--w-red); }
+
+  .scale{ margin-top:13px; padding-top:11px; border-top:1px solid var(--border);
+          display:flex; align-items:center; gap:8px; font-size:10.5px; color:var(--faint); letter-spacing:.06em; }
+  .scale i{ font-style:normal; display:inline-flex; align-items:center; gap:5px; color:var(--muted); }
+  .scale .sw{ width:9px; height:9px; border-radius:2px; display:inline-block; }
+
+  /* ── dive ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--c4);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul,.dive ol{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive code{ font-family:var(--mono); font-size:.9em; color:var(--c5); }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); border-bottom:0; padding:10px 12px 10px 0;
+                  vertical-align:top; line-height:1.55; white-space:normal; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; white-space:normal; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--c5); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="statusline" data-viz-id="poster-card" data-label="statusline poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED TOOL · STATUSLINE</div>
+      <h1 class="hook">The window is<br>7% used. <em>By<br>which session?</em></h1>
+      <p class="sub">Claude Code hands the status line a <b>whole-account</b> percentage. With six panes open that number cannot tell you which one is eating your week — so a detached scanner rebuilds the split from the transcripts and puts <b>your share in front of it</b>.</p>
+      <p class="not">No network call. No OAuth token. No <b>ccusage</b>.<br>Every figure comes off the JSON that already arrives on stdin.</p>
+      <div class="chip">~/.config/ccstatusline/settings.json → tools/statusline/</div>
+    </div>
+
+    <div class="rig" data-viz-id="the-line" data-label="the rendered status line, decoded">
+      <div class="cap"><span>ONE LINE · EIGHT WIDGETS · REDRAWN EVERY 30s</span><span>COLOUR = URGENCY</span></div>
+
+      <div class="line" data-viz-id="line-render" data-label="the status line as it actually renders, row 1">
+        <span class="g">▰▰▰▱▱▱▱▱ 34%</span><span class="sep"> │ </span><span class="y">🖼 12 · 1m</span><span class="sep"> │ </span><span class="o">🧊 12m $8.27 5h:.42% wk:.14%</span>
+      </div>
+      <div class="ticks t3"><i>context</i><i>screenshots</i><i>cache TTL · rewarm price</i></div>
+
+      <div class="line" data-viz-id="line-render-2" data-label="the status line as it actually renders, row 2">
+        <span class="r">⏳5h <span class="hit">3.3/</span>7% 1h59m ⚠out~44m</span><span class="sep"> │ </span><span class="g">📅wk .4/18% 3d11h ✓64%</span><span class="sep"> │ </span><span class="g">⏱ 1h05m</span><span class="sep"> │ </span><span class="y">💵 $8.12</span>
+      </div>
+      <div class="ticks t4"><i>5h window</i><i>7d window</i><i>duration</i><i>cost</i></div>
+
+      <div class="decode">
+        <div class="dec">
+          <div class="k">3.3<span style="color:var(--faint)">/</span>7%</div>
+          <div class="v"><b>Yours, then the account's.</b> Same unit, so one <code style="color:var(--c5)">%</code> sign. The <code style="color:var(--c5)">3.3</code> is the half Claude Code never tells you — reconstructed from <code style="color:var(--c5)">~/.claude/projects</code>, off the critical path.</div>
+        </div>
+        <div class="dec warn">
+          <div class="k">⚠out~44m</div>
+          <div class="v"><b>Pace, not position.</b> 43% used one hour into five is fine; 43% used twenty minutes in is not. Under the cap it reads <span style="color:var(--good)">✓28%</span> of headroom — over it, <b>when you run out</b>.</div>
+        </div>
+        <div class="dec">
+          <div class="k">🧊 12m $8.27</div>
+          <div class="v"><b>The stake, then the bill.</b> While the cache is warm that price is what you lose by letting this session go cold. Once the countdown goes <span class="r">red</span> — and it goes <em>negative</em>, not back to zero — it is the cost of the next message.</div>
+        </div>
+      </div>
+
+      <div class="scale">
+        <i><span class="sw" style="background:var(--w-gray)"></span>fine</i>
+        <i><span class="sw" style="background:var(--w-yellow)"></span>notice</i>
+        <i><span class="sw" style="background:var(--w-orange)"></span>last 15m</i>
+        <i><span class="sw" style="background:var(--w-red)"></span>gone · capping</i>
+        <span style="margin-left:auto; text-align:right">a widget with no data prints NOTHING</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">A percentage with nobody's name on it</h2>
+  <p>Claude Code's statusline payload carries <code>rate_limits.five_hour.used_percentage</code> and its seven-day twin. Those are <b>account-wide</b>. They will tell you the five-hour window is 43% gone and they will never, under any circumstance, tell you which of your six open sessions did it — so the number is alarming and unactionable at the same time. You cannot close the expensive pane if you cannot find it.</p>
+  <p>The second thing missing is <b>pace</b>. 43% one hour into a five-hour window is a comfortable afternoon. 43% twenty minutes in means you are done before lunch. A raw percentage cannot distinguish those, and the distinction is the entire decision you are trying to make.</p>
+  <p class="m">There was an obvious way to get the first number — read the OAuth token and call the usage API, which is what the tools in this space tend to do. That was refused. <code>rate_limits</code> is the <b>supported</b> statusline interface: it arrives on stdin, it costs nothing, and using it carries no ToS risk. Everything here is built on what Claude Code already hands over.</p>
+
+  <h2 data-beat="using">There is nothing to run</h2>
+  <p>The trigger is <b>every render</b>. Claude Code's <code>settings.json</code> points its status line at <code>ccstatusline</code>, and <code>refreshInterval</code> is set to <b>30</b>:</p>
+  <pre>"statusLine": {
+  "type": "command",
+  "command": "ccstatusline",
+  "padding": 0,
+  "refreshInterval": 30
+}</pre>
+  <div class="callout"><b>Absent does not mean "default".</b> With no <code>refreshInterval</code> there is <b>no periodic refresh at all</b> — the line redraws only on an event. Every clock-driven widget here (the cache countdown, both reset timers, the duration) would sit visibly frozen between turns. The 30 is load-bearing.</div>
+  <p>ccstatusline reads its own config from its own default path, <code>~/.config/ccstatusline/settings.json</code>, which <code>install.ts</code> symlinks to <code>tools/statusline/ccstatusline.json</code> — so the tracked config names no path at all and needs no <code>--config</code>. The widget scripts are <b>never</b> linked individually: the config addresses them through <code>$HOME/.agents/ai-setup/tools/statusline/</code>, and they find each other with <code>dirname "$0"</code>. They only have to stay in one directory together.</p>
+  <p class="m">Every widget is a <code>custom-command</code> entry with <code>preserveColors: true</code>, which is what stops ccstatusline applying its own foreground over the ANSI the scripts emit.</p>
+
+  <h2 data-beat="limits">It only sees this machine, and it never throttles anything</h2>
+  <ul>
+    <li><b>Other clients are invisible.</b> claude.ai, mobile, and any other machine burn the same account window and leave no transcript in <code>~/.claude/projects</code>. That shrinks the denominator, which <b>inflates every local session's share</b>. The headline account percentage stays exactly right; only the attribution skews.</li>
+    <li><b>Cost is a proxy, not the meter.</b> Nobody outside Anthropic knows what the rate limiter actually weighs. A share computed from list-price cost is immune to any constant rescaling of that weight, and skews only between sessions with very different model and cache mixes.</li>
+    <li><b>The window's size is inferred, so it is suppressed when it would lie.</b> The cache widget derives dollars-per-point as local burn ÷ account percentage — and that percentage arrives quantized to about a whole point. Below 3% the rounding alone can move the answer several fold, so the <code>5h:</code> and <code>wk:</code> figures simply <b>do not print</b> for the first slice of every window rather than printing something confidently threefold wrong.</li>
+    <li><b>It reports. It never intervenes.</b> No throttling, no blocking, no model switching. <code>⚠out~44m</code> is information; what you do with it is yours.</li>
+    <li><b>A widget with no data prints nothing at all</b> — not a zero, not a dash. An empty segment is the honest rendering of "this field was absent from stdin".</li>
+  </ul>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>Integrates with</td><td><b>Claude Code</b> — the <code>statusLine</code> setting, and the JSON it pipes in on stdin. <b>ccstatusline</b> — every widget is one of its <code>custom-command</code> entries.</td></tr>
+    <tr><td>Requires</td><td><code>ccstatusline</code>. Then <code>jq</code>, <code>awk</code> and <code>python3</code>, all of which are already there. No installs, no dependencies, no network.</td></tr>
+    <tr><td>Its config</td><td><code>~/.config/ccstatusline/settings.json</code> → <code>tools/statusline/ccstatusline.json</code>. Symlinked to <b>ccstatusline's own default path</b>, so the tracked file is machine-independent and names nothing.</td></tr>
+    <tr><td>Its state</td><td><code>~/.agents/state/statusline/</code> — <code>usage-share.json</code> (each session's fraction of each window) and <code>usage-scan-memo.json</code> (per-transcript mtime, size and cost buckets). Plus <code>usage-share.lock</code>, which is a <em>directory</em>.</td></tr>
+    <tr><td>Safe to delete?</td><td><b>Yes</b> — <code>deletion-policy: delete</code>. Both files are derived entirely from <code>~/.claude/projects</code>. Deleting them costs one cold scan, about 1.2 seconds, on the next render that finds the cache stale; the line renders correctly the whole time, just without the share numerator.</td></tr>
+    <tr><td>Not its state</td><td><code>~/.claude/projects</code> is the corpus and belongs to Claude Code — opened read-only, never written. The image counts come from <code>~/.agents/state/ttyimgspool/</code>, which belongs to <a href="../tool-ttyimgspool/">ttyimgspool</a>.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">Cracking it open</h2>
+  <p class="m">One render, from Claude Code invoking <code>ccstatusline</code> to <code>3.3/7%</code> appearing on the line. The hard constraint shapes everything: a status line is redrawn constantly, so <b>nothing in this path may block</b>, and the number that takes 1.2 seconds to compute has to arrive on some <em>later</em> render than the one that asked for it.</p>
+
+  <div class="fig" data-viz-id="render-figure" data-label="stepper: one statusline render and the detached scan behind it">
+    <div class="stage" id="stage"></div>
+    <p class="lede" id="lede"></p>
+    <div class="ctrl">
+      <button id="prev" aria-label="previous step">‹ back</button>
+      <button id="play">▶ play</button>
+      <button id="next" aria-label="next step">next ›</button>
+      <span class="pos" id="pos"></span>
+      <span class="hint">← → arrow keys</span>
+    </div>
+  </div>
+
+  <h3>Two tiers of widget, and only one of them shares anything</h3>
+  <p>Four widgets are standalone: <code>statusline-cost.sh</code>, <code>statusline-duration.sh</code>, <code>statusline-cache.sh</code> and <code>statusline-ttyimgspool.sh</code> each read their fields straight off stdin and exit. They source nothing, so a bug in the shared library cannot take them down. Only the two windowed widgets — <code>statusline-5h.sh</code> and <code>statusline-wk.sh</code> — source <code>statusline-lib.sh</code>, for <code>verdict()</code>, <code>hms()</code>, <code>refresh_share()</code> and <code>share()</code>.</p>
+  <p><code>verdict()</code> is four lines of <code>awk</code> and it is the pacing number: project current utilisation forward over the window (<code>proj = util / (elapsed/window)</code>), and if the projection exceeds 100 print <b>how long until you hit the cap at this pace</b>, otherwise print the headroom left. The unit adapts — minutes under 90, then hours, then days — because <code>⚠out~2.1d</code> and <code>⚠out~44m</code> want completely different reactions from you.</p>
+  <div class="callout"><b>Only the 5h widget kicks off the scan.</b> <code>statusline-wk.sh</code> deliberately does not call <code>refresh_share</code> — one scan serves both windows, and a second caller would only lose the <code>mkdir</code> race a few milliseconds later. Adding the call would look symmetrical and buy nothing.</div>
+
+  <h3><code>mkdir</code> is the lock, because macOS has no <code>flock</code></h3>
+  <p>Several sessions render their status lines at once. Without a lock, every stale moment spawns <b>one scan per live session</b> — six pythons walking the same 500MB of transcripts to compute the same answer. <code>mkdir</code> is the portable atomic test: it succeeds for exactly one caller and fails for everyone else, and the winner <code>rmdir</code>s it when its subshell exits.</p>
+  <p class="m">A lock can still be orphaned by a kill or a reboot, and a stuck lock would freeze the share number <em>forever</em> — a silent, permanent failure. So a lock directory whose mtime is more than <b>300 seconds</b> old is treated as abandoned and removed before the race is run. Age comes from <code>stat -c %Y</code> falling back to <code>stat -f %m</code>, GNU then BSD, which is the same two-spelling dance every mtime read in this tool does.</p>
+  <p><code>refresh_share()</code> returns <b>immediately</b> in all three outcomes — cache fresh, lock lost, or scan launched. The scan itself is backgrounded and <code>disown</code>ed. A cold scan is ~1.2s and a status line that stalled for 1.2s on every render would be worse than having no share number at all.</p>
+
+  <h3>Fractions, not percentages, are what gets cached</h3>
+  <p>This is the decision that makes a 60-second TTL acceptable. <code>usage-share.json</code> stores each session's <b>fraction of local burn</b>, never a percentage:</p>
+  <pre>{"five_hour": {"total": 41.2207,
+               "shares": {"a1b2…": 0.4713, "c3d4…": 0.2088, …}}}</pre>
+  <p>The live account percentage arrives fresh on <em>every</em> render, so only the split needs caching. <code>share()</code> multiplies one by the other at render time, which means a minute-old cache <b>blurs the attribution and never the headline</b>: the <code>7%</code> is always current, and only the <code>3.3</code> in front of it is slightly behind.</p>
+  <p class="m">Its decimals are adaptive for a reason a fixed format cannot handle: a session is a meaningful slice of five hours and a rounding error against a week. <code>share()</code> starts at one decimal place and keeps adding places until a significant digit appears, up to four — so the weekly widget shows <code>.02/</code> rather than a permanent, useless <code>0.0</code>. The leading zero is then stripped to buy back a column on an already crowded line.</p>
+
+  <h3>Dedupe by message id, or overcount by 1.8×</h3>
+  <p><code>statusline-usage-scan.py</code> prices each assistant message from its own <code>usage</code> block — plain input, plus <code>cache_read</code> at 0.10×, <code>ephemeral_5m</code> at 1.25× and <code>ephemeral_1h</code> at 2.00× the input rate, plus output. The unknown-model fallback is deliberately the <b>Opus</b> tier: guessing cheap would silently understate whoever ran it.</p>
+  <p>The load-bearing detail is the dedupe. <b>A transcript writes the same message several times as it streams</b>, so summing rows instead of messages overcounts by roughly <b>1.8×</b>. <code>scan_file()</code> keeps a <code>seen</code> set of <code>message.id</code> and skips repeats. It also only parses lines that contain the literal string <code>"usage"</code>, which is a cheap prefilter over a very large file.</p>
+  <p class="m">There is deliberately <b>no long-context premium</b> above 200k tokens, and that absence was measured rather than assumed. On a 1M-context setup about <b>88%</b> of input tokens sit above that threshold, so a premium would dominate the entire calculation. Fitted against four live sessions' own <code>cost.total_cost_usd</code>, the flat rates predict a 301-message session to within <b>1.6%</b>; an input premium would have put the estimate near half the reported cost. Flat is the measured answer.</p>
+
+  <h3>The memo, and why the scan stays cheap</h3>
+  <p>Costs land in <b>300-second buckets</b> keyed by timestamp — fine enough to place a message on either side of a window edge, small enough on disk to keep. Transcripts are append-only, so an unchanged <code>(mtime, size)</code> pair means unchanged cost: <code>usage-scan-memo.json</code> carries both, and a file that matches is reused without being reopened. Anything whose mtime predates the <em>widest</em> window is skipped outright.</p>
+  <p>Summing a window is then just a floor comparison on bucket keys, which is why one scan serves both the five-hour and the seven-day windows for free. Both output files are written through a <code>tmp</code> + <code>os.replace()</code> pair, so a render that reads the cache mid-write gets the old file rather than half a JSON document.</p>
+  <p class="m">The cache file carries no <code>scanned_at</code> field and no window-start fields, on purpose: <code>statusline-lib.sh</code> checks the file's <b>own mtime</b> for staleness, and nothing reads the rest. A timestamp inside a file whose mtime already says the same thing is a second copy waiting to disagree with the first.</p>
+
+  <h3>Two smaller widgets that are not what they look like</h3>
+  <p>The <b>cache countdown</b> uses the transcript file's mtime as the cache age against a 60-minute TTL, and once that lapses it goes <b>negative</b> — <code>🧊 -3m</code> means the cache expired three minutes ago — rather than resetting. It only jumps back to ~60 on genuine new activity, which is the thing that actually mints a fresh cache. Red starts at <b>0</b>, not at five minutes, because zero is where the meaning changes: above it the next message is cheap, at or below it the whole context gets rewritten.</p>
+  <p class="m">The <b>image count</b> resolves its session id from herdr's <code>agent_session</code> for the pane, <em>not</em> from the <code>session_id</code> on stdin. Claude Code's own id differs when a session runs as a background job, and using it would point the widget at the wrong spool folder — so it matches how ttyimgspool's hook and viewer resolve it, and only falls back to stdin when there is no herdr pane.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · alongside <a href="../tool-ttyimgspool/">ttyimgspool</a> and <a href="../tool-claude-tab/">claude-tab</a>.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+<script type="module">
+  import { stepper, $ } from "/_kit/viz.js";
+
+  const S = [
+    { t: "RENDER · t+0ms",
+      rows: [["Claude Code", "statusLine → ccstatusline", "ok"],
+             ["refreshInterval", "30", "ok"],
+             ["stdin JSON", "fanned to every widget", "ok"],
+             ["preserveColors", "true", "ok"]],
+      lede: "ccstatusline hands the same payload to each <code>custom-command</code> entry. <code>preserveColors: true</code> is what stops it painting its own foreground over the ANSI the scripts emit." },
+    { t: "THE CHEAP FOUR · t+5ms",
+      rows: [["statusline-cost.sh", "cost.total_cost_usd", "ok"],
+             ["statusline-duration.sh", "cost.total_duration_ms", "ok"],
+             ["statusline-cache.sh", "transcript mtime", "ok"],
+             ["statusline-ttyimgspool.sh", "herdr agent_session", "ok"]],
+      lede: "Four standalone widgets, sourcing nothing. Each reads a field off stdin and exits — so a bug in the shared library cannot take any of them down, and a missing field prints <b>nothing</b> rather than a zero." },
+    { t: "THE SHARE IS ASKED FOR · t+8ms",
+      rows: [["statusline-5h.sh", "sources statusline-lib.sh", "ok"],
+             ["verdict(43, elapsed, 18000)", "⚠out~44m", "bad"],
+             ["refresh_share(...)", "returns IMMEDIATELY", "ok"],
+             ["statusline-wk.sh", "does NOT call it", "warn"]],
+      lede: "<code>verdict()</code> projects utilisation over the window and prints the headroom — or, past 100%, <b>when you hit the cap at this pace</b>. Only the 5h widget kicks off a scan; one scan serves both windows." },
+    { t: "THE LOCK · t+9ms",
+      rows: [["cache age ≥ 60s?", "stale", "warn"],
+             ["lock dir older than 300s", "rmdir — abandoned", "bad"],
+             ["mkdir usage-share.lock", "one winner", "ok"],
+             ["five other sessions", "lose, return, render", "ok"]],
+      lede: "macOS has no <code>flock</code>, so <code>mkdir</code> is the atomic test. Without it every stale moment spawns <b>one scan per live session</b> — six pythons computing the same answer over the same 500MB." },
+    { t: "THE SCAN · DETACHED, ~1.2s",
+      rows: [["glob ~/.claude/projects/*/*.jsonl", "read-only", "ok"],
+             ["mtime < window start", "skipped", "ok"],
+             ["(mtime, size) unchanged", "memo hit, not reparsed", "ok"],
+             ["dedupe on message.id", "or overcount 1.8×", "bad"],
+             ["write tmp → os.replace()", "atomic", "ok"]],
+      lede: "Backgrounded and <code>disown</code>ed — the render never waits on this. Costs land in <b>300-second buckets</b>, so summing either window is a floor comparison and one pass serves both." },
+    { t: "A LATER RENDER · t+30s",
+      rows: [["jq .five_hour.shares[$sid]", "0.4713", "ok"],
+             ["× live account %", "0.4713 × 7", "ok"],
+             ["adaptive decimals", "3.3 · .02 · 0/", "ok"],
+             ["not in the cache yet", "prints nothing extra", "warn"]],
+      lede: "The cache holds a <b>fraction</b>, never a percentage, so the live account number scales it on every render. A minute-old cache blurs the attribution and <b>never</b> the headline: <code>3.3/<b>7%</b></code>." },
+  ];
+
+  const stage = $("#stage"), lede = $("#lede"), pos = $("#pos");
+  const mark = { ok: ["var(--good)", "✓"], bad: ["var(--danger)", "✗"], warn: ["var(--warn)", "•"] };
+  const render = (i) => {
+    const s = S[i];
+    stage.innerHTML =
+      `<div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--c4);margin-bottom:12px">${i + 1} · ${s.t}</div>` +
+      s.rows.map(([k, v, st]) => `
+        <div style="display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:13px;
+                    padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text)">${k}</span>
+          <span style="color:${mark[st][0]};white-space:nowrap">${mark[st][1]} ${v}</span>
+        </div>`).join("");
+    lede.innerHTML = s.lede;
+    pos.textContent = `${i + 1} / ${S.length}`;
+  };
+
+  const st = stepper({ n: S.length, onStep: render, autoplayMs: 2600, hashKey: "render" });
+  $("#next").onclick = () => st.next();
+  $("#prev").onclick = () => st.prev();
+  const play = $("#play");
+  let on = false;
+  play.onclick = () => { on = !on; on ? st.play() : st.pause(); play.textContent = on ? "❚❚ pause" : "▶ play"; };
+  for (const el of [$("#next"), $("#prev")])
+    el.addEventListener("click", () => { on = false; play.textContent = "▶ play"; });
+</script>
+</body>
+</html>

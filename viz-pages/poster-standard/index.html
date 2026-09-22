@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The poster standard — five beats, and a checker that ignores your prose</title>
+<meta name="viz:uid" content="v-8a700184944e">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="poster standard">
+<meta name="viz:description" content="Every tool and skill here gets a poster with five required beats in a fixed order. This is that standard, as a poster following it.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  .og-card{background:
+      radial-gradient(820px 480px at 92% -8%, color-mix(in srgb, var(--c4) 16%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 110%, color-mix(in srgb, var(--c5) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 496px; gap:36px; align-items:center; padding:50px 58px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--c4); margin-bottom:16px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--c4);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--c4) 22%, transparent); }
+  h1.hook{ font-size:50px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c5); }
+  p.sub{ font-size:18px; line-height:1.45; color:var(--muted); margin:0 0 16px; max-width:470px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:14.5px; line-height:1.5; color:var(--muted); margin:0 0 18px; max-width:470px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .chip{ display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-size:14px;
+         background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--c4);
+         border-radius:9px; padding:9px 14px; color:var(--text); }
+
+  /* the spine: y position is order, bar length is how much the beat demands */
+  .spine{ background:color-mix(in srgb, var(--panel) 86%, transparent); border:1px solid var(--border);
+          border-radius:14px; padding:16px 18px 15px; font-family:var(--mono); }
+  .spine .cap{ display:flex; justify-content:space-between; font-size:11px; letter-spacing:.13em;
+               color:var(--c4); margin-bottom:14px; }
+  .spine .cap span:last-child{ color:var(--faint); }
+
+  .beat{ display:grid; grid-template-columns:16px 62px 150px 1fr; gap:10px; align-items:center; margin-bottom:10px; }
+  .beat .n{ font-size:12px; color:var(--faint); text-align:right; }
+  .beat .nm{ font-size:12.5px; color:var(--text); }
+  /* the track is a fixed 150px column, so bar WIDTH is readable as a quantity */
+  .beat .bar{ height:18px; border-radius:4px; }
+  .beat .lbl{ font-size:10.5px; letter-spacing:.05em; color:var(--muted); white-space:nowrap; }
+  .b-why  .bar{ background:color-mix(in srgb, var(--c4) 34%, transparent); width:38%; }
+  .b-use  .bar{ background:color-mix(in srgb, var(--c4) 30%, transparent); width:30%; }
+  .b-lim  .bar{ background:color-mix(in srgb, var(--warn) 32%, transparent); width:34%; }
+  .b-whe  .bar{ background:color-mix(in srgb, var(--good) 32%, transparent); width:46%; }
+  .b-how  .bar{ background:color-mix(in srgb, var(--c5) 46%, transparent); width:100%;
+                border:1px solid color-mix(in srgb, var(--c5) 70%, transparent); }
+  .b-how .nm{ color:#fff; font-weight:600; }
+
+  .spine .rule{ margin-top:13px; padding-top:12px; border-top:1px solid var(--border);
+                display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .spine .rule div{ font-size:11.5px; line-height:1.5; color:var(--muted); }
+  .spine .rule b{ color:var(--text); display:block; margin-bottom:2px; font-size:12px; }
+  .spine .rule .no b{ color:var(--danger); }
+  .spine .rule .yes b{ color:var(--good); }
+
+  /* dive */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--c4);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive code{ font-family:var(--mono); font-size:.9em; color:var(--c5); }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--c5); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="poster-standard" data-viz-id="poster-card" data-label="the poster standard card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>THE STANDARD · AS A POSTER FOLLOWING IT</div>
+      <h1 class="hook">Five beats,<br>and a checker that<br><em>ignores your prose.</em></h1>
+      <p class="sub">Every tool and skill here gets a poster. The card is free. The dive is <b>five required beats in a fixed order</b> — and the last one is where the work is.</p>
+      <p class="not">Mechanism used to be <b>scattered across "why X is like that" asides</b>. Four of them, in one poster. Nobody could trace an input end to end.</p>
+      <div class="chip">bun scripts/check-posters.ts</div>
+    </div>
+
+    <div class="spine" data-viz-id="beat-spine" data-label="the five beats; length is how much each demands">
+      <div class="cap"><span>THE DIVE, TOP TO BOTTOM</span><span>BAR = WHAT IT DEMANDS</span></div>
+
+      <div class="beat b-why"><div class="n">1</div><div class="nm">why</div><div class="bar"></div><div class="lbl">what was broken before</div></div>
+      <div class="beat b-use"><div class="n">2</div><div class="nm">using</div><div class="bar"></div><div class="lbl">the trigger</div></div>
+      <div class="beat b-lim"><div class="n">3</div><div class="nm">limits</div><div class="bar"></div><div class="lbl">ceilings, before internals</div></div>
+      <div class="beat b-whe"><div class="n">4</div><div class="nm">where</div><div class="bar"></div><div class="lbl">checked against the manifest</div></div>
+      <div class="beat b-how"><div class="n">5</div><div class="nm">how</div><div class="bar"></div><div class="lbl">named things · end to end · a visual</div></div>
+
+      <div class="rule">
+        <div class="yes"><b>Marked, not matched</b>data-beat="how" on the section. The checker never reads a heading.</div>
+        <div class="no"><b>So the voice survives</b>“The predecessor died and nobody noticed” stays exactly as written.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">The mechanism was there, in pieces</h2>
+  <p>The posters were good and getting better, and the dives were freeform, which was fine while there were four of them. At thirty-eight it stopped being fine in one specific way: <b>the architecture never got a section.</b></p>
+  <p>It was there — but spread across asides. <code>voicemode-hold</code> explained its mechanism in four separate places: <em>"Getting it back to the agent"</em>, <em>"Why it writes the socket directly"</em>, <em>"How the pane behaves"</em>, and a stepper under <em>"Watch a hold"</em>. Every one of those was worth reading. None of them let you follow a single utterance from the tool call to the words arriving back in the agent's context.</p>
+  <p class="m">Two other things fell out of the same freedom: three owned things had no poster at all, and no poster said where its tool kept state, even though every tool had been declaring exactly that in its frontmatter since the manifest landed.</p>
+
+  <h2 data-beat="using">Marking a section</h2>
+  <p>One attribute. The heading is yours.</p>
+  <pre>&lt;h2 data-beat="why"&gt;The predecessor died and nobody noticed&lt;/h2&gt;
+&lt;h2 data-beat="using"&gt;The two keys&lt;/h2&gt;
+&lt;h2 data-beat="limits"&gt;It reports. It never fixes.&lt;/h2&gt;
+&lt;h2 data-beat="where"&gt;Where it lives&lt;/h2&gt;
+&lt;h2 data-beat="how"&gt;Cracking it open&lt;/h2&gt;</pre>
+  <p>Beats may be <b>split</b> — three sections can all carry <code>data-beat="how"</code> — but they may not <b>interleave</b>. Order is fixed: why, using, limits, where, how.</p>
+  <p class="m">Limits sit third on purpose. Someone still deciding whether to care deserves the ceilings before the internals, not after four screens of mechanism.</p>
+
+  <h2 data-beat="limits">What the standard refuses to do</h2>
+  <ul>
+    <li><b>It has no opinion about the card.</b> The 1200×630 hero is the part that has to earn a click, and a rule there would produce forty identical cards.</li>
+    <li><b>It never reads heading text.</b> That is the whole design. It cannot therefore tell a vivid heading from a lazy one.</li>
+    <li><b>It cannot tell whether the <code>how</code> beat is any good.</b> It checks that a diagram or stepper exists and that the section is present. Whether the explanation is <em>true</em> is a reading job, and this repo has reviewers for that.</li>
+    <li><b>It does not touch prose quality anywhere.</b> A poster can pass every check and still be boring. Structure is a floor, not a ceiling.</li>
+  </ul>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>The spec</td><td><code>viz-pages/POSTER-STANDARD.md</code> — the normative copy, for whoever writes the next poster.</td></tr>
+    <tr><td>The checker</td><td><code>scripts/check-posters.ts</code>. <code>bun scripts/check-posters.ts</code> for the report, <code>--fix-list</code> for just the names.</td></tr>
+    <tr><td>What it reads</td><td>The <code>rascaltwo-ai-setup:</code> frontmatter in every <code>tools/*/README.md</code> and <code>skills/*/SKILL.md</code>, and the <code>data-beat</code> attributes in each poster.</td></tr>
+    <tr><td>Its state</td><td><b>None.</b> It is a one-shot report that reads the tree and exits. Nothing to clean up, nothing under <code>~/.agents/state/</code>.</td></tr>
+    <tr><td>Requires</td><td>Bun. Nothing else — no parser dependency, no network.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">Cracking it open</h2>
+  <p class="m">What one run actually does, from an empty argument list to an exit code.</p>
+
+  <div class="fig" data-viz-id="check-figure" data-label="stepper: what check-posters.ts does on one run">
+    <div class="stage" id="stage"></div>
+    <p class="lede" id="lede"></p>
+    <div class="ctrl">
+      <button id="prev" aria-label="previous step">‹ back</button>
+      <button id="play">▶ play</button>
+      <button id="next" aria-label="next step">next ›</button>
+      <span class="pos" id="pos"></span>
+      <span class="hint">← → arrow keys</span>
+    </div>
+  </div>
+
+  <h3>The inventory comes from the manifests, not a list</h3>
+  <p>There is no registry of what this repo owns. The checker walks <code>tools/*/README.md</code> and <code>skills/*/SKILL.md</code>, and anything whose frontmatter carries a <code>rascaltwo-ai-setup:</code> block <b>is</b> an owned thing. That is deliberate: a hand-maintained list is a list that goes stale the first time someone adds a skill in a hurry, and the failure mode is silent — the missing poster simply never gets reported.</p>
+
+  <h3>Slug resolution, and why it tries three</h3>
+  <p>A poster for <code>ttyimgspool</code> lives at <code>viz-pages/tool-ttyimgspool/</code>, one for <code>dream</code> at <code>viz-pages/skill-dream/</code>. The checker tries <code>&lt;kind&gt;-&lt;name&gt;</code> first, then both prefixes, so a skill that grew into a tool does not silently lose its poster the moment its manifest <code>kind</code> changes.</p>
+
+  <h3>Order is checked on first appearance</h3>
+  <p>Beats are allowed to repeat, which means "in order" needs defining. The rule is the <b>first</b> occurrence of each beat: collect the index of the first <code>data-beat="why"</code>, the first <code>"using"</code>, and so on, then assert that sequence is ascending. Three <code>how</code> sections in a row are fine. A <code>why</code> section after them is not.</p>
+
+  <h3>The frontmatter cross-check</h3>
+  <p>This is the only check with an opinion about content, and it exists because two descriptions of one fact always drift. A tool declaring <code>state: true</code> whose poster never names <code>~/.agents/state/&lt;name&gt;/</code> fails. So does the reverse — a poster describing state the manifest says the thing does not keep.</p>
+  <div class="callout"><b>A <code>state-owner</code> is exempt.</b> <code>r2-gauntlet</code> writes into <code>r2-sdlc</code>'s store on purpose, so it has no directory of its own and naming one would be the lie, not the omission.</div>
+
+  <h3>The visual check is deliberately crude</h3>
+  <p>Beat 5 must carry a diagram or a stepper, and the test for that is whether the page contains an <code>&lt;svg&gt;</code>, a call to <code>stepper(</code>, or a <code>class="fig"</code>. That is a blunt instrument and it is supposed to be: it catches "this beat is four paragraphs and nothing else", which was the real failure, and it does not pretend to judge whether the diagram helps.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · the standard, holding itself to itself.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+<script type="module">
+  import { stepper, $ } from "/_kit/viz.js";
+
+  const S = [
+    { t: "WALK THE TREE",
+      rows: [["tools/*/README.md", "5 found", "ok"], ["skills/*/SKILL.md", "36 found", "ok"],
+             ["rascaltwo-ai-setup: block", "41 owned", "ok"]],
+      lede: "No registry. Anything whose frontmatter carries the manifest block <b>is</b> an owned thing — so a skill added in a hurry cannot hide from the check." },
+    { t: "RESOLVE THE SLUG",
+      rows: [["ttyimgspool → tool-ttyimgspool", "found", "ok"], ["dream → skill-dream", "found", "ok"],
+             ["omnissa-horizon-vdi", "no poster", "bad"]],
+      lede: "Tries <code>&lt;kind&gt;-&lt;name&gt;</code> then both prefixes, so a thing that changes kind does not silently lose its page. Anything unresolved is reported, not skipped." },
+    { t: "EXTRACT THE BEATS",
+      rows: [["data-beat=\"why\"", "index 0", "ok"], ["data-beat=\"using\"", "index 1", "ok"],
+             ["data-beat=\"limits\"", "index 2", "ok"], ["data-beat=\"where\"", "index 3", "ok"],
+             ["data-beat=\"how\"", "index 4", "ok"]],
+      lede: "Attributes only. The checker has read no heading text at any point, and never will — that is what keeps the prose yours." },
+    { t: "ASSERT THE ORDER",
+      rows: [["first why < first using", "0 < 1", "ok"], ["first limits < first where", "2 < 3", "ok"],
+             ["repeats allowed", "3× how", "ok"], ["interleaving", "rejected", "bad"]],
+      lede: "Order is judged on <b>first</b> appearance, so a beat may be split across sections but the beats themselves cannot braid together." },
+    { t: "CROSS-CHECK THE MANIFEST",
+      rows: [["state: true", "poster names the dir", "ok"], ["state: false", "poster claims none", "ok"],
+             ["state-owner: r2-sdlc", "exempt", "ok"], ["declared but unnamed", "fail", "bad"]],
+      lede: "The one check with an opinion about content. Two descriptions of one fact always drift, so the poster is asserted against the frontmatter rather than trusted." },
+    { t: "EXIT",
+      rows: [["with a poster", "38", "ok"], ["without", "3", "bad"], ["exit code", "1", "bad"]],
+      lede: "Non-zero while anything fails, so it can gate a commit. <code>--fix-list</code> prints just the names, which is what you hand an agent." },
+  ];
+
+  const stage = $("#stage"), lede = $("#lede"), pos = $("#pos");
+  const render = (i) => {
+    const s = S[i];
+    stage.innerHTML =
+      `<div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--c4);margin-bottom:12px">${i + 1} · ${s.t}</div>` +
+      s.rows.map(([k, v, st]) => `
+        <div style="display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:13px;
+                    padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text)">${k}</span>
+          <span style="color:${st === "ok" ? "var(--good)" : "var(--danger)"};white-space:nowrap">${st === "ok" ? "✓" : "✗"} ${v}</span>
+        </div>`).join("");
+    lede.innerHTML = s.lede;
+    pos.textContent = `${i + 1} / ${S.length}`;
+  };
+
+  const st = stepper({ n: S.length, onStep: render, autoplayMs: 2600, hashKey: "check" });
+  $("#next").onclick = () => st.next();
+  $("#prev").onclick = () => st.prev();
+  const play = $("#play");
+  let on = false;
+  play.onclick = () => { on = !on; on ? st.play() : st.pause(); play.textContent = on ? "❚❚ pause" : "▶ play"; };
+  for (const el of [$("#next"), $("#prev")])
+    el.addEventListener("click", () => { on = false; play.textContent = "▶ play"; });
+</script>
+</body>
+</html>

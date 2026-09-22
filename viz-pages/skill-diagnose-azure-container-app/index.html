@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>diagnose-azure-container-app — the logs you want come back empty</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:uid" content="v-6d1b5e7941d8">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="diagnose-azure-container-app">
+<meta name="viz:description" content="When an Azure Container App crash-loops, the obvious console-log command comes back empty — this skill takes the Log Analytics detour that still has the stack trace.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(800px 470px at 95% -10%, color-mix(in srgb, var(--c4) 15%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c5) 12%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 480px; gap:36px; align-items:center; padding:56px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:60px; line-height:1.04; margin:0 0 20px; letter-spacing:-1.6px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--warn); }
+  p.sub{ font-size:19px; line-height:1.5; color:var(--muted); margin:0 0 22px; max-width:530px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  p.sub code{ font-family:var(--mono); font-size:16.5px; color:var(--text); }
+  .not{ font-size:15.5px; line-height:1.55; color:var(--muted); margin:0 0 22px; max-width:530px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:13px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15.5px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the DEAD END + DETOUR = the "proof" slot. The command everyone reaches for is
+     drawn as a route that terminates; the skill's four hops are the way around. */
+  .cap{ font-family:var(--mono); font-size:12.5px; letter-spacing:.14em; color:var(--muted); margin-bottom:11px; }
+  .cap b{ color:var(--warn); }
+  .dead{ background:color-mix(in srgb, var(--warn) 9%, transparent);
+         border:1px dashed color-mix(in srgb, var(--warn) 50%, transparent); border-radius:11px;
+         padding:14px 14px; display:flex; align-items:center; gap:11px; }
+  .dead .cmd{ font-family:var(--mono); font-size:13px; color:var(--muted); text-decoration:line-through;
+              text-decoration-color:color-mix(in srgb, var(--warn) 70%, transparent); }
+  .dead .res{ margin-left:auto; font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--warn);
+              white-space:nowrap; border:1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+              border-radius:99px; padding:3px 9px; }
+  .bend{ font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; color:var(--faint);
+         padding:11px 0 11px 10px; }
+  .bend b{ color:var(--c4); }
+  .route{ position:relative; display:flex; flex-direction:column; gap:7px; }
+  .route::before{ content:""; position:absolute; left:12px; top:16px; bottom:16px; width:2px;
+                  background:linear-gradient(180deg, color-mix(in srgb, var(--c4) 60%, var(--border)),
+                                                     color-mix(in srgb, var(--c5) 55%, var(--border))); }
+  .hop{ display:grid; grid-template-columns:26px 1fr; gap:11px; align-items:center; }
+  .num{ width:18px; height:18px; border-radius:50%; margin:0 auto; font-family:var(--mono); font-size:10px;
+        line-height:18px; text-align:center; color:var(--bg); background:var(--c4); position:relative; }
+  .body{ display:flex; align-items:baseline; gap:8px; background:color-mix(in srgb, var(--panel) 74%, transparent);
+         border:1px solid var(--border); border-radius:9px; padding:10px 12px; }
+  .body .n{ font-family:var(--mono); font-size:12.5px; color:var(--text); white-space:nowrap; }
+  .body .d{ font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-left:auto; white-space:nowrap; }
+  .hop.win .num{ background:var(--c5); }
+  .hop.win .body{ border-color:color-mix(in srgb, var(--c5) 55%, transparent); }
+  .hop.win .d{ color:var(--c5); }
+  .pfoot{ font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--faint); margin-top:11px; }
+  .pfoot b{ color:var(--text); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive code{ font-family:var(--mono); font-size:14.5px; color:var(--c5); }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  table{ width:100%; border-collapse:collapse; margin:0 0 16px; }
+  th,td{ text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); font-size:14.5px; }
+  th{ font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; color:var(--muted); text-transform:uppercase; }
+  td:first-child{ font-family:var(--mono); font-size:13px; color:var(--c4); width:46%; }
+  td:last-child{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  /* ── poster-standard dive additions: h3 under a beat, the where table, the figure ── */
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); border-bottom:none; color:var(--text);
+                  padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--c5); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="diagnose-azure-container-app" data-viz-id="poster-card" data-label="diagnose-azure-container-app poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · DIAGNOSE-AZURE-CONTAINER-APP</div>
+      <h1 class="hook">The logs you want<br>come back <em>empty.</em></h1>
+      <p class="sub">The container crash-looped, so you ask it for its console logs — and <code>--type console</code> often returns <b>nothing at all</b> for a crashed container. The stack trace isn't gone. It's in Log Analytics, four hops away, and this skill knows the hops.</p>
+      <p class="not">It reads logs and names the cause.<br><b>You</b> fix the code and redeploy.</p>
+      <div class="trigger"><span>fires on</span>&nbsp;"startup probe failed"</div>
+    </div>
+    <div>
+      <div class="cap">THE COMMAND YOU'D REACH FOR &nbsp;·&nbsp; <b>DEAD END</b></div>
+      <div class="dead">
+        <span class="cmd">az containerapp logs show --type console</span>
+        <span class="res">OFTEN EMPTY</span>
+      </div>
+      <div class="bend">↳&nbsp; SO IT GOES <b>AROUND</b>, VIA LOG ANALYTICS</div>
+      <div class="route">
+        <div class="hop">
+          <span class="num">1</span>
+          <div class="body"><span class="n">logs show --type system</span><span class="d">which failure</span></div>
+        </div>
+        <div class="hop">
+          <span class="num">2</span>
+          <div class="body"><span class="n">containerapp show</span><span class="d">→ managedEnvironmentId</span></div>
+        </div>
+        <div class="hop">
+          <span class="num">3</span>
+          <div class="body"><span class="n">containerapp env show</span><span class="d">→ customerId</span></div>
+        </div>
+        <div class="hop">
+          <span class="num">4</span>
+          <div class="body"><span class="n">monitor log-analytics query</span><span class="d">→ 80 lines, last 1h</span></div>
+        </div>
+        <div class="hop win">
+          <span class="num">5</span>
+          <div class="body"><span class="n">newest revision only</span><span class="d">→ the stack trace</span></div>
+        </div>
+      </div>
+      <div class="pfoot">SYSTEM EVENTS SAY <b>WHICH</b> FAILURE. ONLY THE QUERY SAYS <b>WHY</b>.</div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">The trap it exists for</h2>
+  <p>Azure gives you a console log stream, and reaching for it is the obvious move. The skill states the catch plainly: <b><code>az containerapp logs show --type console</code> often returns empty results for crashed containers.</b> The replica you most need to hear from is the one least likely to answer — so an empty result reads like "no logs exist" when the logs exist fine, just somewhere else.</p>
+  <p class="m">That single line is most of the skill's value. Everything after it is the detour, written down so nobody rediscovers it at 5pm during a failed deploy.</p>
+
+  <h2 data-beat="using">What it needs before it starts</h2>
+  <p>It fires on one situation: a deploy that failed on a <b>health check timeout</b>, a <b>startup probe failure</b>, or a container app that is <b>crash-looping</b>. Not a slow app, not a 500 in production — a container that won't come up.</p>
+  <div class="callout"><b>If you don't know the app name</b>, that's step one, not a blocker: <code>az containerapp list --query "[].{name:name, resourceGroup:resourceGroup}" -o table</code>. What the skill does assume is that <code>az login</code> has already happened — it does not authenticate for you, and it does not pick a subscription.</div>
+
+  <h2 data-beat="limits">Where it stops</h2>
+  <p>At the cause. The last line of the skill is <b>"fix the source code or configuration and redeploy"</b> — an instruction to you, not a step it performs. It doesn't patch, doesn't roll back, doesn't re-trigger a deploy, and doesn't touch the container app's configuration. Nothing it runs mutates anything; every command is a read.</p>
+  <ul>
+    <li><b>One hour, eighty lines.</b> Those numbers are hardcoded in the query. A container that died ninety minutes ago is outside the window, and the skill will not widen it for you.</li>
+    <li><b>The interpretation step has an accent.</b> Three of the five entries in its pattern table are Spring-specific, because the table was written from the failures it was actually used on. The retrieval steps are language-agnostic; the last step is a head start, not a taxonomy.</li>
+    <li><b>It reads one app.</b> No environment-wide sweep, no correlation across replicas, no metrics — just this app's events and this app's console lines.</li>
+  </ul>
+  <p class="m">A narrow skill that ends where the risk starts. Its whole job is turning "the deploy failed and the logs are empty" into a specific line of your own code.</p>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>Integrates</td><td><b>Azure Container Apps</b> and <b>Log Analytics</b> — two services, because the answer is split across them. Reached entirely through <code>az</code>: <code>az containerapp</code> for the app and its environment, <code>az monitor log-analytics query</code> for the console lines.</td></tr>
+    <tr><td>Requires</td><td>The <code>az</code> CLI, <b>already authenticated</b> (<code>az login</code> done, subscription selected). No SDK, no extension the skill installs for you.</td></tr>
+    <tr><td>What it touches</td><td>Nothing. Every command is a read: two <code>show</code> calls, one <code>logs show</code>, one KQL query. No write, no restart, no scale, no redeploy.</td></tr>
+    <tr><td>Its state</td><td><b>None.</b> It <b>keeps nothing between runs</b> — no cache of workspace IDs, no saved app names, no query history. Every invocation re-derives the workspace from the app, and nothing is written to disk anywhere.</td></tr>
+    <tr><td>Prerequisite that isn't yours</td><td>The managed environment must have <code>appLogsConfiguration</code> pointed at a Log Analytics workspace. If nobody wired that up, the <code>customerId</code> lookup comes back empty and the detour has no destination.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">App to stack trace, in four hops</h2>
+  <p class="m">One crash-looping container app, from a name you may not have yet to the line that actually threw.</p>
+
+  <div class="fig" data-viz-id="azure-figure" data-label="stepper: system events, the workspace hop, one KQL query">
+    <div class="stage" id="stage"></div>
+    <p class="lede" id="lede"></p>
+    <div class="ctrl">
+      <button id="prev" aria-label="previous step">‹ back</button>
+      <button id="play">▶ play</button>
+      <button id="next" aria-label="next step">next ›</button>
+      <span class="pos" id="pos"></span>
+      <span class="hint">← → arrow keys</span>
+    </div>
+  </div>
+
+  <h3>Two questions, two sources</h3>
+  <p><b>System events</b> tell you the <em>shape</em> of the failure — is it even getting an image, is it starting and dying, is it starting and never binding? That's <code>--type system --tail 100</code>, and there are three patterns worth grepping for:</p>
+  <ul>
+    <li><code>ReplicaUnhealthy</code> / <code>Startup probe failed</code> — the app isn't binding to its port in time.</li>
+    <li><code>ContainerBackOff</code> / <code>Persistent Failure to start container</code> — crash loop.</li>
+    <li><code>ImagePullBackOff</code> — image registry or tag issue.</li>
+  </ul>
+  <p><b>Console logs</b> tell you <em>why</em>: the exception, the missing config, the line that actually threw. Neither source substitutes for the other, which is why the skill walks both instead of picking one — and why <code>ImagePullBackOff</code> is the one answer that arrives without the detour, since a container that never started has no console output to go looking for.</p>
+
+  <h3>The workspace ID isn't on the app</h3>
+  <p>The detour's awkward part: you can't query Log Analytics without a workspace ID, and the container app doesn't carry one. It's on the <b>managed environment</b>, so you hop app → environment → workspace before you can ask a single question.</p>
+  <pre>ENV_NAME=$(az containerapp show -n &lt;APP&gt; -g &lt;RG&gt; \
+  --query "properties.managedEnvironmentId" -o tsv | xargs -I{} basename {})
+
+WORKSPACE_ID=$(az containerapp env show -n "$ENV_NAME" -g &lt;RG&gt; \
+  --query "properties.appLogsConfiguration.logAnalyticsConfiguration.customerId" -o tsv)</pre>
+  <p class="m"><code>managedEnvironmentId</code> comes back as a full ARM resource ID, hence the <code>basename</code> — the <code>env show</code> command wants the bare name. And <code>customerId</code> is the workspace <b>GUID</b>, not its ARM ID: that is the identifier <code>az monitor log-analytics query -w</code> expects, which is why the query is two hops away rather than one.</p>
+
+  <h3>Then one KQL query, with deliberate limits</h3>
+  <pre>az monitor log-analytics query -w "$WORKSPACE_ID" --analytics-query \
+  "ContainerAppConsoleLogs_CL
+   | where ContainerAppName_s == '&lt;APP&gt;'
+   | where TimeGenerated &gt; ago(<b>1h</b>)
+   | order by TimeGenerated desc
+   | take <b>80</b>
+   | project TimeGenerated, Log_s, RevisionName_s" -o table</pre>
+  <p>A one-hour window and eighty lines — enough to catch a deploy that just failed, small enough to actually read. The skill is explicit that the output may be large and that you should <b>read all of it</b> rather than skim, hunting for stack traces, <code>Application run failed</code>, and above all lines from the <b>most recent revision</b> — the one with the highest <code>--NNNNNN</code> suffix. That last filter matters because the table is scoped by app name, not by revision: old revisions are still in there and will happily tell you about a bug you fixed yesterday.</p>
+
+  <h3>The pattern table, and its accent</h3>
+  <p class="m">Once you have the trace, the skill maps the common lines to causes:</p>
+  <table>
+    <tr><th>Log pattern</th><th>Likely cause</th></tr>
+    <tr><td>ConflictingBeanDefinitionException</td><td>Duplicate Spring bean names across packages</td></tr>
+    <tr><td>connection refused (DB / service)</td><td>Missing or wrong env vars / secrets</td></tr>
+    <tr><td>NoSuchBeanDefinitionException</td><td>Missing dependency or config class</td></tr>
+    <tr><td>Port already in use / never binds</td><td>Wrong SERVER_PORT, or a crash before listen</td></tr>
+    <tr><td>ImagePullBackOff</td><td>Wrong image tag, registry auth, or ACR not reachable</td></tr>
+  </table>
+  <p>Three of those five are Spring-specific, and that's worth saying out loud: this table was written from the failures it was actually used on. It's a head start, not a taxonomy. The retrieval steps above are language-agnostic; the interpretation step is where your own stack takes over.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+<script type="module">
+  import { stepper, $ } from "/_kit/viz.js";
+
+  const S = [
+    { t: "FIND THE APP",
+      rows: [["az containerapp list", "name + resourceGroup", "ok"],
+             ["az login", "assumed, not performed", "bad"]],
+      lede: "Not knowing the app name is step one, not a blocker. Not being logged in <em>is</em> a blocker — the skill authenticates nothing." },
+    { t: "SYSTEM EVENTS — THE SHAPE",
+      rows: [["--type system --tail 100", "100 events", "ok"],
+             ["ReplicaUnhealthy / Startup probe failed", "never bound in time", "bad"],
+             ["ContainerBackOff", "crash loop", "bad"],
+             ["ImagePullBackOff", "never started at all", "bad"]],
+      lede: "These say <b>what kind</b> of failure it is. <code>ImagePullBackOff</code> is the one that ends here — a container that never ran has no console output to go find." },
+    { t: "THE OBVIOUS MOVE FAILS",
+      rows: [["--type console", "empty for crashed replicas", "bad"],
+             ["reads like", "\"no logs exist\"", "bad"],
+             ["actually", "they exist, elsewhere", "ok"]],
+      lede: "This is the trap the whole skill is written around. An empty result here is not evidence of anything, and everything below is the detour." },
+    { t: "HOP 1 — APP → ENVIRONMENT",
+      rows: [["properties.managedEnvironmentId", "a full ARM id", "ok"],
+             ["| xargs -I{} basename {}", "→ bare name", "ok"],
+             ["pass the ARM id straight in", "env show rejects it", "bad"]],
+      lede: "The container app does not carry a workspace id. It carries a pointer to the managed environment, as a resource path that the next command will not accept." },
+    { t: "HOP 2 — ENVIRONMENT → WORKSPACE",
+      rows: [["appLogsConfiguration…customerId", "a workspace GUID", "ok"],
+             ["that GUID", "what -w wants", "ok"],
+             ["no appLogsConfiguration", "nothing to query", "bad"]],
+      lede: "<code>customerId</code> is the Log Analytics workspace GUID, not its ARM id. If nobody wired the environment to a workspace, the detour has no destination." },
+    { t: "ONE KQL QUERY",
+      rows: [["ContainerAppConsoleLogs_CL", "the table", "ok"],
+             ["ago(1h) · take 80", "hardcoded window", "ok"],
+             ["project TimeGenerated, Log_s, RevisionName_s", "3 columns", "ok"]],
+      lede: "One hour and eighty lines: enough for a deploy that just failed, small enough to actually read. <code>RevisionName_s</code> is projected for the next step, not for decoration." },
+    { t: "READ THE NEWEST REVISION",
+      rows: [["highest --NNNNNN suffix", "today's crash", "ok"],
+             ["stack trace / Application run failed", "the root cause", "ok"],
+             ["older revisions", "yesterday's fixed bug", "bad"]],
+      lede: "The query is scoped by app name, not revision, so old revisions are in the result set. Reading the wrong one is how you debug a bug you already fixed." },
+  ];
+
+  const stage = $("#stage"), lede = $("#lede"), pos = $("#pos");
+  const render = (i) => {
+    const s = S[i];
+    stage.innerHTML =
+      `<div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--c4);margin-bottom:12px">${i + 1} · ${s.t}</div>` +
+      s.rows.map(([k, v, st]) => `
+        <div style="display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:13px;
+                    padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text)">${k}</span>
+          <span style="color:${st === "ok" ? "var(--good)" : "var(--danger)"};white-space:nowrap">${st === "ok" ? "✓" : "✗"} ${v}</span>
+        </div>`).join("");
+    lede.innerHTML = s.lede;
+    pos.textContent = `${i + 1} / ${S.length}`;
+  };
+
+  const st = stepper({ n: S.length, onStep: render, autoplayMs: 2600, hashKey: "hop" });
+  $("#next").onclick = () => st.next();
+  $("#prev").onclick = () => st.prev();
+  const play = $("#play");
+  let on = false;
+  play.onclick = () => { on = !on; on ? st.play() : st.pause(); play.textContent = on ? "❚❚ pause" : "▶ play"; };
+  for (const el of [$("#next"), $("#prev")])
+    el.addEventListener("click", () => { on = false; play.textContent = "▶ play"; });
+</script>
+</body>
+</html>

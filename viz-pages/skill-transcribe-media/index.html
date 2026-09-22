@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>transcribe-media — 53 minutes in, 10,750 words out, zero tokens</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:uid" content="v-9a34db1d8b52">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="transcribe-media">
+<meta name="viz:description" content="The canonical local speech-to-text primitive — Mac-optimized MLX Whisper on the GPU, nothing uploaded, ~0 Claude tokens.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card stays a fixed 1200×630 clip target (verify.ts --og shoots a 1200×630
+     viewport => --s resolves to 1 => the OG image is pixel-native). The only change
+     from the stock poster template: the page SCROLLS, so a deep dive lives below.
+
+     The gotcha this solves: transform:scale() does NOT shrink an element's layout
+     box, so a scaled card still reserves 630px of flow and leaves a dead gap.
+     Fix: scale from `top center` and drive #fit's height off the same --s.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+  #fit{}
+  .og-card{}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(900px 500px at 88% -10%, color-mix(in srgb, var(--c5) 22%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 110%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans); display:grid; grid-template-columns:1fr 400px; gap:44px; align-items:center; padding:60px 70px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--c5); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--c5);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--c5) 22%, transparent); }
+  h1.hook{ font-size:58px; line-height:1.04; margin:0 0 20px; letter-spacing:-1.5px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c5); }
+  p.sub{ font-size:19px; line-height:1.45; color:var(--muted); margin:0 0 26px; max-width:540px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--c5);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the meters = the "proof" slot */
+  .meters{ display:grid; gap:16px; }
+  .meter{ background:color-mix(in srgb, var(--panel) 78%, transparent); border:1px solid var(--border);
+          border-radius:14px; padding:17px 19px; }
+  .meter .lbl{ font-family:var(--mono); font-size:12.5px; letter-spacing:.1em; color:var(--muted); margin-bottom:8px; }
+  .meter .val{ font-size:25px; font-weight:700; letter-spacing:-.4px; margin-bottom:11px; }
+  .bar{ height:11px; border-radius:99px; background:var(--panel-2); overflow:hidden; }
+  .bar i{ display:block; height:100%; border-radius:99px; }
+  .meter.out .val{ color:var(--c5); }
+  .meter.out .bar i{ width:100%; background:linear-gradient(90deg, color-mix(in srgb, var(--c5) 50%, transparent), var(--c5)); }
+  .meter.cost .val{ color:var(--good); }
+  .meter.cost .bar i{ width:2%; background:var(--good); }
+  .meter .note{ margin-top:9px; font-size:12.5px; color:var(--muted); font-family:var(--mono); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--c5);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  /* ── beat-5 furniture: sub-headings, the manifest table, the stepper figure ── */
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  .dive code{ font-family:var(--mono); font-size:.9em; color:var(--c5); }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--c5); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="transcribe-media" data-viz-id="poster-card" data-label="transcribe-media poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · TRANSCRIBE-MEDIA</div>
+      <h1 class="hook">53 minutes in.<br><em>10,750 words out.</em></h1>
+      <p class="sub">A screen recording, transcribed <b>on the Mac's GPU</b> by MLX Whisper — <b>whisper-large-v3-turbo</b>, running local. Nothing uploaded. No CPU-bound crawl.</p>
+      <div class="trigger"><span>run</span>&nbsp;transcribe.sh &lt;media-file&gt;</div>
+    </div>
+    <div class="meters">
+      <div class="meter out">
+        <div class="lbl">ENGINE</div>
+        <div class="val">mlx_whisper</div>
+        <div class="bar"><i></i></div>
+        <div class="note">Apple GPU · not the CPU fallback</div>
+      </div>
+      <div class="meter cost">
+        <div class="lbl">CLAUDE TOKENS</div>
+        <div class="val">~0 spent</div>
+        <div class="bar"><i></i></div>
+        <div class="note">all local · nothing leaves the box</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">The problem</h2>
+  <p>Speech-to-text is the boring prerequisite for half the interesting work — reading a narrated video, salvaging a meeting capture, mining a voice memo. So every skill that needed it <b>re-derived the same Whisper command</b>, badly. And the obvious one, the plain <code>openai-whisper</code> CLI, quietly falls back to <b>CPU</b> and grinds.</p>
+  <p class="m">Worse than slow: the re-derived commands all shared the same silent failure. Whisper invents phrases over quiet audio and loops on them, and a looped transcript is structurally perfect — right file size, plausible word count, evenly spaced timestamps. One meeting archive produced <b>1,992 consecutive <code>Next.</code></b>, 2,625 × <code>Up.</code>, 1,027 × <code>Yeah.</code> Nothing in the output said so.</p>
+
+  <h2 data-beat="using">Reach for it when</h2>
+  <ul>
+    <li>You want a <b>fresh transcript of the speech</b> in a file on disk — a recording with no caption track, or a clean re-transcription.</li>
+    <li>You need it <b>local</b> — nothing uploaded, ~0 Claude tokens.</li>
+    <li>You want machine-readable output: <code>--format json</code> gives a word-timestamped transcript.</li>
+  </ul>
+  <p class="m">Not this skill: what a video <b>shows</b> visually → <code>read-video-locally</code>. An <b>already-embedded</b> caption track → <code>extract-video-subtitles</code> (ffmpeg stream copy, instant). A Drive/Meet recording behind a browser → <code>extract-gdrive-transcript</code>.</p>
+
+  <h2 data-beat="using">The receipt</h2>
+  <p class="m">Point it at a file. That's the whole interface:</p>
+  <pre><span class="c"># writes txt/vtt/srt/tsv/json into &lt;stem&gt;.transcript-&lt;model-tag&gt;/ beside the recording</span>
+skills/transcribe-media/transcribe.sh ~/Movies/"2026-07-15 16-33-32.mkv"
+
+<span class="c"># or capture just the transcript path — it is the last stdout line</span>
+transcript=$(skills/transcribe-media/transcribe.sh meeting.mp4 --format txt --language en | tail -1)</pre>
+  <p>Options: <code>--model</code> · <code>--output-dir</code> · <code>--format {txt,vtt,srt,tsv,json,all}</code> (default <code>all</code>) · <code>--language</code> (omit to auto-detect; <code>en</code> is faster and avoids misdetection) · <code>--keep-wav</code> · <code>--engine {auto,mlx_whisper,whisper.cpp}</code>. Everything after <code>--</code> is forwarded verbatim to the engine.</p>
+
+  <h2 data-beat="limits">Fine print</h2>
+  <ul>
+    <li>It transcribes <b>speech</b>, and only speech. What is on the screen, who is gesturing, whether the demo worked — none of that reaches it. That is <code>read-video-locally</code>.</li>
+    <li>First run per model <b>downloads it</b> (turbo ≈ few hundred MB) to <code>~/.cache/huggingface</code>; cached after that.</li>
+    <li>Needs <code>ffmpeg</code>/<code>ffprobe</code> plus one engine: <code>mlx_whisper</code> on Apple Silicon, a built <code>whisper.cpp</code> binary elsewhere. With neither installed it says so rather than guessing.</li>
+    <li>Hard recording? <code>--model mlx-community/whisper-large-v3</code> buys accuracy with time.</li>
+  </ul>
+  <div class="callout"><b>Verify content, never structure.</b> The defences below stop the loops seen so far, but the danger was never a crash — it was a transcript that passes every structural check and is wrong in every word. <code>sort -u file.txt | wc -l</code> against total lines is the cheapest tell.</div>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>Entry point</td><td><code>skills/transcribe-media/transcribe.sh</code> — a shim that finds a working Python 3 and execs <code>transcribe.py</code>, which is the implementation and runs on Windows too.</td></tr>
+    <tr><td>Requires</td><td><code>ffmpeg</code> and <code>ffprobe</code> on PATH, Python 3, and one engine — <code>mlx_whisper</code> (Apple Silicon) or <code>whisper.cpp</code> found via PATH, <code>WHISPER_CPP_BIN</code>, or <code>WHISPER_CPP_DIR</code>.</td></tr>
+    <tr><td>Integrates</td><td>Nothing. No MCP server, no network service, no browser. It is a subprocess wrapper around two binaries, which is why other skills can call it without inheriting a dependency.</td></tr>
+    <tr><td>Called by</td><td><code>read-video-locally</code>, <code>extract-video-subtitles</code>, and <code>extract-gdrive-transcript</code> all route here rather than rolling their own Whisper invocation. One engine, shared.</td></tr>
+    <tr><td>Its state</td><td><b>None.</b> The manifest declares <code>state: false</code> and means it — nothing under <code>~/.agents/</code>, no database, no index, no memory of the last run. Two things look like state and are not: <code>~/.cache/huggingface</code> is <b>huggingface's</b> model cache, populated and owned by the hub client and shared with everything else on the machine, and the <code>&lt;stem&gt;.transcript-&lt;model-tag&gt;/</code> folder is the <b>output you asked for</b>, sitting beside your recording where you can see it.</td></tr>
+    <tr><td>Safe to delete</td><td>Both, freely. Deleting a transcript folder loses a transcript; deleting the huggingface cache costs one re-download. Neither breaks the skill, because there is nothing for it to lose.</td></tr>
+    <tr><td>Cleans up after itself</td><td>The intermediate <code>audio.wav</code> — ~100 MB per hour — is removed in a <code>finally</code> block on <b>every</b> exit, success, failure, or interrupt, unless <code>--keep-wav</code>. The older success-only cleanup stranded gigabytes on exactly the paths that failed.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">The turn</h2>
+  <p class="m">One file, from the argument list to the path printed on stdout.</p>
+
+  <div class="fig" data-viz-id="pipeline-figure" data-label="stepper: one media file from argv to a transcript path">
+    <div class="stage" id="stage"></div>
+    <p class="lede" id="lede"></p>
+    <div class="ctrl">
+      <button id="prev" aria-label="previous step">‹ back</button>
+      <button id="play">▶ play</button>
+      <button id="next" aria-label="next step">next ›</button>
+      <span class="pos" id="pos"></span>
+      <span class="hint">← → arrow keys</span>
+    </div>
+  </div>
+
+  <h3>The engine is probed for, not inferred</h3>
+  <p><code>select_engine()</code> calls <code>shutil.which("mlx_whisper")</code> and checks <code>platform.machine() == "arm64"</code>; failing that it looks for <code>whisper-cli</code>, <code>main</code>, or <code>whisper</code> on PATH, then honours <code>WHISPER_CPP_BIN</code>, then walks <code>WHISPER_CPP_DIR</code>. Capability, not platform — the same box can lose <code>mlx_whisper</code> to a failed brew upgrade and still transcribe. Both engines load the same Whisper weights, so quality tracks the model rather than the engine.</p>
+
+  <h3>Every audio track, mixed and levelled</h3>
+  <p>ffprobe first: <code>-select_streams a -show_entries stream=index</code> counts the audio tracks. Screen recorders split mic, system and room across separate tracks and ffmpeg's default stream pick silently takes <b>one</b> — which may be the silent one. So the filter graph names all of them:</p>
+  <pre>[0:a:0][0:a:1]…amix=inputs=N:duration=longest:normalize=0,
+loudnorm=I=-16:TP=-1.5:LRA=11[a]   <span class="c">→ -ac 1 -ar 16000 audio.wav</span></pre>
+  <p><code>loudnorm</code> lifts the mix to −16 LUFS because far-field room audio lands near −36 dB and that is the input Whisper hallucinates on. <code>LRA=11</code> keeps the dynamic range and <code>TP=-1.5</code> prevents clipping, so this is not "make everything loud". It is applied to the throwaway wav; the source file is never touched.</p>
+
+  <h3>Three defences against one failure</h3>
+  <p>The repetition loop gets attacked at three points, because none of them is sufficient alone. Track mixing removes the <em>silent-track</em> case. Loudness normalization removes the <em>too-quiet</em> case. And <code>--condition-on-previous-text False</code> — passed on <b>every</b> mlx run, not offered as a remedy — removes the mechanism that sustains a loop once it starts, since Whisper otherwise feeds each window's output back as the next window's prompt.</p>
+  <p>What survives all three is caught after the fact. <code>check_not_stuck()</code> scans the <code>.txt</code> for consecutive identical lines and fails the run at <code>STUCK_RUN = 50</code> in a row over at least <code>STUCK_MIN_LINES = 20</code> lines. The thresholds are measured, not guessed: real transcripts in this corpus top out near 36 repeats, stuck ones start near 180. Partial output is kept for inspection and the error names the culprit line and its count.</p>
+
+  <h3>One schema out, whichever engine ran</h3>
+  <p>whisper.cpp emits sub-word tokens and its own JSON layout. <code>whisper_cpp_to_result()</code> rewrites it into OpenAI Whisper's result shape, and <code>words_from_tokens()</code> merges tokens into words on the rule that a token not starting with a space continues the previous one. Callers see <code>{text, segments, language}</code> with word timings either way, and never branch on engine.</p>
+  <div class="callout"><b>A bug that cost four recordings their GPU time.</b> <code>subprocess</code> with <code>text=True</code> decodes using the <em>locale</em> encoding — cp1252 on Windows. One byte outside it raises inside the reader thread, which does not propagate: <code>run()</code> returns with that stream set to <code>None</code>, and the failure surfaces much later as <code>unsupported operand +: 'NoneType' and 'str'</code>. Every capture here now pins <code>encoding="utf-8", errors="replace"</code>.</div>
+
+  <h3>What the caller actually gets</h3>
+  <p>Outputs land in <code>&lt;stem&gt;.transcript-&lt;model-tag&gt;/</code> next to the source, the tag stripped down by <code>model_tag()</code> so <code>mlx-community/whisper-large-v3-turbo</code> becomes <code>turbo</code> and two models can coexist. A <code>[transcribe-media OK] engine=… model=… words=… format=… -&gt; …</code> header goes to <b>stderr</b>; the transcript path alone goes to <b>stdout</b>, last line, so <code>| tail -1</code> is a contract rather than a trick. Failure prints <code>TRANSCRIBE_FAILED …</code> to stderr and exits non-zero.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+<script type="module">
+  import { stepper, $ } from "/_kit/viz.js";
+
+  const S = [
+    { t: "PROBE FOR AN ENGINE",
+      rows: [["which mlx_whisper + arm64", "mlx_whisper", "ok"], ["whisper-cli / main / whisper", "fallback", "ok"],
+             ["WHISPER_CPP_BIN / _DIR", "fallback", "ok"], ["neither installed", "TRANSCRIBE_FAILED", "bad"]],
+      lede: "<code>select_engine()</code> probes capability, never the platform — so a broken brew upgrade downgrades the engine instead of killing the skill." },
+    { t: "MIX AND LEVEL THE AUDIO",
+      rows: [["ffprobe -select_streams a", "N tracks", "ok"], ["amix=inputs=N", "all of them", "ok"],
+             ["loudnorm=I=-16:TP=-1.5:LRA=11", "-36dB → -16 LUFS", "ok"], ["-ac 1 -ar 16000", "audio.wav", "ok"]],
+      lede: "ffmpeg's default stream pick takes <b>one</b> track, and on a screen recording that may be the silent one. Every track is named explicitly, then levelled — quiet audio is what Whisper hallucinates on." },
+    { t: "RECOGNISE",
+      rows: [["--word-timestamps True", "on", "ok"], ["--condition-on-previous-text", "False", "ok"],
+             ["--output-format", "all", "ok"], ["stdout+stderr", "whisper.log", "ok"]],
+      lede: "<code>--condition-on-previous-text False</code> is a <b>default</b>, not a remedy. Feeding each window's output back as the next window's prompt is what lets a loop sustain itself." },
+    { t: "NORMALISE THE SHAPE",
+      rows: [["whisper.cpp tokens", "merged to words", "ok"], ["its json layout", "Whisper's schema", "ok"],
+             ["mlx_whisper output", "already that shape", "ok"]],
+      lede: "<code>whisper_cpp_to_result()</code> rewrites the alternate engine's output into <code>{text, segments, language}</code>, so no caller ever branches on which binary ran." },
+    { t: "REFUSE A LOOP",
+      rows: [["identical lines in a row", "≥ 50", "bad"], ["over total lines", "≥ 20", "bad"],
+             ["real transcripts peak at", "~36", "ok"], ["partial output", "kept", "ok"]],
+      lede: "The last defence, and the one that matters: a looped transcript is <b>structurally perfect</b>. <code>check_not_stuck()</code> reads the words, because nothing else would have noticed." },
+    { t: "PRINT THE PATH",
+      rows: [["audio.wav (~100MB/hr)", "unlinked in finally", "ok"], ["[transcribe-media OK] …", "stderr", "ok"],
+             ["the transcript path", "stdout, last line", "ok"], ["on failure", "exit non-zero", "bad"]],
+      lede: "The wav goes on <b>every</b> exit path including interrupt. The path alone on stdout is why <code>| tail -1</code> is a contract other skills can build on." },
+  ];
+
+  const stage = $("#stage"), lede = $("#lede"), pos = $("#pos");
+  const render = (i) => {
+    const s = S[i];
+    stage.innerHTML =
+      `<div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--c5);margin-bottom:12px">${i + 1} · ${s.t}</div>` +
+      s.rows.map(([k, v, st]) => `
+        <div style="display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:13px;
+                    padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text)">${k}</span>
+          <span style="color:${st === "ok" ? "var(--good)" : "var(--danger)"};white-space:nowrap">${st === "ok" ? "✓" : "✗"} ${v}</span>
+        </div>`).join("");
+    lede.innerHTML = s.lede;
+    pos.textContent = `${i + 1} / ${S.length}`;
+  };
+
+  const st = stepper({ n: S.length, onStep: render, autoplayMs: 2600, hashKey: "pipe" });
+  $("#next").onclick = () => st.next();
+  $("#prev").onclick = () => st.prev();
+  const play = $("#play");
+  let on = false;
+  play.onclick = () => { on = !on; on ? st.play() : st.pause(); play.textContent = on ? "❚❚ pause" : "▶ play"; };
+  for (const el of [$("#next"), $("#prev")])
+    el.addEventListener("click", () => { on = false; play.textContent = "▶ play"; });
+</script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+/* Deck mechanics — `/_kit/deck.css`. Pairs with `/_kit/deck.js`.
+ *
+ * MECHANICS ONLY: the scaled canvas, slide transitions, fragment builds, the
+ * segment bar, the hint. Everything about how a deck LOOKS — its palette,
+ * typography, .eyebrow / h1.big / .lead / .titlebox / .reveal — stays in the
+ * deck's own <style>. That split is deliberate and was learned the expensive
+ * way on posters: imposing a shared design system on pages that already had
+ * their own reflows every one of them. New decks get the look from the
+ * template; existing decks keep theirs.
+ *
+ * Scoped to #deck rather than a class on <body>, so nothing here can collide
+ * with a name the page already uses — but through :where(), which contributes
+ * ZERO specificity. Without that, `#deck .slide` (1-0-1) silently outranks a
+ * deck's own `.slide` (0-1-0) no matter what order the sheets load in, and the
+ * kit quietly wins every conflict. That is not a shared base, that is a
+ * takeover: it changed 64 of 74 slides on the first attempt. `:where()` makes
+ * these true DEFAULTS — a deck's own rule of equal specificity, loaded after,
+ * still wins.
+ *
+ * Design resolution comes from the page's :root (--deck-w / --deck-h); the
+ * defaults below mean a deck that never declared them still scales instead of
+ * silently rendering at zero.
+ */
+
+:root { --deck-w: 1280; --deck-h: 720 }
+
+html:where(:has(#deck)), body:where(:has(#deck)) { height: 100%; overflow: hidden }
+
+#viewport {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+#deck {
+  position: relative;
+  width: calc(var(--deck-w) * 1px);
+  height: calc(var(--deck-h) * 1px);
+  overflow: hidden;
+  transform: scale(var(--s, 1));
+  transform-origin: center;
+}
+
+:where(#deck) .stage { position: absolute; inset: 0; z-index: 3 }
+
+/* --- slides: only one is visible; the rest are parked ------------------- */
+:where(#deck) .slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px) scale(.995);
+  transition: opacity .45s ease,
+              transform .5s cubic-bezier(.2,.7,.2,1),
+              visibility 0s .45s;
+}
+:where(#deck) .slide.active { opacity: 1; visibility: visible; transform: none; transition-delay: 0s }
+:where(#deck) .slide.past { transform: translateY(-12px) scale(.995) }
+
+/* --- .frag: reversible arrow-stepped build within a slide --------------- */
+:where(#deck) .frag {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity .5s cubic-bezier(.2,.75,.25,1),
+              transform .5s cubic-bezier(.2,.75,.25,1);
+}
+:where(#deck) .frag.in { opacity: 1; transform: none }
+
+/* --- the segment bar: one segment per slide, split when a slide has frags */
+:where(#deck) .segbar { position: absolute; left: 40px; right: 40px; bottom: 22px; z-index: 6;
+                display: flex; gap: 5px }
+:where(#deck) .segbar b { flex: 1; height: 4px; border-radius: 3px;
+                  background: rgba(150,180,230,.17); cursor: pointer; transition: .35s }
+:where(#deck) .segbar b.cur { height: 5px; margin-top: -.5px }
+:where(#deck) .segbar b.cur.split { background: transparent; box-shadow: none; display: flex; gap: 2px }
+:where(#deck) .segbar b.cur.split i { flex: 1; height: 100%; border-radius: 2px;
+                              background: rgba(150,180,230,.3); transition: .3s }
+
+/* --- the hint: fades out on the first keypress -------------------------- */
+:where(#deck) .hint { position: absolute; left: 50%; transform: translateX(-50%); bottom: 40px;
+              z-index: 6; transition: opacity .6s }
+:where(#deck) .hint.hide { opacity: 0 }

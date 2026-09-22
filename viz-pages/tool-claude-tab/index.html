@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>claude-tab — six keystrokes, or one</title>
+<meta name="viz:uid" content="v-2ffa06a072cb">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="claude-tab">
+<meta name="viz:description" content="One herdr chord opens a new tab already running Claude Code, in the directory you were just in.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ──────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls beneath it, so
+     the deep dive lives below. poster.css owns the scale-to-fit mechanics (and
+     the transform:scale dead-gap fix) — nothing here re-derives them.
+     ────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  .og-card{background:
+      radial-gradient(820px 480px at 94% -10%, color-mix(in srgb, var(--good) 16%, transparent), transparent 60%),
+      radial-gradient(700px 460px at -6% 108%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 452px; gap:38px; align-items:center; padding:58px 66px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:60px; line-height:1.03; margin:0 0 20px; letter-spacing:-1.6px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--good); }
+  p.sub{ font-size:19px; line-height:1.45; color:var(--muted); margin:0 0 20px; max-width:490px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:14.5px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:490px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the keystroke before/after = the "proof" slot */
+  .swap{ display:grid; gap:14px; }
+  .band{ background:color-mix(in srgb, var(--panel) 78%, transparent); border:1px solid var(--border);
+         border-radius:14px; padding:15px 16px 17px; }
+  .band .lbl{ display:flex; justify-content:space-between; align-items:baseline;
+              font-family:var(--mono); font-size:12.5px; letter-spacing:.12em; margin-bottom:11px; }
+  .band .lbl .n{ letter-spacing:0; font-size:12px; color:var(--faint); }
+  .keys{ display:flex; flex-wrap:wrap; gap:7px; }
+  .k{ font-family:var(--mono); font-size:13px; line-height:1; padding:9px 10px; border-radius:7px;
+      background:var(--panel-2); border:1px solid var(--border); color:var(--muted); white-space:nowrap; }
+  .band.before{ border-top:2px solid var(--warn); }
+  .band.before .lbl{ color:var(--warn); }
+  .band.after{ border-top:2px solid var(--good); }
+  .band.after .lbl{ color:var(--good); }
+  .band.after .k{ font-size:20px; padding:14px 18px; color:var(--text);
+                  border-color:color-mix(in srgb, var(--good) 55%, transparent);
+                  background:color-mix(in srgb, var(--good) 14%, transparent); }
+  .lands{ margin-top:12px; font-family:var(--mono); font-size:12.5px; line-height:1.55; color:var(--muted); }
+  .lands b{ color:var(--text); }
+  .lands .cmd{ color:var(--good); }
+  .arrow{ text-align:center; font-family:var(--mono); font-size:12px; letter-spacing:.16em; color:var(--faint); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  /* inline code stays unboxed — this page mentions a lot of it, and chips at that
+     density turn a paragraph into confetti. Mono + teal is enough separation. */
+  .dive code, .callout code{ font-family:var(--mono); font-size:14.5px; color:var(--c5); }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  table{ width:100%; border-collapse:collapse; margin:0 0 16px; font-size:15px; }
+  th,td{ text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); }
+  th{ font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+  td code{ font-family:var(--mono); font-size:13.5px; color:var(--c5); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ text-align:left; border-bottom:none; border-top:1px solid var(--border);
+                  padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig svg{ display:block; }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="claude-tab" data-viz-id="poster-card" data-label="claude-tab poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED TOOL · CLAUDE-TAB</div>
+      <h1 class="hook">Six keystrokes,<br><em>or one.</em></h1>
+      <p class="sub"><b>prefix+a</b> in herdr — a new tab that is <b>already running Claude Code</b>, already sitting in the directory you were just in.</p>
+      <p class="not">Two calls against herdr's socket API.<br><b>No wrapper, no daemon, no state.</b></p>
+      <div class="trigger"><span>needs</span>&nbsp;herdr&nbsp;+&nbsp;jq</div>
+    </div>
+    <div class="swap">
+      <div class="band before">
+        <div class="lbl"><span>BEFORE</span><span class="n">6 steps</span></div>
+        <div class="keys">
+          <span class="k">prefix+c</span><span class="k">type a tab name</span><span class="k">Enter</span>
+          <span class="k">Ctrl-R</span><span class="k">c</span><span class="k">Enter</span>
+        </div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="band after">
+        <div class="lbl"><span>AFTER</span><span class="n">1 step</span></div>
+        <div class="keys"><span class="k">prefix+a</span></div>
+        <div class="lands">tab <b>auto-numbered</b>, cwd <b>inherited</b>, foreground:<br><span class="cmd">claude --dangerously-skip-permissions</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">The six-step version of one step</h2>
+  <p>Opening a new Claude Code session is the single most common thing I do in a terminal, and herdr had no shorter path to it than <code>prefix+c</code>, type a tab name, <code>Enter</code>, <code>Ctrl-R</code>, <code>c</code>, <code>Enter</code>. Six keystrokes, two of which are a shell history search hoping the right command is still in it, and one of which is naming a tab I am about to let <a href="../tool-herdr-autolabel/">herdr-autolabel</a> rename anyway.</p>
+  <p>Nothing about that is hard. It is just friction on the most-repeated action in the setup, and friction on a hot path is what a keybinding is for.</p>
+
+  <h2 data-beat="using">One chord, no arguments</h2>
+  <p><b>prefix+a</b>. A new tab appears, focused, auto-numbered, sitting in the directory the pane you were in was sitting in, with <code>claude --dangerously-skip-permissions</code> already running as its foreground process. There is nothing to type and nothing to confirm.</p>
+  <p class="m">It shows up in herdr's own help as <code>new tab running claude here</code>, which is the <code>description</code> field of the binding — so it is discoverable rather than being one more chord you have to remember you own.</p>
+
+  <h2 data-beat="limits">What it won't do</h2>
+  <ul>
+    <li><b>It hard-codes <code>--dangerously-skip-permissions</code>.</b> There is no flag, no env var and no config file — the invocation is the second line of a two-line script. Wanting a different one means editing the script.</li>
+    <li><b>It never names the tab.</b> No <code>--label</code> is passed on purpose, so herdr auto-numbers it exactly as it would an unnamed <code>prefix+c</code> tab. Naming is <a href="../tool-herdr-autolabel/">herdr-autolabel</a>'s job and it does it better, from the transcript.</li>
+    <li><b>It has no opinion about the directory.</b> The cwd is inherited entirely by herdr, from <code>[terminal] new_cwd</code>. That defaults to <code>"follow"</code>, which is why the tab lands where you were — set it to anything else and the tab lands there instead, and claude-tab will not notice.</li>
+    <li><b>It fails silently.</b> The binding is <code>type = "shell"</code>, which runs detached with no pane of its own, so a failed socket call has nowhere to print. The symptom is that nothing happens and you press the key again.</li>
+  </ul>
+  <p><b>A direct chord works too</b> — <code>key = "ctrl+alt+a"</code> instead of <code>prefix+a</code>. It was not chosen, for two reasons: on macOS, Option is not Alt in Ghostty unless <code>macos-option-as-alt</code> is set; and a bespoke chord is one more undocumented thing to remember. <code>prefix+a</code> shows up in herdr's own help with the <code>description</code> above. The chord is just muscle memory.</p>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>Integrates with</td><td>herdr, and only herdr — <b>prefix+a</b> as a <code>[[keys.command]]</code> binding, and herdr's socket API as the thing the script talks to.</td></tr>
+    <tr><td>Requires</td><td><code>herdr</code> and <code>jq</code>. Nothing else: no runtime, no wrapper, no daemon.</td></tr>
+    <tr><td>Its state</td><td><b>None.</b> It <b>keeps nothing</b> — no directory under <code>~/.agents/state/</code>, no cache, no config of its own. It is a script that makes two calls and <code>exec</code>s itself out of existence, so there is nothing to clean up and nothing that can go stale.</td></tr>
+    <tr><td>What it installs</td><td><code>claude-tab</code> → <code>~/.agents/ai-setup/tools/claude-tab/claude-tab</code>, and <code>herdr-keybind.toml</code> merged into <code>~/.config/herdr/config.toml</code>. Afterwards: <code>herdr server reload-config</code>.</td></tr>
+    <tr><td>Re-running it</td><td>Safe. The TOML merge is guarded on the command path, so a second install is a no-op rather than a duplicate binding.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">Two calls, nothing else</h2>
+  <p>The whole tool is a two-line <code>/bin/sh</code> script talking to herdr's socket API. There is no supervisor, no config file of its own, no process left behind.</p>
+  <pre>pane=$(herdr tab create --focus | jq -r .result.root_pane.pane_id)
+exec herdr pane run "$pane" claude --dangerously-skip-permissions</pre>
+
+  <div class="fig" data-viz-id="two-calls" data-label="sequence: prefix+a, the two socket calls, and the tab that results">
+    <svg viewBox="0 0 764 372" width="100%" role="img" aria-label="Sequence diagram: claude-tab makes two calls to the herdr server and then exits">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--good)"/>
+        </marker>
+        <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--c5)"/>
+        </marker>
+      </defs>
+
+      <!-- lifeline heads -->
+      <rect x="34" y="14" width="232" height="34" rx="8" fill="var(--panel)" stroke="var(--border)"/>
+      <text x="150" y="36" text-anchor="middle" font-family="var(--mono)" font-size="13" fill="var(--text)">claude-tab · /bin/sh</text>
+      <rect x="498" y="14" width="232" height="34" rx="8" fill="var(--panel)" stroke="var(--border)"/>
+      <text x="614" y="36" text-anchor="middle" font-family="var(--mono)" font-size="13" fill="var(--text)">herdr server · socket API</text>
+
+      <line x1="150" y1="48" x2="150" y2="330" stroke="var(--border)" stroke-dasharray="4 5"/>
+      <line x1="614" y1="48" x2="614" y2="356" stroke="var(--border)" stroke-dasharray="4 5"/>
+
+      <!-- trigger -->
+      <rect x="34" y="62" width="232" height="30" rx="7" fill="color-mix(in srgb, var(--accent) 14%, transparent)" stroke="color-mix(in srgb, var(--accent) 50%, transparent)"/>
+      <text x="150" y="82" text-anchor="middle" font-family="var(--mono)" font-size="13" fill="var(--accent)">prefix+a · type = "shell"</text>
+
+      <!-- call 1 -->
+      <line x1="150" y1="122" x2="606" y2="122" stroke="var(--good)" stroke-width="1.5" marker-end="url(#ah)"/>
+      <text x="378" y="114" text-anchor="middle" font-family="var(--mono)" font-size="13" fill="var(--good)">herdr tab create --focus</text>
+      <text x="378" y="140" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--faint)">no --label → herdr auto-numbers it, as an unnamed prefix+c tab would be</text>
+
+      <!-- server-side effect -->
+      <rect x="466" y="152" width="278" height="44" rx="7" fill="color-mix(in srgb, var(--panel) 80%, transparent)" stroke="var(--border)"/>
+      <text x="605" y="170" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--muted)">new tab, focused. cwd copied from the</text>
+      <text x="605" y="187" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--muted)">focused pane — [terminal] new_cwd</text>
+
+      <!-- response -->
+      <line x1="614" y1="222" x2="158" y2="222" stroke="var(--c5)" stroke-width="1.5" marker-end="url(#ahb)"/>
+      <text x="386" y="214" text-anchor="middle" font-family="var(--mono)" font-size="12.5" fill="var(--c5)">{ "result": { "root_pane": { "pane_id": "%7" } } }</text>
+      <text x="386" y="240" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--faint)">jq -r .result.root_pane.pane_id  →  $pane</text>
+
+      <!-- call 2 -->
+      <line x1="150" y1="278" x2="606" y2="278" stroke="var(--good)" stroke-width="1.5" marker-end="url(#ah)"/>
+      <text x="378" y="270" text-anchor="middle" font-family="var(--mono)" font-size="13" fill="var(--good)">herdr pane run "$pane" claude --dangerously-skip-permissions</text>
+      <text x="378" y="296" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--faint)">claude becomes the pane's FOREGROUND process</text>
+
+      <!-- script ends -->
+      <text x="150" y="322" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--danger)">exec — no process left behind</text>
+      <line x1="136" y1="330" x2="164" y2="330" stroke="var(--danger)" stroke-width="2"/>
+
+      <!-- detection -->
+      <rect x="440" y="334" width="290" height="30" rx="7" fill="color-mix(in srgb, var(--good) 12%, transparent)" stroke="color-mix(in srgb, var(--good) 45%, transparent)"/>
+      <text x="585" y="354" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--good)">agent detection → agent_status: idle</text>
+    </svg>
+  </div>
+
+  <h3>Call one: create the tab, and let herdr decide everything about it</h3>
+  <p><b><code>herdr tab create --focus</code></b> — with no <code>--label</code>, so herdr auto-numbers the tab exactly as it would an unnamed <code>prefix+c</code> tab. The new tab inherits the focused pane's cwd <em>on its own</em>, because herdr's <code>[terminal] new_cwd</code> defaults to <code>"follow"</code>. The response carries the new pane at <code>.result.root_pane.pane_id</code> — which is what <code>jq</code> is there for, and the only reason <code>jq</code> is a dependency at all.</p>
+
+  <h3>Call two: run it in the foreground, not through a wrapper</h3>
+  <p><b><code>herdr pane run</code></b> makes claude the pane's <b>foreground</b> process, so the tab behaves as if you had typed the command yourself — <code>Ctrl-C</code> reaches claude, the pane dies when claude exits, and there is no shell sitting underneath waiting to be noticed. The script <code>exec</code>s into that call, so once herdr has it there is no claude-tab process anywhere.</p>
+
+  <h3>Why herdr still sees an agent</h3>
+  <p>herdr's own agent detection picks claude up from there. The tab reports <code>agent_status: idle</code> once it is ready for input, so the status dots and notification routing work exactly as they do for a hand-started agent — and so <a href="../tool-herdr-autolabel/">herdr-autolabel</a>'s <code>Stop</code> hook has a <code>$HERDR_TAB_ID</code> to rename.</p>
+  <p class="m">No <code>herdr agent start</code> call is needed. That one exists for when you want herdr to <em>validate</em> agent identity before proceeding — which a keybinding does not.</p>
+
+  <h3>The binding, and the tilde that never resolves</h3>
+  <pre><span class="c"># herdr-keybind.toml — type = "shell" runs detached in the background.
+# The script prints nothing and needs no pane of its own; the tab it
+# creates IS the visible result.</span>
+[[keys.command]]
+key = "prefix+a"
+type = "shell"
+command = "~/.agents/ai-setup/tools/claude-tab/claude-tab"
+description = "new tab running claude here"</pre>
+  <div class="callout"><b>herdr does not expand <code>~</code></b> in a <code>[[keys.command]]</code> <code>command</code> field. The literal tilde above never resolves — so <code>install.ts</code> bakes in the absolute path at merge time, and what actually lands in <code>~/.config/herdr/config.toml</code> is a full path. The merge is guarded on that path, which is also what makes re-running the installer a no-op.</div>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one tool, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

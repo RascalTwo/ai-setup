@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>upload-image-to-github — the image that renders everywhere</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:uid" content="v-f7ae3f71b854">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="upload-image-to-github">
+<meta name="viz:description" content="GitHub has no attachment API — this drives its real uploader to hand back a user-attachments CDN URL that renders even in private repos.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:scaffold" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card stays a fixed 1200×630 clip target (verify.ts --og shoots a 1200×630
+     viewport => --s resolves to 1 => the OG image is pixel-native). The only change
+     from the stock poster template: the page SCROLLS, so a deep dive lives below.
+
+     The gotcha this solves: transform:scale() does NOT shrink an element's layout
+     box, so a scaled card still reserves 630px of flow and leaves a dead gap.
+     Fix: scale from `top center` and drive #fit's height off the same --s.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+  #fit{}
+  .og-card{}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(900px 500px at 88% -10%, color-mix(in srgb, var(--c4) 20%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 110%, color-mix(in srgb, var(--danger) 14%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans); display:grid; grid-template-columns:1fr 430px; gap:40px; align-items:center; padding:60px 70px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--c4); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--c4);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--c4) 22%, transparent); }
+  h1.hook{ font-size:56px; line-height:1.04; margin:0 0 20px; letter-spacing:-1.5px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  p.sub{ font-size:19px; line-height:1.45; color:var(--muted); margin:0 0 26px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--c4);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the two paths = the "proof" slot */
+  .paths{ display:grid; gap:16px; }
+  .path{ background:color-mix(in srgb, var(--panel) 80%, transparent); border:1px solid var(--border);
+         border-radius:14px; padding:16px 18px; }
+  .path .lbl{ display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12px;
+              letter-spacing:.1em; color:var(--muted); margin-bottom:10px; }
+  .path .url{ font-family:var(--mono); font-size:13.5px; line-height:1.45; word-break:break-all;
+              color:var(--text); margin-bottom:11px; }
+  .path .verdict{ display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600; }
+  .chip{ font-family:var(--mono); font-size:11px; letter-spacing:.08em; padding:3px 8px; border-radius:99px; }
+
+  .path.bad{ border-color:color-mix(in srgb, var(--danger) 45%, var(--border)); }
+  .path.bad .lbl{ color:var(--danger); }
+  .path.bad .url{ color:var(--muted); text-decoration:line-through; text-decoration-color:color-mix(in srgb, var(--danger) 70%, transparent); }
+  .path.bad .verdict{ color:var(--danger); }
+  .path.bad .chip{ background:color-mix(in srgb, var(--danger) 16%, transparent); color:var(--danger); }
+
+  .path.good{ border-color:color-mix(in srgb, var(--good) 45%, var(--border)); }
+  .path.good .lbl{ color:var(--good); }
+  .path.good .verdict{ color:var(--good); }
+  .path.good .chip{ background:color-mix(in srgb, var(--good) 16%, transparent); color:var(--good); }
+  .path .note{ margin-top:9px; font-size:12.5px; color:var(--muted); font-family:var(--mono); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--c4);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive code{ font-family:var(--mono); font-size:14px; background:var(--panel-2);
+              border:1px solid var(--border); border-radius:5px; padding:1px 5px; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  /* ── beat-5 furniture: sub-headings, the manifest table, the stepper figure ── */
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  .dive code{ font-family:var(--mono); font-size:.9em; color:var(--c4); }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--c4); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="upload-image-to-github" data-viz-id="poster-card" data-label="upload-image-to-github poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · UPLOAD-IMAGE-TO-GITHUB</div>
+      <h1 class="hook">Your image link<br><em>quietly doesn't load.</em></h1>
+      <p class="sub">GitHub has <b>no attachment API</b>, and a <b>raw</b> URL from a private repo never renders — camo can't authenticate. This drives GitHub's <b>own uploader</b> and hands back a URL that works anywhere.</p>
+      <div class="trigger"><span>say</span>&nbsp;"put this image at the top of the PR"</div>
+    </div>
+    <div class="paths">
+      <div class="path bad">
+        <div class="lbl">THE OBVIOUS PATH<span class="chip">TRAP</span></div>
+        <div class="url">raw.githubusercontent.com/<wbr>org/private-repo/…</div>
+        <div class="verdict">✕&nbsp; Broken image in the PR</div>
+        <div class="note">camo proxy can't auth → dead end</div>
+      </div>
+      <div class="path good">
+        <div class="lbl">THIS SKILL<span class="chip">WORKS</span></div>
+        <div class="url">github.com/user-attachments/<wbr>assets/&lt;uuid&gt;</div>
+        <div class="verdict">✓&nbsp; Renders, private repos included</div>
+        <div class="note">access-scoped to the repo's viewers</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">The problem</h2>
+  <p>You want a screenshot at the top of a PR. Every path that <i>looks</i> like it should work fails — and most of them fail <b>silently</b>, so you only find out when a reviewer sees a broken image icon.</p>
+
+  <h2 data-beat="why">Why the obvious paths fail</h2>
+  <ul>
+    <li><b>There is no attachment API.</b> GitHub's only uploader is a browser drag-drop onto a classic Markdown editor. <code>gh</code> can't do it.</li>
+    <li><b><code>raw.githubusercontent.com</code> from a private repo</b> → does not render. GitHub proxies images through camo, and camo can't authenticate. Dead end.</li>
+    <li><b>The <code>file_upload</code> MCP tool</b> → currently rejects host paths (regressed). Don't rely on it.</li>
+    <li><b>Synthetic <code>cmd+v</code> paste</b> → unreliable; the key event never delivers image bytes to GitHub's paste handler.</li>
+  </ul>
+
+  <h2 data-beat="using">The receipt</h2>
+  <p class="m">Clipboard → drop → URL → body. Four moves:</p>
+  <pre><span class="c"># 1. image onto the clipboard as base64 text (macOS; note the -i)</span>
+base64 -i /path/to/image.png | tr -d '\n' | pbcopy
+
+<span class="c"># 2. open a CLASSIC editor and prove it is one — both must be true</span>
+<span class="c">#    https://github.com/&lt;owner&gt;/&lt;repo&gt;/wiki/_new</span>
+({ hasFileAttachment: !!document.querySelector('file-attachment'),
+   hasBody: !!document.querySelector('#gollum-editor-body') })
+
+<span class="c"># 3. click the body for OS focus, then run scripts/drop-and-harvest.js</span>
+<span class="c">#    → { url, imgTag }</span>
+
+<span class="c"># 4. spend the URL</span>
+gh pr edit &lt;N&gt; --body-file body.md   <span class="c"># &lt;img width="1200" src="$URL" /&gt;</span></pre>
+  <p class="m">Linux swaps step 1 for <code>base64 -w0 image.png | xclip -selection clipboard</code>. Everything after that is identical, because the mechanism is the browser's, not the shell's.</p>
+
+  <h2 data-beat="limits">When not to</h2>
+  <ul>
+    <li>The image already has a <b>public, renderable URL</b> — just paste it.</li>
+    <li>The repo is public and the file is committed — <code>raw.githubusercontent.com</code> is fine there.</li>
+    <li>Chrome MCP isn't available. The whole mechanism is a real browser driving a real uploader.</li>
+    <li>You want <b>many</b> images. One per run is simplest; multiples mean looping steps 1 and 4, since each drop appends a fresh URL to the same body.</li>
+    <li>You want the upload <b>deleted</b> later. It doesn't do that — the asset is permanent and there is no API to remove it, which is the flip side of it being permanent enough to leave the wiki unsaved.</li>
+  </ul>
+  <div class="callout"><b>Scope is the gotcha:</b> a <code>user-attachments</code> asset is only visible to people who can see the repo it was uploaded through. Upload via the <b>same repo</b> as the PR — or one your audience can also see. Then navigate to the PR and <b>actually look at it</b>. A broken image means wrong repo scope or a bad URL; that eyeball check is the whole point.</div>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>The snippet</td><td><code>skills/upload-image-to-github/scripts/drop-and-harvest.js</code> — the only code in the skill. It is not a module or a script you run; it is text you hand to Chrome MCP's <code>javascript_tool</code> whole.</td></tr>
+    <tr><td>Integrates</td><td><b>GitHub</b>, through the user-attachments upload behind the wiki editor — an undocumented path, used because it is the only one — and <b>Chrome</b>, for the drag-drop automation.</td></tr>
+    <tr><td>Requires</td><td><code>gh</code> (to spend the URL on a PR, issue, comment or Projects card) and <code>chrome</code> with Chrome MCP connected. Plus a GitHub session in that Chrome with write access to a repo whose wiki is enabled.</td></tr>
+    <tr><td>Which repo's wiki</td><td>Load-bearing, not incidental. Prefer the <b>same repo</b> as the PR, so the asset's visibility matches the audience's. If its <code>/wiki/_new</code> redirects to the repo home, the wiki is disabled — use another repo your audience can also see.</td></tr>
+    <tr><td>Its state</td><td><b>None.</b> The manifest says <code>state: false</code> and there is nothing to soften it with: no upload log, no URL cache, no record of what was uploaded where, nothing under <code>~/.agents/</code>. Two runs of the same image produce two different assets, because nothing remembers the first.</td></tr>
+    <tr><td>What persists</td><td>The <b>asset on GitHub's CDN</b>, which is GitHub's, permanent, and independent of the wiki page it was uploaded through. And the base64 text left on your clipboard, until you copy something else.</td></tr>
+    <tr><td>What does not</td><td>The wiki page. It is <b>never saved</b> — step 6 clears the body, kills the unsaved-changes guard and navigates away. Nothing is written to the repo.</td></tr>
+    <tr><td>Safe to delete</td><td>Locally, there is nothing to delete. The CDN asset cannot be deleted at all, so treat the upload as one-way.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">The turn</h2>
+  <p class="m">Stop trying to host the image. <b>Make GitHub's real uploader run.</b> One PNG, from the clipboard to a URL in a PR body.</p>
+
+  <div class="fig" data-viz-id="drop-figure" data-label="stepper: one image from clipboard to a user-attachments URL">
+    <div class="stage" id="stage"></div>
+    <p class="lede" id="lede"></p>
+    <div class="ctrl">
+      <button id="prev" aria-label="previous step">‹ back</button>
+      <button id="play">▶ play</button>
+      <button id="next" aria-label="next step">next ›</button>
+      <span class="pos" id="pos"></span>
+      <span class="hint">← → arrow keys</span>
+    </div>
+  </div>
+
+  <h3>The bytes travel as text, on purpose</h3>
+  <p><code>base64 -i image.png | tr -d '\n' | pbcopy</code> puts the image on the OS clipboard as a single line of <b>text</b>. Two things fall out of that. The obvious one: the bytes never enter the agent's context — a 400 KB screenshot costs nothing to move. The less obvious one: text is what <code>navigator.clipboard.readText()</code> can reach from inside a page, and an <em>image</em> on the clipboard is not, which is the same reason synthetic <code>cmd+v</code> was a dead end.</p>
+  <p>The snippet validates before it decodes — <code>/^[A-Za-z0-9+/=]+$/</code> over the trimmed clipboard — so a stale clipboard fails with <code>"clipboard is not base64 text — re-run the pbcopy step"</code> instead of producing a corrupt <code>File</code> that GitHub accepts and renders as garbage.</p>
+
+  <h3>The classic editor is the whole constraint</h3>
+  <p>GitHub's uploader is bound to a <code>&lt;file-attachment&gt;</code> custom element, and that element exists only on the <b>classic</b> Markdown editors — not the React <code>/issues/new</code> page. The reliable instance is any repo's wiki new-page, <code>https://github.com/&lt;owner&gt;/&lt;repo&gt;/wiki/_new</code>, used purely as an uploader. The precondition is checked rather than assumed, and <b>both</b> halves must be true:</p>
+  <pre>({ hasFileAttachment: !!document.querySelector('file-attachment'),
+   hasBody: !!document.querySelector('#gollum-editor-body') })</pre>
+  <p class="m">A wiki that is disabled redirects <code>/wiki/_new</code> to the repo home, where both come back <code>false</code>. The snippet refuses with a message that names the fix rather than dropping into a page with no uploader on it.</p>
+
+  <h3>Reconstructing a File nobody dragged</h3>
+  <p>Then the actual trick, five lines of it. Decode with <code>Uint8Array.from(atob(b64), c =&gt; c.charCodeAt(0))</code>, build a <code>DataTransfer</code>, add <code>new File([u8], "image.png", { type: "image/png" })</code>, and dispatch <b>three</b> events at the <code>&lt;file-attachment&gt;</code> — <code>dragenter</code>, <code>dragover</code>, then <code>drop</code> — each a real <code>DragEvent</code> with <code>bubbles</code>, <code>cancelable</code> and that <code>dataTransfer</code> attached. The first two are not ceremony: GitHub's handler establishes drop state on the enter/over pair, and a bare <code>drop</code> arrives at an element that was never told a drag was in progress.</p>
+  <p class="m">From GitHub's side this is indistinguishable from a human dragging a file in, which is exactly why it works where every synthetic shortcut failed. Its own uploader runs, with its own auth, its own scoping, its own CDN.</p>
+
+  <h3>Harvesting, because the upload is asynchronous</h3>
+  <p>The drop returns immediately; the URL does not. So the snippet polls the editor body — <b>30 attempts, 500 ms apart</b>, fifteen seconds in total — for <code>/https:\/\/github\.com\/user-attachments\/assets\/[0-9a-f-]+/</code>, and returns <code>{ url, imgTag }</code> the moment it matches. A timeout returns <code>{ error, body }</code> with the body included, so you can see what GitHub actually inserted rather than guessing.</p>
+  <div class="callout"><b>Pass the snippet as-is. Do not wrap it in an async IIFE.</b> <code>javascript_tool</code> returns the last expression's value and supports top-level <code>await</code> — but it does <b>not</b> await a Promise you hand back, so <code>(async () =&gt; {…})()</code> serializes to <code>{}</code>. The file's last expression is the bare <code>out</code> for exactly this reason. If you do get <code>{}</code>, the drop still ran; read the URL back out of the body:<br><code>document.querySelector('#gollum-editor-body').value.match(/user-attachments\/assets\/[0-9a-f-]+/)?.[0]</code></div>
+
+  <h3>Spend it, then walk away without saving</h3>
+  <p>The URL is plain text in a plain Markdown body, so <code>gh</code> takes it from there — <code>gh pr edit</code>, <code>gh issue edit</code>, <code>gh project item-edit --body</code>. Build the body in a file and pass <code>--body-file</code> to avoid escaping pain. <code>&lt;img width="1200" height="630" src="…"&gt;</code> pins a stable render size for an OG card; <code>![alt](url)</code> is fine otherwise.</p>
+  <p>Then the cleanup, which has an ordering requirement: clear the body, fire a bubbling <code>input</code> event so the editor notices, null out <code>window.onbeforeunload</code>, <em>then</em> navigate. Navigate first and Chrome throws a "Leave site?" dialog that blocks the tab.</p>
+  <pre>const b = document.querySelector('#gollum-editor-body');
+b.value = ''; b.dispatchEvent(new Event('input', {bubbles:true}));
+window.onbeforeunload = null; true;</pre>
+  <p class="m">The wiki page is never saved and nothing is committed. The asset outlives the editor it was uploaded through — which is the property the whole approach rests on. Last step, always: open the PR and look at it.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+<script type="module">
+  import { stepper, $ } from "/_kit/viz.js";
+
+  const S = [
+    { t: "BYTES ONTO THE CLIPBOARD",
+      rows: [["base64 -i … | tr -d '\\n' | pbcopy", "text, one line", "ok"], ["through the agent's context", "never", "ok"],
+             ["an image on the clipboard", "unreadable from a page", "bad"]],
+      lede: "As <b>text</b>, not as an image — because <code>navigator.clipboard.readText()</code> can reach text from inside a page and cannot reach an image. Same reason synthetic <code>cmd+v</code> was a dead end." },
+    { t: "FIND A CLASSIC EDITOR",
+      rows: [["/wiki/_new", "has <file-attachment>", "ok"], ["#gollum-editor-body", "present", "ok"],
+             ["/issues/new (React)", "no uploader element", "bad"], ["wiki disabled", "redirects home", "bad"]],
+      lede: "GitHub's uploader is bound to a <code>&lt;file-attachment&gt;</code> element that only the classic editors have. Both checks must be true before anything is dropped." },
+    { t: "VALIDATE AND REBUILD",
+      rows: [["/^[A-Za-z0-9+/=]+$/", "it really is base64", "ok"], ["atob → Uint8Array", "bytes back", "ok"],
+             ["new File([u8], 'image.png')", "image/png", "ok"], ["stale clipboard", "refused, not uploaded", "bad"]],
+      lede: "Validation before decode. A stale clipboard fails loudly rather than becoming a corrupt <code>File</code> that GitHub accepts and renders as garbage." },
+    { t: "DISPATCH A REAL DROP",
+      rows: [["dragenter", "on <file-attachment>", "ok"], ["dragover", "establishes drop state", "ok"],
+             ["drop", "with the DataTransfer", "ok"], ["drop alone", "handler never armed", "bad"]],
+      lede: "Three events, not one. GitHub's handler arms itself on the enter/over pair — a bare <code>drop</code> lands on an element that was never told a drag was in progress." },
+    { t: "POLL FOR THE URL",
+      rows: [["30 attempts × 500ms", "15s ceiling", "ok"], ["user-attachments/assets/<uuid>", "matched in the body", "ok"],
+             ["returns", "{ url, imgTag }", "ok"], ["timeout", "{ error, body }", "bad"]],
+      lede: "The drop returns immediately; the upload does not. On timeout the <b>current body</b> comes back too, so you can see what GitHub actually inserted instead of guessing." },
+    { t: "THE IIFE TRAP",
+      rows: [["top-level await", "supported", "ok"], ["last expression `out`", "returned", "ok"],
+             ["(async () => {…})()", "serializes to {}", "bad"], ["recovery", "re-read the body", "ok"]],
+      lede: "<code>javascript_tool</code> returns the last expression but will <b>not await a Promise you hand back</b>. The snippet's bare trailing <code>out</code> exists precisely for this." },
+    { t: "SPEND IT, DON'T SAVE",
+      rows: [["gh pr edit --body-file", "URL is plain text", "ok"], ["clear body + input event", "first", "ok"],
+             ["window.onbeforeunload = null", "then navigate", "ok"], ["navigate first", "'Leave site?' dialog", "bad"]],
+      lede: "The wiki page is never saved and nothing is committed — the asset outlives the editor it came through. Then open the PR and <b>look at it</b>: a broken image means wrong repo scope." },
+  ];
+
+  const stage = $("#stage"), lede = $("#lede"), pos = $("#pos");
+  const render = (i) => {
+    const s = S[i];
+    stage.innerHTML =
+      `<div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--c4);margin-bottom:12px">${i + 1} · ${s.t}</div>` +
+      s.rows.map(([k, v, st]) => `
+        <div style="display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:13px;
+                    padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text)">${k}</span>
+          <span style="color:${st === "ok" ? "var(--good)" : "var(--danger)"};white-space:nowrap">${st === "ok" ? "✓" : "✗"} ${v}</span>
+        </div>`).join("");
+    lede.innerHTML = s.lede;
+    pos.textContent = `${i + 1} / ${S.length}`;
+  };
+
+  const st = stepper({ n: S.length, onStep: render, autoplayMs: 2600, hashKey: "drop" });
+  $("#next").onclick = () => st.next();
+  $("#prev").onclick = () => st.prev();
+  const play = $("#play");
+  let on = false;
+  play.onclick = () => { on = !on; on ? st.play() : st.pause(); play.textContent = on ? "❚❚ pause" : "▶ play"; };
+  for (const el of [$("#next"), $("#prev")])
+    el.addEventListener("click", () => { on = false; play.textContent = "▶ play"; });
+</script>
+</body>
+</html>
