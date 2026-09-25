@@ -1,0 +1,12 @@
+{
+  "name": "viz",
+  "version": "9.0.0",
+  "description": "Ad-hoc HTML visualizations for AI agents — CLI, MCP server and skill.",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "commander": "^15.0.0",
+    "puppeteer-core": "^25.2.1"
+  },
+  "gemId": "4d9a73950849",
+  "gemChromeProfile": "Profile 4"
+}

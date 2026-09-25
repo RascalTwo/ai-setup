@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  usage-history: lift Codex's rate-limit observations somewhere it cannot lose them.
+
+  Codex already writes what Claude Code throws away — every token_count event in a
+  session rollout carries a rate_limits block — so this is a scraper, not a
+  recorder. It exists because that storage is not guaranteed: `codex
+  migrate-rollouts --apply` moves sessions to a paginated thread store whose
+  sqlite catalog contains no rate-limit data at all.
+
+  HOURLY, AND A FULL RESCAN EACH TIME: the scan of ~/.codex/sessions takes ~0.3s
+  and merges by union, so incremental bookkeeping would be more code for no gain.
+  Hourly keeps the window between a new Codex session and its observations being
+  safely copied out small.
+
+  Install (the user opts in; install.ts does not load this automatically):
+      sed "s|/Users/YOUR-USER|$HOME|g" com.jmilliken.usage-history-codex.plist \
+        > ~/Library/LaunchAgents/com.jmilliken.usage-history-codex.plist
+      launchctl load -w ~/Library/LaunchAgents/com.jmilliken.usage-history-codex.plist
+-->
+<plist version="1.0">
+<!-- Paths are checked in as /Users/YOUR-USER/... — launchd does not expand $HOME,
+     and a real one would publish a username. Substitute before installing. -->
+<dict>
+    <key>Label</key>
+    <string>com.jmilliken.usage-history-codex</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/python3</string>
+        <string>/Users/YOUR-USER/.agents/ai-setup/tools/usage-history/codex-usage-scrape.py</string>
+    </array>
+
+    <key>StartInterval</key>
+    <integer>3600</integer>
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/YOUR-USER/.agents/state/usage-history/codex/scrape.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR-USER/.agents/state/usage-history/codex/scrape.err</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+    <key>LowPriorityIO</key>
+    <true/>
+    <key>Nice</key>
+    <integer>5</integer>
+</dict>
+</plist>

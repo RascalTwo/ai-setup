@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rascal's AI setup tour — hero</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --bg-2: #11141c;
+    --fg: #e6e8ee;
+    --fg-dim: #9aa1b1;
+    --fg-faint: #5b6378;
+    --mint: #84dcc6;
+    --amber: #f6bd60;
+    --blue: #70a1ff;
+    --violet: #b28dff;
+    --rose: #ff6b6b;
+    --line: #232838;
+    --code-bg: #0a0c11;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #05060a; }
+
+  .og-card {
+    width: 1200px; height: 630px;
+    overflow: hidden; position: relative;
+    background:
+      radial-gradient(1150px 620px at 6% -12%, rgba(132,220,198,0.10), transparent 58%),
+      radial-gradient(950px 560px at 108% 8%, rgba(246,189,96,0.08), transparent 60%),
+      var(--bg);
+    font-family: var(--sans); color: var(--fg);
+    display: flex; align-items: stretch;
+  }
+  .frame { position: absolute; inset: 22px; border: 1px solid rgba(35,40,56,0.7); border-radius: 18px; pointer-events: none; }
+  .og-card::after {
+    content: ""; position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.015), transparent 20%),
+      radial-gradient(1400px 800px at 50% 130%, rgba(0,0,0,0.5), transparent 60%);
+    pointer-events: none;
+  }
+
+  .left { width: 620px; padding: 64px 16px 64px 72px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 2; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--mono); font-size: 14px; letter-spacing: 0.08em;
+    color: var(--mint); background: rgba(132,220,198,0.10);
+    border: 1px solid rgba(132,220,198,0.22);
+    padding: 7px 14px; border-radius: 999px;
+    width: fit-content; margin-bottom: 30px; text-transform: uppercase;
+  }
+  .eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 10px var(--mint); }
+
+  .title { font-size: 92px; line-height: 0.92; font-weight: 800; letter-spacing: -0.045em; }
+  .title .hl { color: var(--amber); }
+
+  .essence { margin-top: 28px; font-size: 29px; line-height: 1.28; font-weight: 600; letter-spacing: -0.02em; max-width: 505px; }
+  .essence .hl { color: var(--mint); }
+
+  .sub { margin-top: 16px; font-size: 17px; line-height: 1.5; color: var(--fg-dim); max-width: 480px; }
+  .sub code { font-family: var(--mono); font-size: 0.88em; color: var(--fg); background: var(--code-bg); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line); }
+
+  .chips { display: flex; gap: 10px; margin-top: 30px; flex-wrap: wrap; }
+  .chip { font-family: var(--mono); font-size: 13.5px; color: var(--fg-dim); background: var(--bg-2); border: 1px solid var(--line); padding: 8px 13px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; }
+  .chip .tk { width: 6px; height: 6px; border-radius: 2px; background: var(--amber); box-shadow: 0 0 6px rgba(246,189,96,0.5); }
+
+  .right { flex: 1; display: flex; align-items: center; justify-content: center; padding: 56px 60px 56px 4px; position: relative; z-index: 2; }
+  .panel {
+    width: 420px;
+    background: linear-gradient(180deg, rgba(22,26,37,0.92), rgba(17,20,28,0.92));
+    border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px 18px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+  .panel-cap { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+  .panel-cap .t { font-family: var(--mono); font-size: 13px; color: var(--fg-dim); letter-spacing: 0.04em; text-transform: uppercase; }
+  .panel-cap .s { font-family: var(--mono); font-size: 12px; color: var(--fg-faint); }
+  svg.graph { width: 100%; display: block; }
+</style>
+</head>
+<body>
+  <div class="og-card">
+    <div class="frame"></div>
+
+    <div class="left">
+      <div class="eyebrow"><span class="dot"></span>AI setup &middot; onboarding tour</div>
+
+      <div class="title">One repo.<br><span class="hl">Two agents.</span></div>
+
+      <div class="essence">
+        The setup isn&rsquo;t a tool you configure. It&rsquo;s a repo you <span class="hl">reinstall</span>.
+      </div>
+
+      <div class="sub">
+        <code>bun install.ts</code> symlinks one rulebook, one skills catalog, and one reviewer team into both Claude Code and Codex &mdash; idempotent, never overwrites.
+      </div>
+
+      <div class="chips">
+        <span class="chip"><span class="tk"></span>AGENTS.md</span>
+        <span class="chip"><span class="tk"></span>private overlays</span>
+        <span class="chip"><span class="tk"></span>10 stops</span>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="panel">
+        <div class="panel-cap">
+          <span class="t">One install, both surfaces</span>
+          <span class="s">stops 1&ndash;5</span>
+        </div>
+
+        <svg class="graph" viewBox="0 0 376 358" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <style>
+              .lab    { font-family: ui-monospace,"SF Mono",Menlo,monospace; font-size: 12px; fill: #e6e8ee; dominant-baseline: middle; }
+              .path   { font-family: ui-monospace,"SF Mono",Menlo,monospace; font-size: 10px; fill: #9aa1b1; dominant-baseline: middle; }
+              .tiny   { font-family: ui-monospace,"SF Mono",Menlo,monospace; font-size: 9.5px; fill: #5b6378; dominant-baseline: middle; letter-spacing: 0.04em; }
+              .rail   { stroke: #232838; stroke-width: 2; fill: none; }
+            </style>
+            <marker id="arw" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+              <path d="M0,1 L9,5 L0,9 z" fill="#f6bd60"/>
+            </marker>
+            <marker id="arwb" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.6" markerHeight="4.6" orient="auto">
+              <path d="M0,1 L9,5 L0,9 z" fill="#70a1ff"/>
+            </marker>
+            <marker id="arwv" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4.6" markerHeight="4.6" orient="auto">
+              <path d="M0,1 L9,5 L0,9 z" fill="#b28dff"/>
+            </marker>
+          </defs>
+
+          <!-- SOURCE -->
+          <rect x="76" y="0" width="224" height="64" rx="11" fill="#0a0c11" stroke="#84dcc6" stroke-opacity="0.45"/>
+          <circle cx="94" cy="20" r="4" fill="#84dcc6"/>
+          <text class="lab" x="106" y="20" fill="#84dcc6">RascalTwo/ai-setup</text>
+          <text class="tiny" x="94" y="40">AGENTS.md &middot; skills/ &middot; subagents/</text>
+          <text class="tiny" x="94" y="53">settings/ &middot; external-skills.json</text>
+
+          <!-- source -> installer -->
+          <line class="rail" x1="188" y1="64" x2="188" y2="88" stroke="#f6bd60" stroke-opacity="0.5" stroke-dasharray="4 4" marker-end="url(#arw)"/>
+
+          <!-- INSTALLER -->
+          <rect x="106" y="94" width="164" height="34" rx="9" fill="#1a1710" stroke="#f6bd60" stroke-opacity="0.55"/>
+          <text class="lab" x="188" y="111" fill="#f6bd60" text-anchor="middle">bun install.ts</text>
+
+          <!-- fan out: one shared stem, two elbows -->
+          <line class="rail" x1="188" y1="128" x2="188" y2="150" stroke="#39405a"/>
+          <path class="rail" d="M188 150 Q188 158 178 158 L106 158 Q96 158 96 168 L96 176" stroke="#70a1ff" stroke-opacity="0.55" marker-end="url(#arwb)"/>
+          <path class="rail" d="M188 150 Q188 158 198 158 L270 158 Q280 158 280 168 L280 176" stroke="#b28dff" stroke-opacity="0.55" marker-end="url(#arwv)"/>
+
+          <!-- CLAUDE COLUMN -->
+          <rect x="6" y="182" width="176" height="118" rx="11" fill="#0a0c11" stroke="#232838"/>
+          <circle cx="24" cy="204" r="4.5" fill="#70a1ff"/>
+          <text class="lab" x="36" y="204" fill="#70a1ff">Claude Code</text>
+          <text class="path" x="22" y="232">~/.claude/CLAUDE.md</text>
+          <text class="path" x="22" y="254">~/.claude/skills/</text>
+          <text class="path" x="22" y="276">agents/*.md</text>
+
+          <!-- CODEX COLUMN -->
+          <rect x="194" y="182" width="176" height="118" rx="11" fill="#0a0c11" stroke="#232838"/>
+          <circle cx="212" cy="204" r="4.5" fill="#b28dff"/>
+          <text class="lab" x="224" y="204" fill="#b28dff">Codex</text>
+          <text class="path" x="210" y="232">~/.codex/AGENTS.md</text>
+          <text class="path" x="210" y="254">~/.codex/skills/</text>
+          <text class="path" x="210" y="276">agents/*.toml</text>
+
+          <!-- SHARED FOOTER -->
+          <rect x="6" y="314" width="364" height="40" rx="10" fill="#0d1512" stroke="#84dcc6" stroke-opacity="0.3"/>
+          <circle cx="26" cy="334" r="4" fill="#84dcc6"/>
+          <text class="path" x="40" y="334" fill="#84dcc6">same bytes &mdash; basic-memory + Ollama sit under both</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

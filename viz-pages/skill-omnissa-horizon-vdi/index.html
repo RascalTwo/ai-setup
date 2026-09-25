@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>omnissa-horizon-vdi — drive the VDI on a display that isn't yours</title>
+<meta name="viz:uid" content="v-087073ad4e11">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="omnissa-horizon-vdi">
+<meta name="viz:description" content="Operate a remote Windows desktop through Omnissa Horizon Client on macOS, parked on a DeskPad virtual display — so the agent works while the Mac screen stays the user's.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:page-kind" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(840px 500px at 95% -10%, color-mix(in srgb, var(--c4) 16%, transparent), transparent 60%),
+      radial-gradient(780px 470px at -6% 112%, color-mix(in srgb, var(--good) 11%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 500px; gap:36px; align-items:center; padding:46px 58px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--c4); margin-bottom:16px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--c4);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--c4) 22%, transparent); }
+  h1.hook{ font-size:48px; line-height:1.05; margin:0 0 16px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--good); }
+  p.sub{ font-size:17.5px; line-height:1.45; color:var(--muted); margin:0 0 15px; max-width:460px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:14px; line-height:1.5; color:var(--muted); margin:0 0 16px; max-width:460px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .not i{ color:var(--danger); font-style:normal; }
+  .trigger{ display:inline-flex; align-items:center; gap:9px; font-family:var(--mono); font-size:13.5px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--good);
+            border-radius:9px; padding:9px 14px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the proof slot: NESTING is the argument. Each box is physically inside the one
+     above it, and the colour of its left rail says whether input lands there. */
+  .stack{ background:color-mix(in srgb, var(--panel) 80%, transparent); border:1px solid var(--border);
+          border-radius:14px; padding:15px 16px 14px; font-family:var(--mono); }
+  .stack .cap{ display:flex; justify-content:space-between; font-size:11px; letter-spacing:.13em;
+               color:var(--c4); margin-bottom:12px; }
+  .stack .cap span:last-child{ color:var(--faint); }
+  .lyr{ border:1px solid var(--border); border-left-width:3px; border-radius:9px;
+        padding:8px 11px; margin-bottom:7px; }
+  .lyr .h{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:12.5px; color:var(--text); }
+  .lyr .h .tag{ font-size:10.5px; letter-spacing:.09em; white-space:nowrap; }
+  .lyr .n{ font-size:11px; line-height:1.45; color:var(--muted); margin-top:4px; }
+  .lyr.mac{ border-left-color:var(--faint); }
+  .lyr.mac .tag{ color:var(--faint); }
+  .lyr.dp{ border-left-color:var(--c4); background:color-mix(in srgb, var(--c4) 6%, transparent); }
+  .lyr.dp .tag{ color:var(--c4); }
+  .lyr.hz{ border-left-color:var(--good); background:color-mix(in srgb, var(--good) 9%, transparent);
+           margin-left:15px; }
+  .lyr.hz .tag{ color:var(--good); font-weight:700; }
+  .lyr.win{ border-left-color:var(--good); margin-left:30px; }
+  .lyr.win .tag{ color:var(--good); }
+  .lyr.bad{ border-left-color:var(--danger); background:color-mix(in srgb, var(--danger) 7%, transparent);
+            margin-left:15px; }
+  .lyr.bad .tag{ color:var(--danger); font-weight:700; }
+  .stack .pfoot{ margin-top:10px; padding-top:10px; border-top:1px solid var(--border);
+                 font-size:11px; letter-spacing:.09em; color:var(--faint); line-height:1.5; }
+  .stack .pfoot b{ color:var(--good); }
+
+  /* ── the dive ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--c4);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul, .dive ol{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive code{ font-family:var(--mono); font-size:.9em; color:var(--c4); }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .callout.stop{ border-left-color:var(--danger); background:color-mix(in srgb, var(--danger) 8%, transparent); }
+  .callout.stop b{ color:var(--danger); }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--c4); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="omnissa-horizon-vdi" data-viz-id="poster-card" data-label="omnissa-horizon-vdi poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · OMNISSA-HORIZON-VDI</div>
+      <h1 class="hook">Drive the VDI<br>on a display<br><em>that isn't yours.</em></h1>
+      <p class="sub">A remote Windows desktop, operated through Omnissa Horizon Client — parked on a <b>DeskPad virtual display</b>, so the agent clicks through a Windows app while the Mac screen stays <b>the user's</b>.</p>
+      <p class="not">Horizon's accessibility tree exposes <i>only the Mac wrapper</i>.<br>So: click, screenshot, re-derive coordinates. Every batch.</p>
+      <div class="trigger"><span>probe first</span>&nbsp;sky.click({ app: 'Omnissa Horizon Client' })</div>
+    </div>
+
+    <div class="stack" data-viz-id="surface-stack" data-label="four nested surfaces; the left rail says whether input lands there">
+      <div class="cap"><span>WHERE THE CLICK HAS TO GO</span><span>NESTING = CONTAINMENT</span></div>
+
+      <div class="lyr mac">
+        <div class="h"><span>Mac built-in display</span><span class="tag">UNTOUCHED</span></div>
+        <div class="n">The user keeps working here. Taking it over is the thing this skill exists to avoid.</div>
+      </div>
+
+      <div class="lyr dp">
+        <div class="h"><span>DeskPad Display <span style="color:var(--faint)">— virtual</span></span><span class="tag">THE PARKING SPOT</span></div>
+        <div class="n">A real display as far as macOS is concerned. Confirm with <span style="color:var(--text)">system_profiler SPDisplaysDataType</span>.</div>
+      </div>
+
+      <div class="lyr hz">
+        <div class="h"><span>Omnissa Horizon Client <span style="color:var(--faint)">— windowed</span></span><span class="tag">✓ TARGET THIS</span></div>
+        <div class="n">Windowed, not fullscreen and not <span style="color:var(--text)">Window &gt; Fill</span> — both were less reliable for input after a focus change.</div>
+      </div>
+
+      <div class="lyr win">
+        <div class="h"><span>remote Windows desktop</span><span class="tag">✓ CLICK WELL INSIDE</span></div>
+        <div class="n">First click lands deep in the content, away from titlebar and toolbar. <i>Then</i> the second click takes a real control.</div>
+      </div>
+
+      <div class="lyr bad">
+        <div class="h"><span>the DeskPad mirror window</span><span class="tag">✗ NEVER</span></div>
+        <div class="n">It shows the virtual display, and input did <b style="color:var(--danger)">not</b> reliably pass through to the remote desktop.</div>
+      </div>
+
+      <div class="pfoot">THIS WORKFLOW IS EMPIRICAL. ROUTING DEPENDS ON FOCUS,<br>FULLSCREEN STATE, AND WHICH SURFACE TOOK THE FIRST CLICK.<br><b>PROBE, THEN WORK.</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">The Mac screen is the user's</h2>
+  <p>Driving a GUI with computer-use normally means <b>taking the screen</b>. Windows get raised, focus is stolen, the pointer moves under your hands — fine for a thirty-second task, unusable for an agent working a ticket queue or a mailbox inside a corporate VDI for twenty minutes. The user is sitting right there, wanting to keep typing.</p>
+  <p>And a VDI is the least forgiving place to do it. Horizon Client is a macOS window containing a <em>picture</em> of a Windows desktop, so the accessibility tree stops at the wrapper: there are no buttons to query, no labels to match, no element tree to walk. Everything inside is pixels, and every click is a coordinate.</p>
+  <p class="m">DeskPad is the move that makes both problems tractable at once. It presents a <b>virtual display</b> that macOS treats as real, so Horizon can be parked somewhere that isn't the user's screen — and once it is parked there, the agent can click into it all day without ever touching what the human is looking at.</p>
+
+  <h2 data-beat="using">Preferred display setup</h2>
+  <p>The skill carries <code>disable-model-invocation: true</code>, so it doesn't fire on its own. Ask for it: "operate the VDI", "check my mail on the remote desktop", "open Horizon and find the ticket" — anything naming a VDI, a remote or virtual desktop, Omnissa or Horizon, or an app that lives inside one.</p>
+  <p>Standing it up is four moves, in this order:</p>
+  <ol>
+    <li>Launch <b>DeskPad</b> if it isn't running.</li>
+    <li>Confirm macOS actually sees it — <code>system_profiler SPDisplaysDataType | sed -n '1,260p'</code> should list <code>DeskPad Display</code>.</li>
+    <li>Put Horizon in <b>windowed</b> mode if it's fullscreen.</li>
+    <li><code>Window &gt; Move to DeskPad Display</code>, and leave it windowed there.</li>
+  </ol>
+  <p class="m">Step 4's menu item is <b>only enabled when Horizon is in a normal windowed state</b>. Greyed out means exit fullscreen or restore the window first — the menu isn't broken, the precondition is unmet.</p>
+  <div class="callout"><b>Windowed, not fullscreen, and not <code>Window &gt; Fill</code>.</b> Both were measurably less reliable for input after a focus change. This is an empirical finding rather than a preference, and it is the single setting most likely to be "improved" back into a broken state.</div>
+
+  <h2 data-beat="limits">What it will not do</h2>
+  <p><b>Reading the VDI is allowed when the user asks. Acting in it is not, by default.</b> No sending messages, joining meetings, submitting forms, changing tickets, deleting data, or transmitting anything sensitive — unless the user explicitly asks <em>and</em> the computer-use confirmation policy allows that action. Two gates, not one.</p>
+  <div class="callout stop"><b>Stop and ask on any login, MFA, password or permission prompt.</b> Those require a human. The skill does not attempt them, work around them, or wait them out.</div>
+  <ul>
+    <li><b>It cannot read the Windows UI structurally.</b> Horizon's accessibility tree exposes the Mac wrapper, not the app inside, so there is no element to assert on — only pixels, and only from a fresh screenshot.</li>
+    <li><b>It won't trust a stale coordinate.</b> Every batch re-derives from the current screenshot, because the Horizon window can move or resize between actions.</li>
+    <li><b>It avoids global keyboard shortcuts</b>, <code>Ctrl+Esc</code> especially — it sometimes fails after a focus change even when concrete clicks still work. Visible controls beat shortcuts every time here.</li>
+    <li><b>It won't leave litter on someone's desktop.</b> Probes are task-shaped by design; an arbitrary typed probe string is a last resort and gets cleared immediately.</li>
+    <li><b>It won't quietly mark your mail read.</b> Opening a conversation to check unread state <em>changes</em> that state, so the evidence is captured from the app's own unread filter or counter first.</li>
+    <li><b>macOS only.</b> DeskPad, <code>system_profiler</code> and the Horizon menu structure are all Mac-specific.</li>
+  </ul>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>The skill</td><td><code>skills/omnissa-horizon-vdi/SKILL.md</code> — prose, no scripts. The architecture is the order of operations and the list of things never to do, executed by an agent through a GUI runtime.</td></tr>
+    <tr><td>Integrates</td><td><b>Omnissa Horizon Client</b> for remote Windows desktop control, and <b>DeskPad</b> as the virtual display. Both are applications on the Mac, driven as applications — there is no API, no protocol client, no SDK anywhere in this.</td></tr>
+    <tr><td>Requires</td><td><code>Omnissa Horizon Client</code>, <code>DeskPad</code>, and <code>computer-use</code>. All GUI actions go through <code>node_repl</code> with the bundled computer-use runtime.</td></tr>
+    <tr><td>Bootstrap</td><td>Deliberately <b>not written down here</b>. Follow the <code>computer-use</code> skill for current <code>sky</code> bootstrap instructions — a stale plugin path copied into this file is a landmine, so this skill names the owner instead of duplicating the value.</td></tr>
+    <tr><td>Calls</td><td><a href="../skill-read-image-locally/">read-image-locally</a> first for structured screenshot extraction, falling back to a native image read. ImageMagick (<code>magick</code>) for cropping before that fallback.</td></tr>
+    <tr><td>Its state</td><td><b>None.</b> The manifest says <code>state: false</code> and means it literally: no session file, no saved coordinates, no window-geometry cache, no run log, nothing under <code>~/.agents/</code>. It keeps nothing between runs — which is not an omission but the same rule as "re-derive coordinates from the current screenshot", applied at the scale of a whole session.</td></tr>
+    <tr><td>What persists</td><td>Whatever the <b>remote Windows desktop</b> already persisted, which belongs to the user and their employer, and screenshots in whatever temp path you crop to. The skill owns neither.</td></tr>
+    <tr><td>Safe to delete</td><td>Nothing local to delete. Quitting DeskPad and Horizon returns the Mac to exactly where it started.</td></tr>
+    <tr><td>Where lessons go</td><td><b>Into this skill, not into memory.</b> A refined probe or an operating lesson is executable guidance and belongs in <code>SKILL.md</code>. If something genuinely has no better home and goes to Basic Memory, it gets sanitized first — no customer names, message contents, ticket details, meeting titles, people or internal URLs — and it is never written in both places.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">The known good state, and the probe that proves it</h2>
+  <p class="m">One task, from a cold Mac to a verified click inside Windows — and the four ways input stops landing.</p>
+
+  <div class="fig" data-viz-id="vdi-figure" data-label="stepper: from a cold Mac to a verified click inside the remote Windows desktop">
+    <div class="stage" id="stage"></div>
+    <p class="lede" id="lede"></p>
+    <div class="ctrl">
+      <button id="prev" aria-label="previous step">‹ back</button>
+      <button id="play">▶ play</button>
+      <button id="next" aria-label="next step">next ›</button>
+      <span class="pos" id="pos"></span>
+      <span class="hint">← → arrow keys</span>
+    </div>
+  </div>
+
+  <h3>Target Horizon, never the mirror</h3>
+  <p>There are two windows showing the same thing and only one of them works. DeskPad's mirror window displays the virtual display faithfully — and input clicked into it did <b>not</b> reliably pass through to the remote desktop. Every <code>sky</code> call names the client directly, by app name:</p>
+  <pre>await sky.click({ app: 'Omnissa Horizon Client', x: 760, y: 430 });</pre>
+  <p class="m">App-name targeting is preferred over the macOS app path, which is the fallback for when name targeting fails. Naming the app on <em>every</em> call, rather than setting a target once, is what keeps a focus change from silently redirecting a click at the wrong surface.</p>
+
+  <h3>Two clicks, because the first one is not for you</h3>
+  <p>The known good state has a specific shape and the click order is part of it: <b>the first click lands well inside the remote Windows content</b> — away from the macOS titlebar and away from Horizon's own toolbar — and only <em>then</em> does a second click take a concrete Windows control. The first click is buying input capture; the second is doing the work.</p>
+  <p>The probe is the same two clicks with a verification bolted on, run before real work and again after the user alt-tabs or changes display settings:</p>
+  <pre>await sky.get_app_state({ app: 'Finder', disableDiff: true });
+await new Promise(r =&gt; setTimeout(r, 500));
+await sky.click({ app: 'Omnissa Horizon Client', x: 760, y: 430 });   <span class="c">// into the content</span>
+await new Promise(r =&gt; setTimeout(r, 500));
+await sky.click({ app: 'Omnissa Horizon Client', x: 450, y: 750 });   <span class="c">// a real control</span>
+await sky.press_key({ app: 'Omnissa Horizon Client', key: 'Escape' });</pre>
+  <p class="m">Those coordinates are <b>an example, not a constant</b> — they depend on where the Horizon window currently is, and the skill says so explicitly: use the latest screenshot, never a stale number. The 500 ms pauses are there because focus takes real time to settle; without them the second click lands before the first has taken effect.</p>
+
+  <h3>The probe is quiet on purpose</h3>
+  <p>This is somebody's work machine, so the probe is chosen to leave nothing behind, in this preference order: click the <b>Windows Start button</b>, confirm Start opens, press <code>Escape</code>; or click a navigation control that was already part of the task and confirm the expected pane appears; or, if you were about to launch an app anyway, click the taskbar Search box and type <b>only the real app name you were going to type</b>.</p>
+  <p class="m">An arbitrary typed probe string is the last resort, and it gets cleared immediately. The design goal is that a colleague looking over the user's shoulder afterwards finds no evidence a robot was there — no stray "test123" in a search box, no half-composed message.</p>
+
+  <h3>Click, screenshot, re-derive. Every batch.</h3>
+  <p>Because the accessibility tree exposes only the Mac wrapper, there is nothing to query about the Windows app — so the loop is deliberately short and deliberately slow: <b>one small batch of click/type, then a screenshot, then re-derive the coordinates from that screenshot</b>. Never a long unverified sequence, because there is no error to catch: a click that lands on nothing succeeds exactly as loudly as one that lands on a button.</p>
+  <p>Two standing preferences fall out of the same constraint. <b>Visible controls over global shortcuts</b> — <code>Ctrl+Esc</code> sometimes fails after a focus change even when concrete clicks still work. And <b>click into a known control, then type</b>, rather than typing and hoping focus was where you left it. For launching an app inside Windows: click the taskbar Search box, type the name, and press <code>Return</code> only once the result is visible or strongly implied.</p>
+
+  <h3>Reading the screen without spending vision tokens</h3>
+  <p>Screenshots go to <a href="../skill-read-image-locally/">read-image-locally</a> first, with a <b>specific</b> extraction prompt — exact fields, titles, counts, table rows, error text — and cropped first when the target region is known. Native image reading is the documented fallback, for three named cases: local vision returns nothing but the screenshot visibly contains small or dense UI text; the task needs layout judgement; or calendar cards, dense tables and message lists are too small or clipped to resolve.</p>
+  <pre>magick '&lt;screenshot&gt;' -crop WxH+X+Y /tmp/vdi-crop.png</pre>
+  <div class="callout"><b>Prefer an app's own filter over a badge.</b> When checking read/unread state, use the chat client's <code>Unread</code> view or the mail client's unread folder — not a visual interpretation of a badge. And capture that evidence <em>before</em> opening anything, because opening a conversation may mark it read. You can destroy the thing you were sent to measure.</div>
+
+  <h3>When input stops landing</h3>
+  <p>It will. The recovery ladder is ordered, and the point of the order is that each rung is cheaper than the next:</p>
+  <ol>
+    <li>Re-query Horizon state.</li>
+    <li>Click inside the remote Windows content.</li>
+    <li>Run the quiet Start-menu probe, or click a task-relevant visible control.</li>
+    <li>If text input specifically must be verified, type only task-relevant text into the target control.</li>
+    <li>Still failing — restore the window with <code>Window &gt; Move &amp; Resize &gt; Return to Previous Size</code>.</li>
+    <li>And avoid true fullscreen and <code>Fill</code> while using DeskPad unless a fresh probe passes.</li>
+  </ol>
+  <p class="m">One specific culprit is worth recognising on sight: <b>the Windows snap-layout popup</b>. It appears near the top-right maximize button when the pointer rests there, and it <em>intercepts input</em> — clicks that should reach the app land on the popup instead. The fix is the same first move as everything else: click well inside the content area, then retry the concrete control.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+<script type="module">
+  import { stepper, $ } from "/_kit/viz.js";
+
+  const S = [
+    { t: "STAND UP THE DISPLAY",
+      rows: [["DeskPad running", "launched", "ok"], ["system_profiler SPDisplaysDataType", "DeskPad Display listed", "ok"],
+             ["Horizon fullscreen", "exit it first", "bad"], ["Window > Move to DeskPad Display", "enabled only when windowed", "ok"]],
+      lede: "The menu item is greyed out in fullscreen — that is the precondition talking, not a broken menu. Leave Horizon <b>windowed</b> on the virtual display." },
+    { t: "PICK THE RIGHT SURFACE",
+      rows: [["app: 'Omnissa Horizon Client'", "on every call", "ok"], ["the macOS app path", "fallback only", "ok"],
+             ["the DeskPad mirror window", "input doesn't pass through", "bad"], ["Window > Fill / fullscreen", "unreliable after focus change", "bad"]],
+      lede: "Two windows show the same picture and only one accepts input. Naming the app on <em>every</em> call is what stops a focus change from silently redirecting a click." },
+    { t: "CLICK TWICE — THE FIRST ISN'T FOR YOU",
+      rows: [["click 1: deep in the content", "buys input capture", "ok"], ["away from titlebar + toolbar", "required", "ok"],
+             ["500ms between", "focus needs to settle", "ok"], ["click 2: a concrete control", "does the work", "ok"]],
+      lede: "The first click is not part of the task. It is the price of input capture, and skipping it is the most common reason a perfectly correct second click does nothing at all." },
+    { t: "PROBE, QUIETLY",
+      rows: [["Start button → Escape", "preferred probe", "ok"], ["a control already in the task", "next best", "ok"],
+             ["the real app name you'd type anyway", "acceptable", "ok"], ["an arbitrary test string", "last resort, clear it", "bad"]],
+      lede: "This is somebody's work machine. The probe is chosen so that afterwards there is <b>no evidence a robot was there</b> — no stray text, no half-composed anything." },
+    { t: "THEN WORK — SMALL BATCHES",
+      rows: [["accessibility tree", "Mac wrapper only", "bad"], ["click/type, then screenshot", "every batch", "ok"],
+             ["coordinates", "re-derived, never stale", "ok"], ["Ctrl+Esc after a focus change", "sometimes silently fails", "bad"]],
+      lede: "There is no element to assert on, so there is no error to catch: a click that lands on nothing succeeds exactly as loudly as one that lands on a button. Screenshots are the only oracle." },
+    { t: "READ THE SCREEN",
+      rows: [["read-image-locally, specific prompt", "~0 vision tokens", "ok"], ["magick -crop WxH+X+Y", "narrow it first", "ok"],
+             ["dense/small UI text", "fall back to native", "bad"], ["layout judgement", "native", "bad"]],
+      lede: "And prefer an app's own unread filter over reading a badge — opening a conversation to check may <b>mark it read</b>, destroying the thing you were sent to measure." },
+    { t: "WHEN IT STOPS LANDING",
+      rows: [["snap-layout popup", "intercepts input", "bad"], ["re-query, click content, probe", "cheapest rungs", "ok"],
+             ["Return to Previous Size", "if still failing", "ok"], ["login / MFA / password prompt", "STOP, ask the human", "bad"]],
+      lede: "The ladder is ordered by cost. And one rung is not a rung: a credential prompt ends the automation and hands back to the person, every time." },
+  ];
+
+  const stage = $("#stage"), lede = $("#lede"), pos = $("#pos");
+  const render = (i) => {
+    const s = S[i];
+    stage.innerHTML =
+      `<div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--c4);margin-bottom:12px">${i + 1} · ${s.t}</div>` +
+      s.rows.map(([k, v, st]) => `
+        <div style="display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:13px;
+                    padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text)">${k}</span>
+          <span style="color:${st === "ok" ? "var(--good)" : "var(--danger)"};white-space:nowrap">${st === "ok" ? "✓" : "✗"} ${v}</span>
+        </div>`).join("");
+    lede.innerHTML = s.lede;
+    pos.textContent = `${i + 1} / ${S.length}`;
+  };
+
+  const st = stepper({ n: S.length, onStep: render, autoplayMs: 2600, hashKey: "vdi" });
+  $("#next").onclick = () => st.next();
+  $("#prev").onclick = () => st.prev();
+  const play = $("#play");
+  let on = false;
+  play.onclick = () => { on = !on; on ? st.play() : st.pause(); play.textContent = on ? "❚❚ pause" : "▶ play"; };
+  for (const el of [$("#next"), $("#prev")])
+    el.addEventListener("click", () => { on = false; play.textContent = "▶ play"; });
+</script>
+</body>
+</html>

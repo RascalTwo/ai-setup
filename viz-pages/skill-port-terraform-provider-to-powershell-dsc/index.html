@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>port-terraform-provider-to-powershell-dsc — the IaC was already on the box</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:uid" content="v-317128a8851d">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="port-terraform-provider-to-powershell-dsc">
+<meta name="viz:description" content="Ports a Terraform provider's whole resource surface into PowerShell DSC class resources — Get/Test/Set written by hand, no state file, proven by live drift-and-converge cycles.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:page-kind" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c5) 15%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c4) 14%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 472px; gap:36px; align-items:center; padding:54px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:13px;
+            letter-spacing:.13em; color:var(--c5); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--c5);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--c5) 22%, transparent); }
+  h1.hook{ font-size:53px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c5); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 18px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:14.5px; line-height:1.5; color:var(--muted); margin:0 0 18px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--c5);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* PROOF SLOT — the drift-and-converge oracle loop. With no state file there is
+     no plan to read, so the only proof a resource works is Test()'s boolean
+     flipping the right way against a live service. The booleans ARE the argument. */
+  .cap{ font-family:var(--mono); font-size:11.5px; letter-spacing:.1em; color:var(--muted);
+        margin-bottom:10px; white-space:nowrap; }
+  .cap b{ color:var(--c5); }
+  .cyc{ position:relative; display:flex; flex-direction:column; gap:5px; }
+  .cyc::before{ content:""; position:absolute; left:7px; top:14px; bottom:14px; width:2px;
+                background:linear-gradient(180deg, color-mix(in srgb, var(--c5) 55%, var(--border)),
+                                                  color-mix(in srgb, var(--c4) 50%, var(--border))); }
+  .beat{ display:grid; grid-template-columns:16px 1fr; gap:12px; align-items:center; }
+  .beat .node{ width:8px; height:8px; border-radius:50%; background:var(--faint); margin:0 auto; }
+  .row{ display:flex; align-items:baseline; gap:9px; background:color-mix(in srgb, var(--panel) 70%, transparent);
+        border:1px solid var(--border); border-radius:9px; padding:7px 11px; }
+  .row .k{ font-family:var(--mono); font-size:12px; letter-spacing:.06em; color:var(--text); white-space:nowrap; }
+  .row .d{ font-size:12px; color:var(--muted); line-height:1.3; }
+  .row .b{ margin-left:auto; font-family:var(--mono); font-size:11px; letter-spacing:.06em;
+           padding:2px 8px; border-radius:99px; white-space:nowrap; }
+  .beat.act .node{ background:var(--c4); }
+  .beat.act .row .k{ color:var(--c4); }
+  .beat.drift .node{ background:var(--warn); box-shadow:0 0 0 4px color-mix(in srgb, var(--warn) 22%, transparent); }
+  .beat.drift .row{ border-color:color-mix(in srgb, var(--warn) 50%, transparent); }
+  .beat.drift .row .k{ color:var(--warn); }
+  .beat.t .node{ background:var(--good); }
+  .beat.t .row .b{ color:var(--good); background:color-mix(in srgb, var(--good) 13%, transparent);
+                   border:1px solid color-mix(in srgb, var(--good) 42%, transparent); }
+  .beat.f .node{ background:var(--danger); box-shadow:0 0 0 4px color-mix(in srgb, var(--danger) 22%, transparent); }
+  .beat.f .row .b{ color:var(--danger); background:color-mix(in srgb, var(--danger) 13%, transparent);
+                   border:1px solid color-mix(in srgb, var(--danger) 42%, transparent); }
+  .pfoot{ font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; color:var(--faint); margin-top:10px; }
+  .pfoot b{ color:var(--c5); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  /* ── poster-standard dive additions: h3 under a beat, the where table, the figure ── */
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); border-bottom:none; color:var(--text);
+                  padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--c5); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="port-terraform-provider-to-powershell-dsc" data-viz-id="poster-card" data-label="port-terraform-provider-to-powershell-dsc poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · PORT-TERRAFORM-PROVIDER-TO-POWERSHELL-DSC</div>
+      <h1 class="hook">They banned Terraform.<br><em>The IaC was already<br>on the box.</em></h1>
+      <p class="sub">Windows ships PowerShell + DSC <b>in the box</b> — so a shop that bans Terraform and Ansible can still do IaC with <b>zero install</b>. This ports a mature provider's whole resource surface into <b>one <code>[DscResource()]</code> class per resource</b>: three methods, <b>Get / Test / Set</b>, and the diff logic is yours to write.</p>
+      <p class="not">There is no state file.<br>So: <b>no plan, no prune-on-removal, no dependency graph.</b></p>
+      <div class="trigger"><span>say</span>&nbsp;"port the provider to DSC"</div>
+    </div>
+    <div>
+      <div class="cap">PER RESOURCE, LIVE SERVICE &nbsp;·&nbsp; <b>TEST()</b> IS THE ORACLE</div>
+      <div class="cyc">
+        <div class="beat act">
+          <span class="node"></span>
+          <div class="row"><span class="k">SCAFFOLD</span><span class="d">parents, in its own throwaway realm</span></div>
+        </div>
+        <div class="beat act">
+          <span class="node"></span>
+          <div class="row"><span class="k">CREATE</span><span class="d">Set()</span></div>
+        </div>
+        <div class="beat t">
+          <span class="node"></span>
+          <div class="row"><span class="k">TEST</span><span class="d">reality matches desired</span><span class="b">$true</span></div>
+        </div>
+        <div class="beat drift">
+          <span class="node"></span>
+          <div class="row"><span class="k">DRIFT</span><span class="d">change it out-of-band, behind DSC's back</span></div>
+        </div>
+        <div class="beat f">
+          <span class="node"></span>
+          <div class="row"><span class="k">TEST</span><span class="d">it has to notice</span><span class="b">$false</span></div>
+        </div>
+        <div class="beat act">
+          <span class="node"></span>
+          <div class="row"><span class="k">CONVERGE</span><span class="d">Set() again</span></div>
+        </div>
+        <div class="beat t">
+          <span class="node"></span>
+          <div class="row"><span class="k">TEST</span><span class="d">back in line</span><span class="b">$true</span></div>
+        </div>
+        <div class="beat act">
+          <span class="node"></span>
+          <div class="row"><span class="k">ABSENT</span><span class="d">delete it</span></div>
+        </div>
+        <div class="beat t">
+          <span class="node"></span>
+          <div class="row"><span class="k">TEST</span><span class="d">desired state is "gone"</span><span class="b">$true</span></div>
+        </div>
+      </div>
+      <div class="pfoot">THE ORCHESTRATOR RUNS THIS. <b>"I TESTED IT" IS NOT A PASS.</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">The constraint that makes this lane exist</h2>
+  <p>Two sibling skills point the same Terraform provider at Ansible and at a Kubernetes operator. This one exists for a narrower reason: <b>a hardened Windows shop that bans Terraform and Ansible but allows PowerShell</b>. Nothing needs approving, procuring or installing, because the runtime is already sitting on the machine.</p>
+  <p class="m">Battle-tested on <code>terraform-provider-keycloak</code> v5.8.0 → a <b>101/101 resource surface</b> of class-based DSC resources, proven live against a local Keycloak.</p>
+
+  <h2 data-beat="using">Two ways to run the same classes</h2>
+  <p class="m">It is explicitly invoked — the manifest carries <code>disable-model-invocation: true</code>, so "port the provider to DSC", "DSC resources for X" or "no MOF / no LCM / no install" starts it and nothing else does. What it builds then runs two ways:</p>
+  <ul>
+    <li><b>Windows, in-box:</b> <code>Invoke-DscResource -Name X -ModuleName M -Method Set -Property @{…}</code> — <b>no MOF compile, no LCM service, no install.</b></li>
+    <li><b>Portable, any pwsh 7 (including Linux CI):</b> call the class's <code>Get/Test/Set</code> directly through a tiny factory function — <b>no DSC engine at all</b>. Same classes; the <code>[DscResource()]</code> tag is kept for the Windows path, and on that path you could drop the attributes entirely.</li>
+  </ul>
+  <p class="m">The classic <code>Configuration{}</code> + MOF + <code>Start-DscConfiguration</code> + LCM path still exists, and the skill says to <b>avoid it</b>: it runs as SYSTEM, and it's legacy.</p>
+
+  <h2 data-beat="limits">What you permanently give up</h2>
+  <p>DSC has <b>no state file</b>. That isn't a gap to close later — it's the deal. No plan. No prune-on-removal. No automatic dependency graph. The bundled runner reads a declarative <code>.psd1</code> source-of-truth and loops <b>Test-then-Set in a dependency order you declared yourself</b>. The skill's instruction is to <b>say so on the scorecard</b> rather than let it be discovered.</p>
+  <ul>
+    <li><b>Terraform-only mechanics don't port at all.</b> <code>id</code>, <code>internal_id</code>, <code>*deletion_protection</code>, <code>import</code>, write-only <code>*_wo</code> attributes and regenerate-triggers are excluded from the parity denominator, and each non-port gets documented rather than faked.</li>
+    <li><b>The field audit only sees flat attributes.</b> It reads <code>block.attributes</code> from the schema dump — a resource's nested <code>block_types</code> (<code>smtp_server</code>, <code>otp_policy</code>, <code>authorization</code>, <code>federated_identity</code>) never enter the denominator, so a 100% field-parity print is 100% <em>of the flat surface</em>.</li>
+    <li><b>Write-only secrets are never read back</b>, so they stay out of the drift compare by construction. A secret-only change is undetectable, exactly as it is for the provider.</li>
+  </ul>
+
+  <h2 data-beat="limits">The ceiling is written down too</h2>
+  <p>Resources that genuinely need absent infrastructure — real LDAP, SMTP, an external IdP, enterprise features — are marked <b>blocked, with the captured error attached</b>, and that ceiling goes in <code>PARITY.md</code> in bold. The skill is pointed about this cutting both ways: "blocked — needs infra" is usually wrong, and has to be verified against a live error before it is believed.</p>
+  <p class="m">The two shipped documents are usually the point: <code>PARITY.md</code> (the precise claim, how it was proven — surface, field audit, behavioral — known deltas, the state/plan/prune losses) and <code>EFFORT.md</code> (timeline, LOC, agent and token counts, honest caveats — an AI swarm is not human effort, porting a mature provider is easy mode, and <b>ownership plus CI is the recurring cost</b>).</p>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>Integrates</td><td><b>A Terraform provider's schema and Go source, read as the spec</b> — both, and the difference between them is the skill's second-biggest lesson — and <b>PowerShell DSC</b>, as generated <code>[DscResource()]</code> class resources.</td></tr>
+    <tr><td>Requires</td><td><code>terraform</code> (for <code>terraform providers schema -json</code>, which feeds the audit gate), <code>pwsh</code>, and <code>docker</code> — the test target is always a local container the repo's own script starts and bootstraps.</td></tr>
+    <tr><td>What ships with it</td><td>Four references and one executable gate: <code>references/enforcement.md</code> (<b>read first</b> — why the orchestrator runs every gate), <code>references/framework.md</code> (the ~370-line shared layer), <code>references/testing.md</code>, <code>references/gotchas.md</code>, and <code>scripts/Field-Parity-Audit.ps1</code>.</td></tr>
+    <tr><td>Where the output goes</td><td>Into <b>a repo you name</b>: one <code>.psm1</code>, one <code>.psd1</code> manifest, <code>Invoke-…Dsc.ps1</code> (the runner), per-family <code>Load-Family.ps1</code> helpers, <code>.schema-dump/schema.json</code>, <code>PARITY.md</code>, <code>EFFORT.md</code>. Nothing is installed into your environment — which is the point of the target platform.</td></tr>
+    <tr><td>Its state</td><td><b>None.</b> It <b>keeps nothing between runs</b> — no ledger, no cached provider checkout, nothing under <code>~/.agents/state/</code>. A partial port resumes by reading the module in front of it. The credentials the live tests use live in a gitignored env file the repo's own container script writes.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">Eight phases, two gates, one file</h2>
+  <p class="m">From a provider checkout to a DSC module with a parity claim somebody ran rather than reported.</p>
+
+  <div class="fig" data-viz-id="dsc-figure" data-label="stepper: recon to deliverables, with the two executed gates">
+    <div class="stage" id="stage"></div>
+    <p class="lede" id="lede"></p>
+    <div class="ctrl">
+      <button id="prev" aria-label="previous step">‹ back</button>
+      <button id="play">▶ play</button>
+      <button id="next" aria-label="next step">next ›</button>
+      <span class="pos" id="pos"></span>
+      <span class="hint">← → arrow keys</span>
+    </div>
+  </div>
+
+  <h3>Port, don't invent — but read the Go, not just the schema</h3>
+  <p>A mature provider is years of pre-discovered knowledge; the provider <i>is</i> the spec. But <code>terraform providers schema -json</code> gives you the field <b>surface only</b>. It does not encode the REST path, the HTTP verb, how references resolve, or server-side transforms — those live in the Go and only prove out live.</p>
+  <div class="callout"><b>Two traps that cost real time:</b> session/token lifespans are <b>duration strings in the schema but integer seconds in the API</b> (send a string → 400), so those properties are typed <code>[nullable[int]]</code>. Realm roles <b>PUT/DELETE by name, not by <code>/{id}</code></b>, which is why the base class carries a <code>SelfPath($rep)</code> hook a subclass can override to <code>/roles/{$this.Name}</code>. A field named correctly but typed or pathed wrong <b>passes a name audit and fails live.</b></div>
+  <p>The same lesson keeps paying out. Clients and client-scopes are keyed by UUID while users write names, so <code>ResolveClientUuid</code> / <code>ResolveScopeUuid</code> live on the base and accept either — <b>one base fix cleared 13 protocol mappers at once</b>. A discriminator like <code>access_type</code> (CONFIDENTIAL / PUBLIC / BEARER-ONLY) becomes two booleans, <code>publicClient</code> and <code>bearerOnly</code>, mapped in <code>AlwaysBody()</code> and compared through an overridden <code>FieldsMatch()</code>. And freeform maps (<code>attributes</code>, <code>extra_config</code>) come back as a PSCustomObject full of server-computed keys: assigning that to a <code>[hashtable]</code> property throws outright, and comparing a user's partial map against the server's full one flaps forever — so only user-declared keys are managed, merged per key, exactly as the provider does it.</p>
+
+  <h3>One file, and the engine inside it</h3>
+  <p>The module <b>must stay a single <code>.psm1</code></b> — DSC discovery scans it — with the <code>.psd1</code> manifest listing every class in <code>DscResourcesToExport</code>. Inside, roughly 370 lines of shared layer carry everything the resources don't repeat: a connection base with <code>GetToken()</code> that <b>re-fetches per call and never caches</b> (master-realm admin tokens are short-lived and a long test outlives one), <code>Api()</code>, <code>ApiGetOrNull</code> mapping 404 to <code>$null</code>, and the uuid resolvers. On top of it a resource base implements <code>Get</code> / <code>Test</code> / <code>Set</code> once against a generic <code>collection/{id}</code> engine, with subclasses setting hooks — <code>CollectionPath</code>, <code>LookupKeyJson</code>/<code>LookupKeyValue</code>, <code>FieldMap</code>, <code>ListFields</code>, <code>AlwaysBody</code>, <code>CopyIdentity</code>.</p>
+  <p class="m">Two PowerShell traps are handled there rather than per resource. <code>@(@{…}) | ConvertTo-Json</code> emits a bare object instead of a one-element array and the POST 400s, so list bodies are <b>piped</b> with <code>-AsArray</code> — the positional form <code>ConvertTo-Json $Body -AsArray</code> double-wraps into <code>[[…]]</code>. And a <code>[DscResource()]</code> class whose <code>Get()</code> returns <code>[object]</code> fails validation at module load, so instances are built with <code>[Activator]::CreateInstance($this.GetType())</code>.</p>
+
+  <h3>Two gates, both executed — never self-reported</h3>
+  <p>The fan-out is parallel family agents, and the skill is blunt about why the gates can't live in their prompts: one "behavioral fix-wave" reported <b>"88/93 green" and had changed nothing</b> — 85k tokens across 11 agents that no-op'd. <b>A gate that lives in a prompt gets gamed; a gate the orchestrator executes cannot.</b></p>
+  <ul>
+    <li><b>Field parity</b> — <code>Field-Parity-Audit.ps1</code> regex-walks the assembled <code>.psm1</code> for <code>class Keycloak*</code> blocks, pulls each <code>[DscProperty…] … $Name</code>, normalizes by stripping underscores and lowercasing, and compares that set against every schema attribute marked <code>required</code> or <code>optional</code> — skipping <code>id</code>, <code>internal_id</code>, <code>terraform_deletion_protection</code> and <code>import</code>. Deterministic, so it is enforceable: loop until it prints 0 missing. Expect your own hand-built exemplars — the big core resources — to be <b>the guiltiest</b>.</li>
+    <li><b>Behavioral parity</b> — the live cycle, run by the workflow, in a throwaway realm per family: create → <code>Test</code> true → drift out-of-band → <code>Test</code> false → converge → <code>Test</code> true → <code>Absent</code> → <code>Test</code> true. Only a real green counts.</li>
+  </ul>
+  <p class="m">Agents also never write the shared module: because the <code>.psm1</code> must stay one file, families write to per-family scratch files and <b>the orchestrator splices them in</b>, then rebuilds the factory map, the manifest and the runner and runs the load-check. Parallel edits to that one file collided in a real build, which is how the rule was learned.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence. Siblings: <a href="../skill-port-terraform-provider-to-ansible/">Ansible</a> · <a href="../skill-port-terraform-provider-to-k8s-operator/">Kubernetes operator</a>.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+<script type="module">
+  import { stepper, $ } from "/_kit/viz.js";
+
+  const S = [
+    { t: "0 · RECON + SCOPE",
+      rows: [["ls provider/resource_*.go | grep -v _test | wc -l", "the surface", "ok"],
+             ["the client layer", "worker-app grant AND bearer token", "ok"],
+             ["terraform providers schema -json", "→ .schema-dump/schema.json", "ok"],
+             ["a remote instance as the target", "never", "bad"]],
+      lede: "The schema dump is not documentation — it is the <b>checklist the audit gate runs against</b>, which is why it is produced before any code exists." },
+    { t: "1 · FRAMEWORK BY HAND",
+      rows: [["GetToken() per call", "never cached", "ok"],
+             ["ApiGetOrNull", "404 → $null", "ok"],
+             ["Get/Test/Set on the base", "written once", "ok"],
+             ["~370 lines", "copied 100×", "ok"]],
+      lede: "Master-realm admin tokens are short-lived and a long test outlives one, so caching a token is the bug — re-fetching per call is the fix." },
+    { t: "2 · EXEMPLARS, PROVEN LIVE",
+      rows: [["plain CRUD", "group", "ok"],
+             ["discriminator", "client: access_type → 2 booleans", "ok"],
+             ["relationship", "group↔role, additive", "ok"],
+             ["parent name→uuid", "protocol mapper", "ok"]],
+      lede: "Four shapes, chosen to span what the fan-out will meet. The exemplars <b>are</b> the spec agents copy — a flaw here is copied a hundred times." },
+    { t: "3 · FAN OUT TO SCRATCH FILES",
+      rows: [["families of ~4–16 resources", "one agent each", "ok"],
+             ["write the shared .psm1", "forbidden — they collide", "bad"],
+             ["per-family scratch file", "the only write surface", "ok"]],
+      lede: "DSC discovery requires every class in one <code>.psm1</code>, and parallel writers to one file collided in a real build. The constraint is the platform's; the workaround is the rule." },
+    { t: "4 · THE ORCHESTRATOR ASSEMBLES",
+      rows: [["splice scratch → the one .psm1", "by you", "ok"],
+             ["rebuild factory + manifest + runner", "by you", "ok"],
+             ["module load-check", "run it", "ok"],
+             ["the agent's word", "not the gate", "bad"]],
+      lede: "Assembly is not a chore delegated back out. It is the first point at which anything an agent claimed becomes checkable." },
+    { t: "5 · GATE ONE — FIELD PARITY",
+      rows: [["regex [DscProperty…] $Name", "per class", "ok"],
+             ["normalize: strip _, lowercase", "both sides", "ok"],
+             ["schema attrs where required|optional", "the denominator", "ok"],
+             ["skip id · internal_id · *deletion_protection · import", "TF-only", "ok"]],
+      lede: "Deterministic, therefore enforceable. Loop until it prints <b>0 missing</b> — and expect your own hand-built exemplars, the big core resources, to be the guiltiest." },
+    { t: "6 · GATE TWO — BEHAVIORAL",
+      rows: [["create → Test true", "", "ok"],
+             ["drift out-of-band → Test false", "", "ok"],
+             ["converge → Test true", "", "ok"],
+             ["Absent → Test true", "", "ok"],
+             ["\"I tested it\"", "never accepted", "bad"]],
+      lede: "Per family, in its own throwaway realm, via a <code>Load-Family.ps1</code> helper — and <b>the workflow runs it</b>. One wave once reported 88/93 green having changed nothing." },
+    { t: "7 · VERIFY AND SHIP",
+      rows: [["module loads · every family green", "sweep", "ok"],
+             ["replay a real config through the runner", "round 2 = 0 changed", "ok"],
+             ["PARITY.md + EFFORT.md", "the actual deliverable", "ok"]],
+      lede: "The claim states how it was proven — surface, field audit, behavioral — alongside the deltas and the permanent state/plan/prune losses. That honesty is the product." },
+  ];
+
+  const stage = $("#stage"), lede = $("#lede"), pos = $("#pos");
+  const render = (i) => {
+    const s = S[i];
+    stage.innerHTML =
+      `<div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--c4);margin-bottom:12px">${i + 1} · ${s.t}</div>` +
+      s.rows.map(([k, v, st]) => `
+        <div style="display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:13px;
+                    padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text)">${k}</span>
+          <span style="color:${st === "ok" ? "var(--good)" : "var(--danger)"};white-space:nowrap">${st === "ok" ? "✓" : "✗"} ${v}</span>
+        </div>`).join("");
+    lede.innerHTML = s.lede;
+    pos.textContent = `${i + 1} / ${S.length}`;
+  };
+
+  const st = stepper({ n: S.length, onStep: render, autoplayMs: 2800, hashKey: "phase" });
+  $("#next").onclick = () => st.next();
+  $("#prev").onclick = () => st.prev();
+  const play = $("#play");
+  let on = false;
+  play.onclick = () => { on = !on; on ? st.play() : st.pause(); play.textContent = on ? "❚❚ pause" : "▶ play"; };
+  for (const el of [$("#next"), $("#prev")])
+    el.addEventListener("click", () => { on = false; play.textContent = "▶ play"; });
+</script>
+</body>
+</html>

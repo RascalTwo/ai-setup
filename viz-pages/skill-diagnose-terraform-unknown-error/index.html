@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>diagnose-terraform-unknown-error — the provider says unknown. the API didn't.</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:uid" content="v-0741cb0f4407">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="diagnose-terraform-unknown-error">
+<meta name="viz:description" content="Turns TF_LOG=DEBUG on for one failing CI step, runs it, pulls the real HTTP request and response out of the Actions log, then reverts the flag in the same commit as the fix.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:page-kind" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 95% -10%, color-mix(in srgb, var(--danger) 15%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c5) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 476px; gap:38px; align-items:center; padding:56px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:13px;
+            letter-spacing:.13em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:54px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--danger); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 20px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:14.5px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:13.5px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the proof slot: ONE round trip through CI, wrapped in a bracket that marks the
+     window where secrets are sitting in the log. The bracket is the argument —
+     the flag goes on at 1 and must be gone by 5, or the window never closes. */
+  .cap{ font-family:var(--mono); font-size:12px; letter-spacing:.13em; color:var(--muted); margin-bottom:12px; }
+  .cap b{ color:var(--danger); }
+  .rail{ position:relative; padding-left:19px; display:flex; flex-direction:column; gap:8px; }
+  .rail::before{ content:""; position:absolute; left:0; top:5px; bottom:5px; width:11px;
+                 border:2px solid color-mix(in srgb, var(--danger) 70%, transparent); border-right:none;
+                 border-radius:6px 0 0 6px; }
+  .st{ display:grid; grid-template-columns:24px 1fr; gap:10px; align-items:center; }
+  .st .n{ font-family:var(--mono); font-size:11.5px; color:var(--c4); text-align:center;
+          border:1px solid color-mix(in srgb, var(--c4) 45%, transparent); border-radius:99px; padding:2px 0; }
+  .body{ display:flex; align-items:baseline; gap:8px; background:color-mix(in srgb, var(--panel) 74%, transparent);
+         border:1px solid var(--border); border-radius:9px; padding:9px 12px; }
+  .body .k{ font-family:var(--mono); font-size:12.5px; letter-spacing:.06em; color:var(--text); white-space:nowrap; }
+  .body .d{ font-size:12px; color:var(--muted); line-height:1.3; }
+  .body .d em{ font-style:normal; font-family:var(--mono); font-size:11.5px; color:var(--text); }
+  .tag{ margin-left:auto; font-family:var(--mono); font-size:10px; letter-spacing:.11em; padding:2px 7px;
+        border-radius:99px; white-space:nowrap; }
+  .st.arm .body{ border-color:color-mix(in srgb, var(--danger) 50%, transparent); }
+  .st.arm .tag{ color:var(--danger); background:color-mix(in srgb, var(--danger) 13%, transparent);
+                border:1px solid color-mix(in srgb, var(--danger) 42%, transparent); }
+  .st.clear .body{ border-color:color-mix(in srgb, var(--good) 45%, transparent); }
+  .st.clear .tag{ color:var(--good); background:color-mix(in srgb, var(--good) 12%, transparent);
+                  border:1px solid color-mix(in srgb, var(--good) 40%, transparent); }
+  .pfoot{ font-family:var(--mono); font-size:11px; letter-spacing:.08em; line-height:1.6; color:var(--faint);
+          margin:12px 0 16px; padding-left:19px; }
+  .pfoot b{ color:var(--danger); }
+  /* what step 4 actually reads back */
+  .reads{ display:flex; flex-direction:column; gap:7px; padding-left:19px; }
+  .read{ display:grid; grid-template-columns:70px 1fr; gap:11px; align-items:center;
+         font-size:12px; color:var(--muted); line-height:1.35; }
+  .read .code{ font-family:var(--mono); font-size:11px; letter-spacing:.04em; text-align:center;
+               border-radius:6px; padding:3px 0; }
+  .read.c403 .code{ color:var(--c8); background:color-mix(in srgb, var(--c8) 20%, transparent); }
+  .read.c500 .code{ color:var(--warn); background:color-mix(in srgb, var(--warn) 14%, transparent); }
+  .read em{ font-style:normal; font-family:var(--mono); font-size:11px; color:var(--text); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  code{ font-family:var(--mono); font-size:.92em; color:var(--c5); }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .callout.stop{ border-left-color:var(--danger); background:color-mix(in srgb, var(--danger) 8%, transparent); }
+  .callout.stop b{ color:var(--danger); }
+  /* ── poster-standard dive additions: h3 under a beat, the where table, the figure ── */
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); border-bottom:none; color:var(--text);
+                  padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--c5); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="diagnose-terraform-unknown-error" data-viz-id="poster-card" data-label="diagnose-terraform-unknown-error poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · DIAGNOSE-TERRAFORM-UNKNOWN-ERROR</div>
+      <h1 class="hook">The provider says<br><em>unknown error.</em><br>The API didn't.</h1>
+      <p class="sub">The real HTTP exchange happened — the provider just declined to print it. This turns <b>TF_LOG=DEBUG</b> on for one named CI step, runs it once, and pulls the actual request body and response back out of the Actions log.</p>
+      <p class="not">It doesn't kick the run off itself.<br>That's <b>trigger-github-deploy</b>, then <b>wait-for-github-workflow</b>.</p>
+      <div class="trigger"><span>give it</span>&nbsp;deploy.yml &nbsp;·&nbsp; "Terraform Apply" &nbsp;·&nbsp; ci/terraform</div>
+    </div>
+    <div>
+      <div class="cap">ONE ROUND TRIP &nbsp;·&nbsp; <b>THE FLAG NEVER SURVIVES IT</b></div>
+      <div class="rail">
+        <div class="st arm">
+          <span class="n">1</span>
+          <div class="body"><span class="k">ARM</span><span class="d"><em>TF_LOG: DEBUG</em> on the failing step</span><span class="tag">FLAG ON</span></div>
+        </div>
+        <div class="st">
+          <span class="n">2</span>
+          <div class="body"><span class="k">PUSH</span><span class="d">commit it as <em>temporarily…</em>, so it reads as debt</span></div>
+        </div>
+        <div class="st">
+          <span class="n">3</span>
+          <div class="body"><span class="k">RUN</span><span class="d">trigger the workflow, wait for it to finish</span></div>
+        </div>
+        <div class="st">
+          <span class="n">4</span>
+          <div class="body"><span class="k">READ</span><span class="d"><em>gh api …/logs</em> → grep the request &amp; response</span></div>
+        </div>
+        <div class="st clear">
+          <span class="n">5</span>
+          <div class="body"><span class="k">DISARM</span><span class="d">the fix and the revert — <em>same commit</em></span><span class="tag">FLAG OFF</span></div>
+        </div>
+      </div>
+      <div class="pfoot"><b>↑ THE BRACKET IS THE LIABILITY.</b> ACROSS THAT WHOLE SPAN, API KEYS, TOKENS AND CLIENT SECRETS SIT IN THE RUN LOG IN PLAIN TEXT.</div>
+      <div class="reads">
+        <div class="read c403"><span class="code">HTTP 403</span><span>the <em>Www-Authenticate</em> header names the scope you're missing</span></div>
+        <div class="read c500"><span class="code">HTTP 500</span><span>an error code in the body — or a null field in what you sent</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">"Unknown error" is a printing problem</h2>
+  <p>A Terraform provider that reports <code>unknown error</code> has usually made a perfectly ordinary HTTP call and got a perfectly ordinary HTTP failure back — it just had nowhere to map that response, so it shrugged. The status line, the headers and the response body all exist. They're one log level away. This skill's entire job is to go get them, once, and then put the log level back.</p>
+
+  <h2 data-beat="using">Three things you hand it</h2>
+  <p class="m">Everything else it derives:</p>
+  <ul>
+    <li>The <b>workflow file</b> to modify — e.g. <code>deploy.yml</code>.</li>
+    <li>The <b>name of the failing step</b> — e.g. <code>Terraform Apply</code>. It matches on the step's <code>name:</code>, so that string has to be exact.</li>
+    <li>That step's <b>working directory</b> — e.g. <code>ci/terraform</code>, because the rewritten step reproduces the original <code>working-directory:</code> rather than inferring it.</li>
+  </ul>
+  <p>It is invoked when a run has <em>already</em> failed with an opaque provider error. There is nothing to diagnose on a green pipeline: the whole method depends on reproducing a failure you've already seen.</p>
+
+  <h2 data-beat="limits">It only owns the middle</h2>
+  <p>The skill is deliberately narrow: it edits the workflow, reads the logs and interprets the exchange. The CI mechanics belong to neighbours — <a href="../skill-trigger-github-deploy/">trigger-github-deploy</a> kicks off the run, <a href="../skill-wait-for-github-workflow/">wait-for-github-workflow</a> blocks until it finishes. One diagnosis, one round trip, and the repo is left exactly as clean as it started.</p>
+  <ul>
+    <li><b>One round trip is the design, not a budget.</b> It captures everything with <code>tee</code> precisely so a second debug run is never needed — and because every debug run costs a commit, a push and a full pipeline.</li>
+    <li><b>It only reaches errors the provider actually made an HTTP call for.</b> A crash before the request, or a failure inside Terraform's own graph, leaves nothing for the greps to find.</li>
+    <li><b>The response filter is tuned, not general.</b> <code>grep -v "azure\|microsoft\|storage"</code> strips the platform's own 4xx chatter, and will also strip a real failure whose text happens to contain one of those words.</li>
+    <li><b>It does not apply the fix for you.</b> It identifies the missing scope or the null field; the change is yours to make — in the same commit that reverts the debug flag.</li>
+  </ul>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>Integrates</td><td><b>GitHub Actions</b> — it edits a workflow file, pushes it, and pulls the run's logs through <code>gh</code> — and <b>Terraform's own <code>TF_LOG=DEBUG</code></b> output, which is the only place the raw HTTP exchange is ever printed.</td></tr>
+    <tr><td>Requires</td><td><code>gh</code>, authenticated and able to push. Plus <code>unzip</code>, <code>grep</code> and <code>head</code>. It does not run Terraform locally and does not need the provider installed.</td></tr>
+    <tr><td>What it changes</td><td><b>Your repository.</b> This is the one skill in the group that writes: one commit adding <code>TF_LOG: DEBUG</code> and a <code>tee</code>, and a second commit reverting it alongside the real fix. Both land on the branch you're on.</td></tr>
+    <tr><td>Its state</td><td><b>None.</b> It <b>keeps nothing between runs</b> — no local config, no cache, nothing under <code>~/.agents/state/</code>. The two files it touches, <code>/tmp/tf-debug.log</code> (written inside the runner, which is destroyed with it) and <code>/tmp/run-logs.zip</code> (overwritten next time), are scratch.</td></tr>
+    <tr><td>Where the risk sits</td><td>In the <b>build log</b>, not on your disk. A DEBUG-level Terraform run prints credentials into a log that outlives the run — which is why reverting is part of the method rather than a follow-up.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">One round trip, and the flag goes back</h2>
+  <p class="m">From an opaque <code>unknown error</code> to the actual HTTP status, and back to a clean workflow file.</p>
+
+  <div class="fig" data-viz-id="tf-figure" data-label="stepper: instrument, run, extract, revert">
+    <div class="stage" id="stage"></div>
+    <p class="lede" id="lede"></p>
+    <div class="ctrl">
+      <button id="prev" aria-label="previous step">‹ back</button>
+      <button id="play">▶ play</button>
+      <button id="next" aria-label="next step">next ›</button>
+      <span class="pos" id="pos"></span>
+      <span class="hint">← → arrow keys</span>
+    </div>
+  </div>
+
+  <h3>The pipe that eats your exit code</h3>
+  <p>Step one edits the failing step to capture output. The shape matters more than it looks:</p>
+  <pre>- name: &lt;step-name&gt;
+  working-directory: &lt;working-dir&gt;
+  env:
+    TF_LOG: DEBUG
+  run: |
+    &lt;original-command&gt; 2&gt;&amp;1 | tee /tmp/tf-debug.log; RESULT=${PIPESTATUS[0]}
+    exit $RESULT</pre>
+  <p><code>tee</code> plus <code>${PIPESTATUS[0]}</code> exists because a pipeline's exit status is the <i>last</i> command's. Pipe a failing <code>terraform apply</code> into anything and the step reports the exit code of the thing on the right — which succeeded. Your broken apply turns green and CI carries on. <code>2&gt;&amp;1</code> is equally load-bearing: <code>TF_LOG</code> output goes to <b>stderr</b>, so without the redirect the <code>tee</code> captures a tidy plan summary and none of the HTTP traffic you added the flag for.</p>
+  <div class="callout"><b>Never pipe through grep at apply time.</b> It's the tempting version — filter the noise as it streams — and it's exactly the thing that masks the failure. Capture everything with <code>tee</code>, filter later, when the run is over and the exit code is already banked.</div>
+
+  <h3>Getting the exchange back out</h3>
+  <p>Logs come down as a zip and get read without unpacking. Two greps: one for what you sent, one for what came back.</p>
+  <pre>gh api repos/&lt;owner&gt;/&lt;repo&gt;/actions/runs/&lt;run-id&gt;/logs &gt; /tmp/run-logs.zip
+
+<span class="c"># the request body sent to the failing endpoint</span>
+unzip -p /tmp/run-logs.zip | grep -a -A 40 "performing request.*&lt;endpoint&gt;" | head -60
+
+<span class="c"># the response — 4xx/5xx only, minus the platform's own chatter</span>
+unzip -p /tmp/run-logs.zip | grep -a -A 15 "HTTP/[0-9]\.[0-9] [4-5][0-9][0-9]" \
+  | grep -v "azure\|microsoft\|storage" | head -40</pre>
+  <p class="m"><code>performing request</code> is the Terraform SDK's own log line for an outbound call, which is why the endpoint is matched as a suffix of it rather than searched for on its own. <code>-A 40</code> and <code>-A 15</code> are the request body and the response headers respectively — the match is the status line, the payload is what follows it. <code>grep -a</code> is not decoration either: it forces grep to treat the stream as text, because a log full of control bytes will otherwise get written off as binary and matched silently.</p>
+
+  <h3>Reading the answer</h3>
+  <ul>
+    <li><b>403</b> — read the <code>Www-Authenticate</code> header. It names the scope the token is missing. That's the fix, spelled out, in a header nobody looks at.</li>
+    <li><b>500</b> — read the response body for an error code; if there isn't one, read the <i>request</i> body instead for the field that's missing or null. A 500 is often the API's reaction to something you didn't send — which is why the request grep runs even when the response looks like the interesting half.</li>
+  </ul>
+
+  <h3>Cleanup isn't a tidy-up step</h3>
+  <p>Once the cause is known, the <code>TF_LOG=DEBUG</code> change is reverted and the actual fix applied <b>in the same commit</b> — then pushed and run again to verify. Not a follow-up PR, not a TODO.</p>
+  <div class="callout stop"><b>Never leave TF_LOG=DEBUG in the workflow.</b> At DEBUG, Terraform prints the API keys, tokens and client secrets in its outbound requests in plain text — into a build log that outlives the run and is readable by anyone with access to it. The debug flag is a liability with a fuse, and closing the loop is the only thing that puts it out.</div>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+<script type="module">
+  import { stepper, $ } from "/_kit/viz.js";
+
+  const S = [
+    { t: "INSTRUMENT THE STEP",
+      rows: [["env: TF_LOG: DEBUG", "on that step only", "ok"],
+             ["2&gt;&amp;1 | tee /tmp/tf-debug.log", "stderr is where TF_LOG goes", "ok"],
+             ["RESULT=${PIPESTATUS[0]}", "exit code preserved", "ok"],
+             ["| grep at apply time", "masks the failure", "bad"]],
+      lede: "A pipeline's status is the <em>last</em> command's. Without <code>PIPESTATUS</code>, a failing apply piped into <code>tee</code> reports success and CI carries on." },
+    { t: "COMMIT AND PUSH",
+      rows: [["\"Temporarily add TF_LOG=DEBUG…\"", "one commit", "ok"],
+             ["push to the remote", "starts the run", "ok"],
+             ["the repo", "now dirty on purpose", "bad"]],
+      lede: "This is the skill that writes. The message says <b>temporarily</b> because the revert is part of the method, not a follow-up ticket." },
+    { t: "RUN AND WAIT",
+      rows: [["trigger-github-deploy", "kicks it off", "ok"],
+             ["wait-for-github-workflow", "blocks until done", "ok"],
+             ["the run", "fails again, on purpose", "ok"]],
+      lede: "Neither half belongs to this skill. It owns the middle — instrument and extract — and hands the CI mechanics to its neighbours." },
+    { t: "PULL THE ZIP",
+      rows: [["gh api …/actions/runs/&lt;id&gt;/logs", "&gt; /tmp/run-logs.zip", "ok"],
+             ["unzip -p", "streamed, never extracted", "ok"],
+             ["grep -a", "or it is 'binary', silently", "ok"]],
+      lede: "A DEBUG-level Terraform run is enormous and full of control bytes. <code>-a</code> is on every probe because without it grep matches and prints nothing." },
+    { t: "GREP WHAT YOU SENT",
+      rows: [["\"performing request.*&lt;endpoint&gt;\"", "the SDK's own log line", "ok"],
+             ["-A 40", "the request body", "ok"],
+             ["| head -60", "bounded", "ok"]],
+      lede: "The endpoint is matched as a suffix of the SDK's outbound-call line, so you get the body it actually sent rather than every mention of that path." },
+    { t: "GREP WHAT CAME BACK",
+      rows: [["\"HTTP/[0-9].[0-9] [4-5][0-9][0-9]\"", "status line", "ok"],
+             ["-A 15", "response headers", "ok"],
+             ["-v azure|microsoft|storage", "platform chatter out", "ok"],
+             ["403 → Www-Authenticate", "names the missing scope", "ok"]],
+      lede: "The fix for a 403 is usually sitting in a header nobody reads. For a 500 the answer is more often in the <em>request</em> — a field you didn't send." },
+    { t: "REVERT + FIX, ONE COMMIT",
+      rows: [["TF_LOG: DEBUG", "removed", "ok"], ["the real fix", "same commit", "ok"],
+             ["re-run to verify", "green", "ok"],
+             ["leave DEBUG in", "secrets in a permanent log", "bad"]],
+      lede: "At DEBUG, Terraform prints API keys and client secrets in plain text into a build log that outlives the run. Closing the loop is the only thing that puts that out." },
+  ];
+
+  const stage = $("#stage"), lede = $("#lede"), pos = $("#pos");
+  const render = (i) => {
+    const s = S[i];
+    stage.innerHTML =
+      `<div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--c4);margin-bottom:12px">${i + 1} · ${s.t}</div>` +
+      s.rows.map(([k, v, st]) => `
+        <div style="display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:13px;
+                    padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text)">${k}</span>
+          <span style="color:${st === "ok" ? "var(--good)" : "var(--danger)"};white-space:nowrap">${st === "ok" ? "✓" : "✗"} ${v}</span>
+        </div>`).join("");
+    lede.innerHTML = s.lede;
+    pos.textContent = `${i + 1} / ${S.length}`;
+  };
+
+  const st = stepper({ n: S.length, onStep: render, autoplayMs: 2600, hashKey: "trip" });
+  $("#next").onclick = () => st.next();
+  $("#prev").onclick = () => st.prev();
+  const play = $("#play");
+  let on = false;
+  play.onclick = () => { on = !on; on ? st.play() : st.pause(); play.textContent = on ? "❚❚ pause" : "▶ play"; };
+  for (const el of [$("#next"), $("#prev")])
+    el.addEventListener("click", () => { on = false; play.textContent = "▶ play"; });
+</script>
+</body>
+</html>

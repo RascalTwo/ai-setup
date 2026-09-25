@@ -1,0 +1,273 @@
+<div class="og-card">
+  <style>
+    .og-card {
+      position: relative;
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 74% 46%, rgba(88,166,255,0.10), rgba(88,166,255,0) 46%),
+        #0d1117;
+      color: #e6edf3;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* faint GitHub-dark dot grid */
+    .og-card .grid {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(125,133,144,0.13) 1px, transparent 1.4px);
+      background-size: 30px 30px;
+      -webkit-mask-image: radial-gradient(circle at 62% 50%, #000 0%, rgba(0,0,0,0.35) 60%, transparent 82%);
+      mask-image: radial-gradient(circle at 62% 50%, #000 0%, rgba(0,0,0,0.35) 60%, transparent 82%);
+    }
+    /* corner registration ticks — editorial framing */
+    .og-card .corner {
+      position: absolute;
+      width: 18px; height: 18px;
+      border: 2px solid #30363d;
+    }
+    .og-card .corner.tl { top: 28px; left: 28px; border-right: 0; border-bottom: 0; }
+    .og-card .corner.br { bottom: 28px; right: 28px; border-left: 0; border-top: 0; }
+
+    .og-card .frame {
+      position: absolute;
+      inset: 54px 64px;
+      display: flex;
+      gap: 54px;
+      align-items: stretch;
+    }
+
+    /* ---------- LEFT: type ---------- */
+    .og-card .left {
+      width: 432px;
+      flex: 0 0 432px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-width: 0;
+    }
+    .og-card .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #3fb950;
+    }
+    .og-card .eyebrow::before {
+      content: "";
+      width: 26px; height: 3px;
+      background: #58a6ff;
+      border-radius: 2px;
+    }
+    .og-card .eyebrow .meta {
+      color: #7d8590;
+    }
+
+    .og-card h1 {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+      font-weight: 600;
+      font-size: 62px;
+      line-height: 1.02;
+      margin: 22px 0 0;
+      letter-spacing: -0.01em;
+    }
+    .og-card h1 .slash { color: #58a6ff; }
+    .og-card h1 .dash { color: #444c56; font-weight: 400; }
+    .og-card h1 .sub { display: block; color: #e6edf3; }
+
+    .og-card .rule {
+      height: 1px;
+      width: 108px;
+      margin: 22px 0 20px;
+      background: linear-gradient(90deg, #58a6ff, rgba(88,166,255,0));
+    }
+    .og-card .essence {
+      font-size: 21px;
+      line-height: 1.45;
+      color: #adb7c0;
+      max-width: 400px;
+    }
+    .og-card .essence b { color: #e6edf3; font-weight: 600; }
+
+    .og-card .footer { display: flex; flex-direction: column; gap: 16px; }
+    .og-card .pipe {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      color: #7d8590;
+      flex-wrap: wrap;
+    }
+    .og-card .pipe .step { color: #c9d1d9; }
+    .og-card .pipe .arw { color: #444c56; }
+    .og-card .pipe .step.last { color: #3fb950; }
+
+    .og-card .live {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      align-self: flex-start;
+      padding: 8px 15px;
+      border: 1px solid #30363d;
+      border-radius: 999px;
+      background: #161b22;
+      font-family: ui-monospace, monospace;
+      font-size: 15px;
+      color: #e6edf3;
+    }
+    .og-card .live .dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: #3fb950;
+      box-shadow: 0 0 0 4px rgba(46,160,67,0.20), 0 0 10px rgba(46,160,67,0.85);
+    }
+    .og-card .live .lock { color: #7d8590; }
+    .og-card .live .tag { color: #3fb950; letter-spacing: 0.14em; font-size: 12px; }
+
+    /* ---------- DIVIDER ---------- */
+    .og-card .divider {
+      width: 1px;
+      align-self: stretch;
+      background: linear-gradient(180deg, rgba(48,54,61,0), #30363d 18%, #30363d 82%, rgba(48,54,61,0));
+    }
+
+    /* ---------- RIGHT: hub motif ---------- */
+    .og-card .right {
+      flex: 1 1 auto;
+      position: relative;
+      min-width: 0;
+    }
+    .og-card .right svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .og-card .stamp {
+      position: absolute;
+      right: 2px; bottom: -2px;
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      color: #444c56;
+    }
+  </style>
+
+  <div class="grid"></div>
+  <div class="corner tl"></div>
+  <div class="corner br"></div>
+
+  <div class="frame">
+    <!-- LEFT -->
+    <div class="left">
+      <div>
+        <div class="eyebrow">⚡ Operational <span class="meta">· meta</span></div>
+        <h1><span class="slash">/viz</span> <span class="dash">—</span><span class="sub">self&#8209;portrait</span></h1>
+        <div class="rule"></div>
+        <div class="essence">
+          One Bun server, <b>many viz roots</b>, one live URL — the skill drawing a portrait of its own machine.
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="pipe">
+          <span class="step">author</span><span class="arw">&rarr;</span>
+          <span class="step">verify</span><span class="arw">&rarr;</span>
+          <span class="step">build</span><span class="arw">&rarr;</span>
+          <span class="step last">deploy</span>
+        </div>
+        <div class="live">
+          <span class="dot"></span>
+          <span>127.0.0.1:5180</span>
+          <span class="lock">🔒</span>
+          <span class="tag">LIVE</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- RIGHT: the multi-root hub -->
+    <div class="right">
+      <svg viewBox="0 0 600 522" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"  stop-color="#58a6ff" stop-opacity="0.30"/>
+            <stop offset="55%" stop-color="#58a6ff" stop-opacity="0.07"/>
+            <stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/>
+          </radialGradient>
+          <marker id="ah-blue"   viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#58a6ff"/></marker>
+          <marker id="ah-orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#f0883e"/></marker>
+          <marker id="ah-pink"   viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#db61a2"/></marker>
+          <marker id="ah-green"  viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#3fb950"/></marker>
+        </defs>
+
+        <style>
+          .box   { fill: #161b22; }
+          .hub   { fill: #1c2128; }
+          .t-name{ font-family: ui-monospace, monospace; font-size: 14px; font-weight: 600; fill: #e6edf3; }
+          .t-sub { font-family: ui-monospace, monospace; font-size: 11px; fill: #7d8590; }
+          .h-name{ font-family: ui-monospace, monospace; font-size: 20px; font-weight: 700; fill: #e6edf3; }
+          .h-sub { font-family: ui-monospace, monospace; font-size: 11.5px; fill: #7d8590; }
+          .h-addr{ font-family: ui-monospace, monospace; font-size: 13px; fill: #58a6ff; }
+          .lbl   { font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.04em; }
+          .conn  { fill: none; stroke-width: 2; }
+        </style>
+
+        <!-- focal glow behind the hub -->
+        <circle cx="368" cy="260" r="210" fill="url(#glow)"/>
+
+        <!-- connectors: roots -> server -->
+        <path class="conn" stroke="#58a6ff" d="M190 96  C 232 96, 226 232, 249 236"  marker-end="url(#ah-blue)"/>
+        <path class="conn" stroke="#f0883e" d="M190 260 C 218 260, 226 260, 249 260"  marker-end="url(#ah-orange)"/>
+        <!-- self-reference cycle: self-portrait <-> server -->
+        <path class="conn" stroke="#db61a2" d="M190 426 C 232 422, 228 292, 249 288"  marker-end="url(#ah-pink)"/>
+        <path class="conn" stroke="#db61a2" stroke-dasharray="5 5" opacity="0.85" d="M300 316 C 250 392, 208 436, 194 452" marker-end="url(#ah-pink)"/>
+        <text class="lbl" x="150" y="358" fill="#db61a2">renders itself &#8635;</text>
+
+        <!-- deploy: server -> static Pages -->
+        <path class="conn" stroke="#3fb950" d="M462 208 C 502 184, 516 154, 519 130" marker-end="url(#ah-green)"/>
+        <text class="lbl" x="470" y="176" fill="#3fb950">deploy</text>
+
+        <!-- ROOTS (left) -->
+        <g>
+          <rect class="box" x="20" y="72" width="170" height="48" rx="10" stroke="#58a6ff" stroke-opacity="0.55"/>
+          <text class="t-name" x="34" y="97">central library</text>
+          <text class="t-sub"  x="34" y="112">~/.viz-pages · git</text>
+        </g>
+        <g>
+          <rect class="box" x="20" y="236" width="170" height="48" rx="10" stroke="#f0883e" stroke-opacity="0.55"/>
+          <text class="t-name" x="34" y="261">host repos &#215;N</text>
+          <text class="t-sub"  x="34" y="276">&lt;repo&gt;/viz-pages</text>
+        </g>
+        <g>
+          <rect x="20" y="402" width="170" height="48" rx="10" fill="#241a24" stroke="#db61a2" stroke-width="1.6"/>
+          <text class="t-name" x="34" y="427" fill="#f0b6d6">this viz &#8617;</text>
+          <text class="t-sub"  x="34" y="442" fill="#db61a2">self&#8209;portrait</text>
+        </g>
+
+        <!-- static Pages (deploy target) -->
+        <g>
+          <rect class="box" x="466" y="66" width="118" height="62" rx="10" stroke="#3fb950" stroke-opacity="0.55"/>
+          <text class="t-name" x="480" y="92" fill="#e6edf3">static Pages</text>
+          <text class="t-sub"  x="480" y="109" fill="#3fb950">public URL</text>
+          <text class="t-sub"  x="480" y="122">deployed</text>
+        </g>
+
+        <!-- HUB: the singleton Bun server (focal point) -->
+        <rect class="hub" x="250" y="205" width="230" height="112" rx="14" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="268" cy="223" r="3" fill="#58a6ff"/>
+        <text class="h-name" x="284" y="240">Bun&#160;server</text>
+        <line x1="266" y1="252" x2="464" y2="252" stroke="#30363d"/>
+        <text class="h-sub"  x="266" y="272">singleton &#183; serves MANY roots</text>
+        <text class="h-addr" x="266" y="298">127.0.0.1:5180 &#128274;</text>
+      </svg>
+      <div class="stamp">A VIZ OF THE /VIZ SYSTEM</div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,95 @@
+#!/bin/sh
+# fleet -- one JSON snapshot of every agent pane, joined against whatever each
+# Claude session reported about itself through the fleet hooks.
+#
+#   fleet          this machine
+#   fleet <host>   an ssh target (POSIX hosts; Windows is untested, see below)
+#
+# herdr is the floor and the hooks are an enhancement. Every pane appears with
+# the status herdr detected, whatever agent is running in it. Claude sessions
+# additionally carry a first-party `signal` and their own last message. A Codex
+# pane simply has no state files and still shows up with herdr's status -- so
+# nothing here is Claude-only.
+#
+# The calling session excludes itself via $HERDR_PANE_ID. Without that, a
+# manager can see, prompt, and thereby talk to itself.
+
+set -u
+HOST="${1:-}"
+
+# ponytail: works for POSIX remotes. The Windows PC needs its own state path
+# (%USERPROFILE%\.agents\state\fleet\state) and has no `cat` glob, so V1.1 adds a
+# branch here rather than restructuring anything.
+run() {
+  if [ -n "$HOST" ]; then ssh -o BatchMode=yes "$HOST" "$*"; else sh -c "$*"; fi
+}
+
+agents=$(run 'herdr agent list' 2>/dev/null) || agents=''
+[ -n "$agents" ] || { echo '[]'; exit 0; }
+
+# Tab labels. These are what the user's sidebar shows, so they are the only
+# name a report can use that the user can actually click on. Optional: if this
+# fails every pane just gets a null label and keeps its pane id.
+tabs=$(run 'herdr tab list' 2>/dev/null) || tabs=''
+[ -n "$tabs" ] || tabs='{"result":{"tabs":[]}}'
+
+# One slurp of every state file. If a file is mid-write the whole slurp fails,
+# and we fall back to herdr-only for this cycle rather than reporting nothing.
+state=$(run 'cat "$HOME/.agents/state/fleet/state"/*.json 2>/dev/null' | jq -s . 2>/dev/null)
+[ -n "$state" ] || state='[]'
+
+# How long ago each session last said anything. The payloads carry no timestamp
+# and the hook is deliberately zero-fork (macOS bash 3.2 has no $EPOCHSECONDS),
+# so the mtime is the clock. `stat -f` is BSD, `-c` is GNU; try both.
+mtimes=$(run 'for f in "$HOME/.agents/state/fleet/state"/*.json; do [ -e "$f" ] || continue;
+  m=$(stat -f %m "$f" 2>/dev/null || stat -c %Y "$f" 2>/dev/null); echo "${f##*/} $m"; done' 2>/dev/null)
+
+jq -n \
+  --argjson agents "$agents" \
+  --argjson tabs "$tabs" \
+  --argjson state "$state" \
+  --arg mtimes "$mtimes" \
+  --argjson now "$(date +%s)" \
+  --arg self "${HERDR_PANE_ID:-}" \
+  --arg machine "${HOST:-local}" '
+  # Index the hook payloads by "<session>.<event>" so each agent is one lookup.
+  ($state | map({ key: (.session_id + "." + .hook_event_name), value: . }) | from_entries) as $s
+  | ($tabs.result.tabs // [] | map({ key: .tab_id, value: .label }) | from_entries) as $t
+  # "<session>.<Event>.json <epoch>" lines -> newest epoch per session.
+  | ($mtimes | split("\n") | map(select(test("\\S")) | split(" ")
+      | { s: (.[0] | split(".")[0]), m: (.[1] | tonumber? // 0) })
+      | group_by(.s) | map({ key: .[0].s, value: (map(.m) | max) }) | from_entries) as $age
+  | [ $agents.result.agents[]
+      | select(.pane_id != $self)
+      | (.agent_session.value // null) as $u
+      | {
+          machine:      $machine,
+
+          # What the user sees in the sidebar, and so what a report must name.
+          # A label is frozen at tab creation while the session moves on, so it
+          # can disagree with `title` -- that disagreement is worth surfacing,
+          # not silently resolving.
+          label:        ($t[.tab_id] // null),
+          pane:         .pane_id,
+          session:      $u,
+          agent:        .agent,
+          title:        .terminal_title_stripped,
+          herdr_status: .agent_status,
+          focused:      .focused,
+          cwd:          .cwd,
+
+          # First-party "this session wants attention", straight from Claude
+          # Code. null for non-Claude panes and for sessions that started
+          # before the hooks were installed -- herdr_status still covers those.
+          signal:       (if $u then $s[$u + ".Notification"].notification_type else null end // null),
+
+          # Seconds since this session last reported anything. Separates
+          # "finished ninety seconds ago" from "idle since breakfast", which
+          # herdr_status alone cannot. null for panes with no hook state.
+          reported_age_s: (if $u and $age[$u] then ($now - $age[$u]) else null end),
+
+          # Truncated on purpose: ten of these is the manager every cycle.
+          # Full text is in ~/.agents/state/fleet/state/<session>.Stop.json.
+          last_message: (if $u then ($s[$u + ".Stop"].last_assistant_message // "") else "" end | .[0:400])
+        }
+    ]'
