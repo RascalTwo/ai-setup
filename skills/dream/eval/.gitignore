@@ -1,0 +1,15 @@
+# Eval inputs and outputs are DERIVED FROM REAL SESSION TRANSCRIPTS and contain
+# verbatim client-work excerpts (identity/IAM consulting: <client>, <client>,
+# <client>, <client>, <client>). This repo is published to a PUBLIC GitHub repo by
+# force-pushing a squashed snapshot of private/trunk's tree, so anything
+# committed here is a public disclosure.
+#
+# Measured 2026-08-16: 7 files under eval/ contained client identifiers, and
+# skills/dream/ was entirely untracked at the time -- the first `git add` of the
+# skill would have published them.
+#
+# RESULTS.md is the writeup and IS meant to be committed; ab-compare.py and
+# recall-check.py are code. Everything else here is derived data.
+runs/
+fixtures/
+*.jsonl

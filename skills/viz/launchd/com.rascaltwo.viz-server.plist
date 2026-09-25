@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.rascaltwo.viz-server</string>
+
+  <!-- launchd owns the viz dev server so it survives, and so the nightly job below can
+       simply kill it and let KeepAlive bring it back. A launchd job's backgrounded
+       children are reaped when the job exits, so the server must be the job itself. -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/YOUR-USER/.bun/bin/bun</string>
+    <string>server.ts</string>
+  </array>
+  <!-- Was explorables/skills/viz until 2026-08-17; the skill moved to ai-setup and the
+       job had been failing with exit 78 (EX_CONFIG) ever since, while the 04:00 restart
+       job dutifully kickstarted a job that could not start. -->
+  <key>WorkingDirectory</key>
+  <string>/Users/YOUR-USER/Desktop/Desktop/Code/ai-setup/skills/viz</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>5</integer>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/viz-server.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/viz-server.log</string>
+</dict>
+</plist>

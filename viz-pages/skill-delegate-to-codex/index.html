@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>delegate-to-codex — same work, someone else's meter</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:uid" content="v-f908ea7be02e">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="delegate-to-codex">
+<meta name="viz:description" content="Hands a task to the OpenAI Codex CLI headless — billed to your ChatGPT subscription, not your Claude tokens.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:page-kind" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card stays a fixed 1200×630 clip target (verify.ts --og shoots a 1200×630
+     viewport => --s resolves to 1 => the OG image is pixel-native). The only change
+     from the stock poster template: the page SCROLLS, so a deep dive lives below.
+
+     The gotcha this solves: transform:scale() does NOT shrink an element's layout
+     box, so a scaled card still reserves 630px of flow and leaves a dead gap.
+     Fix: scale from `top center` and drive #fit's height off the same --s.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+  #fit{}
+  .og-card{}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(900px 500px at 88% -10%, color-mix(in srgb, var(--c3) 22%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 110%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans); display:grid; grid-template-columns:1fr 400px; gap:44px; align-items:center; padding:60px 70px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--c3); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--c3);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--c3) 22%, transparent); }
+  h1.hook{ font-size:58px; line-height:1.04; margin:0 0 20px; letter-spacing:-1.5px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c3); }
+  p.sub{ font-size:19px; line-height:1.45; color:var(--muted); margin:0 0 26px; max-width:540px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--c3);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the meters = the "proof" slot */
+  .meters{ display:grid; gap:16px; }
+  .meter{ background:color-mix(in srgb, var(--panel) 78%, transparent); border:1px solid var(--border);
+          border-radius:14px; padding:17px 19px; }
+  .meter .lbl{ font-family:var(--mono); font-size:12.5px; letter-spacing:.1em; color:var(--muted); margin-bottom:8px; }
+  .meter .val{ font-size:25px; font-weight:700; letter-spacing:-.4px; margin-bottom:11px; }
+  .bar{ height:11px; border-radius:99px; background:var(--panel-2); overflow:hidden; }
+  .bar i{ display:block; height:100%; border-radius:99px; }
+  .meter.claude .val{ color:var(--good); }
+  .meter.claude .bar i{ width:2%; background:var(--good); }
+  .meter.gpt .val{ color:var(--c3); }
+  .meter.gpt .bar i{ width:100%; background:linear-gradient(90deg, color-mix(in srgb, var(--c3) 50%, transparent), var(--c3)); }
+  .meter .note{ margin-top:9px; font-size:12.5px; color:var(--muted); font-family:var(--mono); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--c3);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  /* ── poster standard: beat-4 table, beat-5 figure ── */
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .stage svg{ width:100%; height:auto; display:block; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--accent); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="delegate-to-codex" data-viz-id="poster-card" data-label="delegate-to-codex poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · DELEGATE-TO-CODEX</div>
+      <h1 class="hook">Same work.<br><em>Someone else's meter.</em></h1>
+      <p class="sub">Hands a scoped task to the <b>OpenAI Codex CLI</b>, running headless. It reads files, edits code, runs commands — and bills the whole thing to your <b>ChatGPT subscription</b>.</p>
+      <div class="trigger"><span>say</span>&nbsp;"delegate to codex"</div>
+    </div>
+    <div class="meters">
+      <div class="meter claude">
+        <div class="lbl">CLAUDE TOKENS</div>
+        <div class="val">~0 spent</div>
+        <div class="bar"><i></i></div>
+        <div class="note">quota + context preserved</div>
+      </div>
+      <div class="meter gpt">
+        <div class="lbl">BILLED TO</div>
+        <div class="val">ChatGPT sub</div>
+        <div class="bar"><i></i></div>
+        <div class="note">compute on OpenAI's dime</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">The problem</h2>
+  <p>Token-heavy work — a long refactor, a research sweep, six independent tasks — burns Claude quota and context on exactly the jobs that deserve it least. The work isn't hard, it's just <b>big</b>. And the free lunch won't last forever.</p>
+
+  <h2 data-beat="using">Reach for it when</h2>
+  <p class="m">Say "delegate to codex", "have codex do it", "offload this", "spawn a codex agent", "don't use my Claude tokens for this" — the transcriber's <em>code X</em>, <em>codecs</em> and <em>co-dex</em> all mean the same thing. Then:</p>
+  <ul>
+    <li>A task is <b>token-heavy or long-running</b> and quota matters.</li>
+    <li>You want an <b>independent second opinion</b> from a different model on a diff or a design.</li>
+    <li>Several <b>independent tasks</b> can fan out cheaply.</li>
+  </ul>
+  <p>Give it everything up front. Codex is a capable agent but <b>starts cold</b> — it has none of this conversation — so the prompt carries the goal, the definition of done, the exact file paths, and the working dir. And when the context is already a document, <b>pass the path, not the contents</b>: a <code>handoff</code> doc, a spec, an ADR. The artifact stays reviewable before launch, re-runnable after a bad turn, and handable to <code>claude --bg</code> instead without rewriting a word.</p>
+
+  <h2 data-beat="limits">Don't reach for it when</h2>
+  <ul>
+    <li>The user asked <b>Claude</b> to do it. Delegating isn't a loophole around the ask.</li>
+    <li>The job is trivial — the ~5–10s Codex startup is the floor, not a bug, and it costs more than it saves.</li>
+    <li>Codex isn't authenticated.</li>
+  </ul>
+  <p><b>There is no "ask before acting" in headless mode.</b> Approvals exist only in the interactive TUI; <code>exec</code> under the bypass flag never pauses before a risky action, it just does it. That is the price of an unattended run, and it is why the working dir is scoped with <code>-C</code>. To lock a call down instead, drop the bypass flag and use the graduated sandbox: <code>-s read-only</code>, <code>workspace-write</code>, or <code>danger-full-access</code>.</p>
+  <p class="m">It also can't be interrupted with a question mid-turn. If Codex needs something it <b>ends the turn and says so in its final message</b> — which is the mechanism that makes the resume loop necessary rather than optional.</p>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>The skill</td><td><code>skills/delegate-to-codex/SKILL.md</code> — the preflight, the invocation with every flag justified, the turn loop, structured output, and the distilled gotchas.</td></tr>
+    <tr><td>Declared</td><td><code>kind: skill</code>, <code>state: false</code>, <code>integrates: codex → headless exec subagent</code>, <code>requires: [codex]</code>.</td></tr>
+    <tr><td>Its state</td><td><b>None.</b> The skill keeps nothing between runs. <code>result.txt</code>, <code>events.jsonl</code> and any <code>schema.json</code> go in a scratch directory <em>you</em> name and can delete; nothing is written back into the setup.</td></tr>
+    <tr><td>Somebody else's state</td><td>Codex persists its own sessions, which is the only reason <code>codex exec resume</code> can recall a value set in a previous turn. <code>--ephemeral</code> opts out of that — and gives up resume with it.</td></tr>
+    <tr><td>Requires</td><td>The Codex CLI at <code>~/.local/bin/codex</code> (<code>codex --version</code>), authenticated with a <b>ChatGPT subscription</b>. It also loads your <code>~/.codex</code> skills on every run — a small context tax and an occasional "descriptions shortened" warning. Harmless.</td></tr>
+    <tr><td>Sits beside</td><td><code>handoff</code>, which writes the task to disk so this can pass a path · <code>claude --bg</code>, the same shape billed the other way · the <code>Agent</code> tool, which is this minus the different vendor.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">The turn</h2>
+  <p>Think of it as the <b>Agent tool, but the compute is on OpenAI's dime.</b> Codex runs as a headless sub-agent, does the real work, and hands back a result to relay. Because it authenticates with your ChatGPT subscription, none of it touches Claude tokens — that's the entire point.</p>
+  <p class="m">One delegation, from the preflight that proves the economics to the file the answer is read out of.</p>
+
+  <div class="fig" data-viz-id="turn-figure" data-label="diagram: preflight, one codex exec turn, collecting the final message, and the resume loop">
+    <div class="stage">
+      <svg viewBox="0 0 780 428" role="img" aria-label="Flow from codex login status through a codex exec call into Codex's own agent loop, out to result.txt, then branching to collect or to codex exec resume which loops back into the turn">
+        <defs>
+          <marker id="cx-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+          </marker>
+        </defs>
+        <g font-family="var(--mono)">
+          <rect x="20" y="6" width="380" height="50" rx="8" fill="#0e131b" stroke="var(--good)"/>
+          <text x="34" y="26" font-size="9.5" letter-spacing="1" fill="var(--good)">PREFLIGHT · ONCE PER SESSION</text>
+          <text x="34" y="46" font-size="11.5" fill="var(--text)">codex login status → "Logged in using ChatGPT"</text>
+
+          <rect x="420" y="6" width="340" height="50" rx="8" fill="#0e131b" stroke="var(--warn)" stroke-dasharray="4 3"/>
+          <text x="434" y="26" font-size="11" fill="var(--text)">logged in with an API key instead?</text>
+          <text x="434" y="43" font-size="11" fill="var(--muted)">real OpenAI money — flagged, never assumed</text>
+
+          <line x1="210" y1="56" x2="210" y2="74" stroke="var(--muted)" marker-end="url(#cx-a)"/>
+
+          <rect x="20" y="76" width="380" height="104" rx="8" fill="#0e131b" stroke="var(--accent)"/>
+          <text x="34" y="96" font-size="9.5" letter-spacing="1" fill="var(--accent)">CODEX EXEC — THE CORE INVOCATION</text>
+          <text x="34" y="118" font-size="11" fill="var(--text)">--dangerously-bypass-approvals-and-sandbox</text>
+          <text x="34" y="136" font-size="11" fill="var(--text)">--skip-git-repo-check   -C &lt;working-dir&gt;</text>
+          <text x="34" y="154" font-size="11" fill="var(--text)">--output-last-message &lt;scratch&gt;/result.txt</text>
+          <text x="34" y="172" font-size="11" fill="var(--danger)">&lt; /dev/null   ← or it blocks on stdin, forever</text>
+
+          <line x1="400" y1="128" x2="416" y2="128" stroke="var(--muted)" marker-end="url(#cx-a)"/>
+
+          <rect x="420" y="76" width="340" height="104" rx="8" fill="#0e131b" stroke="var(--c5)"/>
+          <text x="434" y="96" font-size="9.5" letter-spacing="1" fill="var(--c5)">ONE CALL = ONE FULL TURN</text>
+          <text x="434" y="118" font-size="11" fill="var(--text)">Codex runs its own agent loop:</text>
+          <text x="434" y="136" font-size="11" fill="var(--muted)">read · run · edit · re-check · recover</text>
+          <text x="434" y="154" font-size="11" fill="var(--muted)">a failed command goes back to Codex,</text>
+          <text x="434" y="172" font-size="11" fill="var(--muted)">not to you. it never blocks on a human.</text>
+
+          <line x1="210" y1="180" x2="210" y2="200" stroke="var(--muted)" marker-end="url(#cx-a)"/>
+
+          <rect x="20" y="202" width="740" height="46" rx="8" fill="#0e131b" stroke="var(--good)"/>
+          <text x="34" y="222" font-size="12" fill="#fff">the final message → &lt;scratch&gt;/result.txt</text>
+          <text x="34" y="240" font-size="11" fill="var(--muted)">clean. never scrape stdout — it carries banners, token counts, --json events</text>
+
+          <line x1="390" y1="248" x2="390" y2="268" stroke="var(--muted)" marker-end="url(#cx-a)"/>
+
+          <rect x="180" y="270" width="420" height="36" rx="8" fill="#0e131b" stroke="var(--border)"/>
+          <text x="194" y="293" font-size="12" fill="var(--text)">done — or did it end the turn asking for something?</text>
+
+          <line x1="230" y1="306" x2="230" y2="326" stroke="var(--good)" marker-end="url(#cx-a)"/>
+          <line x1="550" y1="306" x2="550" y2="326" stroke="var(--warn)" marker-end="url(#cx-a)"/>
+
+          <rect x="20" y="328" width="340" height="44" rx="8" fill="#0e131b" stroke="var(--good)"/>
+          <text x="34" y="346" font-size="11.5" fill="#fff">collect it, relay it, act on it</text>
+          <text x="34" y="363" font-size="11" fill="var(--muted)">--output-schema makes this a typed object</text>
+
+          <rect x="400" y="328" width="340" height="44" rx="8" fill="#0e131b" stroke="var(--warn)"/>
+          <text x="414" y="346" font-size="11" fill="#fff">codex exec resume &lt;thread_id&gt; "&lt;answer&gt;"</text>
+          <text x="414" y="363" font-size="11" fill="var(--muted)">same session, full memory. Claude answers.</text>
+
+          <polyline points="740,350 766,350 766,128 764,128" fill="none" stroke="var(--warn)" stroke-dasharray="4 3" marker-end="url(#cx-a)"/>
+
+          <rect x="20" y="384" width="740" height="38" rx="8" fill="#0e131b" stroke="var(--border)" stroke-dasharray="4 3"/>
+          <text x="34" y="408" font-size="11" fill="var(--muted)">fan out: N background calls, separate result files — zero Claude tokens, wall-clock of the slowest</text>
+        </g>
+      </svg>
+    </div>
+    <p class="lede">The loop on the right is the part that isn't obvious. <b>One <code>codex exec</code> is a whole autonomous turn</b>, not one action — and when Codex needs a decision it doesn't hang, it finishes and says so, leaving Claude Code to answer on your behalf and <code>resume</code> the same session.</p>
+  </div>
+
+  <h3>The receipt</h3>
+  <p class="m">One preflight proves the whole premise — if it doesn't say ChatGPT, the economics don't hold:</p>
+  <pre><span class="c"># want: "Logged in using ChatGPT" → billed to ChatGPT, not Claude</span>
+codex login status</pre>
+
+  <div class="callout"><b>The catch:</b> logged in with an <b>API key</b> instead? Then it spends real OpenAI money. The saving still holds against Claude, but that's a different trade — so it gets flagged, never assumed.</div>
+
+  <h3>Why each flag is there</h3>
+  <ul>
+    <li><code>&lt; /dev/null</code> — <b>the #1 gotcha.</b> Without stdin redirected, <code>codex exec</code> blocks on "Reading additional input from stdin…" and hangs forever.</li>
+    <li><code>--output-last-message &lt;file&gt;</code> — the clean way to collect the answer. Stdout carries banners, token counts and, with <code>--json</code>, a full event stream.</li>
+    <li><code>--dangerously-bypass-hook-trust</code> — skips the first-run "trust this hook?" prompt. Without it, a headless run can hang on an untrusted lifecycle hook.</li>
+    <li><code>--skip-git-repo-check</code> — lets Codex run outside a git repo, harmless inside one. <code>-C &lt;dir&gt;</code> sets the root the task is about.</li>
+    <li><code>-a</code> / <code>--ask-for-approval</code> is <b>not an <code>exec</code> flag</b> — it's top-level only, because <code>exec</code> is non-interactive by design.</li>
+  </ul>
+  <p class="m">Two cheap variants: <code>-m gpt-5.5</code> to pin a model, and <code>--oss --local-provider ollama</code> to run against a local model instead — literally zero cost, weaker output, good for bulk.</p>
+
+  <h3>Getting a typed result back</h3>
+  <p>Pass <code>--output-schema</code> and <code>result.json</code> comes back as exactly that shape — the equivalent of the <code>Agent</code> tool's schema. Pair it with a <code>status</code> field and the resume loop stops being prose-parsing:</p>
+  <pre>{ "status": "done" | "needs_input", "question": "…", "result": "…" }</pre>
+  <div class="callout"><b>Strict mode bites immediately.</b> Codex enforces OpenAI <em>strict</em> structured output: every object needs <code>"additionalProperties": false</code> and <b>every</b> property listed in <code>required</code>, or the call dies with a 400 <code>invalid_json_schema</code> before doing any work at all.</div>
+
+  <h3>Watching a long one</h3>
+  <p>Add <code>--json</code> and tee it to a log: each line is an event, and the <code>command_execution</code> events show exactly which shell commands Codex ran. For long delegations, launch in the background and poll the log rather than blocking — and grab the <code>thread.started</code> event's <code>thread_id</code> if you intend to resume, or skip the id entirely with <code>codex exec resume --last</code>.</p>
+  <p class="m">On resume, options go <em>before</em> the positional <code>&lt;thread_id&gt;</code> and prompt, and <code>-C</code> is not a resume flag — the working dir is inherited from the original session.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>
