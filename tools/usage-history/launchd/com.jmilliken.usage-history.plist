@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  usage-history: snapshot the account's rate-limit windows.
+
+  WHY A POLLER AND NOT JUST THE STATUSLINE HOOK: the statusline only renders while
+  Claude Code runs, and a window that opens, burns and resets while it is closed
+  would leave no trace. Utilisation zeroes at the boundary rather than carrying
+  over, so anything unsampled before a reset is lost, not deferred.
+
+  WHY EVERY 5 MINUTES FOR A 15-MINUTE JOB: the script self-throttles. A tick is a
+  no-op unless 15 minutes have passed OR a window resets within 6 minutes. The
+  short interval buys boundary accuracy without a second scheduled job; a tick
+  that does nothing costs one python startup.
+
+  TCC (see skills/dream/launchd/com.rascaltwo.dream.plist for the long version):
+  this script lives under ~/Desktop, a protected folder, and a LaunchAgent's
+  program is its own responsible process. Verified on this machine by
+  `launchctl kickstart -k` -> LastExitStatus 0 with a record written, so the
+  Homebrew python3 named below holds the grant. If this job ever starts failing
+  silently after a Homebrew reinstall, that grant is the first thing to check.
+
+  Install (the user opts in; install.ts does not load this automatically):
+      sed "s|/Users/YOUR-USER|$HOME|g" com.jmilliken.usage-history.plist \
+        > ~/Library/LaunchAgents/com.jmilliken.usage-history.plist
+      launchctl load -w ~/Library/LaunchAgents/com.jmilliken.usage-history.plist
+-->
+<plist version="1.0">
+<!-- Paths are checked in as /Users/YOUR-USER/... — launchd does not expand $HOME,
+     and a real one would publish a username. Substitute before installing. -->
+<dict>
+    <key>Label</key>
+    <string>com.jmilliken.usage-history</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/python3</string>
+        <string>/Users/YOUR-USER/.agents/ai-setup/tools/usage-history/usage-poll.py</string>
+    </array>
+
+    <key>StartInterval</key>
+    <integer>300</integer>
+
+    <!-- The first snapshot after a reboot should not wait for the first tick. -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- launchd gives a job a minimal PATH; `security` (keychain) is in /usr/bin. -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR-USER/.agents/state/usage-history/claude-code/launchd.err</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+    <key>LowPriorityIO</key>
+    <true/>
+    <key>Nice</key>
+    <integer>5</integer>
+</dict>
+</plist>

@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>port-terraform-provider-to-ansible — apply twice, empty plan. run twice, changed=false.</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:uid" content="v-30b3ea555513">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="port-terraform-provider-to-ansible">
+<meta name="viz:description" content="Ports a Terraform provider into a greenfield Ansible collection — one module per resource, one *_info per data source, and hand-built idempotency, check-mode and diff proven by live acceptance tests.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:page-kind" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c5) 15%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c4) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 476px; gap:38px; align-items:center; padding:54px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:13px;
+            letter-spacing:.13em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:50px; line-height:1.06; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c5); }
+  h1.hook code{ font-family:var(--mono); font-size:44px; letter-spacing:-1px; }
+  p.sub{ font-size:17.5px; line-height:1.47; color:var(--muted); margin:0 0 18px; max-width:540px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  p.sub code{ font-family:var(--mono); font-size:16px; color:var(--text); }
+  .not{ font-size:14px; line-height:1.5; color:var(--muted); margin:0 0 18px; max-width:540px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the lifecycle ledger = the "proof" slot. Terraform proves idempotency with an
+     empty second plan; here the same guarantee is a column of changed / NOT-changed
+     verdicts the module has to earn by hand. Row 2 is the whole argument. */
+  .cap{ font-family:var(--mono); font-size:11.5px; letter-spacing:.13em; color:var(--muted); margin-bottom:11px; }
+  .cap b{ color:var(--accent); }
+  .ledger{ display:flex; flex-direction:column; gap:5px; }
+  .row{ display:grid; grid-template-columns:1fr 116px; gap:10px; align-items:center;
+        background:color-mix(in srgb, var(--panel) 72%, transparent); border:1px solid var(--border);
+        border-radius:9px; padding:8px 12px; }
+  .row .step{ font-family:var(--mono); font-size:13px; color:var(--text); }
+  .row .why{ display:block; font-family:var(--sans); font-size:11.5px; color:var(--muted); margin-top:2px; }
+  .v{ font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-align:center;
+      border-radius:99px; padding:3px 0; }
+  .row.ch .v{ color:var(--c4); background:color-mix(in srgb, var(--c4) 13%, transparent);
+              border:1px solid color-mix(in srgb, var(--c4) 42%, transparent); }
+  .row.nc .v{ color:var(--c5); background:color-mix(in srgb, var(--c5) 13%, transparent);
+              border:1px solid color-mix(in srgb, var(--c5) 42%, transparent); }
+  .row.oracle{ border-color:color-mix(in srgb, var(--c5) 60%, transparent);
+               box-shadow:0 0 0 3px color-mix(in srgb, var(--c5) 13%, transparent); }
+  .row.oracle .step{ color:var(--c5); }
+  .row.dry{ border-style:dashed; }
+  .pfoot{ font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; color:var(--faint);
+          margin-top:11px; line-height:1.5; }
+  .pfoot b{ color:var(--c5); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  .dive code{ font-family:var(--mono); font-size:14.5px; color:var(--c5); }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  /* ── poster-standard dive additions: h3 under a beat, the where table, the figure ── */
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); border-bottom:none; color:var(--text);
+                  padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--c5); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="port-terraform-provider-to-ansible" data-viz-id="poster-card" data-label="port-terraform-provider-to-ansible poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · PORT-TERRAFORM-PROVIDER-TO-ANSIBLE</div>
+      <h1 class="hook">Apply twice, empty plan.<br><em>Run twice,<br><code>changed=false</code>.</em></h1>
+      <p class="sub">A Terraform provider proves itself with an empty second plan. The Ansible port has to earn the same guarantee <b>by hand</b> — one module per resource, one <code>*_info</code> per data source, and a single present/absent engine so <b>check-mode and <code>--diff</code> are solved once</b> rather than per module.</p>
+      <p class="not">Plan/state mechanics don't port. <b>import</b>, write-only <b>*_wo</b> attrs, regenerate-triggers — each non-port documented in the module docs.</p>
+      <div class="trigger"><span>say</span>&nbsp;"build an ansible collection for X"</div>
+    </div>
+    <div>
+      <div class="cap">THE CONTRACT EVERY MODULE ASSERTS &nbsp;·&nbsp; <b>LIVE SERVER</b></div>
+      <div class="ledger">
+        <div class="row ch">
+          <span class="step">create<span class="why">end_state correct</span></span>
+          <span class="v">CHANGED</span>
+        </div>
+        <div class="row nc oracle">
+          <span class="step">identical re-run<span class="why">← the oracle. never weaken it.</span></span>
+          <span class="v">NOT CHANGED</span>
+        </div>
+        <div class="row ch dry">
+          <span class="step">check-mode update<span class="why">diff shows the delta AND the server is not mutated</span></span>
+          <span class="v">CHANGED</span>
+        </div>
+        <div class="row ch">
+          <span class="step">real update<span class="why">end_state reflects it</span></span>
+          <span class="v">CHANGED</span>
+        </div>
+        <div class="row ch">
+          <span class="step">state: absent</span>
+          <span class="v">CHANGED</span>
+        </div>
+        <div class="row nc">
+          <span class="step">absent re-run</span>
+          <span class="v">NOT CHANGED</span>
+        </div>
+      </div>
+      <div class="pfoot">IF ROW 2 REPORTS CHANGED, <b>THE MODULE IS WRONG</b> — THE SERVER<br>NORMALIZED SOMETHING AND THE COMPARISON MUST NORMALIZE TOO.</div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">Port, don't invent</h2>
+  <p>A mature Terraform provider is years of pre-discovered knowledge: every schema field, every API quirk, every server-side normalization is already encoded in its Go source. <b>The provider is the spec — read it, don't rediscover it.</b> Providers are also the ecosystem's shared source of truth (Pulumi bridges them, Crossplane upjet-generates from them), so porting one ports the industry's best knowledge of that API.</p>
+  <p class="m">The workflow is battle-tested on one port: <code>terraform-provider-keycloak</code> → <b>131/131 surface parity</b> (109 resources + 22 data sources), every module live-acceptance-tested, in roughly two hours of orchestrated agent time.</p>
+
+  <h2 data-beat="using">You invoke it. It never invokes itself.</h2>
+  <p>The manifest carries <code>disable-model-invocation: true</code>, so nothing about a conversation makes this fire — it starts when you name it: <em>"port the provider"</em>, <em>"build an Ansible collection for X"</em>, <em>"Ansible can't manage X natively"</em>. That gate is deliberate. This is a multi-hour orchestration that clones a repo, writes a collection and fans agents out in parallel; it is not something that should happen because someone mentioned Ansible.</p>
+  <p class="m">It handles a <b>partial port</b> too — resuming a collection that already covers half the surface — and Phase 0 ends by confirming scope with you: full parity or a subset, where the repo lives, what the collection namespace is.</p>
+
+  <h2 data-beat="limits">The limits, stated out loud</h2>
+  <p>The test target is a <b>local container, full stop</b> — a script in the repo owns start, healthcheck, bootstrap credentials and env file. Pointing the suite at a deployed instance was measured at roughly <b>5× slower per run</b> (WAN+TLS on every call), and the suite dies when that instance does. The only exception is a service that genuinely cannot be containerised, and then that limitation goes in <code>PARITY.md</code> in bold.</p>
+  <p>The per-module lifecycle is about <b>one fifth</b> of a mature provider's permutation depth — providers accrete per-field update cases over years. Closing that gap means porting the provider's own <code>resource_*_test.go</code> files scenario by scenario, which costs about as much as the module port itself and multiplies suite runtime. Measured-PoC: lifecycle tests suffice and the depth gap is stated honestly. Owned product: port the suite.</p>
+  <ul>
+    <li><b>Terraform plan and state mechanics do not port.</b> <code>import</code>, write-only <code>*_wo</code> attributes and regenerate-triggers have no Ansible meaning; each non-port is documented in the module docs rather than faked.</li>
+    <li><b>Untestable is allowed, unevidenced is not.</b> A resource that can't run on this server is acceptable only with the <b>captured server error</b> attached — a feature gate, a server-side file, a removed feature.</li>
+    <li><b>The port is a derivative.</b> It carries the provider's licence (usually Apache or MPL) plus a NOTICE crediting it. That is a Phase 0 decision, not a shipping afterthought.</li>
+  </ul>
+  <div class="callout"><b>The deliverables are usually the point.</b> <code>EFFORT.md</code> and <code>PARITY.md</code> carry the caveats the numbers don't: AI-minutes are not human-months, porting a <em>mature</em> provider is easy mode because the quirks were pre-discovered, and ownership — CI, releases, API drift — is a recurring cost the build does nothing to reduce.</div>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>Integrates</td><td><b>A Terraform provider's Go source, read as the spec</b> — not its docs, not its registry page — and <b>Ansible</b>, as a generated greenfield collection.</td></tr>
+    <tr><td>Requires</td><td><code>docker</code> (the test target is always a local container) and <code>ansible</code>. Terraform itself is optional but strongly preferred: <code>terraform providers schema -json</code> is the exact parity oracle, and without it you fall back to a static Go parse.</td></tr>
+    <tr><td>What ships with it</td><td>Four reference files it reads on demand rather than up front — <code>references/framework.md</code> (the 318-line shared layer, verbatim), <code>references/fanout.md</code> (agent prompt template, family grouping, result schema), <code>references/testing.md</code>, <code>references/gotchas.md</code> — plus one executable: <code>scripts/field-parity-audit.py</code>.</td></tr>
+    <tr><td>Where the output goes</td><td>Into <b>a repo you name</b>: <code>galaxy.yml</code>, <code>meta/runtime.yml</code>, <code>plugins/module_utils/</code>, <code>plugins/modules/</code>, <code>EFFORT.md</code>, <code>PARITY.md</code>. The skill produces a project; it does not install anything into your environment.</td></tr>
+    <tr><td>Its state</td><td><b>None.</b> It <b>keeps nothing between runs</b> — no ledger of past ports, no cached provider checkout, nothing under <code>~/.agents/state/</code>. Resuming a partial port works by reading the half-built collection in front of it, not by remembering the last session.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">Eight phases, and the shared layer that makes them cheap</h2>
+  <p class="m">One provider repo to a collection with a measured parity claim, in the order the skill actually runs it.</p>
+
+  <div class="fig" data-viz-id="ansible-figure" data-label="stepper: recon to deliverables, phase by phase">
+    <div class="stage" id="stage"></div>
+    <p class="lede" id="lede"></p>
+    <div class="ctrl">
+      <button id="prev" aria-label="previous step">‹ back</button>
+      <button id="play">▶ play</button>
+      <button id="next" aria-label="next step">next ›</button>
+      <span class="pos" id="pos"></span>
+      <span class="hint">← → arrow keys</span>
+    </div>
+  </div>
+
+  <h3>The shape Ansible forces on it</h3>
+  <p>Resources become modules; data sources become <code>*_info</code> modules — read-only, plain <code>AnsibleModule</code> plus the API client, <code>changed=False</code>, <code>supports_check_mode=True</code>. The trap is the miss case: <b>port each data source's miss semantics from its Go read path</b>. Some return empty state on a 404, some hard-error with specific messages. Get it per-resource; there is no convention to guess. Secrets get stripped from returns even where the provider exposes them as Sensitive attributes.</p>
+  <p>Everything a plan/state engine would have handled is hand-built <b>once</b>, in a shared layer written by hand before any fan-out — 318 lines in the reference port, across three files:</p>
+  <ul>
+    <li><code>plugins/module_utils/&lt;service&gt;_api.py</code> — the provider's client, ported: its auth grants, <b>re-login-once-and-retry on 401</b> (providers do this, and long runs need it), JSON verbs relative to the API base, created-id capture, safe error extraction. Built on <code>ansible.module_utils.urls.open_url</code>, because a collection must not require <code>requests</code>.</li>
+    <li><code>plugins/module_utils/resource.py</code> — a present/absent engine taking <code>read() / desired() / create() / update() / delete()</code> hooks, so check-mode and <code>--diff</code> are implemented once for every module. Declared-fields-only comparison, <code>SET_FIELDS</code> for order-insensitive lists, <code>sanitize()</code> for secrets.</li>
+    <li><code>plugins/doc_fragments/&lt;service&gt;.py</code> — the auth options, so every module's docs inherit them instead of repeating them.</li>
+  </ul>
+  <div class="callout"><b>Register every module name before writing any of them.</b> The whole <code>action_groups</code> block in <code>meta/runtime.yml</code> is generated from the resource file list up front. Playbooks then set auth once via <code>module_defaults: group/&lt;ns&gt;.&lt;name&gt;.&lt;group&gt;</code>, and no fan-out agent ever edits a shared file — with 16 parallel writers, merge collisions are otherwise guaranteed.</div>
+
+  <h3>What actually makes a module flap</h3>
+  <p class="m">Idempotency fails in specific, boring, expensive ways — each one a day a from-scratch team loses:</p>
+  <ul>
+    <li><b>Quoted booleans.</b> Component-style configs store booleans as the strings <code>"true"</code>/<code>"false"</code>; Python's <code>str(True)</code> is <code>"True"</code> → permanent flapping until explicitly mapped.</li>
+    <li><b>Masked secrets.</b> Servers echo <code>**********</code> back, so a secret-only change is <b>undetectable</b>. The provider has the same limitation (DiffSuppress) — keep secrets out of the comparison and inject them at write.</li>
+    <li><b>Server-added fields</b> you never sent → compare declared fields only, and send existing-merged-with-desired on update.</li>
+    <li><b>Order-nonpreserving multivalued config</b> → compare order-insensitively, or flap forever.</li>
+    <li><b>Durations the provider exposes as strings</b> become integer seconds, because seconds are the API's native unit and the string is a Terraform-side convenience.</li>
+  </ul>
+  <p>The rule the fan-out agents get: server normalizations are normalized <b>in the module</b>. Never weaken the idempotency test to make it pass. The oracle mirrors how providers test themselves — apply twice, and the second run <b>must</b> report <code>changed=false</code> — extended into a full cycle: create → identical re-run → check-mode update with the diff asserted and no server mutation → real update → absent → absent re-run not-changed.</p>
+
+  <h3>Two Ansible-only paper cuts</h3>
+  <p class="m">Neither exists in the provider, both bite in the port. Ansible's <code>no_log</code> heuristic fires on any option name containing <code>password</code> or <code>secret</code> — <code>reset_password_allowed</code> and <code>password_policy</code> trip the warning and need <code>no_log=False</code> set explicitly. And a return key literally named <code>keys</code> collides with <code>dict.keys()</code> in Jinja, forcing <code>result['keys']</code> bracket access in every playbook; pick a different key name.</p>
+
+  <h3>Prove parity, don't claim it</h3>
+  <p>The preferred oracle isn't the Go source, it's Terraform itself: <code>terraform providers schema -json</code> dumps every resource's and data source's final <em>composed</em> schema, and <code>scripts/field-parity-audit.py --schema-json</code> diffs the collection against it. The module side is read with Python's <code>ast</code> — <code>argument_spec</code> keys pulled straight out of the syntax tree, unioned with the <code>options:</code> keys in the module's <code>DOCUMENTATION</code> block — so the audit compares what the module <em>declares</em>, not what it documents.</p>
+  <p>Three exclusion lists keep it honest rather than noisy: <code>EQUIV</code> maps renamed fields (<code>realm_id</code> → <code>realm</code>), <code>IGNORE_GO</code> drops the Terraform-only mechanics (<code>import</code>, <code>client_secret_wo</code>, <code>client_secret_wo_version</code>, <code>client_secret_regenerate_when_changed</code>), and <code>DS_ARTIFACTS</code> records, <b>per data source and with the Go line number that proves it</b>, fields declared optional that the read path never actually reads. Computed-only fields are excluded outright: they are outputs, and they land in <code>end_state</code> rather than in options.</p>
+  <p class="m">Expect to discover <b>legacy alias registrations</b> in the provider's resource map — serve those as <code>plugin_routing</code> redirects, not duplicate modules. If the registry release lags the HEAD you ported, the dump misses the HEAD-only resources; the fallback is <code>--provider-src</code>, a static Go parse whose composed schemas come back <code>NEEDS-MANUAL</code> for a small agent wave to resolve with evidence. And when the audit finds real gaps, <b>expect your own hand-built exemplars to be the guilty ones</b> — they were written before the patterns were known.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence. Siblings: <a href="../skill-port-terraform-provider-to-k8s-operator/">Kubernetes operator</a> · <a href="../skill-port-terraform-provider-to-powershell-dsc/">PowerShell DSC</a>.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+<script type="module">
+  import { stepper, $ } from "/_kit/viz.js";
+
+  const S = [
+    { t: "0 · RECON AND SCOPE",
+      rows: [["ls provider/resource_*.go | grep -v _test | wc -l", "the surface", "ok"],
+             ["the client layer (*_client.go)", "grants, 401 retry, id capture", "ok"],
+             ["their CI + Makefile", "how they test", "ok"],
+             ["a remote instance as the target", "never", "bad"]],
+      lede: "Ten minutes, inline. The counts become the denominator of every parity claim, and the provider's own CI is the template for the test harness." },
+    { t: "1 · FRAMEWORK, BY HAND",
+      rows: [["&lt;service&gt;_api.py", "open_url, not requests", "ok"],
+             ["resource.py", "present/absent engine", "ok"],
+             ["meta/runtime.yml action_groups", "EVERY name, up front", "ok"],
+             ["318 lines", "copied 100×", "ok"]],
+      lede: "Small, and written by you. Every fan-out agent copies these patterns, so quality here multiplies — and pre-registering names means no agent ever edits a shared file." },
+    { t: "2 · EXEMPLARS, GREEN FIRST",
+      rows: [["one simple CRUD", "e.g. group", "ok"],
+             ["one with sub-resource sync", "role + composites", "ok"],
+             ["one big-schema core resource", "partial is fine", "ok"],
+             ["scripts/run-tests.sh", "green before fan-out", "ok"]],
+      lede: "The exemplars <b>are</b> the spec for the fan-out. Agents copy them, so a flaw here is copied a hundred times — which is the whole reason they go first." },
+    { t: "3 · FAN OUT BY FAMILY",
+      rows: [["families of ~4–13 resources", "one agent each", "ok"],
+             ["protocol mappers after clients", "dependency-chained", "ok"],
+             ["LDAP mappers after federation", "dependency-chained", "ok"],
+             ["independent families", "start immediately", "ok"]],
+      lede: "Launched through the Workflow tool with the chain declared up front. Each agent returns a structured result including its <b>quirks harvest</b> — the evidence behind the effort ledger." },
+    { t: "4 · DATA SOURCES → *_info",
+      rows: [["changed=False", "always", "ok"],
+             ["supports_check_mode=True", "always", "ok"],
+             ["404 → empty state, or hard error?", "read the Go, per resource", "bad"],
+             ["Sensitive attributes", "stripped anyway", "ok"]],
+      lede: "Miss semantics are the trap: some data sources return empty state on a 404 and some hard-error with a specific message. There is no convention to guess." },
+    { t: "5 · PROVE PARITY",
+      rows: [["terraform providers schema -json", "composed schemas", "ok"],
+             ["field-parity-audit.py --schema-json", "ast vs schema", "ok"],
+             ["Computed-only fields", "outputs, excluded", "ok"],
+             ["registry lags your HEAD", "--provider-src → NEEDS-MANUAL", "bad"]],
+      lede: "The oracle is Terraform, not the Go — it dumps the <em>composed</em> schema. Expect your hand-built exemplars to be the guilty ones; they predate the patterns." },
+    { t: "6 · MIRROR THEIR TESTS",
+      rows: [["resource_*_test.go", "the real behavior spec", "ok"],
+             ["config A → apply → assert → config B", "per scenario", "ok"],
+             ["cost", "≈ the module port itself", "bad"],
+             ["measured-PoC", "lifecycle only, say so", "ok"]],
+      lede: "Years of per-field update permutations live in those files. Porting them is the difference between lifecycle coverage and real behavior parity — and it is not free." },
+    { t: "7 · VERIFY AND SHIP",
+      rows: [["sequential sweep, every family", "exit 0", "ok"],
+             ["replay a real end-to-end scenario", "round-2 fully idempotent", "ok"],
+             ["EFFORT.md + PARITY.md", "the actual deliverable", "ok"]],
+      lede: "The docs are usually the point. They carry what the numbers can't: AI-minutes are not human-months, and ownership is the recurring cost nothing here reduces." },
+  ];
+
+  const stage = $("#stage"), lede = $("#lede"), pos = $("#pos");
+  const render = (i) => {
+    const s = S[i];
+    stage.innerHTML =
+      `<div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--c4);margin-bottom:12px">${i + 1} · ${s.t}</div>` +
+      s.rows.map(([k, v, st]) => `
+        <div style="display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:13px;
+                    padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text)">${k}</span>
+          <span style="color:${st === "ok" ? "var(--good)" : "var(--danger)"};white-space:nowrap">${st === "ok" ? "✓" : "✗"} ${v}</span>
+        </div>`).join("");
+    lede.innerHTML = s.lede;
+    pos.textContent = `${i + 1} / ${S.length}`;
+  };
+
+  const st = stepper({ n: S.length, onStep: render, autoplayMs: 2800, hashKey: "phase" });
+  $("#next").onclick = () => st.next();
+  $("#prev").onclick = () => st.prev();
+  const play = $("#play");
+  let on = false;
+  play.onclick = () => { on = !on; on ? st.play() : st.pause(); play.textContent = on ? "❚❚ pause" : "▶ play"; };
+  for (const el of [$("#next"), $("#prev")])
+    el.addEventListener("click", () => { on = false; play.textContent = "▶ play"; });
+</script>
+</body>
+</html>

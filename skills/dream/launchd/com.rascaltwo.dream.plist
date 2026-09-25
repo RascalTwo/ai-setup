@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  dream: nightly consolidation job.
+
+  WAKE / CATCH-UP BEHAVIOUR (verified from `man launchd.plist` on this machine,
+  macOS 26.3.1, launchd 7.0.0 -- quoted, not assumed):
+
+      "Unlike cron which skips job invocations when the computer is asleep,
+       launchd will start the job the next time the computer wakes up. If
+       multiple intervals transpire before the computer is woken, those events
+       will be coalesced into one event upon wake from sleep."
+
+  This machine sleeps at night (sleep 1 / standby 1 / powernap 1), so the 03:17
+  trigger will usually fire on the next wake rather than at 03:17 itself. That
+  is fine and is why nightly.sh is idempotent: coalescing means AT MOST one
+  catch-up run, never a backlog of them.
+
+  Deliberately NO RunAtLoad: loading the job should not kick off a dream.
+  Deliberately NO StartInterval: it is evaluated independently of
+  StartCalendarInterval and would double-fire.
+
+  Minute is 17, not 0, to avoid the on-the-hour thundering herd of every other
+  scheduled job on the system.
+
+  Install (do NOT run automatically -- the user opts in):
+      ln -sfn ~/Desktop/Desktop/Code/ai-setup/skills/dream/launchd/com.rascaltwo.dream.plist \
+              ~/Library/LaunchAgents/com.rascaltwo.dream.plist
+      launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.rascaltwo.dream.plist
+-->
+<plist version="1.0">
+<!-- Paths are checked in as /Users/YOUR-USER/... — launchd does not expand $HOME, and a
+     real one would publish a username. Substitute before installing:
+     sed "s|/Users/YOUR-USER|$HOME|g" com.rascaltwo.dream.plist > ~/Library/LaunchAgents/com.rascaltwo.dream.plist -->
+<dict>
+    <key>Label</key>
+    <string>com.rascaltwo.dream</string>
+
+    <!-- TCC shim (2026-09-06). This job ran /bin/bash on nightly.sh directly and
+         died EPERM every night for 21 nights (2026-08-17..09-06), silently: the
+         skill lives under ~/Desktop, a TCC-protected folder, and a LaunchAgent's
+         program is its OWN responsible process. /bin/bash holds no Desktop grant.
+         Verified by launchd probe: /bin/bash EPERM, granted bun exit 0,
+         ungranted /usr/bin/python3 EPERM (control) -- it is the grant, not the
+         interpreter. Grants ARE inherited by children, so bun launches and the
+         whole bash/python/git/claude chain rides its grant.
+         The runner is machine-local (hard-codes $HOME), like this plist. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/YOUR-USER/.bun/bin/bun</string>
+        <string>run</string>
+        <string>/Users/YOUR-USER/.local/share/dream/nightly-runner.ts</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>3</integer>
+        <key>Minute</key>
+        <integer>17</integer>
+    </dict>
+
+    <!-- launchd creates these FILES but not their parent directory; state/logs
+         is created by nightly.sh and must exist before the job is loaded. -->
+    <key>StandardOutPath</key>
+    <string>/Users/YOUR-USER/Desktop/Desktop/Code/ai-setup/skills/dream/state/logs/nightly.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR-USER/Desktop/Desktop/Code/ai-setup/skills/dream/state/logs/nightly.err.log</string>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/YOUR-USER/Desktop/Desktop/Code/ai-setup/skills/dream</string>
+
+    <!-- launchd gives a job a minimal PATH; python3 and git live in Homebrew. -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <!-- Batch work: yield CPU and I/O to anything interactive. -->
+    <key>ProcessType</key>
+    <string>Background</string>
+    <key>LowPriorityIO</key>
+    <true/>
+    <key>Nice</key>
+    <integer>5</integer>
+
+    <!-- A dream that somehow hangs must not sit on the lock forever. -->
+    <key>ExitTimeOut</key>
+    <integer>60</integer>
+</dict>
+</plist>

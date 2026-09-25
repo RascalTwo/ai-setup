@@ -1,0 +1,66 @@
+#!/bin/sh
+# watch-tick -- ONE pass of the fleet watch. Prints a line per thing the user
+# should hear about, prints nothing when nothing changed, and exits.
+#
+# The looping lives in the Monitor command, not here, and that is the whole
+# point: a `while true` loop is read into the shell's memory once, so editing a
+# script that contains its own loop changes nothing until the monitor is
+# restarted. A script that does one pass and exits is re-executed every tick,
+# so edits here take effect on the next tick with no restart. Same reason the
+# tick can call `fleet` and pick up changes to it immediately.
+#
+# Arm it with:
+#   while true; do sleep 5; ~/.claude/skills/fleet/watch-tick; done
+#
+# Consequence of being a fresh process each tick: nothing can live in a shell
+# variable between ticks. Both pieces of memory are files.
+
+set -u
+DIR="${TMPDIR:-/tmp}"
+SEEN="$DIR/fleet-watch.seen"      # episode keys already announced
+PREV="$DIR/fleet-watch.labels"    # labels present on the previous tick
+STATE="$HOME/.agents/state/fleet/state"
+
+# Never truncate SEEN. It persists across arms and across sessions on purpose:
+# the manager's own report covers who is waiting now, and the watch covers what
+# changes after that. Truncating makes every arm re-announce the whole backlog.
+[ -e "$SEEN" ] || : > "$SEEN"
+
+snap=$(~/.claude/skills/fleet/fleet 2>/dev/null) || exit 0
+[ -n "$snap" ] || exit 0
+
+# A pane that vanished writes no state file, so a change-only watch is silent
+# in exactly the case that matters most. Diff the label set to catch it.
+cur=$(printf '%s' "$snap" | jq -r '.[].label // "?"' | sort)
+if [ -s "$PREV" ]; then
+  printf '%s\n' "$cur" | comm -23 "$PREV" - 2>/dev/null \
+    | sed '/^$/d; s/^/[GONE] pane vanished, may be unfinished work: /'
+fi
+printf '%s\n' "$cur" > "$PREV"
+
+printf '%s' "$snap" | jq -r '.[]
+  | select(.signal != null or .herdr_status == "done" or .herdr_status == "blocked")
+  | [ .session, .label, .herdr_status, (.signal // "none"), .title ] | @tsv' |
+while IFS="$(printf '\t')" read -r sid label st sig title; do
+  [ -n "$sid" ] || continue
+
+  # Episode = the Stop file's mtime, which advances only on a genuinely new
+  # turn. One finished turn writes Stop and then Notification; `idle_prompt` is
+  # not a second fact, it is the same fact as `done`, so both land in the
+  # `attention` class and collapse to one announcement.
+  #
+  # `input` is a separate class so a permission prompt arriving mid-turn still
+  # fires even though Stop has not moved since the last announcement. Dedup
+  # must never swallow a session that is actually blocked.
+  ep=$(stat -f %m "$STATE/$sid.Stop.json" 2>/dev/null \
+       || stat -c %Y "$STATE/$sid.Stop.json" 2>/dev/null || echo 0)
+  case "$sig" in
+    permission_prompt|agent_needs_input) cls=input ;;
+    *)                                   cls=attention ;;
+  esac
+
+  key="$sid:$ep:$cls"
+  grep -qxF "$key" "$SEEN" 2>/dev/null && continue
+  printf '%s\n' "$key" >> "$SEEN"
+  printf '[%s] %s signal=%s :: %s\n' "$label" "$st" "$sig" "$title"
+done

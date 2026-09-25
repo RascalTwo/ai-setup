@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>usage-history — the window reset. what did you leave in it?</title>
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="usage-history">
+<meta name="viz:description" content="Claude Code shows your rate-limit windows and then forgets them. usage-history writes them down — a statusline tee that costs nothing, a poller for when Claude Code is closed, and a scraper for Codex, which already keeps what Claude Code throws away.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:page-kind" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* Card + dive. transform:scale() does not shrink the layout box, so poster.css
+     collapses #fit's height off the same --s. */
+  :root{ --s:1; --gone:#5a6474; --kept:var(--c5); --ask:var(--c4); }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 92% -12%, color-mix(in srgb, var(--c5) 16%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c4) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 560px; gap:32px; align-items:center; padding:46px 48px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:13.5px;
+            letter-spacing:.14em; color:var(--c5); margin-bottom:16px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--c5);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--c5) 22%, transparent); }
+  h1.hook{ font-size:46px; line-height:1.06; margin:0 0 16px; letter-spacing:-1.3px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  p.sub{ font-size:17px; line-height:1.45; color:var(--muted); margin:0 0 14px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:13.5px; line-height:1.5; color:var(--muted); margin:0 0 16px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .chip{ display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12.5px;
+         background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--c5);
+         border-radius:9px; padding:9px 13px; color:var(--text); }
+
+  /* ── the proof slot: a week's tank, and the part nobody can account for ── */
+  .rig{ background:color-mix(in srgb, var(--panel) 88%, transparent); border:1px solid var(--border);
+        border-radius:14px; padding:16px 18px 17px; font-family:var(--mono); }
+  .rig .cap{ display:flex; justify-content:space-between; font-size:10.5px; letter-spacing:.13em;
+             color:var(--c5); margin-bottom:13px; }
+  .rig .cap span:last-child{ color:var(--faint); }
+
+  .tank{ display:flex; height:46px; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .tank i{ font-style:normal; display:flex; align-items:center; justify-content:center;
+           font-size:12px; letter-spacing:.04em; }
+  .tank .used{ background:color-mix(in srgb, var(--kept) 34%, transparent); color:#fff; }
+  .tank .unused{ background:repeating-linear-gradient(135deg, transparent 0 7px,
+                 color-mix(in srgb, var(--ask) 22%, transparent) 7px 14px); color:var(--ask); }
+  .tanklab{ display:flex; justify-content:space-between; font-size:9.5px; letter-spacing:.07em;
+            color:var(--faint); margin-top:5px; }
+
+  .verdict{ margin-top:14px; border-left:2px solid var(--ask); padding-left:12px; }
+  .verdict .q{ font-size:14px; color:#fff; line-height:1.4; }
+  .verdict .a{ font-size:11.5px; color:var(--muted); line-height:1.5; margin-top:5px; }
+
+  .srcs{ margin-top:14px; padding-top:12px; border-top:1px solid var(--border); display:grid; gap:7px; }
+  .src{ display:grid; grid-template-columns:118px 1fr; gap:11px; align-items:baseline; }
+  .src .k{ font-size:11.5px; color:var(--c5); }
+  .src .v{ font-size:11px; line-height:1.45; color:var(--muted); }
+  .src .v b{ color:var(--text); }
+  .src.lag .k{ color:var(--gone); }
+
+  /* ── dive ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--c5);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul,.dive ol{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive code{ font-family:var(--mono); font-size:.9em; color:var(--c4); }
+  .dive table{ width:100%; border-collapse:collapse; margin:0 0 16px; }
+  .dive table td{ border-top:1px solid var(--border); padding:11px 0; font-size:15px;
+                  line-height:1.55; vertical-align:top; color:var(--text); }
+  .dive table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono);
+                                    font-size:12.5px; letter-spacing:.05em; padding-right:16px; }
+  .fig{ background:var(--panel); border:1px solid var(--border); border-radius:12px;
+        padding:18px; margin:0 0 18px; }
+  .fig figcaption{ font-family:var(--mono); font-size:11.5px; color:var(--faint);
+                   letter-spacing:.06em; margin-top:12px; line-height:1.5; }
+  .pre{ background:#0b0f16; border:1px solid var(--border); border-radius:9px; padding:12px 14px;
+        font-family:var(--mono); font-size:12.5px; line-height:1.6; color:var(--muted);
+        overflow-x:auto; margin:0 0 16px; }
+  .pre b{ color:var(--c5); font-weight:400; }
+  .pre em{ font-style:normal; color:var(--c4); }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+
+<div id="fit">
+  <div class="og-card" data-atom="usage-history" data-viz-id="poster-card" data-label="usage-history poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED TOOL · USAGE-HISTORY</div>
+      <h1 class="hook">The window reset.<br><em>What did you<br>leave in it?</em></h1>
+      <p class="sub">Claude Code shows you the <b>5-hour</b> and <b>weekly</b> percentage, then throws it away. Every surface reports <b>now</b> — never last Tuesday.</p>
+      <p class="not">Not <b>ccusage</b>. Not <b>/usage</b>. Not the Admin API, which meters organisations, not subscriptions. Nothing on this machine kept it.</p>
+      <div class="chip">statusLine → tools/usage-history/ → ~/.agents/state/</div>
+    </div>
+
+    <div class="rig" data-viz-id="the-tank" data-label="a weekly window, and the part nobody can account for">
+      <div class="cap"><span>ONE WEEKLY WINDOW</span><span>RESETS MON 06:00Z</span></div>
+
+      <div class="tank">
+        <i class="used" style="flex:61">61% BURNED</i>
+        <i class="unused" style="flex:39">39% — ?</i>
+      </div>
+      <div class="tanklab"><span>WINDOW OPENS</span><span>RESET · COUNTER ZEROES</span></div>
+
+      <div class="verdict">
+        <div class="q">Was the 39% room you couldn't use, or room you didn't take?</div>
+        <div class="a">Pinned at the 5-hour cap all week &rarr; the throttle bound you. Never near it &rarr; the runway was open. Only one of those is worth changing, and neither is answerable without the record.</div>
+      </div>
+
+      <div class="srcs">
+        <div class="src"><span class="k">src: api</span><span class="v">Live-computed, accurately dated, <b>22 buckets</b> including the by-surface split. Costs one call.</span></div>
+        <div class="src lag"><span class="k">src: statusline</span><span class="v">Free, but lagged ~25 min. A <b>lower bound</b>, not a timeline.</span></div>
+        <div class="src"><span class="k">src: codex</span><span class="v">Already on disk. <b>2,419</b> observations back to April — Codex never threw them away.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓ scroll</div>
+
+<article class="dive">
+
+  <h2 data-beat="why">The number is destroyed on a timer</h2>
+  <p>A rate-limit window is a cumulative counter that zeroes when it resets. Claude Code reads it, renders it, and keeps nothing. <code>/usage</code> shows the current window. The claude.ai usage page shows the current window. The Admin API's usage and cost reports have real history — for API <em>organisations</em>, which a Max subscription is not.</p>
+  <p>So the counter is not merely unsampled between renders. At the boundary it is <b>gone rather than deferred</b>: whatever accrued after the last observation is not carried into the next window, and no later reading can recover it.</p>
+  <p class="m">Which makes an ordinary question unanswerable. You end a week at 61%. Was the other 39% capacity you were physically throttled out of using, or capacity that sat there while you rationed yourself? Those call for opposite corrections, and after the reset there is nothing left to tell them apart.</p>
+  <p>Codex, meanwhile, writes <code>rate_limits</code> into every session rollout and always has. The asymmetry is the whole design: <b>usage-history records for Claude Code and only scrapes for Codex.</b></p>
+
+  <h2 data-beat="using">You do not use it. That is the point.</h2>
+  <p>There is no command. Once installed it is three things that run on their own:</p>
+  <ul>
+    <li><b>Every statusline render</b> — <code>statusline-capture.sh</code> sits at <code>statusLine.command</code>, appends if the value changed, and pipes the payload through to <code>ccstatusline</code> untouched.</li>
+    <li><b>Every 5 minutes</b> — a launchd agent wakes <code>usage-poll.py</code>, which does nothing unless the last API snapshot is over 15 minutes old or a window resets within 6.</li>
+    <li><b>Hourly</b> — <code>codex-usage-scrape.py</code> re-reads <code>~/.codex/sessions</code> and merges by union.</li>
+  </ul>
+  <p>What you do is read it, later, with whatever you like — it is one JSON object per line:</p>
+  <div class="pre">{"t":"2026-09-20T09:52:03-05:00", <b>"src":"api"</b>, "usage":{
+   "five_hour":{<em>"utilization":29.4</em>, "resets_at":"2026-09-20T18:50:00Z"},
+   "seven_day":{<em>"utilization":61.2</em>, "resets_at":"2026-09-26T06:00:00Z"},
+   "seven_day_breakdown":{"rows":[{"key":"claude_code","percent":100}, …]}}}</div>
+  <p class="m">The response is stored <b>verbatim</b>. It ships buckets that are null today under names like <code>tangelo</code>, <code>cedar_ember</code> and <code>nimbus_quill</code> — unshipped features. A writer that whitelisted the four documented windows would drop every one of them silently on the day it went live.</p>
+
+  <h2 data-beat="limits">What it cannot tell you</h2>
+  <ul>
+    <li><b>The percentages are integers.</b> A hundred steps across a seven-day window is roughly 1% per 101 minutes at uniform full burn. Sampling faster than hourly cannot resolve more than the source reports.</li>
+    <li><b>Statusline records lag.</b> Claude Code refreshes its own usage cache far less often than it renders — measured at ~25 minutes between changes, with 37 of 39 samples identical. A <code>src: statusline</code> record means <em>by</em> this time it had reached X, not that it became X then. Monotone lower bounds, useful as corroboration, wrong as a timeline.</li>
+    <li><b>Windows are account-wide; this machine is not.</b> claude.ai, mobile and a second laptop burn the same windows and leave nothing here. <code>seven_day_breakdown</code> is what reveals whether that is happening.</li>
+    <li><b>The token belongs to Claude Code.</b> The poller reads it from the login keychain and cannot renew it. Leave Claude Code closed long enough and polling fails 401 until you start it again — written to <code>poll-errors.log</code>, never swallowed.</li>
+    <li><b>No backfill.</b> History begins at install. Earlier burn can be reconstructed from transcripts only as a cost proxy, and only for windows whose percentages are already gone.</li>
+  </ul>
+  <p class="m">And it refuses one thing on purpose: it will not tell you whether you were <em>at the keyboard</em> during a quiet stretch. Separating "asleep" from "working but rationing" needs an idle sensor this tool deliberately does not have.</p>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>Integrates with</td><td><b>Claude Code</b> — the <code>statusLine</code> setting, wrapped rather than replaced, and the OAuth token in the login keychain. <b>Codex</b> — its session rollouts, opened read-only. <b>launchd</b> — two agents, both opt-in.</td></tr>
+    <tr><td>Requires</td><td><code>python3</code> and <code>jq</code>. Nothing installed, nothing vendored. The only network call is the same endpoint Claude Code already polls, at a fraction of its rate.</td></tr>
+    <tr><td>Its config</td><td>None. The statusline pointer lives in the tracked <code>settings.json</code>; cadence constants live at the top of <code>usage-poll.py</code>.</td></tr>
+    <tr><td>Its state</td><td><code>~/.agents/state/usage-history/</code> — <code>claude-code/YYYY-MM.jsonl</code> and <code>codex/YYYY-MM.jsonl</code>, append-only, plus <code>backups/</code> holding a tarball of the Codex rollouts.</td></tr>
+    <tr><td>Safe to delete?</td><td><b>No</b> — <code>deletion-policy: retain</code>. The Codex half regenerates from a rescan. The Claude Code half <em>cannot be regenerated by anything</em>, which is the entire reason the tool exists.</td></tr>
+    <tr><td>Not its state</td><td><code>~/.codex/sessions</code> belongs to Codex — read, never written. <code>~/.claude/projects</code> belongs to Claude Code. The window percentages belong to Anthropic's servers; this only keeps copies.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">Cracking it open</h2>
+  <p class="m">Two writers, one append-only log, and a rule that keeps them from cancelling each other out. The constraint that shapes it: the value is exposed in exactly two places, and the cheap one is stale.</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 760 330" width="100%" role="img" aria-label="Two writers appending to one log: the statusline tee while Claude Code runs, and the poller when it does not.">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" fill="#4ec9b0"/>
+        </marker>
+        <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" fill="#bc8cff"/>
+        </marker>
+      </defs>
+      <style>
+        .bx{fill:#161b22; stroke:#30363d;} .lb{font:12px ui-monospace,monospace; fill:#e6edf3;}
+        .sm{font:10.5px ui-monospace,monospace; fill:#8b949e;} .tl{font:10px ui-monospace,monospace; fill:#6e7681;}
+        .ln{stroke:#4ec9b0; stroke-width:1.5; fill:none;} .ln2{stroke:#bc8cff; stroke-width:1.5; fill:none;}
+      </style>
+
+      <text class="tl" x="14" y="18">WHILE CLAUDE CODE RUNS</text>
+      <rect class="bx" x="14" y="30" width="196" height="58" rx="8"/>
+      <text class="lb" x="28" y="52">statusline payload</text>
+      <text class="sm" x="28" y="70">free · lagged ~25 min</text>
+      <path class="ln" d="M210 59 H286" marker-end="url(#ah)"/>
+
+      <rect class="bx" x="286" y="24" width="180" height="70" rx="8"/>
+      <text class="lb" x="300" y="48">value changed?</text>
+      <text class="sm" x="300" y="66">else drop it —</text>
+      <text class="sm" x="300" y="82">37 of 39 were dupes</text>
+      <path class="ln" d="M466 59 H556 V150" marker-end="url(#ah)"/>
+
+      <text class="tl" x="14" y="196">WHEN IT DOES NOT</text>
+      <rect class="bx" x="14" y="208" width="196" height="58" rx="8"/>
+      <text class="lb" x="28" y="230">launchd · every 5 min</text>
+      <text class="sm" x="28" y="248">one call, self-throttled</text>
+      <path class="ln2" d="M210 237 H286" marker-end="url(#ah2)"/>
+
+      <rect class="bx" x="286" y="202" width="180" height="70" rx="8"/>
+      <text class="lb" x="300" y="226">last src:api</text>
+      <text class="sm" x="300" y="244">&gt;15 min? or a reset</text>
+      <text class="sm" x="300" y="260">within 6 min?</text>
+      <path class="ln2" d="M466 237 H556 V214" marker-end="url(#ah2)"/>
+
+      <rect class="bx" x="480" y="150" width="266" height="64" rx="8" stroke="#4ec9b0"/>
+      <text class="lb" x="496" y="176">usage-history/YYYY-MM.jsonl</text>
+      <text class="sm" x="496" y="196">append-only · atomic under PIPE_BUF</text>
+
+      <text class="sm" x="496" y="240">Ten sessions append at once with</text>
+      <text class="sm" x="496" y="256">no lock: a short line cannot</text>
+      <text class="sm" x="496" y="272">interleave with another.</text>
+    </svg>
+    <figcaption>The poller keys its throttle on the last <b>src:api</b> record — not on the file's mtime. Keyed on mtime, the tee's cheap writes suppressed the poller entirely and substituted lagged data for the only accurately-dated source there is.</figcaption>
+  </figure>
+
+  <h3>Why the boundary gets its own trigger</h3>
+  <p>Undersampling a cumulative counter costs timing precision, never magnitude — burn 6% between two polls and the next poll still shows all 6%. The exception is the reset, where the counter zeroes and unsampled burn is genuinely lost. So rather than raise the base rate everywhere, the poller aims at the edge: every response carries <code>resets_at</code>, so it always knows where the next boundary is and takes one extra sample just before it.</p>
+
+  <h3>Why nothing here trusts a key name</h3>
+  <p>Codex's own history proves the hazard. On 2026-07-12 the <code>primary</code> slot silently changed meaning — it had been the 5-hour window, it became the 7-day window, and <code>secondary</code> vanished. Keyed on the slot name, <b>2,068 of 2,419 records</b> would be misread as five-hour data. Window identity comes from <code>window_minutes</code>, and normalisation happens at read time, where it can be re-run when a vendor moves something again.</p>
+
+  <h3>The failure mode it is built to survive</h3>
+  <p class="m">Capture is fail-silent on every path, because a recorder that breaks a statusline is worse than no recorder. Bad JSON, a missing <code>rate_limits</code>, an unreadable log — each one falls straight through to the render. The only thing usage-history will interrupt is its own logging.</p>
+
+</article>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>

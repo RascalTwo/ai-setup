@@ -1,0 +1,71 @@
+/* Poster mechanics — `/_kit/poster.css`.
+ *
+ * A POSTER is a viz that IS its own 1200×630 OG card (`viz:card=self`):
+ * verify.ts --og clips `.og-card` straight to og.auto.png, so there is no
+ * separate hero.html. This file is the *mechanics* only — scaling the fixed
+ * card to any viewport. Everything visual comes from `/_kit/viz-og.css`
+ * (`.frame`, `.left`, `.title`, `.essence`, `.chips`, `.panel`, `.stat`…),
+ * exactly as it does for a scaffolded hero.
+ *
+ * THE MODE CLASS IS NAMESPACED, AND MUST STAY THAT WAY. It was `.poster` for
+ * about an hour, which broke a real card: that page had its own inner
+ * <div class="poster"> carrying transform:scale(.735), so putting `poster` on
+ * <body> made the page's own rule style the body and shrank the whole card to
+ * exactly 73.5%. A poster is a likely thing for a poster to call something.
+ * Same reason the dive mode is `og-poster-dive` and not `dive` — the dive
+ * template already uses `.dive` for the article below the card. Anything this
+ * file puts on <body> shares a namespace with every page that loads it.
+ *
+ * Two modes, one stylesheet:
+ *
+ *   <body class="poster">        the card IS the whole page — scale to fit BOTH
+ *                                axes, page does not scroll.
+ *   <body class="poster poster-dive">   the card is the TOP of a scrollable page —
+ *                                scale to WIDTH only, page scrolls beneath it.
+ *
+ * These were two forked templates that shared nine hand-copied lines. The trap
+ * that fork existed to document is real and is handled below: `transform:scale()`
+ * shrinks a box VISUALLY but leaves its layout box full size, so a dive poster
+ * that merely unlocks scrolling reserves the full 630px and opens a dead gap
+ * under the card. `#fit`'s height has to be collapsed to the SCALED height,
+ * which is why one `--s` drives both.
+ *
+ * `--s` is set on documentElement, NOT on `.og-card`: custom properties inherit
+ * DOWNWARD and `#fit` is the card's PARENT, so setting it on the card would
+ * leave `#fit`'s height:calc() resolving against an undefined `--s`.
+ *
+ * Capped at 1 so the --og shot (taken at a 1200px-wide viewport) stays
+ * pixel-native rather than being upscaled.
+ */
+
+.og-poster #fit {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.og-poster .og-card {
+  position: relative;
+  width: 1200px;
+  height: 630px;
+  overflow: hidden;
+  transform: scale(var(--s, 1));
+}
+
+/* --- mode 1: the card is the whole page ------------------------------ */
+.og-poster:not(.og-poster-dive),
+html:has(.og-poster:not(.og-poster-dive)) { overflow: hidden }
+
+.og-poster:not(.og-poster-dive) #fit {
+  position: fixed;
+  inset: 0;
+}
+.og-poster:not(.og-poster-dive) .og-card { transform-origin: center }
+
+/* --- mode 2: the card tops a scrollable page ------------------------- */
+/* top-centre origin + a collapsed reserved height is the whole fix for the
+   dead-gap trap described above. */
+.og-poster-dive #fit {
+  height: calc(630px * var(--s, 1));
+}
+.og-poster-dive .og-card { transform-origin: top center }

@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ui-narration — a browser shows you the result, never the click</title>
+<meta name="viz:uid" content="v-02bc3bc17f7b">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="ui-narration">
+<meta name="viz:description" content="A synthetic cursor, a highlight box and a click pulse, injected into any page you are driving — so a capture shows WHAT was clicked and WHEN instead of panels changing for no visible reason.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:page-kind" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(860px 500px at 94% -10%, color-mix(in srgb, var(--warn) 15%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 486px; gap:38px; align-items:center; padding:46px 60px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:16px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:51px; line-height:1.05; margin:0 0 16px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:#ff7a00; }
+  p.sub{ font-size:17.5px; line-height:1.45; color:var(--muted); margin:0 0 15px; max-width:470px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:14px; line-height:1.5; color:var(--muted); margin:0 0 16px; max-width:470px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:9px; font-family:var(--mono); font-size:13.5px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid #ff7a00;
+            border-radius:9px; padding:9px 14px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the proof slot: ONE beat, drawn to scale. bar WIDTH = milliseconds, and the
+     three phases share one 2800ms track, so you can read the pacing off the picture. */
+  .beat{ background:color-mix(in srgb, var(--panel) 80%, transparent); border:1px solid var(--border);
+         border-radius:14px; padding:15px 17px 14px; font-family:var(--mono); }
+  .beat .cap{ display:flex; justify-content:space-between; font-size:11px; letter-spacing:.13em;
+              color:var(--accent); margin-bottom:13px; }
+  .beat .cap span:last-child{ color:var(--faint); }
+  .track{ display:grid; grid-template-columns:repeat(280,1fr); gap:0; height:26px; margin-bottom:7px; }
+  .track i{ display:block; height:100%; border-radius:3px; }
+  .ph-g{ grid-column:1 / span 95;   background:color-mix(in srgb, var(--accent) 34%, transparent);
+         border:1px solid color-mix(in srgb, var(--accent) 62%, transparent); }
+  .ph-h{ grid-column:97 / span 55;  background:color-mix(in srgb, var(--warn) 34%, transparent);
+         border:1px solid color-mix(in srgb, var(--warn) 62%, transparent); }
+  .ph-a{ grid-column:154 / span 127; background:color-mix(in srgb, var(--c5) 30%, transparent);
+         border:1px solid color-mix(in srgb, var(--c5) 55%, transparent); }
+  .lbls{ display:grid; grid-template-columns:repeat(280,1fr); font-size:11px; color:var(--muted); margin-bottom:14px; }
+  .lbls b{ display:block; color:var(--text); font-size:12px; }
+  .lbls .l1{ grid-column:1 / span 95; }
+  .lbls .l2{ grid-column:97 / span 55; }
+  .lbls .l3{ grid-column:154 / span 127; }
+
+  .marks{ border-top:1px solid var(--border); padding-top:11px; display:grid; gap:7px; }
+  .mk{ display:grid; grid-template-columns:86px 1fr; gap:10px; font-size:11.5px; align-items:baseline; }
+  .mk .t{ color:var(--faint); text-align:right; white-space:nowrap; }
+  .mk .d{ color:var(--muted); }
+  .mk .d b{ color:var(--text); }
+  .mk.hot .d b{ color:#ff7a00; }
+  .pfoot{ margin-top:11px; padding-top:10px; border-top:1px solid var(--border);
+          font-size:11px; letter-spacing:.1em; color:var(--faint); }
+  .pfoot b{ color:var(--accent); }
+
+  /* ── the dive ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive code{ font-family:var(--mono); font-size:.9em; color:var(--accent); }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  table.api{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:14.5px; }
+  table.api td{ border-top:1px solid var(--border); padding:9px 12px 9px 0; vertical-align:top; line-height:1.5; }
+  table.api td:first-child{ width:280px; font-family:var(--mono); font-size:12.5px; color:var(--accent); padding-right:16px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--accent); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="ui-narration" data-viz-id="poster-card" data-label="ui-narration poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · UI-NARRATION</div>
+      <h1 class="hook">A browser shows you<br>the <em>result</em>.<br>Never the click.</h1>
+      <p class="sub">Watch a capture without annotation and panels change for no visible cause. A <b>cursor that glides</b>, a <b>box that frames</b> and a <b>ring that pulses</b> are not decoration — they <i>are</i> the narration.</p>
+      <p class="not">One file. Inject it into any page you're driving, call <b>__narrate.*</b>.<br>Nothing installed, nothing persisted, no pipeline to adopt.</p>
+      <div class="trigger"><span>await</span>&nbsp;__narrate.focusAndClick(card, title)</div>
+    </div>
+
+    <div class="beat" data-viz-id="beat-timeline" data-label="one focusAndClick beat; bar width is milliseconds on a shared 2800ms track">
+      <div class="cap"><span>ONE BEAT, DRAWN TO SCALE</span><span>WIDTH = MILLISECONDS</span></div>
+
+      <div class="track">
+        <i class="ph-g"></i><i class="ph-h"></i><i class="ph-a"></i>
+      </div>
+      <div class="lbls">
+        <div class="l1"><b>950</b>glide</div>
+        <div class="l2"><b>550</b>hold</div>
+        <div class="l3"><b>1300</b>afterClick</div>
+      </div>
+
+      <div class="marks">
+        <div class="mk"><span class="t">0 ms</span><span class="d"><b>highlight(hlEl)</b> — frame snaps on, radius copied from the element</span></div>
+        <div class="mk"><span class="t">0 → 950</span><span class="d">cursor eases to the target · <b>setTimeout(16ms)</b>, never rAF</span></div>
+        <div class="mk"><span class="t">950 → 1500</span><span class="d">it just sits there — the eye needs to <b>arrive</b> before anything moves</span></div>
+        <div class="mk hot"><span class="t">1500 ms</span><span class="d"><b>hideBox()</b> instantly, BEFORE the click — a fade ghosts onto the next page</span></div>
+        <div class="mk"><span class="t">1500 ms</span><span class="d">pulse ring · cursor dips 0.7× · <b>realClick</b> at elementFromPoint</span></div>
+        <div class="mk"><span class="t">1500 → 2800</span><span class="d">the app responds, and the viewer gets to <b>see</b> it respond</span></div>
+      </div>
+
+      <div class="pfoot">TUNE PER RUN VIA <b>__narrate.CFG</b> — NOT THE DEFAULTS</div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">Things randomly happen</h2>
+  <p>A browser renders the <em>result</em> of a click and never the click itself. Record an agent driving a UI and you get a video in which menus open, panels swap and rows appear with nothing visible causing any of it. The viewer's experience is not "I see how to do that"; it is <b>"things randomly happen"</b> — and that is the failure this skill names.</p>
+  <p>The obvious fixes all fall over. A GIF recorder that stamps a click marker gives you a slideshow. Editing arrows on afterwards means re-editing every time the flow changes. Screen-recording the real OS pointer captures a cursor that teleports, because an automation tool moves the mouse by assignment, not by motion.</p>
+  <p class="m">So: draw the cursor <em>in the page</em>, move it with an easing curve, frame the target before touching it, and flash a ring where the click lands. Then a recording explains itself, and the same choreography works live in front of a human with nothing recording at all.</p>
+
+  <h2 data-beat="using">Inject it, then drive it</h2>
+  <p>It is one file and it defines <code>window.__narrate</code>. It does nothing on its own.</p>
+  <pre><span class="c">// Chrome MCP — a page you are already driving</span>
+javascript_tool: &lt;paste the contents of ui-narration.js&gt;
+
+<span class="c">// Puppeteer / Playwright</span>
+await page.evaluate(fs.readFileSync(
+  `${'$'}{process.env.HOME}/.agents/skills/ui-narration/ui-narration.js`, 'utf8'));
+
+<span class="c">// or by hand: paste it into a DevTools console</span></pre>
+  <p>Then call it. The one you want ninety percent of the time takes two arguments, and the split matters more than it sounds: <b>frame one element, click another</b> — you often want the whole card outlined while the click lands on its title, because the card's centre sits over an avatar or a menu.</p>
+  <table class="api"><tbody>
+    <tr><td>focusAndClick(hlEl, clickEl?)</td><td>frame, glide, hold, pulse, click, wait. The main verb.</td></tr>
+    <tr><td>highlight(el) / hideBox()</td><td>frame an element / drop the frame</td></tr>
+    <tr><td>moveTo(x, y, dur) / clickPulse(x, y)</td><td>glide to a point / ring at a point, without clicking</td></tr>
+    <tr><td>realClick(el)</td><td>framework-safe click at the centre, via <code>elementFromPoint</code></td></tr>
+    <tr><td>waitFor(fn, timeout?) / sleep(ms)</td><td>poll until truthy / pause</td></tr>
+    <tr><td>smoothScrollTo(y, dur?)</td><td>eased scroll — what a GIF recorder can never capture</td></tr>
+    <tr><td>typeInto(el, text, per?)</td><td>type character by character, through the right prototype setter</td></tr>
+    <tr><td>drag(el, dx, dy, opts?)</td><td>drag with intermediate moves, so a framework sees a real gesture</td></tr>
+    <tr><td>say(text, {at, hold}) / captions(bool)</td><td>caption · show or hide the band (cues keep logging while hidden)</td></tr>
+    <tr><td>captionsT0(ms?) / vtt() / cues</td><td>zero the caption clock · emit WebVTT · the raw log</td></tr>
+    <tr><td>clap() / ready(timeout?) / CFG</td><td>two sync frames · wait for the overlay · the timings</td></tr>
+  </tbody></table>
+  <p class="m"><a href="../skill-browser-capture/">browser-capture</a> injects this for its recorded walkthroughs. You can equally drive it live, through Chrome MCP, while a human watches — the same choreography, no file at the end.</p>
+
+  <h2 data-beat="limits">What it refuses to be</h2>
+  <ul>
+    <li><b>It is a toolbox, not a pipeline.</b> There is no <code>run(steps)</code>, no DSL, no config file. An agent composes calls; the skill supplies verbs. That is deliberate and it is why a caption is an independent primitive rather than an argument to <code>focusAndClick</code>.</li>
+    <li><b>It does not record anything.</b> No video, no frames, no files. <code>clap()</code> is the only recorder-aware call in it and it is meaningless outside one.</li>
+    <li><b>It does not survive navigation on its own.</b> A fresh document has no <code>__narrate</code> — re-inject, or use Puppeteer's <code>evaluateOnNewDocument</code>.</li>
+    <li><b>It moves a drawn cursor, not your mouse.</b> The real OS pointer is untouched, which is exactly why a screen recording of the desktop still shows the system cursor sitting wherever it was left.</li>
+    <li><b>Spoken narration is not built yet.</b> The name is aspirational on purpose and currently half-earned: spatial narration works, textual narration works, audio is the roadmap — driven off the same cue log, so the <code>.vtt</code> becomes the script rather than a second source of truth.</li>
+  </ul>
+  <div class="callout"><b>Assert on geometry, never on "the call returned".</b> A drag or resize that does <em>nothing</em> is indistinguishable from one that works: the handle is there, <code>waitFor</code> resolves, nothing throws, and the element's rect comes back byte-identical. Measure before and after, or you will ship a take of an interaction that never happened.</div>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>The whole skill</td><td><code>skills/ui-narration/ui-narration.js</code>, plus <code>SKILL.md</code>. One file, one IIFE, one global. No build step, no bundle, no npm package, no import.</td></tr>
+    <tr><td>Integrates</td><td><b>Chrome</b> — as an injected page overlay, through Chrome MCP's <code>javascript_tool</code> or Puppeteer's <code>page.evaluate</code>. That is the entire integration list, and it is one-way: the skill never calls out to anything.</td></tr>
+    <tr><td>Requires</td><td>The manifest lists no hard requirement, and that is accurate — it is plain DOM against standard APIs. Anything that can run a script in a page can run this, including a DevTools console you paste it into by hand.</td></tr>
+    <tr><td>Depended on by</td><td><a href="../skill-browser-capture/">browser-capture</a>, as a <b>hard</b> dependency: <code>record-flow.js</code> injects it unless you pass <code>--no-kit</code>, and exits with the paths it tried rather than recording a silent, unannotated take.</td></tr>
+    <tr><td>Its state</td><td><b>None.</b> The manifest says <code>state: false</code> and there is nowhere for state to go: everything lives in one closure inside one page. No file is written, no preference is saved, no directory exists under <code>~/.agents/</code>. It keeps nothing between runs — reload the tab and the cue log, the cursor position and the overlay are all gone.</td></tr>
+    <tr><td>What persists</td><td>Only what <em>you</em> do with <code>vtt()</code>. The skill hands back a string; writing it to disk is the caller's act — <a href="../skill-browser-capture/">browser-capture</a> saves it as <code>&lt;name&gt;.vtt</code> beside the video, in the same format <a href="../skill-extract-video-subtitles/">extract-video-subtitles</a> already reads.</td></tr>
+    <tr><td>Safe to delete</td><td>Nothing to delete. The two DOM nodes it creates — <code>#__narrate_cur</code> and <code>#__narrate_box</code> — die with the page.</td></tr>
+    <tr><td>Configuration</td><td><code>__narrate.CFG</code>, in memory, per run: <code>{ glide: 950, hold: 550, afterClick: 1300 }</code>. Adjust it for a take; don't edit the defaults.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">The beat, in milliseconds</h2>
+  <p class="m">One <code>focusAndClick</code>, from the call to the app responding — and the six places where the obvious implementation is wrong.</p>
+
+  <div class="fig" data-viz-id="beat-figure" data-label="stepper: one focusAndClick, call to response">
+    <div class="stage" id="stage"></div>
+    <p class="lede" id="lede"></p>
+    <div class="ctrl">
+      <button id="prev" aria-label="previous step">‹ back</button>
+      <button id="play">▶ play</button>
+      <button id="next" aria-label="next step">next ›</button>
+      <span class="pos" id="pos"></span>
+      <span class="hint">← → arrow keys</span>
+    </div>
+  </div>
+
+  <h3>The overlay is built lazily, and that is load-bearing</h3>
+  <p>Injecting the file costs nothing until you call something: <code>ensureOverlay()</code> creates the cursor and the box on first use. The reason is not frugality. The recorder injects this kit with Puppeteer's <code>evaluateOnNewDocument</code> so it survives cross-document navigation — and <b>that runs at document-start, when <code>document.body</code> is still <code>null</code></b>. Touching <code>body</code> at top level would throw there, and <code>window.__narrate</code> would never get defined at all, on any page. So <code>ensureOverlay()</code> returns <code>false</code> when there is no body yet and <code>ready()</code> polls every 30 ms until there is.</p>
+  <p class="m">Two nodes, both at <code>z-index: 2147483647</code> and <code>pointer-events: none</code>: the cursor is an inline <code>&lt;svg&gt;</code> arrow with a drop shadow so it survives a light page and a dark one, and the box is a 3px <code>#ff7a00</code> frame with a glow. After a navigation the cursor is restored to <code>(cx, cy)</code> — the coordinates it left off at — so a glide reads as continuous across pages instead of teleporting back to a corner.</p>
+
+  <h3>Motion: setTimeout, not requestAnimationFrame</h3>
+  <p><code>moveTo()</code> tweens with <code>setTimeout(step, 16)</code> and an ease-in-out curve, <code>t &lt; .5 ? 2t² : 1 − (−2t+2)²/2</code>. Two deliberate rejections sit behind that one line. <b>rAF is throttled or paused in headless and background tabs</b>, so an rAF tween silently stalls exactly where you least want it. And a <b>CSS transition lags behind what it is chasing</b>, which shows up as the cursor and its pulse ring visibly drifting apart.</p>
+  <p>The highlight box reads the target's computed <code>borderTopLeftRadius</code> and matches it, so the frame follows a pill button's corners rather than sitting around it as a rectangle — the detail nobody gets right first try. It pads by 8px and falls back to <code>12</code> when the element has no radius.</p>
+
+  <h3>The order inside <code>focusAndClick</code>, which is the whole product</h3>
+  <pre>highlight(hlEl)                 <span class="c">// frame goes on first — the viewer knows what's next</span>
+await moveTo(x, y, CFG.glide)   <span class="c">// 950ms, eased, to clickEl's centre</span>
+await sleep(CFG.hold)           <span class="c">// 550ms of nothing: let the eye arrive</span>
+hideBox()                       <span class="c">// INSTANT, and BEFORE the click</span>
+clickPulse(x, y); cursorPress() <span class="c">// 420ms ring to r=44 · cursor dips to 0.7×</span>
+realClick(clickEl)
+await sleep(CFG.afterClick)     <span class="c">// 1300ms: let the app answer, visibly</span></pre>
+  <p><code>hideBox()</code> sets opacity to 0 with <b>no transition, and before the click rather than after</b>. With a fade, the frame survives into the next page for a frame or two and reads as a rendering bug. <code>cursorPress()</code> scales the arrow to 0.7 from <code>transform-origin: 4px 2px</code> — near the tip, so it dips where it points instead of shrinking toward its own middle.</p>
+  <p class="m">And <code>950 / 550 / 1300</code> are not arbitrary. Faster and the eye cannot track the cursor to its target; slower and the capture drags. They are the product, which is why they are exposed as <code>CFG</code> for a run rather than hidden as constants.</p>
+
+  <h3><code>realClick</code> — dispatching at a point, not at an element</h3>
+  <p>A bare <code>el.click()</code> on the element you matched frequently does nothing, because component libraries (Joy, Material UI, Radix) nest the real interactive node inside the wrapper you selected — and because a framework may have re-rendered your element into a detached node between the query and the click. So <code>realClick()</code> takes the element's centre, resolves <code>document.elementFromPoint(x, y)</code>, and dispatches the <b>full sequence</b> on whatever is actually topmost there:</p>
+  <pre>pointerover → pointerenter → pointerdown → mousedown
+           → pointerup → mouseup → click        <span class="c">// each bubbles, cancelable, with clientX/Y</span></pre>
+  <p class="m">That is a click where a <em>user</em> would have made one, which is the only definition that survives a component library.</p>
+
+  <h3><code>typeInto</code> and the prototype that has to match</h3>
+  <p>Setting <code>el.value</code> on a React-controlled input does not fire React's <code>onChange</code>, so the standard workaround is to take the native setter off the prototype and call it, then dispatch a bubbling <code>input</code> event. The trap is which prototype:</p>
+  <pre>const proto = el instanceof HTMLTextAreaElement
+  ? HTMLTextAreaElement : HTMLInputElement;
+const set = Object.getOwnPropertyDescriptor(proto.prototype, 'value').set;</pre>
+  <div class="callout"><b>An <code>&lt;input&gt;</code> setter applied to a <code>&lt;textarea&gt;</code> is silently ignored.</b> No exception, no warning, no console message. The characters appear, the text snaps back on the next render, and there is nothing anywhere to tell you why. It types character by character at 45 ms each, clearing first, so the value builds visibly rather than materialising in one frame.</div>
+
+  <h3><code>drag</code> rides the element, and aims along the element's own axis</h3>
+  <p>Two corrections, both from real failures. First, the cursor follows the <b>dragged element's live bounding rect</b> each step, not the straight line between start and end — because a rotate handle travels an <em>arc</em>, and interpolating along the chord leaves the cursor visibly detached from the thing it is supposed to be holding (chord-versus-arc error is about 0.29 × radius). If the element goes away mid-gesture, it falls back to the interpolated point.</p>
+  <p>Second, <code>pointerdown</code> goes on the element but <code>pointermove</code> and <code>pointerup</code> go on <b><code>window</code></b>, because that is where drag implementations listen once a gesture has started. Thirty steps at 24 ms, then a 600 ms settle.</p>
+  <div class="callout"><b>Aim along <code>handleCentre − elementCentre</code>, not along the screen.</b> A handle labelled "right edge" is named in its <em>element's</em> frame. Rotate that element 90° and its right edge sits at the bottom of the screen — so a screen-right drag slides <em>along</em> the edge and resizes by exactly zero pixels, with every call returning successfully.<br><code>const v = {x: hx-cx, y: hy-cy}, L = Math.hypot(v.x, v.y) || 1;</code><br><code>await drag(handle, v.x/L*D, v.y/L*D);</code></div>
+
+  <h3>Captions: one run, two deliverables</h3>
+  <p><code>say()</code> is <b>non-blocking by default</b>, so it layers over the 950/550/1300 pacing instead of fighting it; pass <code>hold</code> when the caption <em>is</em> the beat, and <code>{at: el}</code> to anchor it above an element instead of in the subtitle band. Every call pushes <code>{t, text}</code> onto <code>cues</code>, timed from <code>capT0</code> — which <code>captionsT0()</code> zeroes when recording starts.</p>
+  <p><b>Cues are logged even when the band is hidden</b>, and that is the entire point: one take ships burned-in captions <em>or</em> a clean capture plus a complete <code>.vtt</code> sidecar. <code>vtt()</code> emits the file, and its timing rule was learned the hard way — a cue runs until the <b>next</b> cue starts, capped at 6 s, and the 900 ms minimum applies <b>only to the last cue</b>:</p>
+  <pre>const end = next ? Math.min(next.t, c.t + 6000)
+                 : c.t + Math.max(900, Math.min(6000, 60 * text.length));</pre>
+  <p class="m">Clamping <em>every</em> cue to a 900 ms minimum made cues overlap whenever two <code>say()</code> calls landed close together. The last cue has no successor to bound it, so it gets a length from its own text instead.</p>
+
+  <h3><code>clap()</code>, and why it is not a trim marker on its own</h3>
+  <p>Two white frames: a full-viewport <code>#fff</code> div for 90 ms, removed, then 120 ms of quiet. Fire one immediately before the choreography and one immediately after, and ffmpeg can find both ends of the action afterwards. The caveat is written into the source: on a white-background app the flash barely differs from the page, so pair it with the recorder's own clock (<code>__cap.t0</code>) and use <code>freezedetect</code> only to cross-check.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+<script type="module">
+  import { stepper, $ } from "/_kit/viz.js";
+
+  const S = [
+    { t: "0 ms · ENSURE THE OVERLAY",
+      rows: [["built lazily, on first use", "not at inject", "ok"], ["document.body at document-start", "null", "bad"],
+             ["ready() polls every 30ms", "until body exists", "ok"], ["cursor restored to (cx, cy)", "no teleport", "ok"]],
+      lede: "Laziness is load-bearing. The recorder injects with <code>evaluateOnNewDocument</code>, which runs before <code>body</code> exists — touching it at top level would leave <code>__narrate</code> undefined on <b>every</b> page." },
+    { t: "0 ms · FRAME THE TARGET",
+      rows: [["borderTopLeftRadius", "copied from the element", "ok"], ["padding", "8px", "ok"],
+             ["a plain rectangle", "reads as a bug on a pill", "bad"]],
+      lede: "The frame goes on <b>before</b> the cursor moves, so the viewer knows what is about to happen rather than working it out afterwards. Matching the corner radius is the detail nobody gets first try." },
+    { t: "0 → 950 ms · GLIDE",
+      rows: [["setTimeout(step, 16)", "the tween", "ok"], ["requestAnimationFrame", "throttled in background tabs", "bad"],
+             ["a CSS transition", "ring drifts off the cursor", "bad"], ["easing", "ease-in-out", "ok"]],
+      lede: "Both obvious implementations are wrong. rAF <b>silently stalls</b> headless; a CSS transition lags behind what it is chasing, so the cursor and its pulse visibly separate." },
+    { t: "950 → 1500 ms · HOLD",
+      rows: [["CFG.hold", "550ms of nothing", "ok"], ["faster", "eye can't track it", "bad"],
+             ["slower", "the capture drags", "bad"]],
+      lede: "Dead time, on purpose. The eye has to <b>arrive</b> at the target before anything else moves, or the click reads as having happened somewhere the viewer wasn't looking." },
+    { t: "1500 ms · THE CLICK",
+      rows: [["hideBox() first, no fade", "or it ghosts onto the next page", "ok"], ["clickPulse", "420ms ring to r=44", "ok"],
+             ["cursorPress", "0.7× from origin 4px 2px", "ok"], ["el.click()", "hits the wrapper, does nothing", "bad"]],
+      lede: "<code>realClick</code> resolves <code>elementFromPoint</code> and fires the whole pointer sequence — because component libraries nest the real node inside the one you matched." },
+    { t: "1500 → 2800 ms · LET IT ANSWER",
+      rows: [["CFG.afterClick", "1300ms", "ok"], ["the app's response", "visible to the viewer", "ok"],
+             ["next beat's waitFor", "never assume ready", "ok"]],
+      lede: "The beat is not over when the click lands. An early next-click is the most common way a take breaks, which is why <code>waitFor</code> exists and why this pause is this long." },
+    { t: "ALONGSIDE · THE CUE LOG",
+      rows: [["say() pushes {t, text}", "even when hidden", "ok"], ["captionsT0()", "zeroes the clock", "ok"],
+             ["cue ends at the next cue", "capped 6s", "ok"], ["900ms minimum on every cue", "made them overlap", "bad"]],
+      lede: "One take, two deliverables: burned-in captions <b>or</b> a clean capture plus a complete <code>.vtt</code>. The sidecar is whole either way, because cues log while the band is hidden." },
+  ];
+
+  const stage = $("#stage"), lede = $("#lede"), pos = $("#pos");
+  const render = (i) => {
+    const s = S[i];
+    stage.innerHTML =
+      `<div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent);margin-bottom:12px">${i + 1} · ${s.t}</div>` +
+      s.rows.map(([k, v, st]) => `
+        <div style="display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:13px;
+                    padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text)">${k}</span>
+          <span style="color:${st === "ok" ? "var(--good)" : "var(--danger)"};white-space:nowrap">${st === "ok" ? "✓" : "✗"} ${v}</span>
+        </div>`).join("");
+    lede.innerHTML = s.lede;
+    pos.textContent = `${i + 1} / ${S.length}`;
+  };
+
+  const st = stepper({ n: S.length, onStep: render, autoplayMs: 2600, hashKey: "beat" });
+  $("#next").onclick = () => st.next();
+  $("#prev").onclick = () => st.prev();
+  const play = $("#play");
+  let on = false;
+  play.onclick = () => { on = !on; on ? st.play() : st.pause(); play.textContent = on ? "❚❚ pause" : "▶ play"; };
+  for (const el of [$("#next"), $("#prev")])
+    el.addEventListener("click", () => { on = false; play.textContent = "▶ play"; });
+</script>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ai-setup-audit — it finds the drift, it fixes nothing</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:uid" content="v-3bb777ffeaae">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="ai-setup-audit">
+<meta name="viz:description" content="A ten-phase interactive audit of the agent setup shared by Claude Code and Codex, which sorts every finding into real work, confirm-first, and not-a-defect — and applies none of them without you.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:page-kind" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 95% -10%, color-mix(in srgb, var(--c7) 16%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 500px; gap:36px; align-items:center; padding:54px 62px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:53px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c5); }
+  p.sub{ font-size:17.5px; line-height:1.46; color:var(--muted); margin:0 0 18px; max-width:500px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:14.5px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:500px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the triage ledger = the "proof" slot. Every check the audit runs emits a
+     signal; the SKILL's real content is the verdict column — which alarms are
+     work, which need you, and which are not defects at all. */
+  .cap{ font-family:var(--mono); font-size:12px; letter-spacing:.13em; color:var(--muted); margin-bottom:11px; }
+  .cap b{ color:var(--accent); }
+  .ledger{ display:flex; flex-direction:column; gap:6px; }
+  .row{ display:grid; grid-template-columns:1fr auto; align-items:center; gap:10px;
+        background:color-mix(in srgb, var(--panel) 72%, transparent); border:1px solid var(--border);
+        border-left:3px solid var(--border); border-radius:9px; padding:7px 11px; }
+  .row .s{ font-family:var(--mono); font-size:12.5px; color:var(--text); letter-spacing:.02em; }
+  .row .w{ font-size:11.5px; line-height:1.3; color:var(--muted); }
+  .badge{ font-family:var(--mono); font-size:9.5px; letter-spacing:.11em; padding:3px 8px;
+          border-radius:99px; white-space:nowrap; }
+  .row.work{ border-left-color:var(--danger); }
+  .row.work .badge{ color:var(--danger); background:color-mix(in srgb, var(--danger) 13%, transparent);
+                    border:1px solid color-mix(in srgb, var(--danger) 42%, transparent); }
+  .row.ask{ border-left-color:var(--warn); }
+  .row.ask .badge{ color:var(--warn); background:color-mix(in srgb, var(--warn) 12%, transparent);
+                   border:1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+  .row.fine{ border-left-color:var(--c5); }
+  .row.fine .badge{ color:var(--c5); border:1px solid color-mix(in srgb, var(--c5) 40%, transparent); }
+  .pfoot{ font-family:var(--mono); font-size:11px; letter-spacing:.09em; color:var(--faint); margin-top:11px; }
+  .pfoot b{ color:var(--c5); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  /* ── poster standard: beat-4 table, beat-5 figure ── */
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .stage svg{ width:100%; height:auto; display:block; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--accent); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="ai-setup-audit" data-viz-id="poster-card" data-label="ai-setup-audit poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · AI-SETUP-AUDIT</div>
+      <h1 class="hook">It finds the drift.<br><em>It fixes nothing.</em></h1>
+      <p class="sub">Ten phases over one setup that drives <b>two agents</b> — rules file, skills, MCP servers, settings, subagents, memory, and the pages that advertise all of it. Every finding is presented <b>one at a time, with its reasoning</b>, and then it waits.</p>
+      <p class="not">Golden rule: <b>never auto-apply.</b><br>Not the edits, not the commit, not the publish.</p>
+      <div class="trigger"><span>say</span>&nbsp;"run the weekly audit"</div>
+    </div>
+    <div>
+      <div class="cap">EVERY CHECK EMITS A SIGNAL &nbsp;·&nbsp; <b>THE VERDICT</b> IS THE SKILL</div>
+      <div class="ledger">
+        <div class="row work">
+          <div><div class="s">BROKEN &nbsp;symlink → gone</div><div class="w">a repo target vanished; sweep for its siblings</div></div>
+          <span class="badge">REAL WORK</span>
+        </div>
+        <div class="row work">
+          <div><div class="s">ORPHAN &nbsp;poster</div><div class="w">a live public page selling a skill that's gone</div></div>
+          <span class="badge">REAL WORK</span>
+        </div>
+        <div class="row work">
+          <div><div class="s">ORPHAN &nbsp;compiled subagent</div><div class="w">Ruler never deletes after a rename</div></div>
+          <span class="badge">REAL WORK</span>
+        </div>
+        <div class="row ask">
+          <div><div class="s">UNACCOUNTED &nbsp;real dir</div><div class="w">true orphan, or a <em>"*"</em> wildcard hiding the name?</div></div>
+          <span class="badge">ASK FIRST</span>
+        </div>
+        <div class="row ask">
+          <div><div class="s">NEW &nbsp;upstream skill</div><div class="w">take it or decline it — but <em>record</em> the verdict</div></div>
+          <span class="badge">ASK FIRST</span>
+        </div>
+        <div class="row fine">
+          <div><div class="s">SYMLINK &nbsp;→ repo</div><div class="w">one file on disk. not a duplicate, not a copy</div></div>
+          <span class="badge">HEALTHY</span>
+        </div>
+        <div class="row fine">
+          <div><div class="s">0 calls this window</div><div class="w">Claude transcripts only — Codex is invisible</div></div>
+          <span class="badge">NOT PROOF</span>
+        </div>
+        <div class="row fine">
+          <div><div class="s">no poster for this skill</div><div class="w">posters are opt-in. a menu, never a backlog</div></div>
+          <span class="badge">NOT A DEFECT</span>
+        </div>
+      </div>
+      <div class="pfoot">↑ HALF THE RED LINES AREN'T DEFECTS. <b>SAYING WHICH IS THE JOB.</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">Nothing in a config ever goes red</h2>
+  <p>A setup like this has no build. A symlink whose target got renamed keeps resolving as a dead file. A third-party skill drifts three versions behind upstream without a single warning. An MCP server stops being called and goes on loading its tool schemas into every session. A published poster keeps confidently selling a skill that was deleted in March. None of it fails anything, because there is nothing to fail.</p>
+  <p class="m">It's also spread too thin to notice by eye: one public repo plus private overlays, symlinked into <code>~/.claude/</code>, <code>~/.codex/</code> and <code>~/.agents/</code>, driving <b>two different agents</b> that each expose a different slice of the truth. No single place shows you the whole thing, which is exactly why the drift survives.</p>
+
+  <h2 data-beat="using">You run it. Weekly, and on purpose.</h2>
+  <p>Say "run the weekly audit", "audit my setup", "clean up my agent config", or name the symptom — a stale skill, an unused MCP server, an orphaned directory, drift in <code>external-skills.json</code>. The manifest carries <code>disable-model-invocation: true</code>, so an agent never starts a ten-phase sweep of your home directory on its own initiative.</p>
+  <p>It is <b>interactive from the first phase, not the last</b>. Phase 1 inventories everything read-only, hands you the list, and asks which phases you actually want to run — so a "just the skills, skip memory" audit is a normal outcome rather than an interruption. Every phase after that ends by asking, and so does the run.</p>
+  <p class="m">All ten phases are independent enough to skip. The usage snapshot in Phase 0 is worth having regardless: it is the only number in the audit that comes from evidence rather than inspection.</p>
+
+  <h2 data-beat="limits">Nothing ships without you</h2>
+  <p>The golden rule is stated before the first phase: <b>never auto-apply changes.</b> Every recommendation is presented individually, with the reasoning — not "remove this" but why it's a candidate for removal.</p>
+  <p>Because every live entry is already a pointer into a repo, the edits made during the audit <b>are</b> the repo — Phase 9 has nothing to <code>cp</code> back, and copying over a symlink would replace it with a regular file and silently break the setup. What's left is re-running the idempotent installer, recompiling subagents, and offering a commit on <code>private/trunk</code> — never on the squashed public snapshot.</p>
+  <ul>
+    <li><b>Half the red lines aren't defects.</b> <code>SYMLINK</code>, <code>REAL_DIR</code> and <code>ABSENT</code> are all healthy states. Saying which is which is the actual work, and a run that reports one broken link and nine fine ones has done its job.</li>
+    <li><b>"0 calls" is not proof of death.</b> Usage comes from Claude Code's transcripts; Codex exposes no equivalent, so quiet means <em>unused by Claude</em>. Confirm before treating it as a removal signal.</li>
+    <li><b>A skill with no poster is not a finding.</b> Posters are opt-in and most skills will never have one. Reading that list out as a backlog is the meta-tooling trap, and the skill says so.</li>
+    <li><b>It cannot see the private overlays from here.</b> Their paths are machine-local, kept in <code>~/.agents/overlays.json</code> rather than in the public file, so the audit discovers them at run time or not at all.</li>
+    <li><b>Publishing has a hard gate.</b> The public core is only pushed after a <b>mandatory secrets scan</b> — org identifiers, account numbers, hardcoded home paths, AWS keys, GitHub tokens — because company and client material belongs in the private overlays only.</li>
+  </ul>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>The skill</td><td><code>skills/ai-setup-audit/SKILL.md</code> — the setup model, the symlink pre-flight, then Phase 0 through Phase 9.</td></tr>
+    <tr><td>Declared</td><td><code>kind: skill</code>, <code>state: false</code>, <code>disable-model-invocation: true</code>, plus an explicit <code>integrates</code> map and <code>requires</code> list.</td></tr>
+    <tr><td>Its state</td><td><b>None.</b> It owns no store and writes no run log — there is no record of the last audit anywhere, which is why a <code>NEW</code> upstream skill whose verdict never gets written down comes back every single time. Continuity lives in the files it edits, not in a directory of its own.</td></tr>
+    <tr><td>What it reads</td><td>Deeply, and all of it someone else's: <code>~/.agents/skills</code> and <code>~/.agents/overlays.json</code>; <code>~/.claude/</code> — <code>settings.json</code>, <code>~/.claude.json</code>, <code>agents/</code>, and <code>projects/**/*.jsonl</code> for the usage snapshot; <code>~/.codex/</code> — <code>config.toml</code>, <code>AGENTS.md</code>, <code>agents/</code>; <code>~/basic-memory/</code>; and this repo's <code>external-skills.json</code>.</td></tr>
+    <tr><td>Integrates</td><td><b>claude-code</b> — settings, skills, plugins, MCP servers · <b>codex</b> — config, skills, MCP servers · <b>basic-memory</b> — note inventory · <b>github-pages</b> — the <code>viz-pages</code> explorables.</td></tr>
+    <tr><td>Requires</td><td><code>jq</code>, <code>gh</code>, <code>npx</code>, <code>claude</code>, <code>codex</code>. The <code>npx</code> lock file on disk is read but <b>not trusted for provenance</b> — it silently fails to update, which is why <code>external-skills.json</code> is hand-maintained.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">Ten phases, and what each one is allowed to conclude</h2>
+  <p class="m">One run, from a read-only inventory to an offered commit. Green is a signal the phase trusts; red is one it has learned not to.</p>
+
+  <div class="fig" data-viz-id="phase-figure" data-label="stepper: phases 0 through 9 of an audit run">
+    <div class="stage" id="stage"></div>
+    <p class="lede" id="lede"></p>
+    <div class="ctrl">
+      <button id="prev" aria-label="previous step">‹ back</button>
+      <button id="play">▶ play</button>
+      <button id="next" aria-label="next step">next ›</button>
+      <span class="pos" id="pos"></span>
+      <span class="hint">← → arrow keys</span>
+    </div>
+  </div>
+
+  <h3>One setup, two agents, zero copies</h3>
+  <p>The thing being audited is a <b>public core</b> (<code>RascalTwo/ai-setup</code>) plus <b>private overlays</b>, installed by symlink into the paths Claude Code and OpenAI Codex both read. <code>AGENTS.md</code> is canonical and <code>CLAUDE.md</code> is a symlink to it, so <b>both agents read the same bytes</b>. The canonical skills dir is <code>~/.agents/skills</code>; <code>~/.claude/skills</code> is a whole-dir symlink to it. Subagents are authored once and compiled by Ruler into a Claude <code>.md</code> and a Codex <code>.toml</code>.</p>
+  <p class="m">That model decides what counts as a finding. A healthy entry is a <b>pointer into a git repo</b>, so there is nothing to copy back, no snapshot to reconcile, and no token doubling to "fix". The audit's first move is a classification sweep — <code>SYMLINK</code>, <code>BROKEN</code>, <code>REAL_DIR</code>, <code>ABSENT</code> — and three of those four are perfectly fine.</p>
+
+  <h3>The one invariant it runs every time</h3>
+  <p>Everything in <code>~/.agents/skills</code> is <b>either</b> a symlink into one of the repos (owned) <b>or</b> named in <code>external-skills.json</code> (third-party). A real directory that the manifest doesn't name is an <b>orphan</b>. The manifest is hand-maintained on purpose: the <code>npx</code> lock file on disk silently fails to update, so it isn't trusted for provenance.</p>
+  <pre><span class="c"># a real dir whose name isn't explicitly in the manifest</span>
+for d in ~/.agents/skills/*; do
+  [ -L "$d" ] &amp;&amp; continue    <span class="c"># symlink into a repo = owned, fine</span>
+  <span class="c"># .repos only — a bare grep would hit .declined and wave an orphan through</span>
+  jq -e --arg n "$(basename "$d")" '[.repos[][]] | index($n)' "$DOC" \
+    &gt;/dev/null || echo "UNACCOUNTED: $d"
+done</pre>
+  <p class="m">Freshness is a separate question, answered by <b>content hash</b>: a third-party skill is current when its installed <code>SKILL.md</code> matches some blob in its source repo's tree. Hashing sidesteps mapping local names onto upstream paths — upstream reorganises (mattpocock moved every skill into category dirs without renaming one) and a path-based check would break. The same pass reports skills upstream has <b>added</b>, and a <code>NEW</code> whose verdict never gets written into <code>.repos</code> or <code>.declined</code> comes back every single audit until the noise gets ignored. That is how the check dies.</p>
+
+  <h3>The signals that lie, and it names them</h3>
+  <ul>
+    <li><code>ls -ld ~/.agents/skills/foo/</code> prints <code>d</code> even when <code>foo</code> is a symlink — the <b>trailing slash makes <code>ls</code> follow the link</b>. Test with <code>[ -L ]</code>, never infer a real dir from <code>ls</code>. <code>stat</code> follows links too.</li>
+    <li>An entire repo's skills reporting <code>GONE</code> on one line isn't a finding, it's a <b>shell bug</b>: <code>IFS=$'\t' read</code> leaks past the read and the whole list arrives as one variable.</li>
+    <li><b>Usage counts are Claude-only.</b> They come from <code>~/.claude/projects/**/*.jsonl</code>, which Claude Code writes unconditionally. Codex exposes no equivalent, so "0 calls" means unused <i>by Claude</i>. A reviewer subagent can also be quiet simply because the r2-sdlc pipeline was idle.</li>
+    <li><code>/doctor</code> runs first and is folded in — <b>then set aside</b>. It is one probe of one agent, blind to Codex, the overlays, the symlink model and memory. Green <code>/doctor</code> never means the setup is healthy.</li>
+  </ul>
+  <p class="m">The usage report replaced a Prometheus/Loki/Tempo/OTEL Docker stack that only had data while it was up, needed babysitting, and was down at audit time. The transcripts had more than it would have provided. Decommissioned 2026-07-11 — and the audit still checks that <code>OTEL_*</code> isn't exporting to the dead endpoint.</p>
+
+  <h3>It audits its own advertising</h3>
+  <p>Phase 8 turns the audit on <a href="../">the published explorables</a> — the setup tour and these posters. They're hand-authored HTML that nothing regenerates, so they drift every time a skill changes, and <b>this audit is the only cadence that catches it</b>. Each poster stamps its subject as <code>data-atom="&lt;skill&gt;"</code> so the check is a one-second grep rather than a slow semantic judgment about whether a pitch still lands.</p>
+  <p>The two lists it produces are read <b>differently</b>, and that asymmetry is the point. A poster whose atom no longer exists is the worst kind of defect — a public, listed page confidently selling something that's gone. A skill with <b>no</b> poster is not a defect at all; posters are opt-in, most skills will never have one, and reading that list out as a to-do is the meta-tooling trap.</p>
+
+  <div class="callout"><b>Two traps learned the hard way:</b> <code>verify.ts</code> is not parallel-safe — it writes one shared <code>latest.png</code>, so concurrent runs clobber each other and you confirm a layout you never looked at. And a poster's <code>og.auto.png</code> never regenerates itself: edit a card without <code>--og</code> and the page updates while every chat unfurl keeps previewing the old pitch. It's git-ignored, so a fresh clone has no OG images at all.</div>
+
+  <p class="m">Phase 9 closes the loop the same way it opened: the explorables deploy separately, off disk, so the OG images have to be regenerated <em>before</em> the deploy rather than before the commit. Then it asks what you want to revisit.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+<script type="module">
+  import { stepper, $ } from "/_kit/viz.js";
+
+  const S = [
+    { t: "PHASE 0 · USAGE SNAPSHOT",
+      rows: [["~/.claude/projects/**/*.jsonl", "6+ months, gap-free", "ok"], ["nothing to keep running", "written unconditionally", "ok"],
+             ["\"0 calls\" = globally dead", "false — Codex is invisible", "bad"]],
+      lede: "The only number in the audit drawn from evidence rather than inspection. It replaced a Prometheus/Loki/OTEL stack that was <b>down at audit time</b> — decommissioned 2026-07-11." },
+    { t: "PHASE 1 · DISCOVERY",
+      rows: [["parallel subagents", "read-only inventory", "ok"], ["classify every live entry", "SYMLINK · BROKEN · REAL_DIR · ABSENT", "ok"],
+             ["which phases to run", "it asks you here", "ok"], ["changing anything yet", "refused", "bad"]],
+      lede: "Interactive at the <b>start</b>, not the end. You get the whole inventory and choose the phases — three of the four classifications are healthy states, so the list is longer than the problem." },
+    { t: "PHASE 2 · RULES FILE",
+      rows: [["ai-setup/AGENTS.md", "canonical", "ok"], ["~/.claude/CLAUDE.md", "→ AGENTS.md", "ok"],
+             ["~/.codex/AGENTS.md", "→ AGENTS.md", "ok"], ["two files drifting apart", "impossible by construction", "ok"]],
+      lede: "One file, two agents, <b>the same bytes</b>. What's audited here is the content — rules that no longer describe the setup, and cross-references pointing at things that moved." },
+    { t: "PHASE 3 · SKILLS",
+      rows: [["the hard invariant", "symlink, or named in the manifest", "ok"], ["freshness", "content hash vs upstream tree", "ok"],
+             ["an unnamed real dir", "UNACCOUNTED — ask, don't delete", "bad"], ["trusting the npx lock file", "refused", "bad"]],
+      lede: "Hashing rather than path-matching, because upstream reorganises — mattpocock moved every skill into category dirs without renaming one, and a path-based check would have reported the whole catalog missing." },
+    { t: "PHASE 4 · SUBAGENTS",
+      rows: [["authored once", ".ruler/agents/*.md", "ok"], ["compiled by Ruler", ".claude/*.md + .codex/*.toml", "ok"],
+             ["a compiled file with no source", "orphan — Ruler never deletes", "bad"]],
+      lede: "The r2-sdlc reviewers. The invariant is that every compiled artefact traces back to a <code>.ruler</code> source; a rename leaves the old compiled pair behind and nothing else ever notices." },
+    { t: "PHASE 5 · MCP & SETTINGS",
+      rows: [["/doctor", "run first, folded in", "ok"], ["Claude ~/.claude.json", "mcpServers", "ok"],
+             ["Codex ~/.codex/config.toml", "[mcp_servers.*]", "ok"], ["green /doctor = healthy setup", "false", "bad"]],
+      lede: "<code>/doctor</code> is one probe of one agent — blind to Codex, the overlays, the symlink model and memory. It is read and then <b>deliberately set aside</b>." },
+    { t: "PHASE 6 · BASIC-MEMORY",
+      rows: [["~/basic-memory/", "note inventory", "ok"], ["wiki-links and permalinks", "resolved", "ok"],
+             ["dead references", "flagged", "bad"]],
+      lede: "Notes link to each other and to skills. A dead reference costs tokens and confuses the model every time it is loaded, and nothing else in the setup would ever surface it." },
+    { t: "PHASE 7 · ECOSYSTEM LINKS",
+      rows: [["AGENTS.md → skill", "resolves?", "ok"], ["skill → memory note", "resolves?", "ok"],
+             ["note → note", "resolves?", "ok"], ["missing cross-reference", "an opportunity, not a defect", "ok"]],
+      lede: "The pass that treats the setup as a graph rather than a list of files. Dead edges waste tokens; <b>absent</b> edges are the missed connections, and they're reported as suggestions." },
+    { t: "PHASE 8 · THE EXPLORABLES",
+      rows: [["data-atom=\"&lt;skill&gt;\"", "one grep, not a judgment call", "ok"],
+             ["poster whose atom is gone", "a live page selling nothing", "bad"],
+             ["skill with no poster", "opt-in — not a defect", "ok"], ["og.auto.png", "regenerate with --og, or it lies", "bad"]],
+      lede: "The audit turned on its own advertising. Hand-authored HTML that nothing regenerates drifts every time a skill changes, and <b>this is the only cadence that catches it</b>." },
+    { t: "PHASE 9 · SYNC & PUBLISH",
+      rows: [["install.ts", "idempotent re-run", "ok"], ["subagents", "recompiled", "ok"],
+             ["commit on private/trunk", "offered, never taken", "ok"], ["publishing the public core", "secrets scan first", "bad"],
+             ["cp over a symlink", "would break the setup", "bad"]],
+      lede: "There is nothing to copy back — the edits <b>were</b> the repo. What's left is the installer, the compiler, and a commit you have to approve; the public snapshot never gets one without the mandatory secrets scan." },
+  ];
+
+  const stage = $("#stage"), lede = $("#lede"), pos = $("#pos");
+  const render = (i) => {
+    const s = S[i];
+    stage.innerHTML =
+      `<div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent);margin-bottom:12px">${s.t}</div>` +
+      s.rows.map(([k, v, st]) => `
+        <div style="display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:13px;
+                    padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text)">${k}</span>
+          <span style="color:${st === "ok" ? "var(--good)" : "var(--danger)"};white-space:nowrap">${st === "ok" ? "✓" : "✗"} ${v}</span>
+        </div>`).join("");
+    lede.innerHTML = s.lede;
+    pos.textContent = `${i + 1} / ${S.length}`;
+  };
+
+  const st = stepper({ n: S.length, onStep: render, autoplayMs: 3200, hashKey: "phase" });
+  $("#next").onclick = () => st.next();
+  $("#prev").onclick = () => st.prev();
+  const play = $("#play");
+  let on = false;
+  play.onclick = () => { on = !on; on ? st.play() : st.pause(); play.textContent = on ? "❚❚ pause" : "▶ play"; };
+  for (const el of [$("#next"), $("#prev")])
+    el.addEventListener("click", () => { on = false; play.textContent = "▶ play"; });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>run-tab — the prompt that asks for the right thing</title>
+<meta name="viz:uid" content="v-5db4adc78375">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="run-tab">
+<meta name="viz:description" content="prefix+c in herdr asks for a command, not a tab name, and runs it in a new tab in the directory you were just in. prefix+shift+c closes the tab when it exits and takes you back.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; verify.ts --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:page-kind" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ──────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls beneath it, so
+     the deep dive lives below. poster.css owns the scale-to-fit mechanics (and
+     the transform:scale dead-gap fix) — nothing here re-derives them.
+     ────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  .og-card{background:
+      radial-gradient(820px 480px at 94% -10%, color-mix(in srgb, var(--good) 16%, transparent), transparent 60%),
+      radial-gradient(700px 460px at -6% 108%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 452px; gap:38px; align-items:center; padding:58px 66px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:60px; line-height:1.03; margin:0 0 20px; letter-spacing:-1.6px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--good); }
+  p.sub{ font-size:19px; line-height:1.45; color:var(--muted); margin:0 0 20px; max-width:490px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:14.5px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:490px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the keystroke before/after = the "proof" slot */
+  .swap{ display:grid; gap:14px; }
+  .band{ background:color-mix(in srgb, var(--panel) 78%, transparent); border:1px solid var(--border);
+         border-radius:14px; padding:15px 16px 17px; }
+  .band .lbl{ display:flex; justify-content:space-between; align-items:baseline;
+              font-family:var(--mono); font-size:12.5px; letter-spacing:.12em; margin-bottom:11px; }
+  .band .lbl .n{ letter-spacing:0; font-size:12px; color:var(--faint); }
+  .keys{ display:flex; flex-wrap:wrap; gap:7px; }
+  .k{ font-family:var(--mono); font-size:13px; line-height:1; padding:9px 10px; border-radius:7px;
+      background:var(--panel-2); border:1px solid var(--border); color:var(--muted); white-space:nowrap; }
+  .band.before{ border-top:2px solid var(--warn); }
+  .band.before .lbl{ color:var(--warn); }
+  .band.after{ border-top:2px solid var(--good); }
+  .band.after .lbl{ color:var(--good); }
+  .band.after .k{ font-size:20px; padding:14px 18px; color:var(--text);
+                  border-color:color-mix(in srgb, var(--good) 55%, transparent);
+                  background:color-mix(in srgb, var(--good) 14%, transparent); }
+  .lands{ margin-top:12px; font-family:var(--mono); font-size:12.5px; line-height:1.55; color:var(--muted); }
+  .lands b{ color:var(--text); }
+  .lands .cmd{ color:var(--good); }
+  .arrow{ text-align:center; font-family:var(--mono); font-size:12px; letter-spacing:.16em; color:var(--faint); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  /* inline code stays unboxed — this page mentions a lot of it, and chips at that
+     density turn a paragraph into confetti. Mono + teal is enough separation. */
+  .dive code, .callout code{ font-family:var(--mono); font-size:14.5px; color:var(--c5); }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  table{ width:100%; border-collapse:collapse; margin:0 0 16px; font-size:15px; }
+  th,td{ text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); }
+  th{ font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+  td code{ font-family:var(--mono); font-size:13.5px; color:var(--c5); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ text-align:left; border-bottom:none; border-top:1px solid var(--border);
+                  padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig svg{ display:block; }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+  /* run-tab: the AFTER band holds three keys, not one — a notch smaller so they share a row. */
+  .band.after .k{ font-size:16px; padding:12px 13px; }
+  .band.after .k.typed{ font-style:italic; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="run-tab" data-viz-id="poster-card" data-label="run-tab poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED TOOL · RUN-TAB</div>
+      <h1 class="hook">Skip the name.<br><em>Type the command.</em></h1>
+      <p class="sub"><b>prefix+c</b> in herdr pops a <b>run&gt;</b> prompt. What you type runs in a <b>new tab</b>, in the directory you were just in.</p>
+      <p class="not"><b>prefix+shift+c</b>: the tab closes when the command exits.<br>Still watching it? You land back where you started.</p>
+      <div class="trigger"><span>needs</span>&nbsp;herdr&nbsp;+&nbsp;jq</div>
+    </div>
+    <div class="swap">
+      <div class="band before">
+        <div class="lbl"><span>BEFORE</span><span class="n">5 steps</span></div>
+        <div class="keys">
+          <span class="k">prefix+c</span><span class="k">name the tab (or skip)</span><span class="k">Enter</span>
+          <span class="k">type the command</span><span class="k">Enter</span>
+        </div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="band after">
+        <div class="lbl"><span>AFTER</span><span class="n">3 steps</span></div>
+        <div class="keys"><span class="k">prefix+c</span><span class="k typed">the command</span><span class="k">Enter</span></div>
+        <div class="lands">tab <b>auto-numbered</b>, cwd <b>inherited</b>, typed into its <b>shell</b>:<br><span class="cmd">run&gt; npm test</span> &nbsp;·&nbsp; empty = plain tab</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">The prompt asked for the wrong thing</h2>
+  <p>herdr's built-in <code>new_tab</code> on <code>prefix+c</code> asked for a <b>tab name</b> before it made the tab. I never typed one. <a href="../tool-herdr-autolabel/">herdr-autolabel</a> renames tabs from what happens in them, so the name prompt was always an <code>Enter</code> to skip. Then I typed the command I had opened the tab for. The prompt asked for the one thing I didn't have and ignored the one thing I did.</p>
+  <p>A lot of those commands are one-shots: a build, a test run, an install. For those, the tab outlives the command. Closing it and finding the way back to the tab I was on was manual, because herdr on its own lands you on whichever tab was last.</p>
+  <p class="m">It is the sibling of <a href="../tool-claude-tab/">claude-tab</a>: claude-tab is <code>prefix+a</code> for the one command I run most, and run-tab is <code>prefix+c</code> for every other one.</p>
+
+  <h2 data-beat="using">prefix+c, or prefix+shift+c</h2>
+  <ul>
+    <li><b>prefix+c</b>: a small popup (60% wide, 5 rows) with a <code>run&gt;</code> prompt. Type a command and press <code>Enter</code>. A new tab opens, focused, in the focused pane's cwd, with the command typed into its shell. The tab stays open afterwards.</li>
+    <li><b>Empty <code>Enter</code></b>: a plain new tab, the same thing the old <code>new_tab</code> gave you.</li>
+    <li><b><code>Ctrl-C</code></b>: cancels. Nothing is created.</li>
+    <li><b>prefix+shift+c</b>: the prompt reads <code>[close on exit] run&gt;</code>. Same as above, but the tab closes when the command exits. If you are still on that tab, you land back on the tab you started from.</li>
+  </ul>
+  <p class="m">Both show up in herdr's own help as <code>new tab running a command (empty = plain tab)</code> and <code>new tab running a command, closed when it exits</code>. Those are the <code>description</code> fields of the two bindings.</p>
+
+  <h2 data-beat="limits">What it won't do</h2>
+  <ul>
+    <li><b>It never names the tab.</b> No <code>--label</code> is passed, so herdr auto-numbers it. Naming is <a href="../tool-herdr-autolabel/">herdr-autolabel</a>'s job.</li>
+    <li><b>It will not pull you back from somewhere else.</b> In close-on-exit mode the jump back happens only if you are still looking at the command's tab when it finishes. If you have moved to another tab during a long command, you stay where you are.</li>
+    <li><b>Close-on-exit does not care whether the command worked.</b> The appended step is joined with <code>;</code>, not <code>&amp;&amp;</code>, so a failing command closes its tab too, and the output goes with it. If you need to read the output, use plain <code>prefix+c</code>.</li>
+    <li><b>The command is typed, not exec'd.</b> It goes through the new tab's shell, so pipes, aliases and <code>&amp;&amp;</code> work and the line lands in your shell history. In close mode, the appended <code>; run-tab --back &lt;origin&gt;; exit</code> lands in history too.</li>
+    <li><b>It has no opinion about the directory.</b> Like claude-tab, the cwd comes from herdr's <code>[terminal] new_cwd</code>, which defaults to <code>"follow"</code>.</li>
+    <li><b>It takes over <code>prefix+c</code>.</b> The snippet unbinds herdr's <code>new_tab</code> (<code>new_tab = ""</code>). Nothing is lost, because an empty prompt gives the same plain tab.</li>
+  </ul>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>Integrates with</td><td>herdr, and only herdr: <b>prefix+c</b> and <b>prefix+shift+c</b> as <code>[[keys.command]]</code> bindings with <code>type = "popup"</code>, plus herdr's socket API as the thing the script talks to.</td></tr>
+    <tr><td>Requires</td><td><code>herdr</code> and <code>jq</code>. The script runs under <code>/bin/zsh</code>, whose <code>vared</code> is the prompt. No daemon, no runtime.</td></tr>
+    <tr><td>Its state</td><td><b>None.</b> It <b>keeps nothing</b>: no state directory, no cache, no config of its own. The origin tab id travels inside the command line it types, so there is nothing to clean up and nothing that can go stale.</td></tr>
+    <tr><td>What it installs</td><td><code>run-tab</code> → <code>~/.agents/ai-setup/tools/run-tab/run-tab</code>, and <code>herdr-keybind.toml</code> merged into <code>~/.config/herdr/config.toml</code> by <code>install.ts</code>. Afterwards: <code>herdr server reload-config</code>.</td></tr>
+    <tr><td>Re-running it</td><td>Safe. The TOML merge is guarded on <code>run-tab</code> in the config, so a second install adds nothing.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">Three calls, then the shell takes over</h2>
+  <p>The whole tool is one zsh script. It reads a line, records where you are, makes a tab, and hands the line to that tab's shell. In close-on-exit mode, the shell calls the same script back when the command finishes.</p>
+  <pre><span class="c"># the part every prefix+c runs</span>
+cmd=''
+vared -p "${1:+[close on exit] }run> " cmd || exit
+origin=$(focused)
+pane=$(herdr tab create --focus | jq -r .result.root_pane.pane_id)
+[[ -z $cmd ]] &amp;&amp; exit
+[[ $1 == --close ]] &amp;&amp; cmd="$cmd; ${0:A} --back $origin; exit"
+exec herdr pane run "$pane" "$cmd"</pre>
+
+  <div class="fig" data-viz-id="sequence" data-label="sequence: the popup, the three socket calls, and the close-on-exit callback">
+    <svg viewBox="0 0 764 590" width="100%" role="img" aria-label="Sequence diagram: run-tab asks herdr for the focused tab, creates a new tab, and types the command into its shell; in close mode the shell calls run-tab back to return to the origin tab and exits">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--good)"/>
+        </marker>
+        <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--c5)"/>
+        </marker>
+        <marker id="ahw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--warn)"/>
+        </marker>
+      </defs>
+
+      <!-- lifeline heads -->
+      <rect x="14" y="14" width="196" height="34" rx="8" fill="var(--panel)" stroke="var(--border)"/>
+      <text x="112" y="36" text-anchor="middle" font-family="var(--mono)" font-size="13" fill="var(--text)">run-tab · zsh popup</text>
+      <rect x="284" y="14" width="196" height="34" rx="8" fill="var(--panel)" stroke="var(--border)"/>
+      <text x="382" y="36" text-anchor="middle" font-family="var(--mono)" font-size="13" fill="var(--text)">herdr server</text>
+      <rect x="554" y="14" width="196" height="34" rx="8" fill="var(--panel)" stroke="var(--border)"/>
+      <text x="652" y="36" text-anchor="middle" font-family="var(--mono)" font-size="13" fill="var(--text)">new tab's shell</text>
+
+      <line x1="112" y1="48" x2="112" y2="330" stroke="var(--border)" stroke-dasharray="4 5"/>
+      <line x1="382" y1="48" x2="382" y2="580" stroke="var(--border)" stroke-dasharray="4 5"/>
+      <line x1="652" y1="48" x2="652" y2="552" stroke="var(--border)" stroke-dasharray="4 5"/>
+
+      <!-- trigger -->
+      <rect x="14" y="62" width="196" height="44" rx="7" fill="color-mix(in srgb, var(--accent) 14%, transparent)" stroke="color-mix(in srgb, var(--accent) 50%, transparent)"/>
+      <text x="112" y="80" text-anchor="middle" font-family="var(--mono)" font-size="12.5" fill="var(--accent)">prefix+c · popup</text>
+      <text x="112" y="97" text-anchor="middle" font-family="var(--mono)" font-size="12.5" fill="var(--text)">run&gt; npm test⏎</text>
+
+      <!-- call 1 -->
+      <line x1="112" y1="138" x2="374" y2="138" stroke="var(--good)" stroke-width="1.5" marker-end="url(#ah)"/>
+      <text x="245" y="130" text-anchor="middle" font-family="var(--mono)" font-size="13" fill="var(--good)">① herdr tab list</text>
+      <text x="245" y="156" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--faint)">focused tab_id → $origin</text>
+
+      <!-- call 2 -->
+      <line x1="112" y1="192" x2="374" y2="192" stroke="var(--good)" stroke-width="1.5" marker-end="url(#ah)"/>
+      <text x="245" y="184" text-anchor="middle" font-family="var(--mono)" font-size="13" fill="var(--good)">② herdr tab create --focus</text>
+      <line x1="382" y1="202" x2="644" y2="202" stroke="var(--c5)" stroke-width="1.5" stroke-dasharray="3 4" marker-end="url(#ahb)"/>
+      <text x="515" y="194" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--muted)">spawns, in the focused cwd</text>
+      <line x1="382" y1="230" x2="120" y2="230" stroke="var(--c5)" stroke-width="1.5" marker-end="url(#ahb)"/>
+      <text x="245" y="248" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--faint)">.result.root_pane.pane_id → $pane</text>
+
+      <!-- empty-input exit -->
+      <text x="112" y="278" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--warn)">empty? exit here = plain tab</text>
+
+      <!-- call 3 -->
+      <line x1="112" y1="306" x2="374" y2="306" stroke="var(--good)" stroke-width="1.5" marker-end="url(#ah)"/>
+      <text x="245" y="298" text-anchor="middle" font-family="var(--mono)" font-size="13" fill="var(--good)">③ herdr pane run $pane "$cmd"</text>
+      <line x1="382" y1="316" x2="644" y2="316" stroke="var(--c5)" stroke-width="1.5" marker-end="url(#ahb)"/>
+      <text x="515" y="308" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--muted)">typed into the shell, run</text>
+
+      <!-- script ends -->
+      <text x="112" y="326" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--danger)">exec · popup closes</text>
+      <line x1="98" y1="334" x2="126" y2="334" stroke="var(--danger)" stroke-width="2"/>
+
+      <!-- plain mode ends here -->
+      <rect x="554" y="332" width="196" height="30" rx="7" fill="color-mix(in srgb, var(--good) 12%, transparent)" stroke="color-mix(in srgb, var(--good) 45%, transparent)"/>
+      <text x="652" y="352" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--good)">prefix+c: shell stays</text>
+
+      <!-- close mode band -->
+      <rect x="236" y="380" width="520" height="198" rx="10" fill="color-mix(in srgb, var(--warn) 5%, transparent)" stroke="color-mix(in srgb, var(--warn) 40%, transparent)" stroke-dasharray="5 5"/>
+      <text x="250" y="400" font-family="var(--mono)" font-size="11.5" fill="var(--warn)">prefix+shift+c only · the typed line ends in</text>
+      <text x="250" y="417" font-family="var(--mono)" font-size="11.5" fill="var(--text)">; …/run-tab --back $origin; exit</text>
+
+      <rect x="546" y="428" width="206" height="30" rx="7" fill="var(--panel)" stroke="var(--border)"/>
+      <text x="649" y="448" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--muted)">command exits (any status)</text>
+
+      <line x1="652" y1="480" x2="390" y2="480" stroke="var(--warn)" stroke-width="1.5" marker-end="url(#ahw)"/>
+      <text x="517" y="472" text-anchor="middle" font-family="var(--mono)" font-size="12.5" fill="var(--warn)">④ herdr tab list</text>
+      <text x="517" y="496" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--faint)">focused == $HERDR_TAB_ID ?</text>
+
+      <line x1="652" y1="524" x2="390" y2="524" stroke="var(--warn)" stroke-width="1.5" marker-end="url(#ahw)"/>
+      <text x="517" y="516" text-anchor="middle" font-family="var(--mono)" font-size="12.5" fill="var(--warn)">⑤ yes: herdr tab focus $origin</text>
+      <text x="517" y="540" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--faint)">no: nothing, you stay where you are</text>
+
+      <text x="652" y="566" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--danger)">exit · the tab closes</text>
+      <line x1="638" y1="552" x2="666" y2="552" stroke="var(--danger)" stroke-width="2"/>
+    </svg>
+  </div>
+
+  <h3>Read the line first, and record where you are before moving</h3>
+  <p>The binding is <code>type = "popup"</code>, not claude-tab's <code>type = "shell"</code>, because the prompt needs a terminal and a popup does not disturb the layout. Inside it, zsh's <code>vared</code> reads the line. <code>Ctrl-C</code> makes <code>vared</code> fail, and <code>|| exit</code> leaves before anything is created. <code>focused()</code> is <code>herdr tab list | jq -r 'first(.result.tabs[] | select(.focused)) | .tab_id'</code>. It has to run <em>before</em> the tab is created: <code>--focus</code> moves the focus, and after that the focused tab is the new one.</p>
+
+  <h3>Create the tab, then check for an empty line</h3>
+  <p><b><code>herdr tab create --focus</code></b>, with no <code>--label</code>, is the same call claude-tab makes. The tab takes the focused pane's cwd through <code>[terminal] new_cwd</code>, and <code>jq</code> pulls the new pane's id out of <code>.result.root_pane.pane_id</code>. The empty-input check comes <em>after</em> the create on purpose: an empty line has already made the plain tab it asked for, so the script just exits.</p>
+
+  <h3>Type it into the shell, don't exec it</h3>
+  <p><b><code>herdr pane run</code></b> types the command into the new tab's shell and runs it. claude-tab hands it one fixed command. run-tab hands it whatever you typed, as one string, so it is shell syntax. Because the shell is still there when the command finishes, <code>prefix+c</code> tabs stay open and the line is in history. The script <code>exec</code>s into this last call, so no run-tab process is left in the popup.</p>
+
+  <h3>Close-on-exit is the shell calling run-tab back</h3>
+  <p>With <code>--close</code>, the typed line becomes <code>$cmd; ${0:A} --back $origin; exit</code>. <code>${0:A}</code> is zsh for the script's own absolute path, so the callback does not depend on <code>PATH</code>. <code>$origin</code> is baked in as text, which is why run-tab keeps no state. When the command exits, <code>--back</code> runs inside the new tab, where herdr has set <code>$HERDR_TAB_ID</code> to that tab. It compares that with the focused tab. If they match, you are still watching, so it calls <code>herdr tab focus $origin</code>. If they don't match, it does nothing. Then <code>exit</code> ends the shell, and the tab closes with it.</p>
+
+  <h3>The binding, and the two things it changes</h3>
+  <pre><span class="c"># herdr-keybind.toml. install.ts expands ~ (herdr does not), and writes
+# new_tab = "" into your existing [keys] table to free prefix+c.</span>
+
+[[keys.command]]
+key = "prefix+c"
+type = "popup"
+command = "~/.agents/ai-setup/tools/run-tab/run-tab"
+description = "new tab running a command (empty = plain tab)"
+width = "60%"
+height = 5
+
+[[keys.command]]
+key = "prefix+shift+c"
+type = "popup"
+command = "~/.agents/ai-setup/tools/run-tab/run-tab --close"
+description = "new tab running a command, closed when it exits"
+width = "60%"
+height = 5</pre>
+  <div class="callout"><b>herdr does not expand <code>~</code></b> in a <code>command</code> field. As with claude-tab, <code>install.ts</code> replaces <code>~/</code> with the absolute home path when it merges the snippet into <code>~/.config/herdr/config.toml</code>. That merge is guarded on <code>run-tab</code>, which is what makes re-running the installer a no-op.</div>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one tool, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+</body>
+</html>
