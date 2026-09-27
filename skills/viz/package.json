@@ -1,0 +1,29 @@
+{
+  "name": "viz",
+  "version": "10.0.0",
+  "description": "Ad-hoc HTML visualizations for AI agents — CLI, MCP server and skill.",
+  "scripts": {
+    "test": "bun test",
+    "sync:kit": "bun maintainer/sync-kit.ts"
+  },
+  "dependencies": {
+    "@bcoe/v8-coverage": "^1.0.2",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "commander": "^15.0.0",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0",
+    "puppeteer-core": "^25.2.1",
+    "v8-to-istanbul": "^9.3.0"
+  },
+  "gemId": "4d9a73950849",
+  "gemChromeProfile": "Profile 4",
+  "trustedDependencies": [
+    "@rascaltwo/pairwise-sorter"
+  ],
+  "devDependencies": {
+    "@rascaltwo/pairwise-sorter": "github:RascalTwo/pairwise-sorter#417c3ccd566035eda850b5ef95c46c3eadc9b0cd"
+  },
+  "kitBundles": {
+    "pairwise.js": "@rascaltwo/pairwise-sorter"
+  }
+}
