@@ -1,0 +1,19 @@
+#!/bin/sh
+# say-aloud -- record the SPOKEN version of this turn, for the fleet console to
+# read out loud. Reads the text on stdin, writes it as JSON beside the state dir.
+#
+# Why a script and not "write this JSON file": hand-authored JSON from a model
+# breaks on the first quote, apostrophe or newline in the sentence, and the
+# failure is silent -- the console just falls back to reading the top of the
+# text instead. `jq -Rs` escapes it correctly every time.
+#
+# Deliberately optional: the Stop hook is written by Claude Code and cannot be
+# forgotten, this file can. The console matches it on freshness and falls back
+# rather than going quiet, so a missed call degrades instead of breaking.
+#
+#   printf '%s' "Steno finished and wants you to look at the schema." | say-aloud
+set -u
+[ -n "${CLAUDE_CODE_SESSION_ID:-}" ] || exit 0
+DIR="$HOME/.agents/state/fleet/speech"
+mkdir -p "$DIR" 2>/dev/null || exit 0
+jq -Rs '{speech: .}' > "$DIR/$CLAUDE_CODE_SESSION_ID.json" 2>/dev/null || exit 0

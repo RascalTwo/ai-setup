@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="darkreader-lock">
+<title>Map Studio</title>
+<style>
+  :root {
+    --desk: #DCE2E7;      /* steel workspace */
+    --panel: #F4F6F8;
+    --paper: #FFFFFF;
+    --ink: #1B2A41;       /* blue-black ink */
+    --muted: #56657A;
+    --blueline: #1F6FD1;  /* mapped field */
+    --unmapped: #7C8896;
+    --mark: #C2186B;      /* selected: proof magenta */
+    --ok: #1E7A45;
+    --warn: #A4262C;
+    --font: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --line: #C6CFD8;
+    --control: #B7C1CC;
+    --hover: #E6EBEF;
+    --soft: #DCE2E7;
+    --tint-mark: #C2186B0D;
+    --problem-bg: #FBEAEA;
+    --problem-line: #E3B7B9;
+    --tab-text: #FFFFFF;
+    --move: #6A45C9;      /* moved shapes */
+    --add: #0B7480;       /* things the recipe adds */
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --desk: #10161E; --panel: #17202B; --paper: #1F2A37; --ink: #E4EAF1; --muted: #9BA9B9;
+      --blueline: #5AA2FF; --unmapped: #8C99A8; --mark: #FF5CA8; --ok: #4CC38A; --warn: #FF8F8F;
+      --line: #2C3847; --control: #3A4859; --hover: #223040; --soft: #2C3847; --tint-mark: #FF5CA814;
+      --problem-bg: #3A1D22; --problem-line: #5C2A31; --tab-text: #10161E; --move: #B39DFF; --add: #4FD1C5;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 var(--font); color: var(--ink); background: var(--desk);
+         font-variant-numeric: tabular-nums; height: 100vh; display: grid;
+         grid-template-rows: auto 1fr; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { border: 1px solid var(--control); background: var(--paper); border-radius: 6px; padding: 5px 12px;
+           cursor: pointer; }
+  button:hover { border-color: var(--ink); }
+  button.primary { background: var(--ink); color: var(--desk); border-color: var(--ink); }
+  button:disabled { opacity: .45; cursor: default; }
+  :focus-visible { outline: 3px solid var(--blueline); outline-offset: 2px; }
+
+  header { display: flex; align-items: center; gap: 16px; padding: 10px 18px; background: var(--paper);
+           border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 17px; margin: 0; font-weight: 600; }
+  header .progress { color: var(--muted); }
+  header .spacer { flex: 1; }
+  #status { color: var(--muted); min-width: 12ch; text-align: right; }
+  #status.bad { color: var(--warn); }
+
+  main { display: grid; grid-template-columns: 250px 1fr 400px; min-height: 0; }
+  aside, #editor { background: var(--panel); overflow: auto; min-height: 0; }
+  aside { border-right: 1px solid var(--line); padding: 12px 0; }
+  aside h2, #editor h2 { font-size: 13px; font-weight: 600; color: var(--muted); margin: 14px 16px 6px; }
+  aside select { margin: 0 16px 8px; width: calc(100% - 32px); padding: 4px; }
+  .plist { list-style: none; margin: 0; padding: 0; }
+  .plist button { width: 100%; text-align: left; border: 0; border-radius: 0; background: none;
+                  padding: 6px 16px; display: grid; grid-template-columns: 14px 1fr auto; gap: 8px;
+                  align-items: center; }
+  .plist button:hover { background: var(--hover); }
+  .plist button[aria-current="true"] { background: var(--paper); box-shadow: inset 3px 0 var(--blueline); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--unmapped); }
+  .dot.done { background: var(--ok); border-color: var(--ok); }
+  .slideno { color: var(--muted); font-size: 13px; }
+
+  #stage { display: flex; flex-direction: column; min-height: 0; padding: 14px 20px; gap: 10px; }
+  .tabs { display: flex; gap: 4px; }
+  .tabs button[aria-pressed="true"] { background: var(--ink); color: var(--desk); border-color: var(--ink); }
+  .tabs .hint { margin-left: auto; color: var(--muted); font-size: 13px; align-self: center; }
+  #canvas { position: relative; flex: 1; min-height: 0; display: flex; align-items: center;
+            justify-content: center; }
+  #frame { position: relative; background: #FFFFFF; box-shadow: 0 1px 0 #AEB9C4, 0 10px 30px #1B2A4122;
+           max-width: 100%; max-height: 100%; }
+  #frame img { display: block; width: 100%; height: 100%; }
+  #frame svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .shape { fill: transparent; stroke: var(--unmapped); stroke-dasharray: .06 .05; stroke-width: .015;
+           cursor: pointer; }
+  .shape:hover { fill: #7C889622; }
+  .field rect.box { fill: #1F6FD10F; stroke: var(--blueline); stroke-width: .02; cursor: pointer; }
+  .field rect.tab { fill: var(--blueline); }
+  .field text { fill: var(--tab-text); font: 600 .13px var(--font); pointer-events: none; }
+  .field.sel rect.box { stroke: var(--mark); fill: #C2186B14; stroke-width: .03; }
+  .field.sel rect.tab { fill: var(--mark); }
+  .shape.sel { stroke: var(--mark); stroke-dasharray: none; stroke-width: .03; }
+  .dropped rect.box { fill: url(#hatch); stroke: var(--warn); stroke-width: .02; cursor: pointer; }
+  .dropped rect.tab { fill: var(--warn); }
+  .dropped text { fill: var(--tab-text); font: 600 .13px var(--font); pointer-events: none; }
+  .dropped.sel rect.box { stroke: var(--mark); stroke-width: .03; }
+  .note { margin: 8px 16px; font-size: 13px; color: var(--muted); }
+  .step rect.box { fill: none; stroke-width: .025; }
+  .step text { fill: var(--tab-text); font: 600 .13px var(--font); pointer-events: none; }
+  .moved rect.box { stroke: var(--move); }
+  .moved rect.tab { fill: var(--move); }
+  .moved .from { fill: none; stroke: var(--move); stroke-dasharray: .05 .05; stroke-width: .015; }
+  .moved line { stroke: var(--move); stroke-width: .025; marker-end: url(#arrow); }
+  .added rect.box { stroke: var(--add); stroke-dasharray: .1 .04; }
+  .added rect.tab { fill: var(--add); }
+  .added.area rect.box { stroke-dasharray: .03 .06; }
+  .recipe { margin: 0 16px; padding: 0; list-style: none; }
+  .recipe li { display: grid; grid-template-columns: 14px 1fr auto; gap: 8px; align-items: center;
+               padding: 5px 0; border-bottom: 1px solid var(--soft); font-size: 14px; }
+  .recipe .swatch { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--line); }
+  .recipe .k-removed { background: var(--warn); }
+  .recipe .k-moved { background: var(--move); }
+  .recipe .k-added { background: var(--add); }
+  .recipe .k-field { background: var(--blueline); }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+                         margin-right: 4px; vertical-align: -1px; background: var(--c); }
+  .droplist { margin: 0 16px; padding: 0; list-style: none; }
+  .droplist li { display: flex; justify-content: space-between; align-items: center; padding: 4px 0;
+                 border-bottom: 1px solid var(--soft); }
+  .empty { text-align: center; max-width: 46ch; margin: auto; }
+  .empty p { color: var(--muted); }
+
+  #editor { border-left: 1px solid var(--line); padding-bottom: 30px; }
+  .row { display: grid; grid-template-columns: 110px 1fr; gap: 8px; align-items: center; margin: 6px 16px; }
+  .row label { color: var(--muted); font-size: 13px; }
+  .row input[type=text], .row input[type=number], .row textarea { width: 100%; padding: 4px 6px;
+      border: 1px solid var(--control); border-radius: 5px; background: var(--paper); }
+  .switch { display: flex; gap: 8px; align-items: center; margin: 10px 16px; padding: 10px 12px;
+            border-radius: 8px; background: var(--paper); border: 1px solid var(--line); }
+  .switch.on { border-color: var(--ok); color: var(--ok); }
+  .fields { margin: 0 16px; border-top: 1px solid var(--line); }
+  .frow { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; padding: 6px 4px;
+          border-bottom: 1px solid var(--soft); align-items: center; cursor: pointer; }
+  .frow[aria-selected="true"] { background: var(--paper); box-shadow: inset 3px 0 var(--mark); }
+  .kind { font-size: 12px; color: var(--muted); }
+  .detail { margin: 10px 16px; padding: 10px 12px; background: var(--paper); border-radius: 8px;
+            border: 1px solid var(--line); }
+  .paras { list-style: none; padding: 0; margin: 6px 0; font-size: 13px; }
+  .paras li { padding: 2px 6px; border-left: 3px solid transparent; color: var(--muted);
+              white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .paras li.in { border-left-color: var(--mark); color: var(--ink); background: var(--tint-mark); }
+  .checks { display: flex; gap: 14px; margin-top: 6px; font-size: 14px; }
+  fieldset.missing { border: 1px solid var(--line); border-radius: 6px; margin: 8px 0 0; padding: 4px 10px 8px;
+                     display: grid; gap: 2px; font-size: 14px; }
+  fieldset.missing legend { font-size: 12px; color: var(--muted); padding: 0 4px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 16px; }
+  details { margin: 10px 16px; }
+  details textarea { width: 100%; min-height: 220px; font: 12px/1.4 ui-monospace, Menlo, monospace;
+                     border: 1px solid var(--control); border-radius: 5px; padding: 6px; }
+  #problems { margin: 0; padding: 8px 18px; background: var(--problem-bg); color: var(--warn); font-size: 14px;
+              border-bottom: 1px solid var(--problem-line); display: none; }
+  #problems.show { display: block; }
+  #problems ul { margin: 4px 0 0; padding-left: 18px; }
+  @media (max-width: 1100px) { main { grid-template-columns: 200px 1fr; } #editor { grid-column: 1 / -1; } }
+</style>
+</head>
+<body>
+<div>
+  <header>
+    <h1>Map Studio</h1>
+    <span id="packname"></span>
+    <span class="progress" id="progress"></span>
+    <span class="spacer"></span>
+    <span id="status" role="status"></span>
+    <button class="primary" id="save" disabled>Save map</button>
+  </header>
+  <div id="problems"></div>
+</div>
+<main>
+  <aside>
+    <h2 id="packs-h">Templates</h2>
+    <select id="packs" aria-labelledby="packs-h"></select>
+    <h2>Slide types</h2>
+    <ul class="plist" id="plist"></ul>
+    <h2 id="unused-h" hidden>Slides with no type yet</h2>
+    <ul class="plist" id="unused"></ul>
+  </aside>
+  <section id="stage">
+    <div class="tabs">
+      <button id="tab-template" aria-pressed="true">Template</button>
+      <button id="tab-proof" aria-pressed="false">Proof</button>
+      <span class="hint legend" id="hint"></span>
+    </div>
+    <div id="canvas"></div>
+  </section>
+  <section id="editor" aria-label="Map entry"></section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const state = { packs: [], render: false, pack: null, info: null, map: null, key: null,
+                field: null, shape: null, shapes: [], view: "template", dirty: false };
+const api = async (url, opts = {}) => {
+  const r = await fetch(url, opts);
+  if ((r.headers.get("Content-Type") || "").includes("json")) {
+    const body = await r.json();
+    if (!r.ok) throw new Error(body.error || r.statusText);
+    return body;
+  }
+  if (!r.ok) throw new Error(r.statusText);
+  return r;
+};
+const say = (msg, bad = false) => { const s = $("#status"); s.textContent = msg; s.className = bad ? "bad" : ""; };
+const esc = t => String(t).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const patternKeys = () => Object.keys(state.map || {}).filter(k => !k.startsWith("_"))
+  .sort((a, b) => state.map[a].slide - state.map[b].slide || a.localeCompare(b));
+const cur = () => state.map[state.key];
+
+function dirty(on = true) {
+  state.dirty = on; $("#save").disabled = !on;
+  if (on) say("Unsaved changes");
+  renderList(); renderProgress();
+}
+
+async function loadPacks() {
+  const r = await api("/api/packs");
+  state.packs = r.packs; state.render = r.render;
+  $("#packs").innerHTML = r.packs.map(p =>
+    `<option value="${esc(p.name)}">${esc(p.name)}${p.mapped ? ` (${p.reviewed}/${p.patterns} reviewed)` : " (no map yet)"}</option>`).join("");
+  if (r.packs.length) await openPack(state.pack || r.packs[0].name);
+}
+
+async function openPack(name) {
+  if (state.dirty && !confirm("Discard unsaved changes to this map?")) { $("#packs").value = state.pack; return; }
+  state.pack = name; $("#packs").value = name;
+  state.info = await api(`/api/packs/${encodeURIComponent(name)}`);
+  state.map = state.info.map; state.dirty = false; $("#save").disabled = true;
+  $("#packname").textContent = name;
+  showProblems(state.info.problems || []);
+  if (!state.map) return renderUnmapped();
+  state.key = patternKeys()[0];
+  renderList(); renderProgress(); await selectPattern(state.key);
+}
+
+function renderUnmapped() {
+  $("#plist").innerHTML = ""; $("#unused").innerHTML = ""; $("#unused-h").hidden = true;
+  $("#progress").textContent = ""; $("#editor").innerHTML = "";
+  $("#canvas").innerHTML = `<div class="empty"><h2>This template has no map yet</h2>
+    <p>A draft map finds every text box, list and photo slot on its own. You then name them and
+    mark each slide type reviewed.</p><button class="primary" id="draft">Draft a map</button></div>`;
+  $("#draft").onclick = async () => {
+    say("Drafting…");
+    try { await api(`/api/packs/${encodeURIComponent(state.pack)}/draft`, {method: "POST"}); say("Draft ready");
+          await loadPacks(); } catch (e) { say(e.message, true); }
+  };
+}
+
+function renderProgress() {
+  const keys = patternKeys();
+  const done = keys.filter(k => state.map[k].reviewed).length;
+  $("#progress").textContent = `${done} of ${keys.length} slide types reviewed`;
+}
+
+function renderList() {
+  if (!state.map) return;
+  $("#plist").innerHTML = patternKeys().map(k => `<li><button data-k="${esc(k)}" aria-current="${k === state.key}">
+      <span class="dot ${state.map[k].reviewed ? "done" : ""}" aria-label="${state.map[k].reviewed ? "reviewed" : "not reviewed"}"></span>
+      <span>${esc(k)}</span><span class="slideno">${state.map[k].slide}</span></button></li>`).join("");
+  $("#plist").querySelectorAll("button").forEach(b => b.onclick = () => selectPattern(b.dataset.k));
+  const used = new Set(patternKeys().map(k => +state.map[k].slide));
+  const unused = [...Array(state.info.slides).keys()].map(i => i + 1).filter(n => !used.has(n));
+  $("#unused-h").hidden = !unused.length;
+  $("#unused").innerHTML = unused.map(n => `<li><button data-n="${n}"><span></span>
+      <span>Slide ${n}</span><span class="slideno">add</span></button></li>`).join("");
+  $("#unused").querySelectorAll("button").forEach(b => b.onclick = () => addPattern(+b.dataset.n));
+}
+
+async function selectPattern(key) {
+  state.key = key; state.field = null; state.shape = null;  // the Template/Proof choice sticks
+  state.shapes = await api(`/api/packs/${encodeURIComponent(state.pack)}/shapes/${cur().slide}`);
+  renderList(); renderStage(); renderEditor();
+}
+
+function addPattern(n) {
+  let key = `slide-${n}`, i = 2;
+  while (state.map[key]) key = `slide-${n}-${i++}`;
+  state.map[key] = {slide: n, fields: {}};
+  dirty(); selectPattern(key);
+}
+
+function tab(x, y, label) {
+  const w = Math.min(Math.max(label.length * .075 + .1, .5), 4), ty = Math.max(y - .2, 0);
+  return `<rect class="tab" x="${x}" y="${ty}" width="${w}" height=".2" rx=".03"></rect>
+          <text x="${x + .05}" y="${ty + .145}">${esc(label)}</text>`;
+}
+
+// Everything the recipe adds that isn't a template shape: text boxes, icon slots, icon rows, generated areas.
+function recipeOverlay() {
+  const p = cur(), out = [];
+  const box = (cls, x, y, w, h, label, tip) => out.push(`<g class="step added ${cls}"><rect class="box" x="${x}" y="${y}"
+      width="${w}" height="${h}"><title>${esc(tip)}</title></rect>${tab(x, y, label)}</g>`);
+  (p.labels || []).forEach((l, i) => box("", l.x, l.y, l.w, l.h, `added text ${i + 1}`,
+      `Text box added by the recipe: ${l.size || 14}pt, #${l.color || "061A40"}${l.fill ? ` on #${l.fill}` : ""}`));
+  for (const [name, f] of Object.entries(p.fields || {}))
+    if (f.art) box("", f.x, f.y, f.size, f.size, `icon slot: ${name}`, `Icon slot - each deck may pick an icon (sample ${f.sample})`);
+  if (p.icon_row) box("area", .5, p.icon_row.y, 9, p.icon_row.size + .7, "icon row",
+      "Each deck picks icons; they are laid out in one captioned row here");
+  if (p.generate) box("area", .3, 1.02, 9.4, 4, `generated: ${p.generate.replace("_", " ")}`,
+      "The build draws this area itself");
+  return out.join("");
+}
+
+function recipeSteps() {
+  const p = cur(), steps = [];
+  for (const id of p.drop || []) steps.push({k: "removed", text: `Remove shape #${id}`, undo: "Keep it", act: () => {
+    p.drop = p.drop.filter(d => d !== id); if (!p.drop.length) delete p.drop; }});
+  for (const [id, g] of Object.entries(p.place || {})) steps.push({k: "moved",
+    text: `Move shape #${id} to ${g[0]}, ${g[1]} in (${g[2]} × ${g[3]} in)`, undo: "Don't move", act: () => {
+      delete p.place[id]; if (!Object.keys(p.place).length) delete p.place; }});
+  (p.labels || []).forEach((l, i) => steps.push({k: "added",
+    text: `Add text box ${i + 1} at ${l.x}, ${l.y} in, ${l.size || 14}pt${l.bold ? " bold" : ""}`, undo: "Remove", act: () => {
+      p.labels.splice(i, 1); if (!p.labels.length) delete p.labels; }}));
+  for (const [name, f] of Object.entries(p.fields || {})) {
+    if (f.color) steps.push({k: "field", text: `Force ${name}'s text to #${f.color}`, undo: "Use the template's color",
+      act: () => { delete f.color; }});
+    if (f.art) steps.push({k: "added", text: `Icon slot ${name} at ${f.x}, ${f.y} in, ${f.size} in square`, undo: "Remove",
+      act: () => { delete p.fields[name]; }});
+  }
+  if (p.icon_row) steps.push({k: "added", text: `Lay out the deck's chosen icons in one row at ${p.icon_row.y} in`});
+  if (p.generate) steps.push({k: "added", text: `Draw the ${p.generate.replace("_", " ")}`});
+  return steps;
+}
+
+function renderStage() {
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-pressed", b.id === `tab-${state.view}`));
+  $("#tab-proof").disabled = !state.render;
+  const [w, h] = state.info.size;
+  const base = `/api/packs/${encodeURIComponent(state.pack)}`;
+  const src = state.view === "proof" ? `${base}/proof/${encodeURIComponent(state.key)}?t=${Date.now()}`
+                                      : `${base}/slide/${cur().slide}`;
+  const fields = cur().fields || {};
+  const byShape = {};
+  for (const [name, spec] of Object.entries(fields)) if (!spec.art) (byShape[spec.shape] ||= []).push(name);
+  const dropped = new Set(cur().drop || []);
+  const overlay = state.view === "proof" ? "" : state.shapes.map(s => {
+    let [x, y, sw, sh] = s.box;
+    // Lines have no area; give them enough to see and click.
+    if (sh < .08) { y -= (.08 - sh) / 2; sh = .08; }
+    if (sw < .08) { x -= (.08 - sw) / 2; sw = .08; }
+    const moved = (cur().place || {})[s.id];
+    if (moved && !dropped.has(s.id)) {
+      const [nx, ny, nw, nh] = moved;
+      return `<g class="step moved" data-shape="${s.id}">
+        <rect class="from" x="${x}" y="${y}" width="${sw}" height="${sh}"><title>Shape ${s.id} starts here</title></rect>
+        <line x1="${x + sw / 2}" y1="${y + sh / 2}" x2="${nx + nw / 2}" y2="${ny + nh / 2}"></line>
+        <rect class="box" x="${nx}" y="${ny}" width="${nw}" height="${nh}"><title>Shape ${s.id} is moved here</title></rect>
+        ${tab(nx, ny, `moved #${s.id}`)}</g>`;
+    }
+    if (dropped.has(s.id)) return `<g class="dropped ${state.shape === s.id ? "sel" : ""}" data-shape="${s.id}">
+      <rect class="box" x="${x}" y="${y}" width="${sw}" height="${sh}"><title>Shape ${s.id} - removed from every deck</title></rect>
+      <rect class="tab" x="${x}" y="${Math.max(y - .2, 0)}" width="1.25" height=".2" rx=".03"></rect>
+      <text x="${x + .05}" y="${Math.max(y - .2, 0) + .145}">removed #${s.id}</text></g>`;
+    const names = byShape[s.id];
+    if (!names) return `<rect class="shape ${state.shape === s.id ? "sel" : ""}" data-shape="${s.id}"
+        x="${x}" y="${y}" width="${sw}" height="${sh}"><title>Shape ${s.id} (${s.kind}) - not mapped</title></rect>`;
+    const sel = names.includes(state.field);
+    const forced = names.map(n => fields[n].color).find(Boolean);
+    const label = names.join(" + ") + (forced ? `  (color #${forced})` : "");
+    const tw = Math.min(Math.max(label.length * .075 + .1, .5), 4);
+    return `<g class="field ${sel ? "sel" : ""}" data-field="${esc(names[0])}">
+      <rect class="box" x="${x}" y="${y}" width="${sw}" height="${sh}"><title>${esc(label)} - shape ${s.id}</title></rect>
+      <rect class="tab" x="${x}" y="${Math.max(y - .2, 0)}" width="${tw}" height=".2" rx=".03"></rect>
+      <text x="${x + .05}" y="${Math.max(y - .2, 0) + .145}">${esc(label)}</text></g>`;
+  }).join("") + (state.view === "proof" ? "" : recipeOverlay());
+  $("#canvas").innerHTML = `<div id="frame" style="aspect-ratio:${w}/${h}; width:min(100%, calc((100vh - 150px) * ${w / h}))">
+      ${state.render ? `<img alt="Slide ${cur().slide} of the template${state.view === "proof" ? ", proof render" : ""}" src="${src}">` : ""}
+      <svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4"
+        orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--move)"/></marker><pattern id="hatch" width=".12" height=".12"
+        patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width=".05" height=".12" fill="#A4262C55"/></pattern></defs>${overlay}</svg></div>`;
+  $("#hint").innerHTML = state.view === "proof"
+    ? "Every box should show its own [field name]. Magenta is an image slot."
+    : `<span style="--c:var(--blueline)">field</span><span style="--c:var(--unmapped)">copied as-is</span>
+       <span style="--c:var(--warn)">removed</span><span style="--c:var(--move)">moved</span>
+       <span style="--c:var(--add)">added by the recipe</span><span>Proof shows the finished slide.</span>`;
+  if (state.view === "proof") {
+    say(state.dirty ? "Proof shows the saved map - save to include your changes" : "Rendering proof…", state.dirty);
+    $("#frame img").onload = () => say(state.dirty ? "Proof shows the saved map - save to include your changes"
+                                                    : "Proof rendered", state.dirty);
+    $("#frame img").onerror = () => say("Proof failed - save the map and check the problems list", true);
+  }
+  $("#canvas").querySelectorAll("[data-field]").forEach(g => g.onclick = () => { state.field = g.dataset.field;
+    state.shape = null; renderStage(); renderEditor(); });
+  $("#canvas").querySelectorAll("[data-shape]").forEach(r => r.onclick = () => { state.shape = +r.dataset.shape;
+    state.field = null; renderStage(); renderEditor(); });
+}
+
+function shapeInfo(id) { return state.shapes.find(s => s.id === +id); }
+
+function renderEditor() {
+  const p = cur();
+  const fields = p.fields || {};
+  const kindOf = f => f.art ? "icon" : f.image ? "image" : f.table ? "table" : f.list ? "list" : "text";
+  let html = `<h2>Slide type</h2>
+    <div class="row"><label for="pname">Name</label><input type="text" id="pname" value="${esc(state.key)}"></div>
+    <div class="row"><label for="pslide">Template slide</label><input type="number" id="pslide" min="1" max="${state.info.slides}" value="${p.slide}"></div>
+    <div class="row"><label for="pdesc">What it's for</label><textarea id="pdesc" rows="2">${esc(p.desc || "")}</textarea></div>
+    <label class="switch ${p.reviewed ? "on" : ""}"><input type="checkbox" id="previewed" ${p.reviewed ? "checked" : ""}>
+      ${p.reviewed ? "Reviewed: this slide type is good to use" : "Mark reviewed once the proof looks right"}</label>
+    <div class="actions"><button id="proofbtn" ${state.render ? "" : "disabled"}>Save and show proof</button>
+      <button id="dup">Duplicate</button><button id="del">Delete slide type</button></div>
+    <h2>Fields (${Object.keys(fields).length})</h2>
+    <div class="fields">${Object.entries(fields).map(([n, f]) => `<div class="frow" role="button" tabindex="0"
+        data-f="${esc(n)}" aria-selected="${n === state.field}"><span>${esc(n)}</span>
+        <span class="kind">${kindOf(f)}</span><span class="kind">${f.art ? "slot" : "#" + f.shape}</span></div>`).join("")
+      || `<p class="kind" style="padding:8px 4px">No fields: the slide is copied as-is. Click a dashed box to add one.</p>`}</div>`;
+
+  const drops = p.drop || [];
+  const steps = recipeSteps();
+  html += `<h2>Recipe (${steps.length} step${steps.length === 1 ? "" : "s"})</h2>` + (steps.length
+    ? `<ul class="recipe">${steps.map((st, i) => `<li><span class="swatch k-${st.k}"></span><span>${esc(st.text)}</span>
+        ${st.undo ? `<button data-step="${i}">${esc(st.undo)}</button>` : "<span></span>"}</li>`).join("")}</ul>`
+    : `<p class="note">No steps: the slide is copied, then its fields are filled.</p>`);
+  html += `<p class="note">Everything on the slide that isn't a field or removed is copied into every deck as-is.
+    Things that come from the slide's layout or master (often the page number and its background) aren't shown here and always appear.</p>`;
+  if (state.field && fields[state.field]) {
+    const f = fields[state.field], s = f.art ? null : shapeInfo(f.shape);
+    const [a, b] = f.paras || [0, 0];
+    const last = s ? s.paras.length - 1 : 0;
+    const inRange = i => f.paras && i >= a && i <= (b === -1 ? last : b);
+    html += `<div class="detail"><div class="row" style="margin:0 0 6px"><label for="fname">Field name</label>
+        <input type="text" id="fname" value="${esc(state.field)}"></div>
+      ${f.art ? `<div class="kind">Icon slot: each deck may name an icon ("slide:shape" from the pack's icon sheet).
+          The icon keeps its proportions inside this square.</div>
+        <div class="row" style="margin:6px 0 0"><label>Left, top, size</label><span>
+          <input type="number" step=".05" id="ax" value="${f.x}" style="width:5em">
+          <input type="number" step=".05" id="ay" value="${f.y}" style="width:5em">
+          <input type="number" step=".05" id="as" value="${f.size}" style="width:5em"> in</span></div>
+        <div class="row" style="margin:6px 0 0"><label for="asample">Proof sample</label><input type="text" id="asample" value="${esc(f.sample || "")}"></div>
+        <div class="checks"><label><input type="checkbox" id="fopt" ${f.optional ? "checked" : ""}> Optional</label></div>`
+      : f.paras ? `<div class="kind">Paragraphs in shape #${f.shape} - the marked lines are what this field replaces:</div>
+        <ul class="paras">${(s ? s.paras : []).map((t, i) => `<li class="${inRange(i) ? "in" : ""}">${i}: ${esc(t) || "<em>(blank)</em>"}</li>`).join("")}</ul>
+        <div class="row" style="margin:0"><label>From / to</label><span>
+          <input type="number" id="pa" min="0" max="${last}" value="${a}" style="width:5em"> to
+          <input type="number" id="pb" min="-1" max="${last}" value="${b}" style="width:5em"> <span class="kind">(-1 = to the end)</span></span></div>
+        <div class="checks"><label><input type="checkbox" id="flist" ${f.list ? "checked" : ""}> Takes a list of lines</label>
+          <label><input type="checkbox" id="fopt" ${f.optional ? "checked" : ""}> Optional</label></div>`
+        : `<div class="kind">${f.image ? "Image slot: the deck supplies a picture file." : "Table: the deck supplies rows."}</div>
+           <div class="checks"><label><input type="checkbox" id="fopt" ${f.optional ? "checked" : ""}> Optional</label></div>`}
+      ${f.optional && !f.art ? `<fieldset class="missing"><legend>When a deck leaves it out</legend>
+        <label><input type="radio" name="missing" value="remove" ${f.keep_if_missing ? "" : "checked"}>
+          Remove it from the slide</label>
+        <label><input type="radio" name="missing" value="keep" ${f.keep_if_missing ? "checked" : ""}>
+          Keep the template's own ${f.image ? "picture" : "text"}</label></fieldset>` : ""}
+      <div class="actions" style="margin:10px 0 0"><button id="fdel">Remove field</button></div></div>`;
+  }
+  if (state.shape) {
+    const s = shapeInfo(state.shape);
+    const kindName = {pic: "picture", sp: "shape", cxnSp: "line", grpSp: "group", table: "table", graphicFrame: "chart or object"}[s.kind] || s.kind;
+    const fillable = s.kind === "pic" || s.kind === "table" || (s.kind === "sp" && (s.placeholder || s.paras.some(t => t.trim())));
+    const guess = s.kind === "pic" ? "image" : s.kind === "table" ? "table" : "text";
+    if (drops.includes(s.id)) {
+      html += `<div class="detail"><strong>Shape #${s.id}</strong> <span class="kind">(${kindName})</span>
+        <p>Removed: decks built from this slide type leave it out.</p>
+        <div class="actions" style="margin:0"><button class="primary" data-keep="${s.id}">Keep it on the slide</button></div></div>`;
+    } else {
+      html += `<div class="detail"><strong>Shape #${s.id}</strong> <span class="kind">(${kindName}, copied as-is)</span>
+        ${s.paras.filter(Boolean).length ? `<ul class="paras">${s.paras.map((t, i) => `<li>${i}: ${esc(t) || "<em>(blank)</em>"}</li>`).join("")}</ul>` : ""}
+        <p class="kind">${fillable ? (s.kind === "pic" ? "Make it an image field if each deck should be able to supply its own picture here."
+            : "Make it a field if each deck should put its own words here.")
+          : "A drawn shape with no text: it can only be kept or removed."}</p>
+        <div class="actions" style="margin:6px 0 0">${fillable ? `<button class="primary" id="addf">Add as ${guess} field</button>` : ""}
+        <button id="dropf">Remove from every deck</button></div></div>`;
+    }
+  }
+  html += `<details><summary>Everything else (JSON)</summary>
+    <p class="kind">Drops, color overrides, added label boxes and icon rows live here.</p>
+    <textarea id="raw" spellcheck="false">${esc(JSON.stringify(p, null, 2))}</textarea>
+    <div class="actions" style="margin:6px 0"><button id="applyraw">Apply JSON</button></div></details>`;
+  $("#editor").innerHTML = html;
+  wireEditor();
+}
+
+function wireEditor() {
+  const p = cur();
+  $("#pname").onchange = e => {
+    const nk = e.target.value.trim();
+    if (!nk || nk === state.key) return;
+    if (state.map[nk]) { say(`"${nk}" already exists`, true); e.target.value = state.key; return; }
+    const rebuilt = {};
+    for (const [k, v] of Object.entries(state.map)) rebuilt[k === state.key ? nk : k] = v;
+    state.map = rebuilt; state.key = nk; dirty(); renderEditor();
+  };
+  $("#pslide").onchange = async e => { p.slide = +e.target.value; dirty(); await selectPattern(state.key); };
+  $("#pdesc").onchange = e => { p.desc = e.target.value; dirty(); };
+  $("#previewed").onchange = e => { if (e.target.checked) p.reviewed = true; else delete p.reviewed; dirty(); renderEditor(); };
+  $("#proofbtn").onclick = async () => { if (await save()) { state.view = "proof"; renderStage(); } };
+  $("#dup").onclick = () => { let k = `${state.key}-copy`, i = 2; while (state.map[k]) k = `${state.key}-copy${i++}`;
+    state.map[k] = JSON.parse(JSON.stringify(p)); delete state.map[k].reviewed; dirty(); selectPattern(k); };
+  $("#del").onclick = () => { if (!confirm(`Delete slide type "${state.key}"?`)) return;
+    delete state.map[state.key]; dirty(); state.key = patternKeys()[0]; selectPattern(state.key); };
+  document.querySelectorAll(".frow").forEach(r => {
+    const pick = () => { state.field = r.dataset.f; state.shape = null; renderStage(); renderEditor(); };
+    r.onclick = pick; r.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } };
+  });
+  const f = state.field && p.fields[state.field];
+  if (f) {
+    $("#fname").onchange = e => {
+      const nn = e.target.value.trim();
+      if (!nn || nn === state.field) return;
+      if (p.fields[nn]) { say(`Field "${nn}" already exists`, true); e.target.value = state.field; return; }
+      const rebuilt = {};
+      for (const [k, v] of Object.entries(p.fields)) rebuilt[k === state.field ? nn : k] = v;
+      p.fields = rebuilt; state.field = nn; dirty(); renderStage(); renderEditor();
+    };
+    if ($("#pa")) {
+      $("#pa").onchange = e => { f.paras[0] = +e.target.value; dirty(); renderEditor(); };
+      $("#pb").onchange = e => { f.paras[1] = +e.target.value; dirty(); renderEditor(); };
+      $("#flist").onchange = e => { if (e.target.checked) f.list = true; else delete f.list; dirty(); };
+    }
+    $("#fopt").onchange = e => { if (e.target.checked) f.optional = true; else { delete f.optional; delete f.keep_if_missing; }
+      dirty(); renderEditor(); };
+    document.querySelectorAll("input[name=missing]").forEach(r => r.onchange = () => {
+      if (r.value === "keep") f.keep_if_missing = true; else delete f.keep_if_missing; dirty(); });
+    $("#fdel").onclick = () => { delete p.fields[state.field]; state.field = null; dirty(); renderStage(); renderEditor(); };
+  }
+  const steps = recipeSteps();
+  document.querySelectorAll("[data-step]").forEach(b => b.onclick = () => {
+    const st = steps[+b.dataset.step];
+    st.act(); dirty(); say(`Undone: ${st.text}`); renderStage(); renderEditor();
+  });
+  if (f && f.art) {
+    const num = (id, key) => $(id).onchange = e => { f[key] = +e.target.value; dirty(); renderStage(); };
+    num("#ax", "x"); num("#ay", "y"); num("#as", "size");
+    $("#asample").onchange = e => { f.sample = e.target.value.trim(); dirty(); };
+  }
+  document.querySelectorAll("[data-keep]").forEach(b => b.onclick = () => {
+    const id = +b.dataset.keep;
+    p.drop = (p.drop || []).filter(d => d !== id);
+    if (!p.drop.length) delete p.drop;
+    dirty(); say(`Shape #${id} stays on the slide again`); renderStage(); renderEditor();
+  });
+  if (state.shape && $("#addf")) {
+    const s = shapeInfo(state.shape);
+    $("#addf").onclick = () => {
+      let base = s.kind === "pic" ? "image" : s.kind === "table" ? "rows" : "text", name = base, i = 2;
+      while (p.fields[name]) name = `${base}_${i++}`;
+      p.fields[name] = s.kind === "pic" ? {shape: s.id, image: true} : s.kind === "table" ? {shape: s.id, table: true}
+        : {shape: s.id, paras: [0, -1]};
+      state.field = name; state.shape = null; dirty(); renderStage(); renderEditor();
+      $("#fname").focus(); $("#fname").select();
+    };
+  }
+  if (state.shape && $("#dropf")) {
+    const id = state.shape;
+    $("#dropf").onclick = () => { (p.drop ||= []).includes(id) || p.drop.push(id);
+      dirty(); say(`Shape #${id} removed from decks - "Keep it on the slide" undoes it`); renderStage(); renderEditor(); };
+  }
+  $("#applyraw").onclick = async () => {
+    try { state.map[state.key] = JSON.parse($("#raw").value); dirty(); await selectPattern(state.key); }
+    catch (e) { say(`That JSON doesn't parse: ${e.message}`, true); }
+  };
+}
+
+function showProblems(list) {
+  const el = $("#problems");
+  el.className = list.length ? "show" : "";
+  el.innerHTML = list.length ? `${list.length} problem${list.length > 1 ? "s" : ""} in this map - decks may break until fixed:
+    <ul>${list.map(p => `<li>${esc(p)}</li>`).join("")}</ul>` : "";
+}
+
+async function save() {
+  try {
+    const r = await api(`/api/packs/${encodeURIComponent(state.pack)}/map`,
+      {method: "PUT", headers: {"Content-Type": "application/json"}, body: JSON.stringify(state.map)});
+    showProblems(r.problems); dirty(false);
+    const keys = patternKeys(), done = keys.filter(k => state.map[k].reviewed).length;
+    $("#packs").selectedOptions[0].textContent = `${state.pack} (${done}/${keys.length} reviewed)`;
+    say(r.problems.length ? "Saved, with problems" : "Saved", r.problems.length > 0);
+    return true;
+  } catch (e) { say(e.message, true); return false; }
+}
+
+$("#save").onclick = save;
+$("#packs").onchange = e => openPack(e.target.value);
+$("#tab-template").onclick = () => { state.view = "template"; renderStage(); };
+$("#tab-proof").onclick = async () => { if (state.dirty && !(await save())) return; state.view = "proof"; renderStage(); };
+window.onbeforeunload = e => { if (state.dirty) { e.preventDefault(); return ""; } };
+loadPacks().catch(e => say(e.message, true));
+</script>
+</body>
+</html>

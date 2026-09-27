@@ -1,0 +1,25 @@
+{
+  "name": "viz",
+  "version": "9.5.1",
+  "description": "Ad-hoc HTML visualizations for AI agents \u2014 CLI, MCP server and skill.",
+  "scripts": {
+    "test": "bun test",
+    "sync:kit": "bun maintainer/sync-kit.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "commander": "^15.0.0",
+    "puppeteer-core": "^25.2.1"
+  },
+  "gemId": "4d9a73950849",
+  "gemChromeProfile": "Profile 4",
+  "trustedDependencies": [
+    "@rascaltwo/pairwise-sorter"
+  ],
+  "devDependencies": {
+    "@rascaltwo/pairwise-sorter": "github:RascalTwo/pairwise-sorter#67f1448ae078a93cd8de474188bae002c07f712e"
+  },
+  "kitBundles": {
+    "pairwise.js": "@rascaltwo/pairwise-sorter"
+  }
+}

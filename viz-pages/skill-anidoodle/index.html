@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>anidoodle</title>
+<!-- Publish posture — the SOLE source of truth for viz publish. Default "local" = stays
+     on this machine, never published. Change to "public" (open web) or "private"
+     (magic-link sealed) ONLY when you intend to share this viz. -->
+<meta name="viz:uid" content="v-2141cf5c17cf">
+<meta name="viz:approved" content="h-249d77449b44">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="anidoodle">
+<meta name="viz:description" content="A nine-chapter tour of the external /anidoodle skill: 31 hand-drawn styles, 11 kinds of output, characters, composed scores and live web pieces, every image and sound on the page made by anidoodle itself.">
+<!-- <meta name="viz:spoiler" content="true"> -->
+<!-- Runtime media the single-file builder can't see (JS-set video/audio/iframe src, fetch): shipped beside the page. -->
+<meta name="viz:asset" content="media">
+<meta name="viz:asset" content="data.json">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<style>
+  :root {
+    --bg: #15110d; --panel: #201a14; --panel-2: #2a221a; --border: #3b3128;
+    --text: #f3eadc; --muted: #b9ab98; --faint: #8a7c6b; --accent: #e5a55a;
+    --paper: #efe7d9; --ink: #2a1c14; --red: #c8553d;
+  }
+  body { margin: 0; background: var(--bg); }
+  .top { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); }
+  .top-in { max-width: 1320px; margin: 0 auto; padding: 10px 20px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .brand { font-weight: 700; letter-spacing: .02em; }
+  .brand em { font-style: normal; color: var(--accent); }
+  .chaps { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+  .chap { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 4px 11px; font: inherit; font-size: 12.5px; cursor: pointer; }
+  .chap b { color: var(--faint); font-weight: 600; margin-right: 5px; }
+  .chap.on { background: var(--accent); color: #1a120a; border-color: var(--accent); }
+  .chap.on b { color: #1a120a; }
+  .chap.seen:not(.on) { color: var(--text); }
+  .ctl { display: flex; gap: 6px; align-items: center; }
+  .ctl button { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font: inherit; cursor: pointer; }
+  .ctl .pos { font-family: var(--mono); color: var(--muted); font-size: 12px; min-width: 44px; text-align: center; }
+  .progress { height: 3px; background: var(--panel-2); }
+  .progress i { display: block; height: 100%; background: var(--accent); transition: width .4s; }
+  main { max-width: 1320px; margin: 0 auto; padding: 22px 20px 80px; }
+  section.ch { display: none; }
+  section.ch.on { display: block; animation: rise .35s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+  h2 { font-size: 30px; margin: 4px 0 4px; letter-spacing: -.01em; }
+  h2 small { font-size: 14px; color: var(--accent); font-weight: 600; display: block; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+  h3 { margin: 20px 0 8px; font-size: 17px; }
+  .lede { color: var(--muted); max-width: 900px; font-size: 15.5px; line-height: 1.55; margin: 0 0 16px; }
+  .lede b { color: var(--text); }
+  .grid2 { display: grid; grid-template-columns: 1.25fr 1fr; gap: 18px; align-items: start; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 980px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+  .panel { padding: 14px 16px; }
+  .media { width: 100%; border-radius: 8px; display: block; background: #000; }
+  .cap { color: var(--faint); font-size: 12.5px; margin-top: 6px; line-height: 1.45; }
+  code, .mono { font-family: var(--mono); font-size: 12.5px; }
+  .cmd { background: #0e0b08; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-family: var(--mono); font-size: 12.5px; color: #f1d7ae; white-space: pre-wrap; word-break: break-word; }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 13.5px; }
+  .kv dt { color: var(--faint); } .kv dd { margin: 0; }
+  .chipset { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chipbtn { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 999px; padding: 4px 10px; font: inherit; font-size: 12.5px; cursor: pointer; }
+  .chipbtn.on { border-color: var(--accent); color: var(--accent); }
+  .gate { display: inline-block; font-size: 11px; background: var(--accent); color: #1a120a; border-radius: 4px; padding: 0 5px; font-weight: 700; margin-left: 4px; }
+  /* pipeline */
+  #pipe svg { width: 100%; height: auto; }
+  .pnode rect { fill: var(--panel-2); stroke: var(--border); }
+  .pnode.gatey rect { stroke: var(--accent); stroke-width: 2; }
+  .pnode.sel rect { fill: color-mix(in srgb, var(--accent) 22%, var(--panel-2)); }
+  .pnode { cursor: pointer; }
+  /* gallery */
+  .fams { display: flex; gap: 3px; align-items: flex-end; height: 70px; margin: 6px 0 12px; }
+  .fam { flex: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .fam i { display: block; width: 26px; border-radius: 3px 3px 0 0; }
+  .fam span { font-size: 10px; color: var(--muted); writing-mode: vertical-rl; transform: rotate(180deg); max-height: 0; }
+  .famlegend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--muted); }
+  .famlegend label { display: flex; gap: 5px; align-items: center; cursor: pointer; }
+  .famlegend label.off { opacity: .35; }
+  .famlegend .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .tile { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; position: relative; }
+  .tile.sel { outline: 2px solid var(--accent); }
+  .tile .img { aspect-ratio: 1; background: #0b0907 center/cover no-repeat; position: relative; }
+  .tile video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .15s; }
+  .tile:hover video { opacity: 1; }
+  .tile .nm { padding: 6px 8px 7px; font-size: 12.5px; line-height: 1.25; }
+  .tile .nm small { display: block; color: var(--faint); font-size: 11px; }
+  .tile .band { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+  .tile.dim { opacity: .18; pointer-events: none; }
+  .detail { position: sticky; top: 78px; }
+  #scrubber { width: 100%; }
+  /* kinds matrix */
+  table.mx { border-collapse: collapse; width: 100%; font-size: 13px; }
+  table.mx th, table.mx td { border-bottom: 1px solid var(--border); padding: 6px 8px; text-align: left; vertical-align: middle; }
+  table.mx th { color: var(--faint); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; }
+  table.mx tr.row { cursor: pointer; }
+  table.mx tr.row:hover td { background: var(--panel); }
+  table.mx tr.row.sel td { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+  .gbar { display: inline-flex; gap: 3px; }
+  .gbar i { width: 12px; height: 12px; border: 1.5px solid var(--accent); border-radius: 3px; }
+  .gbar i.f { background: var(--accent); }
+  .lenbar { height: 8px; background: var(--c5); border-radius: 4px; opacity: .85; }
+  .steps { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+  .steps b { color: var(--text); }
+  .say { border-left: 3px solid var(--accent); padding: 6px 10px; background: var(--panel-2); border-radius: 0 6px 6px 0; font-size: 13.5px; }
+  /* music */
+  #scatter svg, #tempo svg, #moods svg { width: 100%; height: auto; }
+  .pt { cursor: pointer; }
+  .pt.playing circle { stroke: #fff; stroke-width: 3; }
+  /* shapes */
+  #shapes svg { width: 100%; height: auto; }
+  iframe.live { width: 100%; height: 560px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+  .check { display: grid; grid-template-columns: 52px 1fr; gap: 3px 10px; font-size: 13px; }
+  .check .p { color: var(--good); font-family: var(--mono); font-weight: 700; }
+  .check .x { color: var(--danger); font-family: var(--mono); font-weight: 700; }
+  .laws { counter-reset: law; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .law { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 13.5px; color: var(--muted); }
+  .law b { color: var(--text); display: block; margin-bottom: 4px; font-size: 14.5px; }
+  .law b::before { counter-increment: law; content: counter(law) ". "; color: var(--accent); }
+  .tell { display: flex; gap: 8px; align-items: baseline; font-size: 13.5px; padding: 3px 0; }
+  .tell::before { content: "✗"; color: var(--danger); font-weight: 700; }
+  .cheat td:first-child { color: #f1d7ae; font-family: var(--mono); font-size: 12.5px; }
+  .hint { color: var(--faint); font-size: 12px; }
+  .endcard { text-align: center; padding: 26px; border: 1px dashed var(--border); border-radius: 12px; margin-top: 22px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="top-in">
+    <div class="brand">/<em>anidoodle</em> · the whole skill</div>
+    <nav class="chaps" id="chaps"></nav>
+    <div class="ctl">
+      <button id="prev" title="Previous chapter (←)">←</button>
+      <span class="pos" id="pos"></span>
+      <button id="next" title="Next chapter (→)">→</button>
+      <button id="tour" title="Auto-advance through every chapter">▶ Tour</button>
+    </div>
+  </div>
+  <div class="progress"><i id="bar"></i></div>
+</div>
+
+<main>
+<!-- 0 ─────────────────────────────── OVERVIEW -->
+<section class="ch" data-title="What it is">
+  <h2><small>Chapter 1 · What it is</small>Hand-drawn art, written as code</h2>
+  <p class="lede"><b>What you're looking at:</b> a tour of the <code>/anidoodle</code> Claude Code skill. Everything visual or audible on this page was made by anidoodle: the film below, all 31 style plates, the timelapses, the characters, the scores and the live web pieces. None of it came from an image generator or a download. <b>One pure function paints every frame; another composes and synthesizes every audio sample.</b> So the same source rebuilds the same pixels and the same sound on any machine, at any size and any length. Use <b>← →</b> to move between the nine chapters, or press <b>▶ Tour</b>.</p>
+  <div class="grid2">
+    <div>
+      <video class="media" src="media/showcaseTitle.mp4" autoplay muted loop playsinline data-viz-id="title-film" data-label="Title film, drawn by anidoodle for this page"></video>
+      <div class="cap">Made for this page with anidoodle. <code>showcaseTitle.ts</code> is a 20-second "drawing" film, 1280×720, 600 frames on a 120 bpm grid. The pen writes the name, the capitals go down stroke by stroke, and six prints are set down one per beat. It passed the skill's own 14-check gate (chapter 8 shows where it failed first).</div>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">The whole idea in four lines</h3>
+      <dl class="kv">
+        <dt>You ask</dt><dd>“a fox at dusk, in cut paper” · “a 45-second film about a lighthouse keeper, woodcut, with a nocturne” · “teach me to draw an owl” · “make our signup form's mascot react to typing”</dd>
+        <dt>It asks back</dt><dd>one question at a time, and only what you left open: what, style, shape, length, sound, characters (chapter 2)</dd>
+        <dt>It builds</dt><dd>TypeScript that draws every frame in one of <b>31 hands</b>, the way that medium really makes its marks, plus a <b>composed score</b> as note data</dd>
+        <dt>You get</dt><dd>PNG · MP4 with the score · GIF · WebM/APNG with alpha · one offline HTML player · a live interactive canvas · WAV · a drawing lesson set</dd>
+      </dl>
+    </div>
+  </div>
+  <h3>How a piece gets made <span class="hint">· click any step · orange border = a human approval gate (three at most)</span></h3>
+  <div class="panel" id="pipe"></div>
+  <div class="panel" id="pipeDetail" style="margin-top:10px"></div>
+</section>
+
+<!-- 1 ─────────────────────────────── INTAKE -->
+<section class="ch" data-title="Asking">
+  <h2><small>Chapter 2 · Asking for something</small>Six questions, then it draws</h2>
+  <p class="lede">anidoodle asks <b>one question per turn</b>, gives its recommendation first, and skips anything your request already answered. If you say <b>“you pick”</b>, it picks and tells you why in one line. The answers go into a short <b>brief file</b> before anything is drawn. <b>Try it:</b> change the answers below. The frame is drawn to the real aspect ratio, and you get the brief, the beat grid, the workflow it follows and the exact scaffold command.</p>
+  <div class="grid2">
+    <div class="panel">
+      <dl class="kv" id="intake" style="row-gap:10px"></dl>
+    </div>
+    <div>
+      <div class="panel" id="shapePreview"></div>
+      <div class="panel" style="margin-top:10px" id="intakeOut"></div>
+    </div>
+  </div>
+  <h3>Defaults when you don't say</h3>
+  <table class="mx">
+    <tr><th>Open question</th><th>Default</th><th>Why</th></tr>
+    <tr><td>Style</td><td>the hand whose recipe best fits the subject, named with a reason</td><td>a style is a decision, not a coin toss</td></tr>
+    <tr><td>Shape</td><td>1x1 social · 16x9 web heroes/YouTube · 9x16 Reels/Shorts/TikTok</td><td>where it lives decides it</td></tr>
+    <tr><td>Length</td><td>still 1 frame · loop 4–8 s · logo 2–4 s · film as long as its arc · explainer one idea per chapter</td><td>the content sets the length; <b>never capped</b></td></tr>
+    <tr><td>Sound</td><td>films get a score in a fitting style; loops and stills are silent; interactive pieces never have sound</td><td>silence is a choice too</td></tr>
+    <tr><td>fps</td><td>30 · 24 for a hand-drawn cartoon feel · 12 “on twos” for paper and stop-motion</td><td>the medium's own rhythm</td></tr>
+  </table>
+</section>
+
+<!-- 2 ─────────────────────────────── STYLES -->
+<section class="ch" data-title="31 hands">
+  <h2><small>Chapter 3 · The styles</small>31 hands, each a different way of making marks</h2>
+  <p class="lede">A style here is <b>not a palette swap</b>. Each hand changes the <b>medium, the edge and the order of the marks</b>: crayon skips the paper's valleys, riso overprints one ink drum at a time, a woodblock pulls the keyblock and then the colour blocks. <b>Hover a tile</b> to watch that plate draw itself. <b>Click</b> to open its recipe, then scrub the timelapse. The bar chart shows how many hands each family has, and clicking a bar filters the grid.</p>
+  <div class="fams" id="fams"></div>
+  <div class="famlegend" id="famlegend"></div>
+  <div class="grid2" style="grid-template-columns: 1.6fr 1fr; margin-top: 12px">
+    <div class="tiles" id="tiles"></div>
+    <div class="detail panel" id="styleDetail"></div>
+  </div>
+  <p class="cap">Each tile is the last frame of that style's draw film, rendered for this page with <code>node tools/render.mjs &lt;drawFilm&gt; --out x.webm</code> (480 px here; any size at full resolution). Other routes: <b>“match my image”</b> analyses your picture and grows the nearest plate into a new hand (chapter 4). <b>“a house style”</b> reloads one saved earlier from <code>styles/house/</code>.</p>
+</section>
+
+<!-- 3 ─────────────────────────────── KINDS -->
+<section class="ch" data-title="What it makes">
+  <h2><small>Chapter 4 · Output kinds</small>Eleven kinds of thing, one engine</h2>
+  <p class="lede">Every piece is a <b>Film</b> (meta, shots that tile the frames, an optional score), and a still is just a film one frame long. Each kind has its own workflow. The <b>gate squares</b> count the human approvals it spends, the <b>teal bar</b> shows typical length on a log scale, and the dots mark motion, sound and interactivity. <b>Click a row</b> to see a real example made by the skill, with its steps and a line you could say to ask for one.</p>
+  <div class="grid2">
+    <div class="panel" style="padding:6px 8px"><table class="mx" id="kinds"></table></div>
+    <div class="detail panel" id="kindDetail"></div>
+  </div>
+</section>
+
+<!-- 4 ─────────────────────────────── CHARACTERS -->
+<section class="ch" data-title="Characters">
+  <h2><small>Chapter 5 · Characters</small>One character, identical in every hand</h2>
+  <p class="lede">A character is built <b>once, as a module</b>: canon proportions, a 3D rig with joint limits, drawn views, palette roles and distinguishing features. Every shot and every style poses that one module, so <b>Mira</b> is the same girl in woodcut, pixel art or toy brick. A gate checks bone lengths, joint limits, five digits, feet on the floor and identity across styles (IoU &gt; 0.8 for grid styles). <b>Pick a sheet:</b></p>
+  <div class="chipset" id="charPick" style="margin-bottom:10px"></div>
+  <div class="grid2">
+    <div id="charMedia"></div>
+    <div class="panel" id="charInfo"></div>
+  </div>
+  <h3>The character gate <span class="hint">· <code>node tools/character-check.mjs</code> · every check has a “negative twin” that must fail</span></h3>
+  <div class="chipset" id="charChecks"></div>
+</section>
+
+<!-- 5 ─────────────────────────────── MUSIC -->
+<section class="ch" data-title="Music">
+  <h2><small>Chapter 6 · Scores</small>Music as note data, then measured</h2>
+  <p class="lede">anidoodle writes the notes itself, as bar-checked data (a bar that doesn't add up throws). It synthesizes every instrument and masters to a loudness target. No samples, no loops. <b>Music gets a plan, never an adjective</b>: a style, a mood per section, the notes, then measurements. Because the model can't hear, <b>one human listens to 8 seconds</b> before it ships. <b>Click any dot to play</b> the piece, rendered for this page. It's plotted by what <code>music.mjs meter</code> measured: note onsets per second → busier, spectral centroid → brighter.</p>
+  <div class="grid2">
+    <div class="panel"><div id="scatter"></div><div class="cap" id="nowPlaying">Nothing playing · the red dot is the <b>ghost fixture</b>, a deliberately hated sustained drone that the “ghost” guard exists to reject.</div></div>
+    <div class="panel"><h3 style="margin-top:0">11 styles · tempo ranges (bpm)</h3><div id="tempo"></div></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="panel"><h3 style="margin-top:0">15 moods, blendable <span class="hint">· red links are the blends it refuses</span></h3><div id="moods"></div></div>
+    <div class="panel">
+      <h3 style="margin-top:0">What a score looks like</h3>
+      <div class="cmd">line(3, "C5:2 Bb4:.5 Ab4:.5 | Bb4:2 Eb4:1 | [Ab1 Eb2 Ab2]:3@0.8",
+     { role: "melody", bpb: 3 })</div>
+      <dl class="kv" style="margin-top:10px">
+        <dt>Plan</dt><dd>sections, each with a mood (or a blend), key + mode, melody types, a dynamic arc and an ending</dd>
+        <dt>13 modes</dt><dd>major, aeolian, harmonic/melodic minor, dorian, phrygian, lydian, mixolydian, major/minor pentatonic, blues, whole-tone, locrian</dd>
+        <dt>9 melody types</dt><dd>arpeggio, stepwise, hook, ostinato, drone, call &amp; response, counter-melody, sequence, theme transformation</dd>
+        <dt>Instruments</dt><dd>modal piano, music box, bell, celesta, marimba, vibes, harp and guitar (Karplus-Strong), strings, FM bell, e-piano, chip pulse/triangle/noise, kick, snare, hat, bass, vinyl</dd>
+        <dt>Any length</dt><dd><code>fitToDuration</code> drops optional sections, restates repeatable ones and moves the tempo within the style's range</dd>
+        <dt>Measured</dt><dd>integrated LUFS, LRA, true peak, onsets/s, centroid; guards for <i>ghost</i>, <i>reverb</i>, <i>masking</i> and <i>plan</i> (the declared mode matches the notes)</dd>
+        <dt>Mastering</dt><dd>gentle styles: −16 LUFS, static gain, never a compressor · dense styles: −14 LUFS through a look-ahead limiter</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- 6 ─────────────────────────────── INTERACTIVE -->
+<section class="ch" data-title="Interactive">
+  <h2><small>Chapter 7 · Interactive web pieces</small>Art that reacts to your UI, live</h2>
+  <p class="lede">An interactive piece is a <b>live canvas in your page</b>, not a video. It reacts to pointer, hover, focus, clicks, scroll, typing (length and caret only, <b>never the text</b>) and UI state (idle, busy, success, error). Every input goes into a 60 Hz log, and a frame is a pure function of that log, so any session can be <b>replayed</b> and hashed exactly. These three demos were emitted for this page with <code>emit-interactive.mjs</code> and each passed 11 of 11 checks. <b>Go on, use them.</b></p>
+  <div class="chipset" id="intPick" style="margin-bottom:10px"></div>
+  <div class="grid2">
+    <iframe class="live" id="intFrame" title="anidoodle interactive demo" data-viz-id="int-frame" data-label="Live interactive anidoodle piece"></iframe>
+    <div class="panel" id="intInfo"></div>
+  </div>
+</section>
+
+<!-- 7 ─────────────────────────────── ENGINE -->
+<section class="ch" data-title="Engine">
+  <h2><small>Chapter 8 · The engine</small>Deterministic, gated, any size</h2>
+  <p class="lede">The engine is a portable art core that knows nothing about the DOM, plus the tooling around it. <b>The contract is absolute:</b> <code>renderFrame(frame, env)</code> is pure, randomness comes only from <code>rng(seed)</code>, and nothing reads a clock, uses <code>ctx.filter</code> or loads a file. That's why a piece can render on four workers, backwards, on another backend, and still come out hash-identical. <b>Click a tool</b> to see its flags.</p>
+  <div class="panel" id="tools"></div>
+  <div class="panel" id="toolDetail" style="margin-top:10px"></div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="panel">
+      <h3 style="margin-top:0">Shapes, drawn to scale <span class="hint">· any W×H works too</span></h3>
+      <div id="shapes"></div>
+      <h3>Outputs</h3>
+      <table class="mx">
+        <tr><th>File</th><th>Command</th><th>Notes</th></tr>
+        <tr><td>PNG</td><td><code>still.mjs</code></td><td>drawn twice, hash printed, <i>reproducible</i> · <code>--scale 3</code> for print</td></tr>
+        <tr><td>MP4</td><td><code>render.mjs</code></td><td>with the synthesized score, at the film's own size</td></tr>
+        <tr><td>GIF</td><td><code>--out x.gif</code></td><td>one palette for the whole piece, loops forever</td></tr>
+        <tr><td>WebM / APNG</td><td><code>--out x.webm</code></td><td>alpha kept: stickers and overlays</td></tr>
+        <tr><td>HTML player</td><td><code>emit.mjs</code></td><td>one offline file that synthesizes its own sound</td></tr>
+        <tr><td>Interactive</td><td><code>emit-interactive.mjs</code></td><td><code>.html</code> + an ES module with <code>mount()</code></td></tr>
+        <tr><td>WAV</td><td><code>music.mjs render</code></td><td>48 kHz, 32-bit float</td></tr>
+        <tr><td>Lesson set</td><td><code>lesson.mjs</code></td><td>steps sheet, timelapse, contact sheet, final, LESSON.md</td></tr>
+      </table>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">The gate, run on this page's title film</h3>
+      <p class="hint" style="margin-top:0">A real transcript. Run 1 <b>failed</b> on dead air, the gate doing its job. Toggle to see the fix.</p>
+      <div class="chipset" id="gateRun" style="margin-bottom:8px"></div>
+      <div class="check" id="gateList"></div>
+      <div class="cap" id="gateNote"></div>
+      <h3>Four backends, one art core</h3>
+      <table class="mx">
+        <tr><th>Backend</th><th>What it delivers</th><th>Catches</th></tr>
+        <tr><td>playwright</td><td>frames → MP4</td><td>—</td></tr>
+        <tr><td>html-player</td><td>one offline HTML file; warm shared cache</td><td>bad cache keys</td></tr>
+        <tr><td>remotion</td><td>a Remotion <code>&lt;Composition&gt;</code>; every frame cold</td><td>frame-order dependence</td></tr>
+        <tr><td>hyperframes</td><td>frames seeked via <code>window.FILM.seek(n)</code></td><td>seek bugs</td></tr>
+      </table>
+      <p class="cap">A backend that isn't installed reports <b>CANNOT RUN</b> instead of a wrong answer.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 8 ─────────────────────────────── LAWS -->
+<section class="ch" data-title="Craft & recap">
+  <h2><small>Chapter 9 · The craft bar and the recap</small>Would a proud illustrator ship this?</h2>
+  <p class="lede">The engine is the easy half. Work gets thrown away because it had no point, because the subject was an icon of itself, because a style was only a palette swap, because the music had no form, or because the person spent their patience approving fragments. The skill carries the craft that prevents each of those.</p>
+  <div class="laws">
+    <div class="law"><b>Every piece has a point.</b>A still: one idea, one focal subject, one light. A film: one transformation, one payoff, one token that returns.</div>
+    <div class="law"><b>State the realism.</b>Name the anatomy, the view and the reference opened, for animals, objects and people alike.</div>
+    <div class="law"><b>A style is a way of making marks.</b>Change the medium, the edge and the order of the marks, not just the palette.</div>
+    <div class="law"><b>Prove the look on ONE still, then build end to end.</b>After that, approval gates cost more than they save.</div>
+    <div class="law"><b>The contract is absolute.</b>Pure in (frame, env), rng(seed) only, no clock, no ctx.filter, nothing generated or downloaded. Your own images may be embedded, pinned by hash.</div>
+    <div class="law"><b>Music gets a plan, never an adjective.</b>Style, a mood per section, notes as data, then measurements, then one human listens.</div>
+    <div class="law"><b>One directs, one builds, both write everything down.</b>When a session degrades, reset: the files are the memory.</div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="panel">
+      <h3 style="margin-top:0">The tells it hunts for and fixes</h3>
+      <div class="tell">subjects built from ellipses (an icon of a pear, not a pear)</div>
+      <div class="tell">one style recoloured into another</div>
+      <div class="tell">things that fade in instead of being drawn</div>
+      <div class="tell">people with rubber joints, mitten hands, floating feet</div>
+      <div class="tell">a character drawn differently from shot to shot</div>
+      <div class="tell">flat colour fields, same-weight strokes, evenly stamped scatter</div>
+      <div class="tell">gradient skies, oval bokeh, decoration without a reason</div>
+      <div class="tell">dead air: something must visibly change every second</div>
+      <h3>Honest limits</h3>
+      <p class="hint" style="font-size:13px">It can't hear the score, watch the film move or use the interactive piece. Every claim about them comes from a <b>measurement</b> or from <b>a human</b>, and it tells you which. A green check is a claim until it's re-run.</p>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">Cheat sheet · things you can say</h3>
+      <table class="mx cheat" id="cheat"></table>
+    </div>
+  </div>
+  <div class="endcard">
+    <div style="font-size:20px;font-weight:700">That's everything anidoodle can do.</div>
+    <div class="hint" style="margin-top:6px">31 hands · 11 kinds · characters in any hand · 11 music styles × 15 moods · live web pieces · 4 backends · one pure function per frame.<br>Start with <code>/anidoodle</code> and one sentence of what you want.</div>
+    <div class="hint" style="margin-top:12px">anidoodle is by Alex Greenshpun (10x Company), Apache-2.0: <a href="https://github.com/alexgreensh/anidoodle">github.com/alexgreensh/anidoodle</a>. The style plates, the butterfly film, Bit, Mira and Theo are its designs, rendered here by its own code. This tour and its title film were made with it.</div>
+  </div>
+</section>
+</main>
+
+<script type="module">
+import { arrowMarkers, connect, stepper, $, $$, esc } from "/_kit/viz.js";
+
+const data = await (await fetch("data.json")).json();
+const svgNS = "http://www.w3.org/2000/svg";
+
+let audio = null, playingId = null;
+function stopAudio() { if (audio) { audio.pause(); audio = null; } playingId = null; $$(".pt").forEach((p) => p.classList.remove("playing")); }
+
+// ───────────────── chapter stepper
+const chs = $$("section.ch");
+const seen = new Set();
+$("#chaps").innerHTML = chs.map((c, i) => `<button class="chap" data-i="${i}"><b>${i + 1}</b>${esc(c.dataset.title)}</button>`).join("");
+const onStep = (i) => {
+  chs.forEach((c, j) => c.classList.toggle("on", j === i));
+  seen.add(i);
+  $$(".chap").forEach((b, j) => { b.classList.toggle("on", j === i); b.classList.toggle("seen", seen.has(j)); });
+  $("#pos").textContent = `${i + 1} / ${chs.length}`;
+  $("#bar").style.width = `${((i + 1) / chs.length) * 100}%`;
+  $$("video").forEach((v) => { if (!chs[i].contains(v) && !v.muted) v.pause(); });
+  if (i !== 5) stopAudio();
+  window.scrollTo({ top: 0 });
+  if (i === 6 && !$("#intFrame").src) pickInt(0);
+};
+const nav = stepper({ n: chs.length, onStep, autoplayMs: 45000 });
+nav.pause();
+$("#prev").onclick = () => nav.prev();
+$("#next").onclick = () => nav.next();
+$$(".chap").forEach((b) => (b.onclick = () => nav.go(+b.dataset.i)));
+let touring = false;
+$("#tour").onclick = () => { touring = !touring; touring ? nav.play() : nav.pause(); $("#tour").textContent = touring ? "❚❚ Pause tour" : "▶ Tour"; };
+onStep(nav.current);
+
+// ───────────────── 1. pipeline
+{
+  const P = data.pipeline, w = 116, h = 62, gap = 20, y = 30;
+  const nodes = P.map((p, i) => ({ ...p, x: 10 + i * (w + gap), y, w, h }));
+  const W = nodes.at(-1).x + w + 10;
+  let s = `<svg viewBox="0 0 ${W} 130" role="img" aria-label="anidoodle production pipeline">${arrowMarkers()}`;
+  nodes.forEach((n, i) => { if (i) s += `<path d="${connect(nodes[i - 1], n)}" stroke="var(--muted)" fill="none" marker-end="url(#ah)"/>`; });
+  nodes.forEach((n, i) => {
+    s += `<g class="pnode ${n.gate ? "gatey" : ""}" data-i="${i}" data-viz-id="pipe-${i}" data-label="${esc(n.name)}"><rect x="${n.x}" y="${n.y}" width="${w}" height="${h}" rx="8"/>
+      <text x="${n.x + w / 2}" y="${n.y + 26}" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="600">${esc(n.name)}</text>
+      <text x="${n.x + w / 2}" y="${n.y + 45}" text-anchor="middle" fill="var(--faint)" font-size="10.5">${esc(n.sub)}</text>
+      ${n.gate ? `<text x="${n.x + w / 2}" y="${n.y - 8}" text-anchor="middle" fill="var(--accent)" font-size="11" font-weight="700">✋ approval</text>` : ""}</g>`;
+  });
+  s += `<text x="10" y="122" fill="var(--faint)" font-size="11">stills stop after “Look still” · loops add a seam check · films run the whole line · mechanical checks run continuously while building</text></svg>`;
+  $("#pipe").innerHTML = s;
+  const pick = (i) => { $$(".pnode").forEach((g, j) => g.classList.toggle("sel", j === i)); const n = P[i]; $("#pipeDetail").innerHTML = `<b>${esc(n.name)}</b>${n.gate ? '<span class="gate">APPROVAL</span>' : ""}<p style="margin:6px 0 0;color:var(--muted)">${n.detail}</p>`; };
+  $$(".pnode").forEach((g) => (g.onclick = () => pick(+g.dataset.i)));
+  pick(0);
+}
+
+// ───────────────── 2. intake builder
+{
+  const st = { kind: "film", style: "woodcut", shape: "16x9", secs: 45, music: "nocturne", mood: "wistful", fps: 30, chars: "none", subject: "a lighthouse keeper's last night" };
+  const shapes = { "1x1": [1080, 1080], "9x16": [1080, 1920], "16x9": [1920, 1080], "4x5": [1080, 1350] };
+  const opt = (arr, v) => arr.map(([k, l]) => `<option value="${k}" ${k === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+  const K = data.kinds;
+  $("#intake").innerHTML = `
+    <dt>1 · What?</dt><dd><select id="iKind">${opt(K.map((k) => [k.id, k.name]), st.kind)}</select></dd>
+    <dt>Subject</dt><dd><input id="iSubj" value="${esc(st.subject)}" style="width:100%"></dd>
+    <dt>2 · Style</dt><dd><select id="iStyle">${opt(data.styles.map((s) => [s.id, `${s.name} (${s.family})`]), st.style)}</select></dd>
+    <dt>3 · Shape</dt><dd class="chipset" id="iShape">${Object.keys(shapes).map((k) => `<button class="chipbtn" data-v="${k}">${k}</button>`).join("")}</dd>
+    <dt>4 · Length</dt><dd><input id="iLen" type="range" min="0" max="100" style="width:70%"> <span id="iLenV" class="mono"></span></dd>
+    <dt>5 · Sound</dt><dd><select id="iMusic"><option value="">silent</option>${opt(data.musicStyles.map((m) => [m.id, m.id]), st.music)}</select> mood <select id="iMood">${opt(data.moods.map((m) => [m, m]), st.mood)}</select></dd>
+    <dt>fps</dt><dd class="chipset" id="iFps">${[30, 24, 12].map((f) => `<button class="chipbtn" data-v="${f}">${f}</button>`).join("")}</dd>
+    <dt>6 · Characters</dt><dd><select id="iChar">${opt([["none", "none"], ["mira", "Mira (existing module)"], ["theo", "Theo (existing module)"], ["new", "a new one, built once"], ["image", "one from my image"]], st.chars)}</select></dd>`;
+  const toS = (v) => Math.round(Math.exp(Math.log(1) + (v / 100) * (Math.log(1200) - Math.log(1)))), fromS = (s) => Math.round((Math.log(s) / Math.log(1200)) * 100);
+  const fmt = (s) => (s < 60 ? `${s} s` : `${Math.floor(s / 60)} m ${s % 60 ? (s % 60) + " s" : ""}`);
+  $("#iLen").value = fromS(st.secs);
+  const render = () => {
+    const k = K.find((x) => x.id === st.kind), sty = data.styles.find((s) => s.id === st.style);
+    const still = k.id === "still" || k.id === "character" || k.id === "adapt";
+    const secs = still ? 0 : st.secs, [W, H] = shapes[st.shape];
+    $$("#iShape .chipbtn").forEach((b) => b.classList.toggle("on", b.dataset.v === st.shape));
+    $$("#iFps .chipbtn").forEach((b) => b.classList.toggle("on", +b.dataset.v === st.fps));
+    $("#iLenV").textContent = still ? "one frame" : fmt(st.secs);
+    $("#iLen").disabled = still;
+    const bpm = st.fps === 24 ? 120 : st.fps === 12 ? 120 : 120, beat = (60 * st.fps) / bpm, frames = Math.max(1, Math.round(secs * st.fps));
+    const sc = 170 / Math.max(W, H), rw = W * sc, rh = H * sc;
+    $("#shapePreview").innerHTML = `<div style="display:flex;gap:16px;align-items:center">
+      <svg width="190" height="190" viewBox="0 0 190 190" data-viz-id="shape-frame" data-label="Frame at ${W}x${H}"><rect x="${(190 - rw) / 2}" y="${(190 - rh) / 2}" width="${rw}" height="${rh}" fill="#0b0907" stroke="var(--accent)" stroke-width="1.5"/>
+      <image href="media/styles/${sty.id}.jpg" x="${(190 - rw) / 2}" y="${(190 - rh) / 2}" width="${rw}" height="${rh}" preserveAspectRatio="xMidYMid slice"/></svg>
+      <dl class="kv"><dt>Canvas</dt><dd class="mono">${W} × ${H}</dd><dt>Frames</dt><dd class="mono">${frames.toLocaleString()} @ ${st.fps} fps</dd>${still ? "" : `<dt>Beat</dt><dd class="mono">${beat} frames (120 bpm) · ${Math.round(frames / beat)} beats</dd><dt>Cuts</dt><dd>on multiples of ${beat}; events on multiples of 5</dd>`}<dt>Hand</dt><dd>${esc(sty.name)}: <span class="hint">${esc(sty.medium.slice(0, 90))}…</span></dd></dl></div>`;
+    const flag = still ? `--still ${camel(st.subject)}` : `--film ${camel(st.subject)} --duration ${secs} --fps ${st.fps}`;
+    const snd = st.music ? `${st.music}, ${st.mood}` : "silent";
+    $("#intakeOut").innerHTML = `
+      <div class="say">“/anidoodle ${esc(k.ask(st, snd, fmt))}”</div>
+      <h3>The brief it writes</h3>
+      <div class="cmd">kind:   ${k.name}
+idea:   ${st.subject}
+style:  ${sty.name} (${sty.id}), because it fits the subject  ← agent's pick, veto in one line
+shape:  ${st.shape} (${W}x${H})
+length: ${still ? "one frame" : fmt(secs)}
+sound:  ${snd}
+chars:  ${st.chars}</div>
+      <h3>Then</h3>
+      <dl class="kv"><dt>Reads</dt><dd><code>${k.workflow}</code></dd><dt>Approvals</dt><dd>${k.gates} ${k.gates ? `(${k.gateNames})` : ""}</dd></dl>
+      <div class="cmd" style="margin-top:8px">node &lt;skill&gt;/engine/tools/scaffold.mjs ~/art ${flag} --format ${st.shape}
+node tools/still.mjs ${camel(st.subject)} --out out/look.png --scale 2
+${still ? "" : `node tools/render.mjs ${camel(st.subject)}          # MP4${st.music ? " with the score" : ""}\nnode tools/gate.mjs ${camel(st.subject)}            # determinism · contract · dead air`}</div>`;
+  };
+  const camel = (s) => (s.toLowerCase().replace(/[^a-z0-9 ]/g, "").split(/\s+/).filter(Boolean).slice(0, 3).map((w, i) => (i ? w[0].toUpperCase() + w.slice(1) : w)).join("") || "piece");
+  data.kinds.forEach((k) => (k.ask = new Function("st", "snd", "fmt", `return \`${k.askT}\`;`)));
+  $("#iKind").onchange = (e) => { st.kind = e.target.value; render(); };
+  $("#iSubj").oninput = (e) => { st.subject = e.target.value; render(); };
+  $("#iStyle").onchange = (e) => { st.style = e.target.value; render(); };
+  $("#iMusic").onchange = (e) => { st.music = e.target.value; render(); };
+  $("#iMood").onchange = (e) => { st.mood = e.target.value; render(); };
+  $("#iChar").onchange = (e) => { st.chars = e.target.value; render(); };
+  $("#iLen").oninput = (e) => { st.secs = toS(+e.target.value); render(); };
+  $$("#iShape .chipbtn").forEach((b) => (b.onclick = () => { st.shape = b.dataset.v; render(); }));
+  $$("#iFps .chipbtn").forEach((b) => (b.onclick = () => { st.fps = +b.dataset.v; render(); }));
+  render();
+}
+
+// ───────────────── 3. styles gallery
+{
+  const fams = [...new Set(data.styles.map((s) => s.family))].sort((a, b) => data.styles.filter((s) => s.family === b).length - data.styles.filter((s) => s.family === a).length || a.localeCompare(b));
+  const pal = ["#e5a55a", "#6cb6ff", "#8ddb8c", "#d2a8ff", "#56d4dd", "#ff9bce", "#f2cc60", "#a5b4fc", "#ff938a", "#b3e6a0", "#c9b39a", "#7ee0c3", "#f0a8d0", "#9fc3ff", "#e8c07a", "#c7a0ff", "#86d0a6", "#ffb86b", "#b0b0ff"];
+  const col = Object.fromEntries(fams.map((f, i) => [f, pal[i % pal.length]]));
+  const on = new Set(fams);
+  const max = Math.max(...fams.map((f) => data.styles.filter((s) => s.family === f).length));
+  $("#fams").innerHTML = fams.map((f) => { const n = data.styles.filter((s) => s.family === f).length; return `<div class="fam" data-f="${esc(f)}" title="${esc(f)}: ${n}" data-viz-id="fam-${esc(f)}" data-label="${esc(f)}: ${n} styles"><i style="height:${(n / max) * 56}px;background:${col[f]}"></i></div>`; }).join("") + `<div class="hint" style="margin-left:10px;align-self:center">bar height = styles in that family (tallest = ${max})</div>`;
+  $("#famlegend").innerHTML = fams.map((f) => `<label data-f="${esc(f)}"><span class="sw" style="background:${col[f]}"></span>${esc(f)} (${data.styles.filter((s) => s.family === f).length})</label>`).join("") + `<label data-f="*" style="color:var(--accent)">show all</label>`;
+  const applyF = () => { $$(".tile").forEach((t) => t.classList.toggle("dim", !on.has(t.dataset.f))); $$("#famlegend label").forEach((l) => l.classList.toggle("off", l.dataset.f !== "*" && !on.has(l.dataset.f))); };
+  const solo = (f) => { if (f === "*" || (on.size === 1 && on.has(f))) fams.forEach((x) => on.add(x)); else { on.clear(); on.add(f); } applyF(); };
+  $$(".fam, #famlegend label").forEach((el) => (el.onclick = () => solo(el.dataset.f)));
+  const ordered = [...data.styles].sort((a, b) => fams.indexOf(a.family) - fams.indexOf(b.family) || a.name.localeCompare(b.name));
+  $("#tiles").innerHTML = ordered.map((s) => `<div class="tile" data-id="${s.id}" data-f="${esc(s.family)}" data-viz-id="style-${s.id}" data-label="${esc(s.name)}">
+    <span class="band" style="background:${col[s.family]}"></span>
+    <div class="img" style="background-image:url(media/styles/${s.id}.jpg)"><video muted loop playsinline preload="none" data-src="media/styles/${s.id}.webm"></video></div>
+    <div class="nm">${esc(s.name)}<small>${esc(s.family)}</small></div></div>`).join("");
+  $$(".tile").forEach((t) => {
+    const v = $("video", t);
+    t.onmouseenter = () => { if (!v.src) v.src = v.dataset.src; v.currentTime = 0; v.play().catch(() => {}); };
+    t.onmouseleave = () => v.pause();
+    t.onclick = () => pickStyle(t.dataset.id);
+  });
+  const pickStyle = (id) => {
+    const s = data.styles.find((x) => x.id === id);
+    $$(".tile").forEach((t) => t.classList.toggle("sel", t.dataset.id === id));
+    const near = data.styles.find((x) => s.nearest.startsWith(x.id) || s.nearest.startsWith(x.name.toLowerCase()));
+    $("#styleDetail").innerHTML = `
+      <h3 style="margin-top:0"><span class="sw" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${col[s.family]}"></span> ${esc(s.name)} <span class="hint mono">${s.id}</span></h3>
+      <video class="media" id="bigDraw" src="media/styles/${s.id}.webm" muted playsinline autoplay></video>
+      <input id="scrubber" type="range" min="0" max="1000" value="0" aria-label="Scrub the timelapse">
+      <div class="hint">▶ the plate drawing itself · drag to scrub from bare ground (frame 0) to the finished still (last frame, pixel for pixel)</div>
+      <dl class="kv" style="margin-top:10px">
+        <dt>Medium</dt><dd>${esc(s.medium)}</dd>
+        <dt>Hero plate</dt><dd>${esc(s.hero)}</dd>
+        <dt>Family</dt><dd>${esc(s.family)}</dd>
+        <dt>Nearest hand</dt><dd>${near ? `<a href="#" id="nearLink">${esc(near.name)}</a>` : esc(s.nearest)}</dd>
+        <dt>Draw film</dt><dd><code>${s.drawFilm}</code></dd>
+      </dl>
+      <div class="say" style="margin-top:10px">“/anidoodle ${esc(s.askEx)}”</div>`;
+    const v = $("#bigDraw"), sc = $("#scrubber");
+    v.ontimeupdate = () => { if (!sc.matches(":active") && v.duration) sc.value = (v.currentTime / v.duration) * 1000; };
+    sc.oninput = () => { v.pause(); if (v.duration) v.currentTime = (sc.value / 1000) * v.duration; };
+    if (near) $("#nearLink").onclick = (e) => { e.preventDefault(); pickStyle(near.id); };
+  };
+  applyF(); pickStyle("woodcut");
+}
+
+// ───────────────── 4. kinds
+{
+  const K = data.kinds, maxLog = Math.log10(3600);
+  const lenW = (s) => (s <= 0 ? 4 : 4 + (Math.log10(s + 1) / maxLog) * 96);
+  $("#kinds").innerHTML = `<tr><th>Kind</th><th>Approvals</th><th>Typical length</th><th title="moves">Mov</th><th title="has sound">Snd</th><th title="interactive">Int</th></tr>` +
+    K.map((k, i) => `<tr class="row" data-i="${i}" data-viz-id="kind-${k.id}" data-label="${esc(k.name)}"><td><b>${esc(k.name)}</b></td>
+      <td><span class="gbar">${[0, 1, 2].map((g) => `<i class="${g < k.gates ? "f" : ""}"></i>`).join("")}</span></td>
+      <td><div class="lenbar" style="width:${lenW(k.typS)}px"></div><span class="hint">${esc(k.len)}</span></td>
+      <td>${k.motion ? '<span class="dot" style="background:var(--c5)"></span>' : ""}</td><td>${k.sound ? '<span class="dot" style="background:var(--c4)"></span>' : ""}</td><td>${k.interactive ? '<span class="dot" style="background:var(--c8)"></span>' : ""}</td></tr>`).join("");
+  const pick = (i) => {
+    const k = K[i];
+    $$("#kinds tr.row").forEach((r, j) => r.classList.toggle("sel", j === i));
+    const m = k.media;
+    const med = !m ? "" : m.type === "video" ? `<video class="media" src="${m.src}" controls ${m.muted === false ? "" : "muted"} autoplay loop playsinline></video>` : m.type === "iframe" ? `<iframe class="live" style="height:420px" src="${m.src}"></iframe>` : m.type === "timeline" ? m.html : m.type === "audio" ? `<audio controls src="${m.src}" style="width:100%"></audio>` : `<img class="media" src="${m.src}" alt="${esc(k.name)} example">`;
+    $("#kindDetail").innerHTML = `<h3 style="margin-top:0">${esc(k.name)}</h3><p style="color:var(--muted);margin:0 0 10px">${k.what}</p>${med}<div class="cap">${m ? m.cap : ""}</div>
+      <ol class="steps">${k.steps.map((s) => `<li>${s}</li>`).join("")}</ol>
+      <dl class="kv" style="margin-top:8px"><dt>Workflow</dt><dd><code>${k.workflow}</code></dd><dt>Approvals</dt><dd>${k.gates} ${k.gates ? `(${k.gateNames})` : ""}</dd></dl>
+      <div class="say" style="margin-top:10px">“/anidoodle ${esc(k.askEx)}”</div>`;
+  };
+  $$("#kinds tr.row").forEach((r) => (r.onclick = () => pick(+r.dataset.i)));
+  pick(0);
+}
+
+// ───────────────── 5. characters
+{
+  const C = data.characters;
+  $("#charPick").innerHTML = C.map((c, i) => `<button class="chipbtn" data-i="${i}">${esc(c.name)}</button>`).join("");
+  const pick = (i) => {
+    const c = C[i];
+    $$("#charPick .chipbtn").forEach((b, j) => b.classList.toggle("on", j === i));
+    $("#charMedia").innerHTML = c.type === "video" ? `<video class="media" src="${c.src}" autoplay loop muted playsinline></video>` : `<a href="${c.src}" target="_blank"><img class="media" src="${c.src}" alt="${esc(c.name)}" style="background:var(--paper)"></a>`;
+    $("#charInfo").innerHTML = `<h3 style="margin-top:0">${esc(c.name)}</h3><p style="color:var(--muted);margin-top:0">${c.what}</p><div class="hint">module: <code>${c.module}</code> · click the image to open it full size</div>`;
+  };
+  $$("#charPick .chipbtn").forEach((b) => (b.onclick = () => pick(+b.dataset.i)));
+  pick(0);
+  $("#charChecks").innerHTML = data.charChecks.map((c) => `<span class="chipbtn" style="cursor:default">✓ ${esc(c)}</span>`).join("");
+}
+
+// ───────────────── 6. music
+{
+  const M = data.music, W = 560, H = 360, L = 50, R = 20, T = 16, B = 46;
+  const xMax = 4.5, yMin = 300, yMax = 5000;
+  const X = (v) => L + (v / xMax) * (W - L - R), Y = (v) => T + (1 - (Math.log(v) - Math.log(yMin)) / (Math.log(yMax) - Math.log(yMin))) * (H - T - B);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Music pieces by busyness and brightness">`;
+  [0, 1, 2, 3, 4].forEach((v) => (s += `<line x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${H - B}" stroke="var(--border)"/><text x="${X(v)}" y="${H - B + 16}" fill="var(--faint)" font-size="11" text-anchor="middle">${v}</text>`));
+  [300, 500, 1000, 2000, 4000].forEach((v) => (s += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--border)"/><text x="${L - 6}" y="${Y(v) + 4}" fill="var(--faint)" font-size="11" text-anchor="end">${v >= 1000 ? v / 1000 + "k" : v}</text>`));
+  s += `<text x="${(L + W - R) / 2}" y="${H - 8}" fill="var(--muted)" font-size="12" text-anchor="middle">note onsets per second → busier</text><text transform="translate(14 ${(T + H - B) / 2}) rotate(-90)" fill="var(--muted)" font-size="12" text-anchor="middle">spectral centroid, Hz (log) → brighter</text>`;
+  M.forEach((m) => {
+    const c = m.id === "ghostFixture" ? "var(--danger)" : m.master === "dense" ? "var(--c8)" : "var(--c5)";
+    const r = 7 + (m.lufs + 17) * 2.2, [dx, dy, anchor] = ({ bellsHopeful: [-1, -12, "end"], guitarWistful: [1, 14, "start"], harpTender: [1, 8, "start"], folkCalm: [1, -8, "start"], chiptunePlayful: [-1, -12, "end"], driveElectronic: [-1, 22, "end"], minorPianoMelancholy: [-1, 4, "end"] })[m.id] ?? [1, 4, "start"];
+    s += `<g class="pt" data-id="${m.id}" data-viz-id="music-${m.id}" data-label="${esc(m.id)}"><circle cx="${X(m.onsets)}" cy="${Y(m.centroid)}" r="${r}" fill="${c}" fill-opacity=".75"/><text x="${X(m.onsets) + dx * (r + 4)}" y="${Y(m.centroid) + dy}" text-anchor="${anchor}" fill="var(--text)" font-size="11.5">${esc(m.id)}</text></g>`;
+  });
+  s += `<g transform="translate(${W - 180} ${H - B - 62})"><circle cx="6" cy="6" r="6" fill="var(--c5)"/><text x="16" y="10" fill="var(--muted)" font-size="11">gentle master (−16 LUFS)</text><circle cx="6" cy="24" r="8" fill="var(--c8)"/><text x="18" y="28" fill="var(--muted)" font-size="11">dense master (−14 LUFS)</text><text x="0" y="46" fill="var(--faint)" font-size="10.5">dot size = measured loudness</text></g></svg>`;
+  $("#scatter").innerHTML = s;
+  $$(".pt").forEach((p) => (p.onclick = () => {
+    const id = p.dataset.id, was = playingId === id; stopAudio(); if (was) return;
+    const m = M.find((x) => x.id === id);
+    audio = new Audio(`media/music/${id}.m4a`); audio.play(); playingId = id; p.classList.add("playing");
+    audio.onended = () => stopAudio();
+    $("#nowPlaying").innerHTML = `▶ <b>${esc(id)}</b> (${esc(m.style)}, ${esc(m.mood)}) · measured ${m.lufs} LUFS · true peak ${m.tp} dBTP · ${m.onsets} onsets/s · centroid ${m.centroid} Hz · click again to stop`;
+  }));
+
+  // tempo ranges
+  const S = data.musicStyles, tw = 560, rowH = 24, tL = 96, tMin = 40, tMax = 190;
+  const TX = (v) => tL + ((v - tMin) / (tMax - tMin)) * (tw - tL - 96);
+  let t = `<svg viewBox="0 0 ${tw} ${S.length * rowH + 30}" role="img" aria-label="Tempo range per music style">`;
+  [60, 90, 120, 150, 180].forEach((v) => (t += `<line x1="${TX(v)}" x2="${TX(v)}" y1="0" y2="${S.length * rowH}" stroke="var(--border)"/><text x="${TX(v)}" y="${S.length * rowH + 16}" fill="var(--faint)" font-size="11" text-anchor="middle">${v}</text>`));
+  S.forEach((m, i) => {
+    const y = i * rowH + 5, c = m.master === "dense" ? "var(--c8)" : "var(--c5)";
+    t += `<g data-viz-id="tempo-${m.id}" data-label="${esc(m.id)} ${m.lo}-${m.hi} bpm"><text x="${tL - 8}" y="${y + 12}" fill="var(--text)" font-size="12" text-anchor="end">${esc(m.id)}</text><rect x="${TX(m.lo)}" y="${y}" width="${TX(m.hi) - TX(m.lo)}" height="15" rx="4" fill="${c}" fill-opacity=".8"/><text x="${TX(m.hi) + 5}" y="${y + 12}" fill="var(--faint)" font-size="10.5">${esc(m.note || "")}</text></g>`;
+  });
+  t += `<text x="${tL}" y="${S.length * rowH + 28}" fill="var(--muted)" font-size="11">bpm · colour = master type (teal gentle, magenta dense)</text></svg>`;
+  $("#tempo").innerHTML = t;
+
+  // mood wheel
+  const MO = data.moods, cx = 200, cy = 170, rr = 128;
+  const pos = Object.fromEntries(MO.map((m, i) => { const a = (i / MO.length) * Math.PI * 2 - Math.PI / 2; return [m, [cx + rr * Math.cos(a), cy + rr * Math.sin(a)]]; }));
+  let w = `<svg viewBox="0 0 400 340" role="img" aria-label="Moods and refused blends">`;
+  data.refusedBlends.forEach(([a, b]) => { if (pos[a] && pos[b]) w += `<line x1="${pos[a][0]}" y1="${pos[a][1]}" x2="${pos[b][0]}" y2="${pos[b][1]}" stroke="var(--danger)" stroke-width="2" stroke-dasharray="5 4"/>`; });
+  MO.forEach((m) => { const [x, y] = pos[m]; w += `<g data-viz-id="mood-${m}" data-label="${m}"><circle cx="${x}" cy="${y}" r="5" fill="var(--accent)"/><text x="${x + (x > cx ? 9 : -9)}" y="${y + 4}" fill="var(--text)" font-size="12" text-anchor="${x > cx ? "start" : "end"}">${m}</text></g>`; });
+  w += `<text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="var(--muted)" font-size="12">a section's mood</text><text x="${cx}" y="${cy + 12}" text-anchor="middle" fill="var(--faint)" font-size="11">or a blend [a, b, weight]</text></svg>`;
+  $("#moods").innerHTML = w;
+}
+
+// ───────────────── 7. interactive
+function pickInt(i) {
+  const I = data.interactive[i];
+  $$("#intPick .chipbtn").forEach((b, j) => b.classList.toggle("on", j === i));
+  $("#intFrame").src = I.src;
+  $("#intInfo").innerHTML = `<h3 style="margin-top:0">${esc(I.name)}</h3><p style="color:var(--muted);margin-top:0">${I.what}</p><div class="say">Try: ${I.try}</div>
+    <h3>How it goes on your page</h3><div class="cmd">${esc(I.embed)}</div>
+    <h3>What the art can see</h3><div class="chipset">${data.inputs.map((x) => `<span class="chipbtn" style="cursor:default">${esc(x)}</span>`).join("")}</div>
+    <p class="cap">Gated with <code>replay.mjs</code>: scripted desktop and touch sessions at DPR 2, replayed reversed, forward and cold with identical hashes; an empty log equals the rest state; reduced motion is honoured. <code>record-interactive.mjs</code> turns a scripted choreography (glide, click, type, scroll) into a frame-exact demo MP4.</p>`;
+}
+$("#intPick").innerHTML = data.interactive.map((x, i) => `<button class="chipbtn" data-i="${i}">${esc(x.name)}</button>`).join("");
+$$("#intPick .chipbtn").forEach((b) => (b.onclick = () => pickInt(+b.dataset.i)));
+
+// ───────────────── 8. engine
+{
+  const T = data.tools, cols = 6, bw = 176, bh = 44, gx = 14, gy = 26;
+  const nodes = T.map((t, i) => ({ ...t, x: 10 + (t.col ?? i % cols) * (bw + gx), y: 22 + (t.row ?? Math.floor(i / cols)) * (bh + gy), w: bw, h: bh }));
+  const W = 10 + cols * (bw + gx), H = 22 + (Math.max(...nodes.map((n) => n.row)) + 1) * (bh + gy);
+  const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="anidoodle engine tools">${arrowMarkers()}`;
+  ["build", "check", "ship", "study"].forEach((lane, r) => (s += `<text x="10" y="${16 + r * (bh + gy)}" fill="var(--faint)" font-size="10.5" letter-spacing=".08em">${lane.toUpperCase()}</text>`));
+  nodes.forEach((n) => (n.to || []).forEach((t) => (s += `<path d="${connect(n, byId[t])}" stroke="var(--muted)" fill="none" marker-end="url(#ah)" opacity=".7"/>`)));
+  nodes.forEach((n, i) => (s += `<g class="pnode" data-i="${i}" data-viz-id="tool-${n.id}" data-label="${esc(n.id)}"><rect x="${n.x}" y="${n.y}" width="${bw}" height="${bh}" rx="7"/><text x="${n.x + bw / 2}" y="${n.y + 19}" text-anchor="middle" fill="var(--text)" font-size="11.5" font-family="var(--mono)">${esc(n.id)}</text><text x="${n.x + bw / 2}" y="${n.y + 34}" text-anchor="middle" fill="var(--faint)" font-size="10.5">${esc(n.short)}</text></g>`));
+  s += `</svg>`;
+  $("#tools").innerHTML = s;
+  const pick = (i) => { $$("#tools .pnode").forEach((g, j) => g.classList.toggle("sel", j === i)); const n = T[i]; $("#toolDetail").innerHTML = `<b class="mono">${esc(n.id)}</b> <span style="color:var(--muted)">· ${n.what}</span><div class="cmd" style="margin-top:8px">${esc(n.usage)}</div>`; };
+  $$("#tools .pnode").forEach((g) => (g.onclick = () => pick(+g.dataset.i)));
+  pick(0);
+
+  // shapes to scale
+  const F = [["1x1", 1080, 1080, "social"], ["4x5", 1080, 1350, "feed portrait"], ["9x16", 1080, 1920, "Reels · Shorts · TikTok"], ["16x9", 1920, 1080, "web hero · YouTube"], ["1200x630", 1200, 630, "social card"], ["2550x3300", 2550, 3300, "letter @ 300 dpi"]];
+  const k = 0.045; let x = 8, sh = `<svg viewBox="0 0 640 200" role="img" aria-label="Formats drawn to scale">`;
+  F.forEach(([n, w, h, u]) => { const rw = w * k, rh = h * k; sh += `<g data-viz-id="fmt-${n}" data-label="${n} ${w}x${h}"><rect x="${x}" y="${178 - rh}" width="${rw}" height="${rh}" fill="none" stroke="var(--accent)" stroke-width="1.3"/><text x="${x + rw / 2}" y="${192}" text-anchor="middle" fill="var(--text)" font-size="11">${n}</text><text x="${x + rw / 2}" y="${178 - rh - 5}" text-anchor="middle" fill="var(--faint)" font-size="9.5">${u}</text></g>`; x += rw + 12; });
+  $("#shapes").innerHTML = sh + `</svg><div class="hint">all rectangles share one scale (pixels) · <code>--scale</code> multiplies at render time: 0.5 thumbnail, 3 print</div>`;
+
+  // gate runs
+  const runs = data.gateRuns;
+  $("#gateRun").innerHTML = runs.map((r, i) => `<button class="chipbtn" data-i="${i}">${esc(r.name)}</button>`).join("");
+  const pr = (i) => { $$("#gateRun .chipbtn").forEach((b, j) => b.classList.toggle("on", j === i)); const r = runs[i]; $("#gateList").innerHTML = r.checks.map(([ok, t]) => `<span class="${ok ? "p" : "x"}">${ok ? "PASS" : "FAIL"}</span><span>${esc(t)}</span>`).join(""); $("#gateNote").innerHTML = r.note; };
+  $$("#gateRun .chipbtn").forEach((b) => (b.onclick = () => pr(+b.dataset.i)));
+  pr(0);
+}
+
+// ───────────────── 9. cheat sheet
+$("#cheat").innerHTML = `<tr><th>Say</th><th>You get</th></tr>` + data.cheat.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("");
+</script>
+</body>
+</html>
