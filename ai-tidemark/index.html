@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script type="importmap">{"imports":{"/_kit/viz.js":"data:text/javascript;base64,Ly8gR0VORVJBVEVEIGZyb20ga2l0L3NyYy92aXoudHMgYnkgYGJ1biBydW4gc3luYzpraXRgIOKAlCBlZGl0IHRoYXQgZmlsZSwgbm90IHRoaXMgb25lLgovLyB2aXouanMg4oCUIHNoYXJlZCBoZWxwZXJzIGZvciAvdml6IHBhZ2VzLiBMb2FkIHdpdGg6Ci8vICAgPHNjcmlwdCB0eXBlPSJtb2R1bGUiPgovLyAgICAgaW1wb3J0IHsgYXJyb3dNYXJrZXJzLCBjb25uZWN0LCBzaWRlLCBsYWJlbEJveCwgdml6QXVkaXQsICQsICQkLCBlc2MsIHNhdmVIYXNoLCBsb2FkSGFzaCwgdml6RW52IH0gZnJvbSAiL19raXQvdml6LmpzIjsKLy8gICA8L3NjcmlwdD4KLy8gU2VydmVkIGJ5IHRoZSB2aXogc2VydmVyIGF0IC9fa2l0L3Zpei5qcyBmcm9tIHRoZSBza2lsbCdzIG93biBraXQvIGRpciwgc28gaXQncwovLyBvbmUgc291cmNlIG9mIHRydXRoIGFjcm9zcyBldmVyeSB2aXouIFBhaXJzIHdpdGggL19raXQvdml6LWtpdC5jc3MuCmV4cG9ydCBjb25zdCBTVkdOUyA9ICJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI7Ci8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQovLyBTVkcgZGlhZ3JhbXMg4oCUIGdlb21ldHJ5IGZpcnN0LgovLwovLyBUaGUgcmVjdXJyaW5nIHJld29yayBpbiBib3hlcy1hbmQtYXJyb3dzIGRpYWdyYW1zIGNvbWVzIGZyb20gdHlwaW5nIGxhYmVsIGFuZAovLyBhcnJvdyBjb29yZGluYXRlcyBhcyBpbmRlcGVuZGVudCBsaXRlcmFsczogYSBib3ggZ2V0cyByZXNpemVkIG9yIG1vdmVkLCBidXQgdGhlCi8vIGFycm93IGVuZHBvaW50IGFuZCB0aGUgbGFiZWwgcG9zaXRpb24gd2VyZSBndWVzc2VkIGFnYWluc3QgdGhlICpvbGQqIGdlb21ldHJ5LAovLyBzbyB0aGUgYXJyb3cgbm93IHBvaW50cyBhdCBlbXB0eSBzcGFjZSAob3IgdGhlIHdyb25nIGJveCkgYW5kIHRoZSBsYWJlbCBzcGlsbHMKLy8gb3V0LiBUaGUgZml4IGlzIHRvIG5ldmVyIGhhbmQtcGxhY2UgdGhvc2U6IGRlZmluZSBlYWNoIG5vZGUgT05DRSBhcyB7eCx5LHcsaH0KLy8gYW5kIGNvbXB1dGUgZXZlcnl0aGluZyBlbHNlIGZyb20gaXQuCi8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQovLyBEZWZhdWx0IGFycm93aGVhZCBwYWxldHRlLCBrZXllZCB0byB0aGUgdml6LWtpdCBpbnRlbnQgdG9rZW5zLiBTVkcgbWFya2VycyBjYW4ndAovLyBpbmhlcml0IHRoZSBzdHJva2UgY29sb3Igb2YgdGhlIGxpbmUgdGhhdCB1c2VzIHRoZW0sIHNvIHlvdSBnZW51aW5lbHkgbmVlZCBvbmUKLy8gbWFya2VyIHBlciBjb2xvciDigJQgdGhpcyBlbWl0cyB0aGVtIGFsbCB3aXRoIHN0YWJsZSBpZHMgc28geW91IHN0b3AgcmUtZGVyaXZpbmcKLy8gdGhlIHNhbWUgPG1hcmtlcj4gYmxvY2sgcGVyIGRpYWdyYW0uIFJlZmVyZW5jZSBhcyBtYXJrZXItZW5kPSJ1cmwoI2FoLWFjY2VudCkiLgovLwovLyBUaGVzZSBhcmUgdmFyKCkgcmVmZXJlbmNlcywgbm90IGhleGVzLCBPTiBQVVJQT1NFOiBhIHBhZ2UgdGhhdCBvdmVycmlkZXMgdGhlCi8vIHRva2VucyAoc2VlIGtpdC9SRUFETUUubWQpIHJlLXRoZW1lcyBpdHMgYXJyb3doZWFkcyBmb3IgZnJlZS4gSGFyZGNvZGluZyB0aGUKLy8gaGV4ZXMgaGVyZSB3b3VsZCBzaWxlbnRseSBzdHJhbmQgZXZlcnkgbWFya2VyIGF0IHRoZSBkZWZhdWx0IHBhbGV0dGUuCmNvbnN0IERFRkFVTFRfTUFSS0VSUyA9IHsKICAgIGFoOiAidmFyKC0tbXV0ZWQpIiwgLy8gdGhlIGRlZmF1bHQgZWRnZQogICAgImFoLWFjY2VudCI6ICJ2YXIoLS1hY2NlbnQpIiwKICAgICJhaC1nb29kIjogInZhcigtLWdvb2QpIiwKICAgICJhaC13YXJuIjogInZhcigtLXdhcm4pIiwKICAgICJhaC1kYW5nZXIiOiAidmFyKC0tZGFuZ2VyKSIsCn07Ci8vIFJldHVybnMgYSA8ZGVmcz7igKY8L2RlZnM+IHN0cmluZy4gRHJvcCBpdCBvbmNlIGF0IHRoZSB0b3Agb2YgeW91ciA8c3ZnPi4KZXhwb3J0IGZ1bmN0aW9uIGFycm93TWFya2VycyhwYWxldHRlID0gREVGQVVMVF9NQVJLRVJTKSB7CiAgICBjb25zdCBtYXJrZXJzID0gT2JqZWN0LmVudHJpZXMocGFsZXR0ZSkKICAgICAgICAubWFwKChbaWQsIGZpbGxdKSA9PiBgPG1hcmtlciBpZD0iJHtpZH0iIHZpZXdCb3g9IjAgMCAxMCAxMCIgcmVmWD0iOSIgcmVmWT0iNSIgYCArCiAgICAgICAgYG1hcmtlcldpZHRoPSI3IiBtYXJrZXJIZWlnaHQ9IjciIG9yaWVudD0iYXV0by1zdGFydC1yZXZlcnNlIj5gICsKICAgICAgICBgPHBhdGggZD0iTTAsMCBMMTAsNSBMMCwxMCB6IiBmaWxsPSIke2ZpbGx9Ii8+PC9tYXJrZXI+YCkKICAgICAgICAuam9pbigiIik7CiAgICByZXR1cm4gYDxkZWZzPiR7bWFya2Vyc308L2RlZnM+YDsKfQovLyBBIG5vZGUgaXMganVzdCB7eCwgeSwgdywgaH0uIGNlbnRlcigpIGFuZCBzaWRlKCkgZGVyaXZlIGNvbm5lY3Rpb24gcG9pbnRzIGZyb20KLy8gaXQsIHNvIGFuIGVkZ2Ugc3RheXMgYXR0YWNoZWQgdG8gdGhlIGJveCBubyBtYXR0ZXIgaG93IHRoZSBib3ggY2hhbmdlcy4KZXhwb3J0IGNvbnN0IGNlbnRlciA9IChuKSA9PiAoeyB4OiBuLnggKyBuLncgLyAyLCB5OiBuLnkgKyBuLmggLyAyIH0pOwpleHBvcnQgY29uc3Qgc2lkZSA9IChuLCB3aGVyZSkgPT4gKHsKICAgIHRvcDogeyB4OiBuLnggKyBuLncgLyAyLCB5OiBuLnkgfSwKICAgIGJvdHRvbTogeyB4OiBuLnggKyBuLncgLyAyLCB5OiBuLnkgKyBuLmggfSwKICAgIGxlZnQ6IHsgeDogbi54LCB5OiBuLnkgKyBuLmggLyAyIH0sCiAgICByaWdodDogeyB4OiBuLnggKyBuLncsIHk6IG4ueSArIG4uaCAvIDIgfSwKfSlbd2hlcmVdOwovLyBTdHJhaWdodCBlZGdlIGJldHdlZW4gdHdvIG5vZGVzLCBhdXRvLXBpY2tpbmcgdGhlIGZhY2luZyBzaWRlcyBiYXNlZCBvbiB0aGVpcgovLyByZWxhdGl2ZSBwb3NpdGlvbi4gUmV0dXJucyBhbiBTVkcgcGF0aCAiZCIgc3RyaW5nOyBzZXQgdGhlIG1hcmtlciB5b3Vyc2VsZiB2aWEKLy8gdGhlIGVsZW1lbnQncyBtYXJrZXItZW5kIGF0dHJpYnV0ZS4gRm9yID41IG5vZGVzIHdpdGggY3Jvc3NpbmcgZWRnZXMsIHJlYWNoIGZvcgovLyBhIGxheW91dCBlbmdpbmUgKGRhZ3JlIC8gZDMtZGFnIC8gbWVybWFpZCkgaW5zdGVhZCBvZiBwbGFjaW5nIG5vZGVzIGJ5IGhhbmQg4oCUCi8vIHRoYXQncyB0aGUgcG9pbnQgd2hlcmUgbWFudWFsIGNvb3JkaW5hdGVzIHN0b3AgYmVpbmcgd29ydGggaXQuCmV4cG9ydCBmdW5jdGlvbiBjb25uZWN0KGEsIGIpIHsKICAgIGNvbnN0IGNhID0gY2VudGVyKGEpLCBjYiA9IGNlbnRlcihiKTsKICAgIGNvbnN0IGhvcml6ID0gTWF0aC5hYnMoY2IueCAtIGNhLngpID4gTWF0aC5hYnMoY2IueSAtIGNhLnkpOwogICAgY29uc3QgcGEgPSBob3JpegogICAgICAgID8gc2lkZShhLCBjYi54ID4gY2EueCA/ICJyaWdodCIgOiAibGVmdCIpCiAgICAgICAgOiBzaWRlKGEsIGNiLnkgPiBjYS55ID8gImJvdHRvbSIgOiAidG9wIik7CiAgICBjb25zdCBwYiA9IGhvcml6CiAgICAgICAgPyBzaWRlKGIsIGNiLnggPiBjYS54ID8gImxlZnQiIDogInJpZ2h0IikKICAgICAgICA6IHNpZGUoYiwgY2IueSA+IGNhLnkgPyAidG9wIiA6ICJib3R0b20iKTsKICAgIHJldHVybiBgTSAke3BhLnh9ICR7cGEueX0gTCAke3BiLnh9ICR7cGIueX1gOwp9Ci8vIEEgbGFiZWwgdGhhdCBDQU5OT1Qgb3ZlcmZsb3cgaXRzIGJveC4gPGZvcmVpZ25PYmplY3Q+IGxldHMgdGhlIGJyb3dzZXIgd3JhcCBhbmQKLy8gZWxsaXBzaXplIEhUTUwgbmF0aXZlbHksIHVubGlrZSByYXcgPHRleHQ+IHdoaWNoIHlvdSdkIGhhdmUgdG8gbWVhc3VyZSBieSBoYW5kCi8vIChhbmQgaGlzdG9yaWNhbGx5IGd1ZXNzZWQgd3JvbmcpLiBVc2UgdGhpcyBmb3IgYW55IG11bHRpLXdvcmQgbGFiZWwgaW5zaWRlIGEKLy8gZml4ZWQtd2lkdGggYm94LiBTdHlsZSB2aWEgdGhlIC52c3ZnLWxhYmVsIGNsYXNzIGluIHZpei1raXQuY3NzLgpleHBvcnQgZnVuY3Rpb24gbGFiZWxCb3gobm9kZSwgaHRtbCwgY2xzID0gIiIpIHsKICAgIHJldHVybiAoYDxmb3JlaWduT2JqZWN0IHg9IiR7bm9kZS54fSIgeT0iJHtub2RlLnl9IiB3aWR0aD0iJHtub2RlLnd9IiBoZWlnaHQ9IiR7bm9kZS5ofSI+YCArCiAgICAgICAgYDxkaXYgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGh0bWwiIGNsYXNzPSJ2c3ZnLWxhYmVsICR7Y2xzfSI+JHtodG1sfTwvZGl2PmAgKwogICAgICAgIGA8L2ZvcmVpZ25PYmplY3Q+YCk7Cn0KLy8gVmVyaWZpY2F0aW9uIGJhY2tzdG9wLiBJZiB5b3UgRE8gaGFuZC1yb2xsIDx0ZXh0PiwgY2FsbCB0aGlzIG9uY2UgYWZ0ZXIgcmVuZGVyOgovLyBpdCBvdXRsaW5lcyAoaW4gcmVkKSBhbnkgPHRleHQ+IHdob3NlIGJvdW5kaW5nIGJveCBzcGlsbHMgcGFzdCB0aGUgPHJlY3Q+IGluIGl0cwovLyBncm91cCwgYW5kIGRyb3BzIGEgZml4ZWQgYmFubmVyIHNvIGFuIG92ZXJmbG93IGlzIGltcG9zc2libGUgdG8gbWlzcyBpbiB0aGUgb3BlbgovLyBicm93c2VyIOKAlCBvciBpbiBhbnkgc2NyZWVuc2hvdCB5b3UgdGFrZSB0byB2ZXJpZnkgdGhlIHBhZ2UuIFJldHVybnMgdGhlIGxpc3Qgb2YKLy8gb2ZmZW5kaW5nIHN0cmluZ3MgKGVtcHR5ID0gY2xlYW4pLiBUaGUgcmVjdC1pbi1zYW1lLTxnPiBwYWlyaW5nIGlzIGEgaGV1cmlzdGljOwovLyBpdCBjYXRjaGVzIHRoZSBjb21tb24gY2FzZSB3aGVyZSBlYWNoIGJveCtsYWJlbCBsaXZlIGluIG9uZSA8Zz4uCmV4cG9ydCBmdW5jdGlvbiB2aXpBdWRpdChyb290ID0gZG9jdW1lbnQpIHsKICAgIGNvbnN0IGJhZCA9IFtdOwogICAgZm9yIChjb25zdCB0IG9mIHJvb3QucXVlcnlTZWxlY3RvckFsbCgidGV4dCIpKSB7CiAgICAgICAgY29uc3QgcmVjdCA9IHQuY2xvc2VzdCgiZyIpPy5xdWVyeVNlbGVjdG9yKCJyZWN0Iik7CiAgICAgICAgaWYgKCFyZWN0KQogICAgICAgICAgICBjb250aW51ZTsKICAgICAgICBjb25zdCB0YiA9IHQuZ2V0QkJveCgpOwogICAgICAgIGNvbnN0IHJiID0gcmVjdC5nZXRCQm94KCk7CiAgICAgICAgY29uc3Qgc3BpbGxzID0gdGIueCA8IHJiLnggLSAxIHx8CiAgICAgICAgICAgIHRiLnkgPCByYi55IC0gMSB8fAogICAgICAgICAgICB0Yi54ICsgdGIud2lkdGggPiByYi54ICsgcmIud2lkdGggKyAxIHx8CiAgICAgICAgICAgIHRiLnkgKyB0Yi5oZWlnaHQgPiByYi55ICsgcmIuaGVpZ2h0ICsgMTsKICAgICAgICBpZiAoc3BpbGxzKSB7CiAgICAgICAgICAgIHQuc3R5bGUub3V0bGluZSA9ICIxcHggc29saWQgI2Y4NTE0OSI7CiAgICAgICAgICAgIGJhZC5wdXNoKHQudGV4dENvbnRlbnQpOwogICAgICAgIH0KICAgIH0KICAgIGlmIChiYWQubGVuZ3RoKSB7CiAgICAgICAgY29uc29sZS5lcnJvcigiW3ZpekF1ZGl0XSB0ZXh0IG92ZXJmbG93OiIsIGJhZCk7CiAgICAgICAgY29uc3QgYmFubmVyID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgiZGl2Iik7CiAgICAgICAgYmFubmVyLnRleHRDb250ZW50ID0gYOKaoCAke2JhZC5sZW5ndGh9IHRleHQgb3ZlcmZsb3cocykg4oCUIHNlZSByZWQgb3V0bGluZXNgOwogICAgICAgIGJhbm5lci5zdHlsZS5jc3NUZXh0ID0KICAgICAgICAgICAgInBvc2l0aW9uOmZpeGVkO2xlZnQ6OHB4O2JvdHRvbTo4cHg7ei1pbmRleDo5OTk5O2JhY2tncm91bmQ6I2Y4NTE0OTtjb2xvcjojZmZmOyIgKwogICAgICAgICAgICAgICAgImZvbnQ6MTJweC8xIHNhbnMtc2VyaWY7cGFkZGluZzo2cHggMTBweDtib3JkZXItcmFkaXVzOjZweCI7CiAgICAgICAgZG9jdW1lbnQuYm9keS5hcHBlbmRDaGlsZChiYW5uZXIpOwogICAgfQogICAgcmV0dXJuIGJhZDsKfQpleHBvcnQgZnVuY3Rpb24gJChzZWwsIHJvb3QgPSBkb2N1bWVudCkgeyByZXR1cm4gcm9vdC5xdWVyeVNlbGVjdG9yKHNlbCk7IH0KZXhwb3J0IGZ1bmN0aW9uICQkKHNlbCwgcm9vdCA9IGRvY3VtZW50KSB7IHJldHVybiBbLi4ucm9vdC5xdWVyeVNlbGVjdG9yQWxsKHNlbCldOyB9Ci8vIEVzY2FwZSBiZWZvcmUgaW5qZWN0aW5nIHRleHQgaW50byBpbm5lckhUTUwuCmNvbnN0IEVOVElUSUVTID0geyAiJiI6ICImYW1wOyIsICI8IjogIiZsdDsiLCAiPiI6ICImZ3Q7IiwgJyInOiAiJnF1b3Q7IiwgIiciOiAiJiMzOTsiIH07CmV4cG9ydCBjb25zdCBlc2MgPSAocykgPT4gU3RyaW5nKHMpLnJlcGxhY2UoL1smPD4iJ10vZywgKGMpID0+IEVOVElUSUVTW2NdID8/IGMpOwovLyBIb3QtcmVsb2FkIChhbmQgZXZlcnkgc2F2ZSkgZG9lcyBhIGZ1bGwgcGFnZSByZWZyZXNoLCBzbyBpbi1wYWdlIHN0YXRlIGlzIHdpcGVkLgovLyBQZXJzaXN0IGFueXRoaW5nIHlvdSB3YW50IHRvIHN1cnZpdmUg4oCUIG9wZW4gcGFuZWwsIHNlbGVjdGVkIHN0ZXAsIGFjdGl2ZSBmaWx0ZXJzIOKAlAovLyB0byB0aGUgVVJMIGhhc2guIEJvbnVzOiB0aGUgVVJMIGJlY29tZXMgc2hhcmVhYmxlL2RlZXAtbGlua2FibGUgZm9yIGZyZWUuCi8vIFJvdW5kLXRyaXBzIGEgcGxhaW4gb2JqZWN0LiBTYXkgd2hhdCB5b3VyIGhhc2ggaG9sZHM6IGBsb2FkSGFzaDx7IHN0ZXA6IG51bWJlciB9PigpYCDigJQKLy8gZXZlcnkga2V5IG1heSBiZSBtaXNzaW5nIChhIGZyZXNoIFVSTCwgYW4gb2xkIGxpbmspLCBzbyBlYWNoIGNvbWVzIGJhY2sgb3B0aW9uYWwuCmV4cG9ydCBjb25zdCBzYXZlSGFzaCA9IChvYmopID0+IGxvY2F0aW9uLnJlcGxhY2UoIiMiICsgZW5jb2RlVVJJQ29tcG9uZW50KEpTT04uc3RyaW5naWZ5KG9iaikpKTsKZXhwb3J0IGNvbnN0IGxvYWRIYXNoID0gKCkgPT4gewogICAgdHJ5IHsKICAgICAgICByZXR1cm4gSlNPTi5wYXJzZShkZWNvZGVVUklDb21wb25lbnQobG9jYXRpb24uaGFzaC5zbGljZSgxKSkgfHwgInt9Iik7CiAgICB9CiAgICBjYXRjaCB7CiAgICAgICAgcmV0dXJuIHt9OwogICAgfQp9Owpjb25zdCBpc1R5cGluZyA9ICh0KSA9PiB0IGluc3RhbmNlb2YgSFRNTEVsZW1lbnQgJiYgKC9eKElOUFVUfFRFWFRBUkVBfFNFTEVDVCkkLy50ZXN0KHQudGFnTmFtZSkgfHwgdC5pc0NvbnRlbnRFZGl0YWJsZSk7CmV4cG9ydCBmdW5jdGlvbiBzdGVwcGVyKHsgbiwgb25TdGVwLCBhdXRvcGxheU1zID0gMCwgaGFzaEtleSA9ICJzdGVwIiwgdGFyZ2V0ID0gZG9jdW1lbnQgfSkgewogICAgbGV0IGkgPSBNYXRoLm1pbihNYXRoLm1heChOdW1iZXIobG9hZEhhc2goKVtoYXNoS2V5XSA/PyAwKSwgMCksIG4gLSAxKTsKICAgIGxldCB0aW1lciA9IG51bGw7CiAgICBjb25zdCBlbWl0ID0gKCkgPT4gewogICAgICAgIHNhdmVIYXNoKHsgLi4ubG9hZEhhc2goKSwgW2hhc2hLZXldOiBpIH0pOwogICAgICAgIG9uU3RlcD8uKGkpOwogICAgfTsKICAgIGNvbnN0IGdvID0gKHRvLCBtYW51YWwgPSB0cnVlKSA9PiB7CiAgICAgICAgY29uc3QgbmV4dCA9IE1hdGgubWluKE1hdGgubWF4KHRvLCAwKSwgbiAtIDEpOwogICAgICAgIGlmIChtYW51YWwpCiAgICAgICAgICAgIHBhdXNlKCk7IC8vIGEgbWFudWFsIG5hdiBhbHdheXMgd2lucyBvdmVyIGF1dG9wbGF5CiAgICAgICAgaWYgKG5leHQgPT09IGkpCiAgICAgICAgICAgIHJldHVybjsKICAgICAgICBpID0gbmV4dDsKICAgICAgICBlbWl0KCk7CiAgICB9OwogICAgY29uc3QgcGxheSA9ICgpID0+IHsKICAgICAgICBpZiAodGltZXIgfHwgIWF1dG9wbGF5TXMpCiAgICAgICAgICAgIHJldHVybjsKICAgICAgICB0aW1lciA9IHNldEludGVydmFsKCgpID0+IHsKICAgICAgICAgICAgaWYgKGkgPj0gbiAtIDEpCiAgICAgICAgICAgICAgICByZXR1cm4gcGF1c2UoKTsKICAgICAgICAgICAgZ28oaSArIDEsIGZhbHNlKTsKICAgICAgICB9LCBhdXRvcGxheU1zKTsKICAgIH07CiAgICBjb25zdCBwYXVzZSA9ICgpID0+IHsKICAgICAgICBpZiAodGltZXIpCiAgICAgICAgICAgIGNsZWFySW50ZXJ2YWwodGltZXIpOwogICAgICAgIHRpbWVyID0gbnVsbDsKICAgIH07CiAgICBjb25zdCBLRVlTID0gewogICAgICAgIEFycm93UmlnaHQ6IDEsIEFycm93RG93bjogMSwgUGFnZURvd246IDEsICIgIjogMSwKICAgICAgICBBcnJvd0xlZnQ6IC0xLCBBcnJvd1VwOiAtMSwgUGFnZVVwOiAtMSwKICAgIH07CiAgICB0YXJnZXQuYWRkRXZlbnRMaXN0ZW5lcigia2V5ZG93biIsIChldikgPT4gewogICAgICAgIGNvbnN0IGUgPSBldjsKICAgICAgICBpZiAoZS5tZXRhS2V5IHx8IGUuY3RybEtleSB8fCBlLmFsdEtleSkKICAgICAgICAgICAgcmV0dXJuOwogICAgICAgIGlmIChpc1R5cGluZyhlLnRhcmdldCkpCiAgICAgICAgICAgIHJldHVybjsKICAgICAgICBjb25zdCBkID0gS0VZU1tlLmtleV07CiAgICAgICAgaWYgKGQgIT09IHVuZGVmaW5lZCkgewogICAgICAgICAgICBlLnByZXZlbnREZWZhdWx0KCk7IC8vIGVsc2UgU3BhY2UvUGFnZURvd24gc2Nyb2xscyB0aGUgcGFnZSB0b28KICAgICAgICAgICAgZ28oaSArIGQpOwogICAgICAgIH0KICAgICAgICBlbHNlIGlmIChlLmtleSA9PT0gIkhvbWUiKSB7CiAgICAgICAgICAgIGUucHJldmVudERlZmF1bHQoKTsKICAgICAgICAgICAgZ28oMCk7CiAgICAgICAgfQogICAgICAgIGVsc2UgaWYgKGUua2V5ID09PSAiRW5kIikgewogICAgICAgICAgICBlLnByZXZlbnREZWZhdWx0KCk7CiAgICAgICAgICAgIGdvKG4gLSAxKTsKICAgICAgICB9CiAgICB9KTsKICAgIGVtaXQoKTsKICAgIGlmIChhdXRvcGxheU1zKQogICAgICAgIHBsYXkoKTsKICAgIHJldHVybiB7CiAgICAgICAgZ28sCiAgICAgICAgbmV4dDogKCkgPT4gZ28oaSArIDEpLAogICAgICAgIHByZXY6ICgpID0+IGdvKGkgLSAxKSwKICAgICAgICBwbGF5LAogICAgICAgIHBhdXNlLAogICAgICAgIGdldCBjdXJyZW50KCkgewogICAgICAgICAgICByZXR1cm4gaTsKICAgICAgICB9LAogICAgfTsKfQpleHBvcnQgZnVuY3Rpb24gdHdvQXhpcyhlbCwgeyB4OiB4ciA9IFswLCAxXSwgeTogeXIgPSBbMCwgMV0sIHN0YXJ0LCBvbkNoYW5nZSwgc3BlZWQgPSAxIH0gPSB7fSkgewogICAgY29uc3QgY2xhbXAgPSAodiwgW2xvLCBoaV0pID0+IE1hdGgubWluKGhpLCBNYXRoLm1heChsbywgdikpOwogICAgY29uc3Qgc3BhbiA9IChyKSA9PiByWzFdIC0gclswXTsKICAgIGxldCB4ID0gc3RhcnQgPyBzdGFydFswXSA6ICh4clswXSArIHhyWzFdKSAvIDI7CiAgICBsZXQgeSA9IHN0YXJ0ID8gc3RhcnRbMV0gOiAoeXJbMF0gKyB5clsxXSkgLyAyOwogICAgbGV0IHB4ID0gbnVsbCwgcHkgPSBudWxsOwogICAgLy8gSFRNTCBhbmQgU1ZHIGVsZW1lbnRzIHNoYXJlIG9uZSBzZXQgb2YgcG9pbnRlciBldmVudHMsIGJ1dCBUeXBlU2NyaXB0IGNhbid0IG1lcmdlIHRoZSB0d28KICAgIC8vIHR5cGVkIGFkZEV2ZW50TGlzdGVuZXIgb3ZlcmxvYWRzIG9mIHRoZSB1bmlvbiwgc28gdHlwZSBhZ2FpbnN0IHRoZSBzaGFyZWQgbWFwIGRpcmVjdGx5LgogICAgY29uc3Qgb24gPSAodHlwZSwgZikgPT4gZWwuYWRkRXZlbnRMaXN0ZW5lcih0eXBlLCBmKTsKICAgIGVsLnN0eWxlLnRvdWNoQWN0aW9uID0gIm5vbmUiOyAvLyBlbHNlIHRoZSBicm93c2VyIHNjcm9sbHMgaW5zdGVhZCBvZiBkcmFnZ2luZwogICAgZWwuc3R5bGUuY3Vyc29yID0gImdyYWIiOwogICAgb24oInBvaW50ZXJkb3duIiwgKGUpID0+IHsKICAgICAgICBweCA9IGUuY2xpZW50WDsKICAgICAgICBweSA9IGUuY2xpZW50WTsKICAgICAgICBlbC5zZXRQb2ludGVyQ2FwdHVyZShlLnBvaW50ZXJJZCk7CiAgICAgICAgZWwuc3R5bGUuY3Vyc29yID0gImdyYWJiaW5nIjsKICAgIH0pOwogICAgb24oInBvaW50ZXJtb3ZlIiwgKGUpID0+IHsKICAgICAgICBpZiAocHggPT09IG51bGwgfHwgcHkgPT09IG51bGwpCiAgICAgICAgICAgIHJldHVybjsKICAgICAgICBjb25zdCByID0gZWwuZ2V0Qm91bmRpbmdDbGllbnRSZWN0KCk7CiAgICAgICAgLy8gTm9ybWFsaXplIGJ5IGVsZW1lbnQgc2l6ZSBzbyBzZW5zaXRpdml0eSBkb2Vzbid0IGRlcGVuZCBvbiByZW5kZXIgc2NhbGUuCiAgICAgICAgeCA9IGNsYW1wKHggKyAoKGUuY2xpZW50WCAtIHB4KSAvIHIud2lkdGgpICogc3Bhbih4cikgKiBzcGVlZCwgeHIpOwogICAgICAgIHkgPSBjbGFtcCh5ICsgKChlLmNsaWVudFkgLSBweSkgLyByLmhlaWdodCkgKiBzcGFuKHlyKSAqIHNwZWVkLCB5cik7CiAgICAgICAgcHggPSBlLmNsaWVudFg7CiAgICAgICAgcHkgPSBlLmNsaWVudFk7CiAgICAgICAgb25DaGFuZ2U/Lih4LCB5KTsKICAgIH0pOwogICAgY29uc3QgZW5kID0gKCkgPT4gewogICAgICAgIHB4ID0gcHkgPSBudWxsOwogICAgICAgIGVsLnN0eWxlLmN1cnNvciA9ICJncmFiIjsKICAgIH07CiAgICBvbigicG9pbnRlcnVwIiwgZW5kKTsKICAgIG9uKCJwb2ludGVyY2FuY2VsIiwgZW5kKTsKICAgIG9uQ2hhbmdlPy4oeCwgeSk7CiAgICByZXR1cm4gewogICAgICAgIHNldDogKG54LCBueSkgPT4gewogICAgICAgICAgICB4ID0gY2xhbXAobngsIHhyKTsKICAgICAgICAgICAgeSA9IGNsYW1wKG55LCB5cik7CiAgICAgICAgICAgIG9uQ2hhbmdlPy4oeCwgeSk7CiAgICAgICAgfSwKICAgICAgICBnZXQgdmFsdWUoKSB7CiAgICAgICAgICAgIHJldHVybiBbeCwgeV07CiAgICAgICAgfSwKICAgIH07Cn0KZXhwb3J0IGZ1bmN0aW9uIGZpZ3VyZUxpZmVjeWNsZShmaWd1cmVzLCB7IHJvb3QgPSBudWxsIH0gPSB7fSkgewogICAgY29uc3Qgc2VlbiA9IG5ldyBNYXAoKTsKICAgIGNvbnN0IGlvID0gbmV3IEludGVyc2VjdGlvbk9ic2VydmVyKChlbnRyaWVzKSA9PiB7CiAgICAgICAgZm9yIChjb25zdCBlIG9mIGVudHJpZXMpIHsKICAgICAgICAgICAgY29uc3QgZiA9IGZpZ3VyZXMuZmluZCgoZikgPT4gZi5lbCA9PT0gZS50YXJnZXQpOwogICAgICAgICAgICBpZiAoIWYpCiAgICAgICAgICAgICAgICBjb250aW51ZTsKICAgICAgICAgICAgc2Vlbi5zZXQoZiwgZS5pc0ludGVyc2VjdGluZyk7CiAgICAgICAgICAgIGYuc2V0VmlzaWJsZT8uKGUuaXNJbnRlcnNlY3RpbmcgJiYgIWRvY3VtZW50LmhpZGRlbik7CiAgICAgICAgfQogICAgICAgIHBpY2tBY3RpdmUoKTsKICAgIH0sIHsgcm9vdCwgdGhyZXNob2xkOiAwIH0pOwogICAgZmlndXJlcy5mb3JFYWNoKChmKSA9PiBpby5vYnNlcnZlKGYuZWwpKTsKICAgIGxldCBhY3RpdmVGID0gbnVsbDsKICAgIGZ1bmN0aW9uIHBpY2tBY3RpdmUoKSB7CiAgICAgICAgY29uc3QgbWlkID0gd2luZG93LmlubmVySGVpZ2h0IC8gMjsKICAgICAgICBsZXQgYmVzdCA9IG51bGwsIGJlc3REID0gSW5maW5pdHk7CiAgICAgICAgZm9yIChjb25zdCBmIG9mIGZpZ3VyZXMpIHsKICAgICAgICAgICAgaWYgKCFzZWVuLmdldChmKSkKICAgICAgICAgICAgICAgIGNvbnRpbnVlOwogICAgICAgICAgICBjb25zdCByID0gZi5lbC5nZXRCb3VuZGluZ0NsaWVudFJlY3QoKTsKICAgICAgICAgICAgY29uc3QgZCA9IE1hdGguYWJzKHIudG9wICsgci5oZWlnaHQgLyAyIC0gbWlkKTsKICAgICAgICAgICAgaWYgKGQgPCBiZXN0RCkgewogICAgICAgICAgICAgICAgYmVzdEQgPSBkOwogICAgICAgICAgICAgICAgYmVzdCA9IGY7CiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICAgICAgaWYgKGJlc3QgPT09IGFjdGl2ZUYpCiAgICAgICAgICAgIHJldHVybjsKICAgICAgICBhY3RpdmVGPy5zZXRBY3RpdmU/LihmYWxzZSk7CiAgICAgICAgYWN0aXZlRiA9IGJlc3Q7CiAgICAgICAgYWN0aXZlRj8uc2V0QWN0aXZlPy4odHJ1ZSk7CiAgICB9CiAgICBsZXQgcXVldWVkID0gZmFsc2U7CiAgICBjb25zdCBvblNjcm9sbCA9ICgpID0+IHsKICAgICAgICBpZiAocXVldWVkKQogICAgICAgICAgICByZXR1cm47CiAgICAgICAgcXVldWVkID0gdHJ1ZTsKICAgICAgICByZXF1ZXN0QW5pbWF0aW9uRnJhbWUoKCkgPT4geyBxdWV1ZWQgPSBmYWxzZTsgcGlja0FjdGl2ZSgpOyB9KTsKICAgIH07CiAgICBhZGRFdmVudExpc3RlbmVyKCJzY3JvbGwiLCBvblNjcm9sbCwgeyBwYXNzaXZlOiB0cnVlIH0pOwogICAgYWRkRXZlbnRMaXN0ZW5lcigicmVzaXplIiwgb25TY3JvbGwsIHsgcGFzc2l2ZTogdHJ1ZSB9KTsKICAgIGRvY3VtZW50LmFkZEV2ZW50TGlzdGVuZXIoInZpc2liaWxpdHljaGFuZ2UiLCAoKSA9PiB7CiAgICAgICAgZm9yIChjb25zdCBmIG9mIGZpZ3VyZXMpCiAgICAgICAgICAgIGYuc2V0VmlzaWJsZT8uKCFkb2N1bWVudC5oaWRkZW4gJiYgISFzZWVuLmdldChmKSk7CiAgICB9KTsKICAgIHBpY2tBY3RpdmUoKTsKICAgIHJldHVybiB7CiAgICAgICAgZ2V0IGFjdGl2ZSgpIHsgcmV0dXJuIGFjdGl2ZUY7IH0sCiAgICAgICAgZGVzdHJveSgpIHsKICAgICAgICAgICAgaW8uZGlzY29ubmVjdCgpOwogICAgICAgICAgICByZW1vdmVFdmVudExpc3RlbmVyKCJzY3JvbGwiLCBvblNjcm9sbCk7CiAgICAgICAgICAgIHJlbW92ZUV2ZW50TGlzdGVuZXIoInJlc2l6ZSIsIG9uU2Nyb2xsKTsKICAgICAgICB9LAogICAgfTsKfQpsZXQgX3ZpekVudlA7CmV4cG9ydCBmdW5jdGlvbiB2aXpFbnYoKSB7CiAgICByZXR1cm4gKF92aXpFbnZQID8/PSAoYXN5bmMgKCkgPT4gewogICAgICAgIGlmICh0eXBlb2Ygd2luZG93ICE9PSAidW5kZWZpbmVkIiAmJiB3aW5kb3cuX19WSVpfU1RBVElDX18pCiAgICAgICAgICAgIHJldHVybiAic3RhdGljIjsKICAgICAgICB0cnkgewogICAgICAgICAgICBjb25zdCByID0gYXdhaXQgZmV0Y2goIi9faGVhbHRoIiwgeyBjYWNoZTogIm5vLXN0b3JlIiB9KTsKICAgICAgICAgICAgcmV0dXJuIHIub2sgPyAibGl2ZSIgOiAib2ZmbGluZSI7CiAgICAgICAgfQogICAgICAgIGNhdGNoIHsKICAgICAgICAgICAgcmV0dXJuICJvZmZsaW5lIjsKICAgICAgICB9CiAgICB9KSgpKTsKfQovLyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KLy8gTmFycmF0aW9uIOKAlCBwbGF5IGEgZmlsbSdzIG5hcnJhdGlvbi5qc29uIGluIHN5bmMgd2l0aCBpdHMgdGltZWxpbmUuCi8vCi8vIGB2aXogdmVyaWZ5YCAvIGB2aXogcmVuZGVyYCBjb21waWxlIG5hcnJhdGlvbi5qc29uIGludG8gLnR0cy9tYW5pZmVzdC5qc29uIChLb2tvcm8KLy8gY2xpcHMgKyB5b3VyIGF1ZGlvLyBmaWxlcywgZWFjaCBwbGFjZWQgYXQgYSB0aW1lKS4gVGhpcyBwbGF5cyB0aGUgc2FtZSBjbGlwcyBhdCB0aGUKLy8gc2FtZSBtb21lbnRzLCBzbyBzdGVwcGluZyB0aGUgcGFnZSBzb3VuZHMgbGlrZSB0aGUgcmVuZGVyZWQgdmlkZW8uIENhcHRpb25zIHNob3cKLy8gb24gdGhlIHBhZ2UgYmVoaW5kIGEgQ0MgdG9nZ2xlOyBgdml6IHJlbmRlcmAgaGlkZXMgdGhlbSAodGhlIG1wNCBjYXJyaWVzIGEgc3VidGl0bGUKLy8gdHJhY2sgaW5zdGVhZCkuIENhbGwgb25jZSwgYWZ0ZXIgcmVnaXN0ZXJpbmcgdGhlIHRpbWVsaW5lOgovLyAgIHdpbmRvdy5fX3ZpeiA9IHsgdGltZWxpbmU6IHsgdG90YWwsIHNlZWssIHBsYXksIHBhdXNlLCBhdCwgY2hhcHRlcnMgfSB9OwovLyAgIG5hcnJhdGUod2luZG93Ll9fdml6LnRpbWVsaW5lKTsKLy8gSXQgb25seSByZWFkcyB0aW1lbGluZS5hdCgpOiB0aGUgcGxheWhlYWQgY3JlZXBpbmcgZm9yd2FyZCBmcmFtZSB0byBmcmFtZSBpcyAicGxheWluZyI7Ci8vIHN0YW5kaW5nIHN0aWxsIG9yIGp1bXBpbmcgKGEgc2VlaywgYSBzdGVwKSBpcyBub3QuIFNvIGl0IG5lZWRzIG5vIGhvb2tzIGludG8gdGhlIGZpbG0sCi8vIGFuZCBhIGZpbG0gdGhhdCBhdXRvcGxheXMsIGxvb3BzIG9yIGVuZHMgb24gaXRzIG93biBzdGlsbCBzb3VuZHMgcmlnaHQuCmV4cG9ydCBhc3luYyBmdW5jdGlvbiBuYXJyYXRlKHRpbWVsaW5lLCB7IG1hbmlmZXN0ID0gIi50dHMvbWFuaWZlc3QuanNvbiIsIGNvbnRyb2xzID0gbnVsbCB9ID0ge30pIHsKICAgIC8vIEEgcHVibGlzaGVkIGJ1aWxkIGlubGluZXMgdGhlIG1hbmlmZXN0IChjbGlwcyBhcyBkYXRhOiBVUkxzKTsgYSBsaXZlIHBhZ2UgZmV0Y2hlcyBpdC4KICAgIGNvbnN0IGRhdGEgPSB3aW5kb3cuX192aXpUdHMgPz8gKGF3YWl0IGZldGNoKG1hbmlmZXN0KS50aGVuKChyKSA9PiAoci5vayA/IHIuanNvbigpIDogbnVsbCksICgpID0+IG51bGwpKTsKICAgIGlmICghZGF0YSkKICAgICAgICByZXR1cm4gY29uc29sZS5pbmZvKCJbdml6IG5hcnJhdGlvbl0gbm8gLnR0cy9tYW5pZmVzdC5qc29uIHlldCDigJQgYHZpeiB2ZXJpZnlgIGNvbXBpbGVzIG5hcnJhdGlvbi5qc29uIik7CiAgICBmb3IgKGNvbnN0IHcgb2YgZGF0YS53YXJuaW5ncyA/PyBbXSkKICAgICAgICBjb25zb2xlLndhcm4oYFt2aXogbmFycmF0aW9uXSAke3d9YCk7CiAgICBjb25zdCBjdWVzID0gZGF0YS5jdWVzLm1hcCgoYykgPT4gKHsgLi4uYywgZWw6IE9iamVjdC5hc3NpZ24obmV3IEF1ZGlvKGMuc3JjKSwgeyBwcmVsb2FkOiAiYXV0byIsIHZvbHVtZTogTWF0aC5taW4oMSwgMTAgKiogKChjLmdhaW4gPz8gMCkgLyAyMCkpIH0pIH0pKTsKICAgIC8vIENhcHRpb25zOiBib3R0b20tY2VudHJlIGJ5IGRlZmF1bHQ7IGRyYWcgdGhlbSBhbnl3aGVyZSAocmVtZW1iZXJlZCBwZXIgcGFnZSksIGRvdWJsZS1jbGljawogICAgLy8gdG8gcHV0IHRoZW0gYmFjay4gI3Zpei1jYXB0aW9ucyBpcyBoaWRkZW4gaW4gcmVuZGVycyDigJQgdGhlIG1wNCBjYXJyaWVzIGEgc3VidGl0bGUgdHJhY2suCiAgICBjb25zdCBib3ggPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCJkaXYiKTsKICAgIGJveC5pZCA9ICJ2aXotY2FwdGlvbnMiOwogICAgY29uc3QgdGV4dCA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoInAiKTsKICAgIHRleHQuaGlkZGVuID0gdHJ1ZTsKICAgIHRleHQudGl0bGUgPSAiZHJhZyB0byBtb3ZlIMK3IGRvdWJsZS1jbGljayB0byByZXNldCI7CiAgICBib3guYXBwZW5kKHRleHQpOwogICAgYm94LnN0eWxlLmNzc1RleHQgPSAicG9zaXRpb246Zml4ZWQ7aW5zZXQ6MDtwb2ludGVyLWV2ZW50czpub25lO3otaW5kZXg6MjE0NzQ4MzAwMCI7CiAgICB0ZXh0LnN0eWxlLmNzc1RleHQgPSAicG9zaXRpb246Zml4ZWQ7bWFyZ2luOjA7bWF4LXdpZHRoOm1pbig4MGNoLDkwdncpO3BhZGRpbmc6NnB4IDEycHg7Ym9yZGVyLXJhZGl1czo2cHg7YmFja2dyb3VuZDpyZ2JhKDAsMCwwLC43NSk7Y29sb3I6I2ZmZjtmb250OjUwMCAyMHB4LzEuMzUgc3lzdGVtLXVpLHNhbnMtc2VyaWY7dGV4dC1hbGlnbjpjZW50ZXI7cG9pbnRlci1ldmVudHM6YXV0bztjdXJzb3I6Z3JhYjt1c2VyLXNlbGVjdDpub25lO3RvdWNoLWFjdGlvbjpub25lIjsKICAgIGRvY3VtZW50LmJvZHkuYXBwZW5kKGJveCk7CiAgICBjb25zdCBwb3NLZXkgPSBgdml6LWNjLXBvczoke2xvY2F0aW9uLnBhdGhuYW1lfWA7CiAgICBjb25zdCBwbGFjZSA9IChwKSA9PiB7CiAgICAgICAgaWYgKHApCiAgICAgICAgICAgIE9iamVjdC5hc3NpZ24odGV4dC5zdHlsZSwgeyBsZWZ0OiBwLnggKiBpbm5lcldpZHRoICsgInB4IiwgdG9wOiBwLnkgKiBpbm5lckhlaWdodCArICJweCIsIGJvdHRvbTogIiIsIHRyYW5zZm9ybTogInRyYW5zbGF0ZSgtNTAlLC01MCUpIiB9KTsKICAgICAgICBlbHNlCiAgICAgICAgICAgIE9iamVjdC5hc3NpZ24odGV4dC5zdHlsZSwgeyBsZWZ0OiAiNTAlIiwgdG9wOiAiIiwgYm90dG9tOiAidmFyKC0tdml6LWNhcHRpb25zLWJvdHRvbSwyNHB4KSIsIHRyYW5zZm9ybTogInRyYW5zbGF0ZVgoLTUwJSkiIH0pOwogICAgfTsKICAgIHBsYWNlKEpTT04ucGFyc2UobG9jYWxTdG9yYWdlLmdldEl0ZW0ocG9zS2V5KSA/PyAibnVsbCIpKTsKICAgIHRleHQuYWRkRXZlbnRMaXN0ZW5lcigicG9pbnRlcmRvd24iLCAoZSkgPT4gewogICAgICAgIHRleHQuc2V0UG9pbnRlckNhcHR1cmUoZS5wb2ludGVySWQpOwogICAgICAgIHRleHQuc3R5bGUuY3Vyc29yID0gImdyYWJiaW5nIjsKICAgICAgICBjb25zdCBtb3ZlID0gKGV2KSA9PiBwbGFjZSh7IHg6IGV2LmNsaWVudFggLyBpbm5lcldpZHRoLCB5OiBldi5jbGllbnRZIC8gaW5uZXJIZWlnaHQgfSk7CiAgICAgICAgY29uc3QgdXAgPSAoZXYpID0+IHsKICAgICAgICAgICAgdGV4dC5yZW1vdmVFdmVudExpc3RlbmVyKCJwb2ludGVybW92ZSIsIG1vdmUpOwogICAgICAgICAgICB0ZXh0LnN0eWxlLmN1cnNvciA9ICJncmFiIjsKICAgICAgICAgICAgbG9jYWxTdG9yYWdlLnNldEl0ZW0ocG9zS2V5LCBKU09OLnN0cmluZ2lmeSh7IHg6IGV2LmNsaWVudFggLyBpbm5lcldpZHRoLCB5OiBldi5jbGllbnRZIC8gaW5uZXJIZWlnaHQgfSkpOwogICAgICAgIH07CiAgICAgICAgdGV4dC5hZGRFdmVudExpc3RlbmVyKCJwb2ludGVybW92ZSIsIG1vdmUpOwogICAgICAgIHRleHQuYWRkRXZlbnRMaXN0ZW5lcigicG9pbnRlcnVwIiwgdXAsIHsgb25jZTogdHJ1ZSB9KTsKICAgIH0pOwogICAgdGV4dC5hZGRFdmVudExpc3RlbmVyKCJkYmxjbGljayIsICgpID0+IHsgbG9jYWxTdG9yYWdlLnJlbW92ZUl0ZW0ocG9zS2V5KTsgcGxhY2UobnVsbCk7IH0pOwogICAgLy8gQ0MgdG9nZ2xlOiBpbnNpZGUgdGhlIHBhZ2UncyBvd24gY29udHJvbHMgd2hlbiBpdCBoYXMgdGhlbSAoZmlsbSgpIHBhc3NlcyBpdHMgYmFyKSwgZWxzZQogICAgLy8gYm90dG9tLWxlZnQg4oCUIGJvdHRvbS1yaWdodCBiZWxvbmdzIHRvIHRoZSB2aXogY29tbWVudCBidWJibGUuCiAgICBjb25zdCBjYyA9IE9iamVjdC5hc3NpZ24oZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgiYnV0dG9uIiksIHsgdHlwZTogImJ1dHRvbiIsIHRpdGxlOiAiQ2FwdGlvbnMgKGMpIiwgdGV4dENvbnRlbnQ6ICJDQyIgfSk7CiAgICBjYy5zZXRBdHRyaWJ1dGUoImFyaWEtcHJlc3NlZCIsICJ0cnVlIik7CiAgICBpZiAoY29udHJvbHMpCiAgICAgICAgY29udHJvbHMuYXBwZW5kKGNjKTsKICAgIGVsc2UgewogICAgICAgIGNjLnN0eWxlLmNzc1RleHQgPSAicG9zaXRpb246Zml4ZWQ7bGVmdDoxMnB4O2JvdHRvbToxMnB4O2ZvbnQ6NjAwIDExcHggdWktbW9ub3NwYWNlLG1vbm9zcGFjZTtwYWRkaW5nOjNweCA3cHg7Ym9yZGVyLXJhZGl1czo0cHg7Ym9yZGVyOjFweCBzb2xpZCB2YXIoLS1ib3JkZXIsIzMwMzYzZCk7YmFja2dyb3VuZDp2YXIoLS1wYW5lbCwjMTYxYjIyKTtjb2xvcjp2YXIoLS10ZXh0LCNlNmVkZjMpO2N1cnNvcjpwb2ludGVyO3otaW5kZXg6MjE0NzQ4MzAwMCI7CiAgICAgICAgZG9jdW1lbnQuYm9keS5hcHBlbmQoY2MpOwogICAgfQogICAgY2MuZGF0YXNldFsidml6Q2hyb21lIl0gPSAiIjsKICAgIGxldCBvbiA9IGxvY2FsU3RvcmFnZS5nZXRJdGVtKCJ2aXotY2MiKSAhPT0gIjAiOwogICAgY29uc3Qgc2hvdyA9ICgpID0+IHsgY2Muc2V0QXR0cmlidXRlKCJhcmlhLXByZXNzZWQiLCBTdHJpbmcob24pKTsgY2Muc3R5bGUub3BhY2l0eSA9IG9uID8gIjEiIDogIi41IjsgfTsKICAgIGNvbnN0IHRvZ2dsZSA9ICgpID0+IHsgb24gPSAhb247IGxvY2FsU3RvcmFnZS5zZXRJdGVtKCJ2aXotY2MiLCBvbiA/ICIxIiA6ICIwIik7IHNob3coKTsgfTsKICAgIHNob3coKTsKICAgIGNjLm9uY2xpY2sgPSB0b2dnbGU7CiAgICBhZGRFdmVudExpc3RlbmVyKCJrZXlkb3duIiwgKGUpID0+IHsgaWYgKGUua2V5ID09PSAiYyIgJiYgIWUubWV0YUtleSAmJiAhZS5jdHJsS2V5ICYmICEoZS50YXJnZXQgaW5zdGFuY2VvZiBIVE1MRWxlbWVudCAmJiAvSU5QVVR8VEVYVEFSRUEvLnRlc3QoZS50YXJnZXQudGFnTmFtZSkpKQogICAgICAgIHRvZ2dsZSgpOyB9KTsKICAgIGxldCBsYXN0ID0gdGltZWxpbmUuYXQoKTsKICAgIChmdW5jdGlvbiBsb29wKCkgewogICAgICAgIGNvbnN0IHQgPSB0aW1lbGluZS5hdCgpOwogICAgICAgIGNvbnN0IHN0ZXAgPSB0IC0gbGFzdDsKICAgICAgICBsYXN0ID0gdDsKICAgICAgICBjb25zdCBwbGF5aW5nID0gc3RlcCA+IDAgJiYgc3RlcCA8IDAuMjU7IC8vIGZvcndhcmQgYnkgYWJvdXQgYSBmcmFtZTsgYmlnZ2VyIGp1bXBzIGFyZSBzZWVrcwogICAgICAgIGNvbnN0IHJhdGUgPSB0aW1lbGluZS5yYXRlID8/IDE7IC8vIGZpbG0oKSBoYXMgYSBzcGVlZCBjb250cm9sOyB0aGUgY2xpcHMgZm9sbG93IGl0CiAgICAgICAgZm9yIChjb25zdCBjIG9mIGN1ZXMpIHsKICAgICAgICAgICAgaWYgKGMuZWwucGxheWJhY2tSYXRlICE9PSByYXRlKQogICAgICAgICAgICAgICAgYy5lbC5wbGF5YmFja1JhdGUgPSByYXRlOwogICAgICAgICAgICBjb25zdCBpbnRvID0gdCAtIGMudDsKICAgICAgICAgICAgaWYgKHBsYXlpbmcgJiYgaW50byA+PSAwICYmIGludG8gPCBjLmR1cikgewogICAgICAgICAgICAgICAgLy8gU3RhcnQsIG9yIHB1bGwgYmFjayBpbnRvIHN5bmMgaWYgdGhlIGZpbG0gYW5kIHRoZSBjbGlwIGhhdmUgZHJpZnRlZCBhcGFydC4KICAgICAgICAgICAgICAgIGlmIChjLmVsLnBhdXNlZCB8fCBNYXRoLmFicyhjLmVsLmN1cnJlbnRUaW1lIC0gaW50bykgPiAwLjMpIHsKICAgICAgICAgICAgICAgICAgICBjLmVsLmN1cnJlbnRUaW1lID0gaW50bzsKICAgICAgICAgICAgICAgICAgICBjLmVsLnBsYXkoKS5jYXRjaCgoKSA9PiB7IH0pOwogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CiAgICAgICAgICAgIGVsc2UgaWYgKCFjLmVsLnBhdXNlZCkKICAgICAgICAgICAgICAgIGMuZWwucGF1c2UoKTsKICAgICAgICB9CiAgICAgICAgY29uc3Qgc2FpZCA9IG9uICYmIGN1ZXMuZmluZCgoYykgPT4gYy50ZXh0ICYmIHQgPj0gYy50ICYmIHQgPCBjLnQgKyBjLmR1cik7CiAgICAgICAgdGV4dC50ZXh0Q29udGVudCA9IHNhaWQgPyBzYWlkLnRleHQgPz8gIiIgOiAiIjsKICAgICAgICB0ZXh0LmhpZGRlbiA9ICFzYWlkOwogICAgICAgIHJlcXVlc3RBbmltYXRpb25GcmFtZShsb29wKTsKICAgIH0pKCk7Cn0K"}}</script>
+<script>window.__VIZ_STATIC__=true;</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI tidemark — are you using your AI limits?</title>
+<!-- Publish posture — the SOLE source of truth for viz publish. "local" = never
+     published. Online, api/data does not exist, so the page shows generated demo data. -->
+<meta name="viz:uid" content="v-e8e562fcef00">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<!-- Published copies have no api/data; this is what they show instead. -->
+<meta name="viz:asset" content="fixtures/demo.json">
+<meta name="viz:title" content="AI tidemark">
+<meta name="viz:description" content="How much of each Claude Code and Codex rate-limit window you actually used: 5-hour and weekly utilisation against even pace, zoomable across all history, per-window headroom, the 5h→weekly exchange rate, and when you burn.">
+<style>
+/* viz-kit.css — the /viz house style. Load with:
+     <link rel="stylesheet" href="/_kit/viz-kit.css">
+   Served by the viz server at /_kit/viz-kit.css from the skill's own kit/ dir.
+
+   Why this exists: nearly every viz independently re-derived the same dark theme
+   (a GitHub-dark palette), re-guessed the exact hexes (so the "same" background
+   drifted across files), and invented its own variable names (--txt vs --text vs
+   --ink) for identical concepts. This file fixes the palette and the names ONCE so
+   you can reach for var(--accent) / var(--good) instead of re-picking colors.
+
+   The dark GitHub-ish palette is the DEFAULT, not a constraint. Every rule below
+   reads its colors through var() — there is not one hardcoded hex outside :root —
+   so a page needing a brand or one-off palette overrides the tokens in a later
+   :root and keeps every component. Re-theme; don't fork. See kit/README.md. */
+
+:root {
+  /* Surfaces, back to front */
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel-2: #21262d;
+  --border: #30363d;
+
+  /* Text — three tiers. --faint is for de-emphasized chrome (axis ticks, units,
+     footnotes, "n of m" counters); 72 vizzes re-derived a third tier by hand
+     before it existed here, at half a dozen different grays. */
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --faint: #6e7681;
+
+  /* Intent — accents that carry meaning */
+  --accent: #58a6ff; /* primary / links / selection */
+  --good: #3fb950; /* success / healthy / "yes" */
+  --warn: #d29922; /* caution / pending */
+  --danger: #f85149; /* error / blocked / "no" */
+
+  /* Categorical ramp — visually separable hues for diagram categories / series.
+     Use these when you need N separable colors, NOT meaning.
+
+     ⚠ ALIASING TRAP — c1/c2/c3/c6 are byte-identical to the intent colors above:
+       --c1 == --accent   --c2 == --good   --c3 == --warn   --c6 == --danger
+     So a categorical series rendered in --c2 reads as "success" next to anything
+     using --good, and --c6 reads as "error". Only --c4, --c5, --c7, --c8 are
+     unique to this ramp. This has already caused rework (a poster themed on --c2
+     went monochrome against a --good meter and had to be re-themed to --c5).
+     If your viz mixes categorical series WITH semantic color, pick from
+     --c4/--c5/--c7/--c8 first, then reach for the aliased four knowingly.
+
+     The four aliased slots are DEFINED AS the intent colors rather than repeating
+     their hexes. That's deliberate: the aliasing is self-evident wherever you read
+     this file, it cannot drift, and a re-theme keeps them in sync automatically.
+     The slots with a literal hex are the meaning-free ones. */
+  --c1: var(--accent); /* blue  — ALIAS, reads as "primary/selected" */
+  --c2: var(--good); /* green — ALIAS, reads as "success" */
+  --c3: var(--warn); /* amber — ALIAS, reads as "caution" */
+  --c4: #bc8cff; /* purple — meaning-free */
+  --c5: #4ec9b0; /* teal   — meaning-free */
+  --c6: var(--danger); /* red — ALIAS, reads as "error" */
+  --c7: #5d52b4; /* indigo  — meaning-free (ΔE 21.3 from the nearest intent color) */
+  --c8: #b70385; /* magenta — meaning-free (ΔE 20.9) */
+  /* No orange slot exists on purpose: every orange sits between --danger (hue 27°)
+     and --warn (80°), and none clears ΔE 15 from both under CVD simulation. The
+     obvious #f0883e is ΔE 1.5 from --warn to a protanope — indistinguishable. */
+
+  /* Type */
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Spacing rhythm */
+  --r: 8px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+html {
+  /* Paint the canvas itself. body is height:100% (one viewport), so on a page taller
+     than the viewport the area BELOW the body box would otherwise reveal the browser's
+     default (lighter) canvas when scrolled — showing as a horizontal "line" mid-page
+     where body's --bg ends. Putting --bg on the root keeps the whole canvas dark. */
+  background-color: var(--bg);
+}
+
+body {
+  /* A faint top-glow over the flat background — the recurring "radial-gradient at
+     60% 0%" idiom, standardized. Sized large and faded to transparent well past the
+     fold (color-mix dilutes --panel) so the glow→--bg transition never forms a
+     visible edge mid-page — the earlier tight 600px gradient left a "boundary" band. */
+  background:
+    radial-gradient(1600px 1000px at 50% -30%, color-mix(in srgb, var(--panel) 55%, transparent), transparent 75%),
+    var(--bg);
+  color: var(--text);
+  font: 14px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Links. There was no bare `a` rule here until 2026-08-19, so every naked anchor
+   in every viz fell through to the user-agent default: #0000EE on a #0d1117
+   background (2.3:1 — below the 4.5:1 floor), and #551A8B once visited, which is
+   1.5:1 and effectively invisible. Both tiers now come from tokens, so they follow
+   a re-theme. --c4 keeps the "visited is purple" convention at 8.2:1 instead of
+   abandoning it. Lowest possible specificity, so any component rule still wins. */
+a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+a:visited { color: var(--c4); }
+a:hover { color: var(--text); text-decoration-thickness: 2px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+/* Header: title + one-line muted subtitle — the chrome ~19/22 vizzes open with. */
+.viz-header {
+  padding: 20px 24px;
+}
+.viz-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.viz-header .sub,
+.sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* Panels / cards */
+.panel,
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--r) * 1.5);
+  padding: 16px;
+}
+
+/* Slide-in detail drawer (click a node → details). Toggle .open. */
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(420px, 90vw);
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  transform: translateX(100%);
+  transition: transform 0.2s ease;
+  overflow: auto;
+  padding: 20px;
+  z-index: 50;
+}
+.drawer.open {
+  transform: none;
+}
+
+/* Legend: the single most common component (~16/22), reinvented differently each
+   time. Two swatch shapes: a filled square for nodes, a short rule for edge types. */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex: none;
+  background: var(--accent);
+}
+/* Colour comes from `background` (inherited from .swatch), NOT border-top. It was
+   `height:0` + `border-top` until 2026-08-19, which made the documented way to
+   colour a swatch — an inline `background:` — a silent no-op: every line swatch in
+   the corpus rendered accent-blue regardless of what it was labelling. All 5
+   usages passed `background`; none passed `border-top-color`. */
+.swatch.line {
+  width: 16px;
+  height: 2px;
+  border-radius: 0;
+}
+/* Round swatch. Its absence is why 25 vizzes abandoned .swatch entirely and
+   hand-rolled a .dot/.sw at five different sizes — the shape was the blocker,
+   not the component. */
+.swatch.dot {
+  border-radius: 50%;
+}
+
+/* Status / label pill — uppercase micro-badge. Recurs in ~120 files (the
+   border-radius:999px + text-transform:uppercase idiom) and was re-derived at a
+   different size almost every time. Modifiers tint text + border together. */
+.pill {
+  display: inline-block;
+  font: 700 11px var(--sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.pill.accent {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+.pill.good {
+  color: var(--good);
+  border-color: color-mix(in srgb, var(--good) 50%, transparent);
+}
+.pill.warn {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 50%, transparent);
+}
+.pill.danger {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 50%, transparent);
+}
+
+/* Animated "flow" edge — dashed line whose dashes drift along the path. The
+   @keyframes was identical everywhere but for the offset magnitude; here it's one
+   class. Apply to an SVG <path>/<line>: <path class="flow" .../>. */
+@keyframes viz-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+.flow {
+  stroke-dasharray: 6 4;
+  animation: viz-dash 1s linear infinite;
+}
+
+/* Reduced motion. 108 of 161 corpus vizzes animate (rAF, @keyframes, transitions,
+   setInterval); 3 guarded it. Guarding per-viz was never going to happen, so the
+   kit does it once for everyone that links this file.
+
+   Motion is not removed, it is collapsed: near-zero durations keep transition/
+   animation END events firing, so state machines that advance on `transitionend`
+   still advance instead of deadlocking (the usual bug in a naive
+   `animation: none !important` reset).
+
+   This cannot reach a JS rAF loop. If your viz animates in JS, gate it yourself:
+     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+   and jump to the end state instead of tweening to it. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* The dashed-edge drift reads as decoration, not information — stop it dead
+     rather than freezing it mid-dash. */
+  .flow {
+    animation: none !important;
+  }
+}
+
+/* Auto-wrapping SVG label (see labelBox() in viz.js). Fills its <foreignObject>
+   and centers; overflow is clipped, never spilled. */
+.vsvg-label {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text);
+  font: 12px/1.25 var(--sans);
+  overflow: hidden;
+  padding: 2px 6px;
+}
+
+/* --- .elsewhere — third-party explainers -------------------------------------
+   A pointer to somebody ELSE explaining the same thing. Deliberately its own
+   look, because a page that cites standards needs three visually distinct
+   kinds of evidence and a reader must never mistake one for another:
+
+     normative   what makes the claim true      (RFC / NIST / regulator)
+     first-party what we read or decided        (source code, our own choice)
+     elsewhere   a second teacher               <- this
+
+   Uses --c5 (teal, one of the meaning-free categorical slots) so it reads as
+   "a different kind of thing" rather than as success or warning.
+
+   Convention that makes it worth having: the `.why` line says what the source
+   is actually good for, INCLUDING where it is thinner than its reputation. An
+   unread link presented as authoritative is the exact impression this component
+   exists to prevent. Pair it with a rot checker — external pages 404.  */
+.elsewhere {
+  border-left: 2px solid var(--c5);
+  padding: 8px 0 2px 12px;
+  margin-top: 12px;
+}
+.elsewhere > .lbl {
+  display: block;
+  font: 700 9px/1 var(--sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c5);
+  margin-bottom: 5px;
+}
+.elsewhere a {
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid var(--c5);
+}
+.elsewhere a:hover { color: var(--c5) }
+.elsewhere .who { color: var(--faint); font-size: 0.85em; margin-left: 6px }
+.elsewhere .why {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.92em;
+  line-height: 1.55;
+}
+
+</style>
+<style>
+  :root { --src-claude: var(--c4); --src-codex: var(--c5); }
+  body { margin: 0; padding: 24px 28px 60px; max-width: 1320px; margin-inline: auto; }
+  .banner { background: color-mix(in srgb, var(--c4) 14%, var(--panel)); border: 1px solid var(--c4); border-radius: 8px; padding: 10px 14px; margin: 14px 0 0; font-size: 14px; }
+  .kpis { display: grid; grid-template-columns: 110px repeat(5, minmax(0, 1fr)); gap: 10px; margin: 14px 0 0; align-items: stretch; }
+  .kpis .src { align-self: center; font-weight: 600; }
+  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .kpi .n { font: 600 26px/1.1 var(--sans); font-variant-numeric: tabular-nums; }
+  .kpi .l { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .kpi .d { color: var(--faint); font-size: 12px; margin-top: 4px; }
+  .kpi .n.good { color: var(--good); } .kpi .n.warn { color: var(--warn); } .kpi .n.danger { color: var(--danger); }
+  @media (max-width: 1000px) { .kpis { grid-template-columns: repeat(2, 1fr); } .kpis .src { grid-column: 1 / -1; } }
+  section.panel { margin-top: 16px; padding: 16px 18px; }
+  section h2 { margin: 0 0 2px; font-size: 16px; }
+  section .cap { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+  .row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .row { grid-template-columns: 1fr; } }
+  .row > section { margin-top: 16px; }
+  .ctl { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .ctl button { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font: 12px var(--sans); cursor: pointer; }
+  .ctl button.on { border-color: var(--accent); color: var(--accent); }
+  .ctl label { color: var(--muted); font-size: 12px; margin-left: 8px; cursor: pointer; }
+  .ctl .hint { color: var(--faint); font-size: 12px; margin-left: auto; }
+  svg { width: 100%; height: auto; display: block; overflow: visible; }
+  svg text { fill: var(--faint); font: 11px var(--sans); }
+  svg .lbl { fill: var(--muted); font-size: 12px; }
+  svg .src-lbl { fill: var(--text); font-size: 13px; font-weight: 600; }
+  svg .grid { stroke: var(--border); stroke-width: 1; }
+  .brush .selection { fill: var(--accent); fill-opacity: .15; stroke: var(--accent); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 6px; }
+  #tip { position: fixed; pointer-events: none; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12px; line-height: 1.5; z-index: 9; display: none; max-width: 300px; box-shadow: 0 6px 20px #0008; }
+  #tip b { color: var(--text); } #tip .m { color: var(--muted); }
+  pre.err { background: var(--panel-2); padding: 8px 10px; border-radius: 6px; font: 11px/1.5 var(--mono); color: var(--muted); white-space: pre-wrap; }
+  table { border-collapse: collapse; font-size: 12px; width: 100%; } td, th { padding: 3px 8px; border-bottom: 1px solid var(--border); text-align: right; font-variant-numeric: tabular-nums; } th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+  [data-viz-id] { cursor: pointer; }
+  .hit { fill: transparent; cursor: crosshair; }
+  .sub-src { color: var(--muted); font-size: 12px; margin: 10px 0 2px; font-weight: 600; }
+  .empty { color: var(--muted); padding: 30px 0; }
+</style>
+<meta property="og:type" content="website">
+<meta property="og:title" content="AI tidemark">
+<meta property="og:description" content="How much of each Claude Code and Codex rate-limit window you actually used: 5-hour and weekly utilisation against even pace, zoomable across all history, per-window headroom, the 5h→weekly exchange rate, and when you burn.">
+<meta property="og:url" content="https://rascaltwo.github.io/ai-setup/ai-tidemark/">
+<meta property="og:image" content="https://rascaltwo.github.io/ai-setup/ai-tidemark/og.auto.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+  <div class="viz-header">
+    <h1>AI tidemark: are you using your AI limits?</h1>
+    <div class="sub">How much of each rate-limit window you actually used: 5-hour (filled shapes) and weekly (lines) utilisation, one colour per source, against the even-pace line that lands exactly on 100% at reset. Space above the lines is capacity that expired unused. “pts” = percentage points of a limit. <span id="stamp"></span></div>
+  </div>
+  <div id="banner"></div>
+  <div id="kpis"></div>
+
+  <section class="panel" id="tlPanel">
+    <h2>Every window, zoomable</h2>
+    <div class="cap">Scroll to zoom, drag to pan, or drag a range on the strip below. Hover for readings. The bars and exchange-rate panels follow what's in view.</div>
+    <div class="ctl" id="tlCtl"></div>
+    <svg id="tl"></svg>
+    <svg id="ov"></svg>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <div class="row">
+    <section class="panel">
+      <h2>5-hour windows in view: used vs. expired</h2>
+      <div class="cap">Bar = peak before reset; grey track = what expired unused. The dashed line is where the next tier down would have cut you off. Click a bar to zoom to it.</div>
+      <div id="bars"></div>
+    </section>
+    <section class="panel">
+      <h2>Exchange rate: 5-hour % → weekly %</h2>
+      <div class="cap">Each dot is a window in view: how far it got (x) vs. how much weekly limit it burned (y). A steep slope means the weekly limit binds first.</div>
+      <div id="xr"></div>
+    </section>
+  </div>
+
+  <div class="row">
+    <section class="panel">
+      <h2>When you burn</h2>
+      <div class="cap">Weekly-limit points consumed, by local day × hour, summed over all history. Darker = more.</div>
+      <div class="ctl" id="heatSrc"></div>
+      <svg id="heat" viewBox="0 0 720 230"></svg>
+    </section>
+    <section class="panel">
+      <h2>Every weekly window</h2>
+      <div class="cap">Where each week closed. The last bar is the week in progress.</div>
+      <div id="weeks"></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <details><summary class="m">All 5-hour windows as a table</summary><div id="tbl"></div></details>
+    <details style="margin-top:6px"><summary class="m">Poller error log (tail)</summary><pre class="err" id="errs"></pre></details>
+  </section>
+
+  <div id="tip"></div>
+
+  <script type="module">
+// app.ts
+import * as d3 from "https://esm.sh/d3@7";
+import { $, esc, saveHash, loadHash, vizEnv } from "/_kit/viz.js";
+var H = 3600000;
+var WEEK = 168 * H;
+var FIVE = 5 * H;
+var st = Object.assign({ hide: [], lag: false, zoom: null, heat: null, sel: null }, loadHash());
+var tip = $("#tip");
+var fmt = (t, o = { weekday: "short", hour: "numeric", minute: "2-digit" }) => new Date(t).toLocaleString([], o);
+var day = (t) => fmt(t, { weekday: "short", month: "short", day: "numeric" });
+var pct = (v) => v == null ? "—" : `${Math.round(v)}%`;
+var showTip = (e, html) => {
+  tip.innerHTML = html;
+  tip.style.display = "block";
+  tip.style.left = Math.min(e.clientX + 14, innerWidth - 320) + "px";
+  tip.style.top = e.clientY + 14 + "px";
+};
+var hideTip = () => tip.style.display = "none";
+var onTip = (sel, html) => sel.on("mousemove", (e, d) => showTip(e, html(d))).on("mouseleave", hideTip);
+var D;
+var M;
+async function load() {
+  let d = null;
+  if (!new URLSearchParams(location.search).has("demo") && await vizEnv() === "live")
+    try {
+      const r = await fetch("api/data", { signal: AbortSignal.timeout(8000) });
+      if (r.ok)
+        d = await r.json();
+    } catch {}
+  d ??= await (await fetch("fixtures/demo.json")).json();
+  D = d;
+  M = Object.fromEntries(D.sources.map((s) => [s.id, model(s)]));
+  render();
+}
+addEventListener("visibilitychange", () => document.visibilityState === "visible" && !D?.demo && load());
+setInterval(() => document.visibilityState === "visible" && !D?.demo && load(), 60000);
+function model(src) {
+  const exact = src.samples.filter((s) => s.q === "exact"), lagged = src.samples.filter((s) => s.q === "lagged");
+  const group = (w) => d3.groups(exact.filter((s) => s.w === w), (s) => s.r).map(([r, pts2]) => {
+    const peak = d3.max([...pts2, ...lagged.filter((p) => p.w === w && p.r === r)], (p) => p.v);
+    return { r, pts: pts2, peak, start: r - (w === 300 ? FIVE : WEEK), id: `${src.id}-${w}-${r}` };
+  }).filter((g) => g.peak > 0 || g.r > D.now).sort((a, b) => a.r - b.r);
+  const weekly = exact.filter((s) => s.w === 10080), weeks = group(10080), fives = group(300);
+  for (const f of fives) {
+    const wk = weeks.find((w) => w.start < f.r && f.r <= w.r);
+    const before = wk && weekly.filter((s) => s.r === wk.r && s.t <= f.start).at(-1);
+    const inside = wk && weekly.filter((s) => s.r === wk.r && s.t <= f.r).at(-1);
+    f.wkDelta = before && inside && inside.t > f.start ? inside.v - before.v : null;
+  }
+  const pts = fives.filter((f) => f.wkDelta != null && f.peak > 0);
+  let burn = 0;
+  for (let i = 1;i < weekly.length; i++) {
+    const a = weekly[i - 1], c = weekly[i];
+    if (c.t >= D.now - WEEK && a.r === c.r && c.v > a.v)
+      burn += c.v - a.v;
+  }
+  const cur = weekly.at(-1), curWeek = cur && cur.r > D.now ? weeks.find((w) => w.r === cur.r) : null;
+  return { src, exact, lagged, weekly, weeks, fives, k: fitK(pts), rate: burn / WEEK, cur, curWeek };
+}
+function fitK(pts) {
+  const sxx = d3.sum(pts, (p) => p.peak ** 2);
+  return sxx ? d3.sum(pts, (p) => p.peak * p.wkDelta) / sxx : null;
+}
+var col = (id) => ({ claude: "var(--src-claude)", codex: "var(--src-codex)" })[id] ?? "var(--c7)";
+var visible = () => D.sources.filter((s) => !st.hide.includes(s.id)).map((s) => M[s.id]);
+var x0;
+var x;
+var inView = (a, b) => b >= +x.domain()[0] && a <= +x.domain()[1];
+function render() {
+  $("#stamp").textContent = D.demo ? "" : `Updated ${fmt(D.now)}.`;
+  $("#banner").innerHTML = D.demo ? `<div class="banner"><b>Demo data</b>: generated, not anyone's real usage. Installed locally, this page shows your own history. See <code>tools/ai-tidemark/README.md</code>.</div>` : "";
+  if (!D.sources.length) {
+    $("#kpis").innerHTML = `<div class="empty">No history recorded yet. Once the statusline wrapper or the poller has run, windows appear here.</div>`;
+    for (const id of ["tlPanel"])
+      $("#" + id).style.display = "none";
+    return;
+  }
+  kpis();
+  timeline();
+  heat();
+  weeksPanel();
+  table();
+  $("#errs").textContent = D.errors || "(empty)";
+}
+function kpis() {
+  const tone = (v) => v >= 100 ? "danger" : v >= 80 ? "good" : "warn";
+  $("#kpis").innerHTML = D.sources.map((s) => {
+    const m = M[s.id], { cur, curWeek, rate, k } = m;
+    const tiles = [];
+    if (curWeek) {
+      const elapsed = (D.now - curWeek.start) / WEEK, proj = cur.v + rate * (curWeek.r - D.now);
+      tiles.push(["This week", pct(cur.v), `${Math.round(elapsed * 100)}% of the week gone · so far ${(cur.v / Math.max(0.01, elapsed * 100)).toFixed(1)}× even pace`]);
+      tiles.push(["Projected at reset", proj >= 100 ? "100%+" : pct(proj), proj >= 100 && rate ? `limit hit ≈ ${fmt(D.now + (100 - cur.v) / rate)}` : `at your 7-day-average rate · resets ${day(curWeek.r)}`, tone(proj)]);
+    }
+    const prev = m.weeks.filter((w) => w.r <= D.now).at(-1);
+    if (prev)
+      tiles.push(["Last week closed at", pct(prev.peak), `${Math.round(100 - prev.peak)}% expired unused`, tone(prev.peak)]);
+    const best = d3.greatest(m.fives, (f) => f.peak);
+    if (best)
+      tiles.push(["Busiest 5h window", pct(best.peak), `${fmt(best.start, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} → ${fmt(best.r, { hour: "numeric" })}`]);
+    if (k)
+      tiles.push(["Full 5h window =", `${pct(100 * k)} wk`, `≈ ${(1 / k).toFixed(1)} maxed windows empty the week`]);
+    return `<div class="kpis"><div class="src"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col(s.id)}"></span> ${esc(s.label)}${s.plan ? ` <span class="pill">${esc(s.plan)}</span>` : ""}${s.tier ? ` <span class="pill">${esc(s.tier.name)}</span>` : ""}</div>` + tiles.map(([l, n, d, c]) => `<div class="kpi" data-viz-id="kpi-${s.id}-${l}" data-label="${esc(s.label)} ${l}: ${n}"><div class="l">${l}</div><div class="n ${c || ""}">${n}</div><div class="d">${esc(d)}</div></div>`).join("") + "</div>";
+  }).join("");
+}
+function timeline() {
+  const W = 1240, L = 44, R = 150, PH = 260, T = 12;
+  const vis = visible();
+  const hasLag = D.sources.some((s) => M[s.id].lagged.length);
+  $("#tlCtl").innerHTML = (D.sources.length > 1 ? D.sources.map((s) => `<label><input type="checkbox" data-src="${s.id}" ${st.hide.includes(s.id) ? "" : "checked"}> ${esc(s.label)}</label>`).join("") : "") + ["all|All", "lastweek|Last week", "thisweek|This week", "24h|Last 24h"].map((p2) => `<button data-p="${p2.split("|")[0]}">${p2.split("|")[1]}</button>`).join("") + (hasLag ? `<label><input type="checkbox" id="lagT" ${st.lag ? "checked" : ""}> statusline samples (lagged lower bounds)</label>` : "") + `<span class="hint">scroll = zoom · drag = pan</span>`;
+  $("#tlCtl").querySelectorAll("[data-src]").forEach((c) => c.onchange = () => {
+    st.hide = c.checked ? st.hide.filter((i) => i !== c.dataset["src"]) : [...st.hide, c.dataset["src"]];
+    render();
+  });
+  if ($("#lagT"))
+    $("#lagT").onchange = (e) => {
+      st.lag = e.target.checked;
+      render();
+    };
+  $("#legend").innerHTML = vis.map((m) => `<span class="legend-item"><span class="swatch line" style="background:${col(m.src.id)}"></span>${esc(m.src.label)} weekly</span><span class="legend-item"><span class="swatch" style="background:color-mix(in srgb,${col(m.src.id)} 30%,transparent);border:1px solid ${col(m.src.id)}"></span>${esc(m.src.label)} 5-hour windows</span>`).join("") + `<span class="legend-item"><span class="swatch line" style="background:repeating-linear-gradient(90deg,var(--muted) 0 6px,transparent 6px 11px)"></span>Even pace → 100% at reset (in the source's colour)</span><span class="legend-item"><span class="swatch line" style="background:repeating-linear-gradient(90deg,var(--muted) 0 3px,transparent 3px 6px)"></span>Projection at trailing-7-day rate</span>`;
+  const all = vis.flatMap((m) => m.exact);
+  if (!all.length) {
+    d3.select("#tl").html("");
+    d3.select("#ov").html("");
+    return;
+  }
+  const end = d3.max([D.now, ...vis.map((m) => m.curWeek?.r ?? 0)]);
+  x0 = d3.scaleTime().domain([d3.min(all, (s) => s.t), end]).range([L, W - R]);
+  x = x0.copy();
+  const Ht = T + PH + 24;
+  const svg = d3.select("#tl").attr("viewBox", `0 0 ${W} ${Ht}`).html("");
+  svg.append("defs").append("clipPath").attr("id", "clip").append("rect").attr("x", L).attr("y", 0).attr("width", W - L - R).attr("height", Ht);
+  const y = d3.scaleLinear().domain([0, 100]).range([T + PH, T]);
+  svg.append("g").attr("transform", `translate(${L},0)`).call(d3.axisLeft(y).ticks(4).tickFormat((d) => d + "%").tickSize(-(W - L - R))).call((a) => a.selectAll("line").attr("class", "grid")).call((a) => a.select(".domain").remove());
+  const xAxis = svg.append("g").attr("transform", `translate(0,${T + PH})`);
+  const p = svg.append("g").attr("clip-path", "url(#clip)");
+  const now = p.append("line").attr("stroke", "var(--accent)");
+  const lay = ["pace", "fives", "lag", "weekly", "proj"].map((k) => [k, p.append("g")]);
+  const panels = vis.map((m) => ({ m, y, c: col(m.src.id), ...Object.fromEntries(lay.map(([k, g]) => [k, g.append("g")])) }));
+  const labels = svg.append("g");
+  const hit = svg.append("rect").attr("class", "hit").attr("x", L).attr("y", T).attr("width", W - L - R).attr("height", Ht - T);
+  const xh = svg.append("line").attr("pointer-events", "none").attr("stroke", "var(--text)").attr("opacity", 0).attr("y1", T).attr("y2", T + PH);
+  function draw() {
+    xAxis.call(d3.axisBottom(x).ticks(8).tickSizeOuter(0)).call((a) => a.select(".domain").attr("stroke", "var(--border)"));
+    now.attr("x1", x(D.now)).attr("x2", x(D.now)).attr("y1", y(100)).attr("y2", y(0));
+    for (const P of panels) {
+      const { m, c } = P;
+      const paceEnd = (w, i) => Math.min(w.r, m.weeks[i + 1]?.start ?? Infinity);
+      P.pace.selectAll("line").data(m.weeks).join("line").attr("x1", (w) => x(w.start)).attr("y1", y(0)).attr("x2", (w, i) => x(paceEnd(w, i))).attr("y2", (w, i) => y((paceEnd(w, i) - w.start) / WEEK * 100)).attr("stroke", c).attr("opacity", 0.5).attr("stroke-dasharray", "6 5").attr("stroke-width", 1.25);
+      P.fives.selectAll("path").data(m.fives).join("path").attr("d", (f) => d3.area().x((p2) => x(p2[0])).y0(y(0)).y1((p2) => y(p2[1]))([[f.start, 0], ...f.pts.map((p2) => [p2.t, p2.v]), [Math.min(f.r, D.now), f.pts.at(-1).v]])).attr("fill", (f) => `color-mix(in srgb,${c} ${st.sel === f.id ? 55 : 20}%,transparent)`).attr("stroke", (f) => st.sel === f.id ? "var(--text)" : c).attr("stroke-width", 1.25).attr("data-viz-id", (f) => f.id).attr("data-label", (f) => `${m.src.label} 5h window ending ${fmt(f.r)}, peak ${pct(f.peak)}`);
+      P.weekly.selectAll("path").data(m.weeks).join("path").attr("d", (w) => d3.line().x((p2) => x(p2.t)).y((p2) => y(p2.v)).curve(d3.curveStepAfter)(w.pts)).attr("fill", "none").attr("stroke", c).attr("stroke-width", 2.5).attr("data-src", m.src.id).attr("data-viz-id", (w) => w.id).attr("data-label", (w) => `${m.src.label} week ending ${day(w.r)}, closed ${pct(w.peak)}`);
+      P.lag.selectAll("circle").data(st.lag ? m.lagged : []).join("circle").attr("cx", (p2) => x(p2.t)).attr("cy", (p2) => y(p2.v)).attr("r", 1.6).attr("fill", c).attr("opacity", 0.45);
+      const { curWeek: cw, cur: last } = m;
+      const pv = cw ? last.v + m.rate * (cw.r - last.t) : 0, capT = cw && pv > 100 && m.rate ? last.t + (100 - last.v) / m.rate : cw?.r;
+      P.proj.selectAll("*").remove();
+      if (P === panels[0])
+        labels.selectAll("*").remove();
+      if (cw) {
+        P.proj.append("line").attr("x1", x(last.t)).attr("y1", y(last.v)).attr("x2", x(capT)).attr("y2", y(Math.min(100, pv))).attr("stroke", c).attr("stroke-dasharray", "3 3").attr("stroke-width", 1.5);
+        if (x(capT) <= W - R + 1)
+          labels.append("text").attr("class", "lbl").attr("x", x(capT) + 6).attr("y", y(Math.min(100, pv)) + 4).style("fill", c).text(`${m.src.label} ${pv > 100 ? `hits 100% ${fmt(capT, { weekday: "short", hour: "numeric" })}` : `→ ${pct(pv)}`}`);
+      }
+    }
+  }
+  const ov = d3.select("#ov").attr("viewBox", `0 0 ${W} 60`).html(""), yo = d3.scaleLinear().domain([0, 100]).range([44, 4]);
+  for (const m of vis)
+    ov.append("path").attr("d", d3.area().x((p2) => x0(p2.t)).y0(yo(0)).y1((p2) => yo(p2.v)).curve(d3.curveStepAfter)(m.weekly)).attr("fill", `color-mix(in srgb,${col(m.src.id)} 30%,transparent)`);
+  ov.append("g").attr("transform", "translate(0,44)").call(d3.axisBottom(x0).ticks(8).tickSize(3)).call((a) => a.select(".domain").attr("stroke", "var(--border)"));
+  const brush = d3.brushX().extent([[L, 2], [W - R, 44]]).on("brush end", (e) => {
+    if (!e.sourceEvent || e.sourceEvent.type === "zoom")
+      return;
+    if (e.selection)
+      setDomain(e.selection.map(x0.invert));
+  });
+  const gb = ov.append("g").attr("class", "brush").call(brush);
+  const zoom2 = d3.zoom().scaleExtent([1, 500]).translateExtent([[L, 0], [W - R, Ht]]).extent([[L, 0], [W - R, Ht]]).on("zoom", (e) => {
+    x = e.transform.rescaleX(x0);
+    draw();
+    followers();
+    if (e.sourceEvent) {
+      st.zoom = x.domain().map(Number);
+      saveHash(st);
+    }
+    if (e.sourceEvent?.type !== "brush")
+      gb.call(brush.move, st.zoom ? x.range().map(e.transform.invertX, e.transform) : null);
+  });
+  svg.call(zoom2).on("dblclick.zoom", null);
+  function setDomain(dom, save = true) {
+    if (save) {
+      st.zoom = dom;
+      saveHash(st);
+    }
+    if (dom === "all")
+      return svg.call(zoom2.transform, d3.zoomIdentity);
+    let [a, b] = dom;
+    a = Math.max(+x0.domain()[0], +a);
+    b = Math.min(+x0.domain()[1], +b);
+    const k = (W - L - R) / (x0(b) - x0(a));
+    svg.call(zoom2.transform, d3.zoomIdentity.scale(k).translate(-x0(a) + L / k, 0));
+  }
+  timeline.setDomain = setDomain;
+  $("#tlCtl").querySelectorAll("[data-p]").forEach((b) => b.onclick = () => {
+    const ref2 = vis[0], cw = ref2.curWeek ?? ref2.weeks.at(-1);
+    const p2 = b.dataset["p"];
+    if (p2 === "all")
+      setDomain("all");
+    if (p2 === "thisweek")
+      setDomain([cw.start, cw.r]);
+    if (p2 === "lastweek")
+      setDomain([cw.start - WEEK, cw.start]);
+    if (p2 === "24h")
+      setDomain([D.now - 24 * H, D.now]);
+  });
+  hit.on("mousemove", (e) => {
+    const t = x.invert(d3.pointer(e)[0]);
+    xh.attr("x1", x(t)).attr("x2", x(t)).attr("opacity", 0.3);
+    const rows = vis.map((m) => {
+      const near = (w) => {
+        const a = m.exact.filter((s) => s.w === w);
+        return a.length ? a[d3.bisector((s) => s.t).center(a, t)] : null;
+      };
+      const wk = near(10080), f = near(300), wkW = wk && m.weeks.find((w) => w.r === wk.r);
+      const pace = wkW ? (wk.t - wkW.start) / WEEK * 100 : null, gap = wk && pace != null ? wk.v - pace : null;
+      return `<b style="color:${col(m.src.id)}">${esc(m.src.label)}</b> <span class="m">(nearest reading ${wk ? Math.round(Math.abs(wk.t - +t) / 60000) : "—"} min away)</span><br>` + (wk ? `<span style="color:${col(m.src.id)}">weekly</span> ${pct(wk.v)} <span class="m">· ${Math.abs(Math.round(gap))} points ${gap >= 0 ? "ahead of" : "behind"} pace</span><br>` : "") + (f ? `<span style="color:${col(m.src.id)}">5-hour</span> ${pct(f.v)} <span class="m">· resets ${fmt(f.r, { hour: "numeric", minute: "2-digit" })}</span>` : "");
+    });
+    showTip(e, `<b>${fmt(t)}</b><br>${rows.join("<br>")}`);
+  }).on("mouseleave", () => {
+    hideTip();
+    xh.attr("opacity", 0);
+  });
+  draw();
+  const ref = vis[0].curWeek ?? vis[0].weeks.at(-1);
+  setDomain(st.zoom ?? [ref.start - WEEK, Math.max(ref.r, D.now)], false);
+}
+var pending = false;
+function followers() {
+  if (pending)
+    return;
+  pending = true;
+  requestAnimationFrame(() => {
+    pending = false;
+    bars();
+    exchange();
+  });
+}
+function bars() {
+  const withFives = visible().filter((m) => m.fives.length);
+  $("#bars").innerHTML = withFives.length ? "" : `<div class="empty">No 5-hour windows in the visible sources.</div>`;
+  for (const m of withFives) {
+    const ws = m.fives.filter((f) => inView(f.start, f.r)), tier = m.src.tier;
+    const host = d3.select("#bars").append("div");
+    const over = tier ? ws.filter((f) => f.peak > tier.line).length : 0;
+    host.append("div").attr("class", "sub-src").text(`${m.src.label} · ${ws.length} windows in view${tier && ws.length ? ` · ${over} would have hit the ${tier.down} limit` : ""}`);
+    if (!ws.length)
+      continue;
+    const W = 720, Ht = 220, L = 34, R = 8, T = 10, B = 34, bw = (W - L - R) / Math.max(1, ws.length), y = d3.scaleLinear().domain([0, 100]).range([Ht - B, T]);
+    const svg = host.append("svg").attr("viewBox", `0 0 ${W} ${Ht}`);
+    svg.append("g").attr("transform", `translate(${L},0)`).call(d3.axisLeft(y).ticks(2).tickFormat((d) => d + "%").tickSize(-(W - L - R))).call((a) => a.selectAll("line").attr("class", "grid")).call((a) => a.select(".domain").remove());
+    const g = svg.selectAll("g.b").data(ws).join("g").attr("class", "b").attr("data-viz-id", (f) => f.id).attr("data-label", (f) => `${m.src.label} 5h window ${fmt(f.start)}: peak ${pct(f.peak)}`);
+    g.append("rect").attr("x", (_f, i) => L + i * bw + 1).attr("y", y(100)).attr("width", Math.max(1, bw - 2)).attr("height", y(0) - y(100)).attr("rx", Math.min(3, bw / 3)).attr("fill", "var(--panel-2)");
+    g.append("rect").attr("x", (_f, i) => L + i * bw + 1).attr("y", (f) => y(f.peak)).attr("width", Math.max(1, bw - 2)).attr("height", (f) => Math.max(1, y(0) - y(f.peak))).attr("rx", Math.min(3, bw / 3)).attr("fill", (f) => st.sel === f.id ? "var(--text)" : col(m.src.id));
+    onTip(g, (f) => `<b>${fmt(f.start)} → ${fmt(f.r, { hour: "numeric", minute: "2-digit" })}</b><br><span style="color:${col(m.src.id)}">peak ${pct(f.peak)}</span> · <span class="m">${pct(100 - f.peak)} expired unused</span><br>weekly burned: ${f.wkDelta == null ? "<span class=m>unknown (no reading before it began)</span>" : `+${f.wkDelta} pts`}${tier && f.peak > tier.line ? `<br><span style="color:var(--warn)">▲ over the ${tier.down} limit</span>` : ""}`);
+    g.on("click", (_e, f) => {
+      st.sel = st.sel === f.id ? null : f.id;
+      timeline.setDomain([f.start - 6 * H, f.r + 6 * H]);
+    });
+    let lastDay = "";
+    ws.forEach((f, i) => {
+      const d = fmt(f.start, { month: "short", day: "numeric" });
+      if (d !== lastDay && (i === 0 || i * bw > 40)) {
+        svg.append("text").attr("x", L + i * bw).attr("y", Ht - B + 14).text(d);
+        lastDay = d;
+      }
+    });
+    if (tier) {
+      svg.append("line").attr("x1", L).attr("x2", W - R).attr("y1", y(tier.line)).attr("y2", y(tier.line)).attr("stroke", "var(--warn)").attr("stroke-dasharray", "5 4").attr("stroke-width", 1.5);
+      svg.append("text").attr("class", "lbl").attr("x", W - R).attr("y", y(tier.line) - 5).attr("text-anchor", "end").style("fill", "var(--warn)").text(`${tier.down} would stop here (${tier.line}%)`);
+    }
+  }
+}
+function exchange() {
+  const withK = visible().filter((m) => m.k);
+  $("#xr").innerHTML = withK.length ? "" : `<div class="empty">Needs windows with both 5-hour and weekly readings.</div>`;
+  for (const m of withK) {
+    const pts = m.fives.filter((f) => f.wkDelta != null && f.peak > 0 && inView(f.start, f.r)), local = pts.length >= 3, k = local ? fitK(pts) : m.k;
+    const host = d3.select("#xr").append("div");
+    host.append("div").attr("class", "sub-src").text(`${m.src.label} · ${pts.length} windows in view · slope ${local ? "fitted to these" : "from all history"}`);
+    if (!pts.length)
+      continue;
+    const W = 460, Ht = 240, L = 40, R = 14, T = 16, B = 34;
+    const xs = d3.scaleLinear().domain([0, Math.max(40, d3.max(pts, (p) => p.peak) ?? 0) * 1.08]).range([L, W - R]);
+    const ys = d3.scaleLinear().domain([0, Math.max(10, d3.max(pts, (p) => p.wkDelta) ?? 0) * 1.15]).range([Ht - B, T]);
+    const svg = host.append("svg").attr("viewBox", `0 0 ${W} ${Ht}`);
+    svg.append("g").attr("transform", `translate(0,${Ht - B})`).call(d3.axisBottom(xs).ticks(5).tickFormat((d) => d + "%").tickSize(-(Ht - B - T))).call((a) => a.selectAll("line").attr("class", "grid")).call((a) => a.select(".domain").remove());
+    svg.append("g").attr("transform", `translate(${L},0)`).call(d3.axisLeft(ys).ticks(5)).call((a) => a.select(".domain").remove());
+    svg.append("text").attr("class", "lbl").attr("x", W - R).attr("y", Ht - 2).attr("text-anchor", "end").text("5-hour peak →");
+    svg.append("text").attr("class", "lbl").attr("x", L).attr("y", T - 4).text("↑ weekly pts burned");
+    const xm = xs.domain()[1];
+    svg.append("line").attr("x1", xs(0)).attr("y1", ys(0)).attr("x2", xs(xm)).attr("y2", ys(k * xm)).attr("stroke", "var(--muted)").attr("stroke-width", 2).attr("stroke-dasharray", "6 5");
+    svg.append("text").attr("class", "lbl").attr("x", xs(xm) - 4).attr("y", Math.max(T + 12, ys(k * xm) + 16)).attr("text-anchor", "end").style("fill", "var(--muted)").text(`100% of 5h ≈ ${Math.round(100 * k)}% of week`);
+    const c = svg.selectAll("circle").data(pts).join("circle").attr("cx", (p) => xs(p.peak)).attr("cy", (p) => ys(p.wkDelta)).attr("r", 5).attr("fill", col(m.src.id)).attr("stroke", "var(--panel)").attr("stroke-width", 2).attr("data-viz-id", (p) => `xr-${p.id}`).attr("data-label", (p) => `window ending ${fmt(p.r)}: ${pct(p.peak)} of 5h, +${p.wkDelta} weekly`);
+    onTip(c, (p) => `<b>${fmt(p.start)} → ${fmt(p.r, { hour: "numeric" })}</b><br>5h peak ${pct(p.peak)} · weekly +${p.wkDelta} pts`);
+  }
+}
+function heat() {
+  if (!D.sources.some((s) => s.id === st.heat))
+    st.heat = D.sources[0].id;
+  $("#heatSrc").innerHTML = D.sources.length > 1 ? D.sources.map((s) => `<button data-k="${s.id}" class="${st.heat === s.id ? "on" : ""}">${esc(s.label)}</button>`).join("") : "";
+  $("#heatSrc").onclick = (e) => {
+    const b = e.target.closest("button");
+    if (b) {
+      st.heat = b.dataset["k"];
+      saveHash(st);
+      heat();
+    }
+  };
+  const w = M[st.heat].weekly, g = Array.from({ length: 7 }, () => Array(24).fill(0));
+  for (let i = 1;i < w.length; i++) {
+    const a = w[i - 1], c = w[i];
+    if (a.r !== c.r || c.v <= a.v)
+      continue;
+    const from = Math.max(a.t, c.t - 6 * H), n = Math.max(1, Math.ceil((c.t - from) / H));
+    for (let j = 0;j < n; j++) {
+      const d = new Date(from + (j + 0.5) * ((c.t - from) / n));
+      g[(d.getDay() + 6) % 7][d.getHours()] += (c.v - a.v) / n;
+    }
+  }
+  const L = 36, T = 16, cw = (720 - L - 4) / 24, ch = 26, mx = Math.max(0.01, d3.max(g.flat())), days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const svg = d3.select("#heat").html("");
+  for (let h = 0;h < 24; h += 3)
+    svg.append("text").attr("x", L + h * cw + cw / 2).attr("y", T - 4).attr("text-anchor", "middle").text(h === 0 ? "12a" : h === 12 ? "12p" : h < 12 ? h + "a" : h - 12 + "p");
+  days.forEach((d, i) => svg.append("text").attr("x", L - 6).attr("y", T + i * ch + ch / 2 + 4).attr("text-anchor", "end").text(d));
+  const cells = svg.selectAll("rect").data(g.flatMap((row, d) => row.map((v, h) => ({ d, h, v })))).join("rect").attr("x", (c) => L + c.h * cw + 1).attr("y", (c) => T + c.d * ch + 1).attr("width", cw - 2).attr("height", ch - 2).attr("rx", 3).attr("fill", (c) => c.v ? `color-mix(in srgb,${col(st.heat)} ${Math.round(12 + 88 * (c.v / mx))}%,var(--panel-2))` : "var(--panel-2)").attr("data-viz-id", (c) => `h-${c.d}-${c.h}`).attr("data-label", (c) => `${days[c.d]} ${c.h}:00 — ${c.v.toFixed(1)} weekly pts`);
+  onTip(cells, (c) => `${days[c.d]} ${c.h}:00 · <b>${c.v.toFixed(1)}</b> weekly pts`);
+  svg.append("text").attr("x", L).attr("y", T + 7 * ch + 18).text(`darkest = ${mx.toFixed(1)} weekly pts in that hour-slot`);
+}
+function weeksPanel() {
+  $("#weeks").innerHTML = "";
+  for (const s of D.sources) {
+    const ws = M[s.id].weeks, host = d3.select("#weeks").append("div");
+    host.append("div").attr("class", "sub-src").text(`${s.label} · ${ws.length} weeks`);
+    const W = 460, Ht = 150, L = 34, R = 8, T = 8, B = 30, bw = (W - L - R) / Math.max(1, ws.length), y = d3.scaleLinear().domain([0, 100]).range([Ht - B, T]);
+    const svg = host.append("svg").attr("viewBox", `0 0 ${W} ${Ht}`);
+    svg.append("g").attr("transform", `translate(${L},0)`).call(d3.axisLeft(y).ticks(2).tickFormat((d) => d + "%").tickSize(-(W - L - R))).call((a) => a.selectAll("line").attr("class", "grid")).call((a) => a.select(".domain").remove());
+    const g = svg.selectAll("g.w").data(ws).join("g").attr("class", "w").attr("data-viz-id", (w) => w.id).attr("data-label", (w) => `${s.label} week ending ${day(w.r)}: ${pct(w.peak)}`);
+    g.append("rect").attr("x", (_w, i) => L + i * bw + 1).attr("y", y(100)).attr("width", Math.max(1, bw - 2)).attr("height", y(0) - y(100)).attr("rx", 3).attr("fill", "var(--panel-2)");
+    g.append("rect").attr("x", (_w, i) => L + i * bw + 1).attr("y", (w) => y(w.peak)).attr("width", Math.max(1, bw - 2)).attr("height", (w) => Math.max(1, y(0) - y(w.peak))).attr("rx", 3).attr("fill", col(s.id)).attr("opacity", (w) => w.r > D.now ? 0.55 : 1);
+    onTip(g, (w) => `<b>Week ending ${day(w.r)}</b><br>${w.r > D.now ? "in progress: " : "closed at "}${pct(w.peak)}`);
+    g.on("click", (_e, w) => timeline.setDomain([w.start, w.r]));
+    const every = Math.ceil(ws.length / 6);
+    ws.forEach((w, i) => i % every === 0 && svg.append("text").attr("x", L + i * bw).attr("y", Ht - B + 14).text(fmt(w.r, { month: "short", day: "numeric" })));
+  }
+}
+function table() {
+  const rows = D.sources.flatMap((s) => M[s.id].fives.map((f) => ({ s, f }))).sort((a, b) => b.f.r - a.f.r);
+  $("#tbl").innerHTML = `<table><tr><th>window</th><th>source</th><th>5h peak</th><th>weekly Δ</th><th>readings</th></tr>${rows.map(({ s, f }) => `<tr><td>${fmt(f.start)} → ${fmt(f.r, { hour: "numeric", minute: "2-digit" })}</td><td>${esc(s.label)}</td><td>${pct(f.peak)}</td><td>${f.wkDelta ?? "—"}</td><td>${f.pts.length}</td></tr>`).join("")}</table>`;
+}
+load();
+</script>
+<a id="__viz_dl" href="#" role="button" aria-label="Save a copy of this page"
+title="Save a copy" style="position:fixed;bottom:14px;right:14px;z-index:2147483646;
+width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+border-radius:8px;background:rgba(20,20,22,.55);color:#fff;opacity:.35;
+backdrop-filter:blur(4px);transition:opacity .15s;text-decoration:none"
+onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.35">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/>
+<line x1="12" y1="15" x2="12" y2="3"/></svg></a>
+<script>(function(){
+  var a=document.getElementById("__viz_dl");
+  var name=(document.title||"visualization").toLowerCase()
+    .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60)||"visualization";
+  var plain="<!DOCTYPE html>\n"+document.documentElement.outerHTML;
+  function save(text){
+    var url=URL.createObjectURL(new Blob([text],{type:"text/html"}));
+    var t=document.createElement("a"); t.href=url; t.download=name+".html";
+    document.body.appendChild(t); t.click(); t.remove();
+    setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  }
+  a.addEventListener("click",function(e){
+    e.preventDefault();
+    fetch(location.href).then(function(r){return r.text();})
+      .then(function(t){ save(t.indexOf("staticrypt"+"Config")>0?plain:t); })
+      .catch(function(){ save(plain); });
+  });
+})();</script>
+</body>
+</html>

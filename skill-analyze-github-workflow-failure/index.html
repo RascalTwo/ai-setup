@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script type="importmap">{"imports":{"/_kit/viz.js":"data:text/javascript;base64,Ly8gR0VORVJBVEVEIGZyb20ga2l0L3NyYy92aXoudHMgYnkgYGJ1biBydW4gc3luYzpraXRgIOKAlCBlZGl0IHRoYXQgZmlsZSwgbm90IHRoaXMgb25lLgovLyB2aXouanMg4oCUIHNoYXJlZCBoZWxwZXJzIGZvciAvdml6IHBhZ2VzLiBMb2FkIHdpdGg6Ci8vICAgPHNjcmlwdCB0eXBlPSJtb2R1bGUiPgovLyAgICAgaW1wb3J0IHsgYXJyb3dNYXJrZXJzLCBjb25uZWN0LCBzaWRlLCBsYWJlbEJveCwgdml6QXVkaXQsICQsICQkLCBlc2MsIHNhdmVIYXNoLCBsb2FkSGFzaCwgdml6RW52IH0gZnJvbSAiL19raXQvdml6LmpzIjsKLy8gICA8L3NjcmlwdD4KLy8gU2VydmVkIGJ5IHRoZSB2aXogc2VydmVyIGF0IC9fa2l0L3Zpei5qcyBmcm9tIHRoZSBza2lsbCdzIG93biBraXQvIGRpciwgc28gaXQncwovLyBvbmUgc291cmNlIG9mIHRydXRoIGFjcm9zcyBldmVyeSB2aXouIFBhaXJzIHdpdGggL19raXQvdml6LWtpdC5jc3MuCmV4cG9ydCBjb25zdCBTVkdOUyA9ICJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI7Ci8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQovLyBTVkcgZGlhZ3JhbXMg4oCUIGdlb21ldHJ5IGZpcnN0LgovLwovLyBUaGUgcmVjdXJyaW5nIHJld29yayBpbiBib3hlcy1hbmQtYXJyb3dzIGRpYWdyYW1zIGNvbWVzIGZyb20gdHlwaW5nIGxhYmVsIGFuZAovLyBhcnJvdyBjb29yZGluYXRlcyBhcyBpbmRlcGVuZGVudCBsaXRlcmFsczogYSBib3ggZ2V0cyByZXNpemVkIG9yIG1vdmVkLCBidXQgdGhlCi8vIGFycm93IGVuZHBvaW50IGFuZCB0aGUgbGFiZWwgcG9zaXRpb24gd2VyZSBndWVzc2VkIGFnYWluc3QgdGhlICpvbGQqIGdlb21ldHJ5LAovLyBzbyB0aGUgYXJyb3cgbm93IHBvaW50cyBhdCBlbXB0eSBzcGFjZSAob3IgdGhlIHdyb25nIGJveCkgYW5kIHRoZSBsYWJlbCBzcGlsbHMKLy8gb3V0LiBUaGUgZml4IGlzIHRvIG5ldmVyIGhhbmQtcGxhY2UgdGhvc2U6IGRlZmluZSBlYWNoIG5vZGUgT05DRSBhcyB7eCx5LHcsaH0KLy8gYW5kIGNvbXB1dGUgZXZlcnl0aGluZyBlbHNlIGZyb20gaXQuCi8vIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQovLyBEZWZhdWx0IGFycm93aGVhZCBwYWxldHRlLCBrZXllZCB0byB0aGUgdml6LWtpdCBpbnRlbnQgdG9rZW5zLiBTVkcgbWFya2VycyBjYW4ndAovLyBpbmhlcml0IHRoZSBzdHJva2UgY29sb3Igb2YgdGhlIGxpbmUgdGhhdCB1c2VzIHRoZW0sIHNvIHlvdSBnZW51aW5lbHkgbmVlZCBvbmUKLy8gbWFya2VyIHBlciBjb2xvciDigJQgdGhpcyBlbWl0cyB0aGVtIGFsbCB3aXRoIHN0YWJsZSBpZHMgc28geW91IHN0b3AgcmUtZGVyaXZpbmcKLy8gdGhlIHNhbWUgPG1hcmtlcj4gYmxvY2sgcGVyIGRpYWdyYW0uIFJlZmVyZW5jZSBhcyBtYXJrZXItZW5kPSJ1cmwoI2FoLWFjY2VudCkiLgovLwovLyBUaGVzZSBhcmUgdmFyKCkgcmVmZXJlbmNlcywgbm90IGhleGVzLCBPTiBQVVJQT1NFOiBhIHBhZ2UgdGhhdCBvdmVycmlkZXMgdGhlCi8vIHRva2VucyAoc2VlIGtpdC9SRUFETUUubWQpIHJlLXRoZW1lcyBpdHMgYXJyb3doZWFkcyBmb3IgZnJlZS4gSGFyZGNvZGluZyB0aGUKLy8gaGV4ZXMgaGVyZSB3b3VsZCBzaWxlbnRseSBzdHJhbmQgZXZlcnkgbWFya2VyIGF0IHRoZSBkZWZhdWx0IHBhbGV0dGUuCmNvbnN0IERFRkFVTFRfTUFSS0VSUyA9IHsKICAgIGFoOiAidmFyKC0tbXV0ZWQpIiwgLy8gdGhlIGRlZmF1bHQgZWRnZQogICAgImFoLWFjY2VudCI6ICJ2YXIoLS1hY2NlbnQpIiwKICAgICJhaC1nb29kIjogInZhcigtLWdvb2QpIiwKICAgICJhaC13YXJuIjogInZhcigtLXdhcm4pIiwKICAgICJhaC1kYW5nZXIiOiAidmFyKC0tZGFuZ2VyKSIsCn07Ci8vIFJldHVybnMgYSA8ZGVmcz7igKY8L2RlZnM+IHN0cmluZy4gRHJvcCBpdCBvbmNlIGF0IHRoZSB0b3Agb2YgeW91ciA8c3ZnPi4KZXhwb3J0IGZ1bmN0aW9uIGFycm93TWFya2VycyhwYWxldHRlID0gREVGQVVMVF9NQVJLRVJTKSB7CiAgICBjb25zdCBtYXJrZXJzID0gT2JqZWN0LmVudHJpZXMocGFsZXR0ZSkKICAgICAgICAubWFwKChbaWQsIGZpbGxdKSA9PiBgPG1hcmtlciBpZD0iJHtpZH0iIHZpZXdCb3g9IjAgMCAxMCAxMCIgcmVmWD0iOSIgcmVmWT0iNSIgYCArCiAgICAgICAgYG1hcmtlcldpZHRoPSI3IiBtYXJrZXJIZWlnaHQ9IjciIG9yaWVudD0iYXV0by1zdGFydC1yZXZlcnNlIj5gICsKICAgICAgICBgPHBhdGggZD0iTTAsMCBMMTAsNSBMMCwxMCB6IiBmaWxsPSIke2ZpbGx9Ii8+PC9tYXJrZXI+YCkKICAgICAgICAuam9pbigiIik7CiAgICByZXR1cm4gYDxkZWZzPiR7bWFya2Vyc308L2RlZnM+YDsKfQovLyBBIG5vZGUgaXMganVzdCB7eCwgeSwgdywgaH0uIGNlbnRlcigpIGFuZCBzaWRlKCkgZGVyaXZlIGNvbm5lY3Rpb24gcG9pbnRzIGZyb20KLy8gaXQsIHNvIGFuIGVkZ2Ugc3RheXMgYXR0YWNoZWQgdG8gdGhlIGJveCBubyBtYXR0ZXIgaG93IHRoZSBib3ggY2hhbmdlcy4KZXhwb3J0IGNvbnN0IGNlbnRlciA9IChuKSA9PiAoeyB4OiBuLnggKyBuLncgLyAyLCB5OiBuLnkgKyBuLmggLyAyIH0pOwpleHBvcnQgY29uc3Qgc2lkZSA9IChuLCB3aGVyZSkgPT4gKHsKICAgIHRvcDogeyB4OiBuLnggKyBuLncgLyAyLCB5OiBuLnkgfSwKICAgIGJvdHRvbTogeyB4OiBuLnggKyBuLncgLyAyLCB5OiBuLnkgKyBuLmggfSwKICAgIGxlZnQ6IHsgeDogbi54LCB5OiBuLnkgKyBuLmggLyAyIH0sCiAgICByaWdodDogeyB4OiBuLnggKyBuLncsIHk6IG4ueSArIG4uaCAvIDIgfSwKfSlbd2hlcmVdOwovLyBTdHJhaWdodCBlZGdlIGJldHdlZW4gdHdvIG5vZGVzLCBhdXRvLXBpY2tpbmcgdGhlIGZhY2luZyBzaWRlcyBiYXNlZCBvbiB0aGVpcgovLyByZWxhdGl2ZSBwb3NpdGlvbi4gUmV0dXJucyBhbiBTVkcgcGF0aCAiZCIgc3RyaW5nOyBzZXQgdGhlIG1hcmtlciB5b3Vyc2VsZiB2aWEKLy8gdGhlIGVsZW1lbnQncyBtYXJrZXItZW5kIGF0dHJpYnV0ZS4gRm9yID41IG5vZGVzIHdpdGggY3Jvc3NpbmcgZWRnZXMsIHJlYWNoIGZvcgovLyBhIGxheW91dCBlbmdpbmUgKGRhZ3JlIC8gZDMtZGFnIC8gbWVybWFpZCkgaW5zdGVhZCBvZiBwbGFjaW5nIG5vZGVzIGJ5IGhhbmQg4oCUCi8vIHRoYXQncyB0aGUgcG9pbnQgd2hlcmUgbWFudWFsIGNvb3JkaW5hdGVzIHN0b3AgYmVpbmcgd29ydGggaXQuCmV4cG9ydCBmdW5jdGlvbiBjb25uZWN0KGEsIGIpIHsKICAgIGNvbnN0IGNhID0gY2VudGVyKGEpLCBjYiA9IGNlbnRlcihiKTsKICAgIGNvbnN0IGhvcml6ID0gTWF0aC5hYnMoY2IueCAtIGNhLngpID4gTWF0aC5hYnMoY2IueSAtIGNhLnkpOwogICAgY29uc3QgcGEgPSBob3JpegogICAgICAgID8gc2lkZShhLCBjYi54ID4gY2EueCA/ICJyaWdodCIgOiAibGVmdCIpCiAgICAgICAgOiBzaWRlKGEsIGNiLnkgPiBjYS55ID8gImJvdHRvbSIgOiAidG9wIik7CiAgICBjb25zdCBwYiA9IGhvcml6CiAgICAgICAgPyBzaWRlKGIsIGNiLnggPiBjYS54ID8gImxlZnQiIDogInJpZ2h0IikKICAgICAgICA6IHNpZGUoYiwgY2IueSA+IGNhLnkgPyAidG9wIiA6ICJib3R0b20iKTsKICAgIHJldHVybiBgTSAke3BhLnh9ICR7cGEueX0gTCAke3BiLnh9ICR7cGIueX1gOwp9Ci8vIEEgbGFiZWwgdGhhdCBDQU5OT1Qgb3ZlcmZsb3cgaXRzIGJveC4gPGZvcmVpZ25PYmplY3Q+IGxldHMgdGhlIGJyb3dzZXIgd3JhcCBhbmQKLy8gZWxsaXBzaXplIEhUTUwgbmF0aXZlbHksIHVubGlrZSByYXcgPHRleHQ+IHdoaWNoIHlvdSdkIGhhdmUgdG8gbWVhc3VyZSBieSBoYW5kCi8vIChhbmQgaGlzdG9yaWNhbGx5IGd1ZXNzZWQgd3JvbmcpLiBVc2UgdGhpcyBmb3IgYW55IG11bHRpLXdvcmQgbGFiZWwgaW5zaWRlIGEKLy8gZml4ZWQtd2lkdGggYm94LiBTdHlsZSB2aWEgdGhlIC52c3ZnLWxhYmVsIGNsYXNzIGluIHZpei1raXQuY3NzLgpleHBvcnQgZnVuY3Rpb24gbGFiZWxCb3gobm9kZSwgaHRtbCwgY2xzID0gIiIpIHsKICAgIHJldHVybiAoYDxmb3JlaWduT2JqZWN0IHg9IiR7bm9kZS54fSIgeT0iJHtub2RlLnl9IiB3aWR0aD0iJHtub2RlLnd9IiBoZWlnaHQ9IiR7bm9kZS5ofSI+YCArCiAgICAgICAgYDxkaXYgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGh0bWwiIGNsYXNzPSJ2c3ZnLWxhYmVsICR7Y2xzfSI+JHtodG1sfTwvZGl2PmAgKwogICAgICAgIGA8L2ZvcmVpZ25PYmplY3Q+YCk7Cn0KLy8gVmVyaWZpY2F0aW9uIGJhY2tzdG9wLiBJZiB5b3UgRE8gaGFuZC1yb2xsIDx0ZXh0PiwgY2FsbCB0aGlzIG9uY2UgYWZ0ZXIgcmVuZGVyOgovLyBpdCBvdXRsaW5lcyAoaW4gcmVkKSBhbnkgPHRleHQ+IHdob3NlIGJvdW5kaW5nIGJveCBzcGlsbHMgcGFzdCB0aGUgPHJlY3Q+IGluIGl0cwovLyBncm91cCwgYW5kIGRyb3BzIGEgZml4ZWQgYmFubmVyIHNvIGFuIG92ZXJmbG93IGlzIGltcG9zc2libGUgdG8gbWlzcyBpbiB0aGUgb3BlbgovLyBicm93c2VyIOKAlCBvciBpbiBhbnkgc2NyZWVuc2hvdCB5b3UgdGFrZSB0byB2ZXJpZnkgdGhlIHBhZ2UuIFJldHVybnMgdGhlIGxpc3Qgb2YKLy8gb2ZmZW5kaW5nIHN0cmluZ3MgKGVtcHR5ID0gY2xlYW4pLiBUaGUgcmVjdC1pbi1zYW1lLTxnPiBwYWlyaW5nIGlzIGEgaGV1cmlzdGljOwovLyBpdCBjYXRjaGVzIHRoZSBjb21tb24gY2FzZSB3aGVyZSBlYWNoIGJveCtsYWJlbCBsaXZlIGluIG9uZSA8Zz4uCmV4cG9ydCBmdW5jdGlvbiB2aXpBdWRpdChyb290ID0gZG9jdW1lbnQpIHsKICAgIGNvbnN0IGJhZCA9IFtdOwogICAgZm9yIChjb25zdCB0IG9mIHJvb3QucXVlcnlTZWxlY3RvckFsbCgidGV4dCIpKSB7CiAgICAgICAgY29uc3QgcmVjdCA9IHQuY2xvc2VzdCgiZyIpPy5xdWVyeVNlbGVjdG9yKCJyZWN0Iik7CiAgICAgICAgaWYgKCFyZWN0KQogICAgICAgICAgICBjb250aW51ZTsKICAgICAgICBjb25zdCB0YiA9IHQuZ2V0QkJveCgpOwogICAgICAgIGNvbnN0IHJiID0gcmVjdC5nZXRCQm94KCk7CiAgICAgICAgY29uc3Qgc3BpbGxzID0gdGIueCA8IHJiLnggLSAxIHx8CiAgICAgICAgICAgIHRiLnkgPCByYi55IC0gMSB8fAogICAgICAgICAgICB0Yi54ICsgdGIud2lkdGggPiByYi54ICsgcmIud2lkdGggKyAxIHx8CiAgICAgICAgICAgIHRiLnkgKyB0Yi5oZWlnaHQgPiByYi55ICsgcmIuaGVpZ2h0ICsgMTsKICAgICAgICBpZiAoc3BpbGxzKSB7CiAgICAgICAgICAgIHQuc3R5bGUub3V0bGluZSA9ICIxcHggc29saWQgI2Y4NTE0OSI7CiAgICAgICAgICAgIGJhZC5wdXNoKHQudGV4dENvbnRlbnQpOwogICAgICAgIH0KICAgIH0KICAgIGlmIChiYWQubGVuZ3RoKSB7CiAgICAgICAgY29uc29sZS5lcnJvcigiW3ZpekF1ZGl0XSB0ZXh0IG92ZXJmbG93OiIsIGJhZCk7CiAgICAgICAgY29uc3QgYmFubmVyID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgiZGl2Iik7CiAgICAgICAgYmFubmVyLnRleHRDb250ZW50ID0gYOKaoCAke2JhZC5sZW5ndGh9IHRleHQgb3ZlcmZsb3cocykg4oCUIHNlZSByZWQgb3V0bGluZXNgOwogICAgICAgIGJhbm5lci5zdHlsZS5jc3NUZXh0ID0KICAgICAgICAgICAgInBvc2l0aW9uOmZpeGVkO2xlZnQ6OHB4O2JvdHRvbTo4cHg7ei1pbmRleDo5OTk5O2JhY2tncm91bmQ6I2Y4NTE0OTtjb2xvcjojZmZmOyIgKwogICAgICAgICAgICAgICAgImZvbnQ6MTJweC8xIHNhbnMtc2VyaWY7cGFkZGluZzo2cHggMTBweDtib3JkZXItcmFkaXVzOjZweCI7CiAgICAgICAgZG9jdW1lbnQuYm9keS5hcHBlbmRDaGlsZChiYW5uZXIpOwogICAgfQogICAgcmV0dXJuIGJhZDsKfQpleHBvcnQgZnVuY3Rpb24gJChzZWwsIHJvb3QgPSBkb2N1bWVudCkgeyByZXR1cm4gcm9vdC5xdWVyeVNlbGVjdG9yKHNlbCk7IH0KZXhwb3J0IGZ1bmN0aW9uICQkKHNlbCwgcm9vdCA9IGRvY3VtZW50KSB7IHJldHVybiBbLi4ucm9vdC5xdWVyeVNlbGVjdG9yQWxsKHNlbCldOyB9Ci8vIEVzY2FwZSBiZWZvcmUgaW5qZWN0aW5nIHRleHQgaW50byBpbm5lckhUTUwuCmNvbnN0IEVOVElUSUVTID0geyAiJiI6ICImYW1wOyIsICI8IjogIiZsdDsiLCAiPiI6ICImZ3Q7IiwgJyInOiAiJnF1b3Q7IiwgIiciOiAiJiMzOTsiIH07CmV4cG9ydCBjb25zdCBlc2MgPSAocykgPT4gU3RyaW5nKHMpLnJlcGxhY2UoL1smPD4iJ10vZywgKGMpID0+IEVOVElUSUVTW2NdID8/IGMpOwovLyBIb3QtcmVsb2FkIChhbmQgZXZlcnkgc2F2ZSkgZG9lcyBhIGZ1bGwgcGFnZSByZWZyZXNoLCBzbyBpbi1wYWdlIHN0YXRlIGlzIHdpcGVkLgovLyBQZXJzaXN0IGFueXRoaW5nIHlvdSB3YW50IHRvIHN1cnZpdmUg4oCUIG9wZW4gcGFuZWwsIHNlbGVjdGVkIHN0ZXAsIGFjdGl2ZSBmaWx0ZXJzIOKAlAovLyB0byB0aGUgVVJMIGhhc2guIEJvbnVzOiB0aGUgVVJMIGJlY29tZXMgc2hhcmVhYmxlL2RlZXAtbGlua2FibGUgZm9yIGZyZWUuCi8vIFJvdW5kLXRyaXBzIGEgcGxhaW4gb2JqZWN0LiBTYXkgd2hhdCB5b3VyIGhhc2ggaG9sZHM6IGBsb2FkSGFzaDx7IHN0ZXA6IG51bWJlciB9PigpYCDigJQKLy8gZXZlcnkga2V5IG1heSBiZSBtaXNzaW5nIChhIGZyZXNoIFVSTCwgYW4gb2xkIGxpbmspLCBzbyBlYWNoIGNvbWVzIGJhY2sgb3B0aW9uYWwuCmV4cG9ydCBjb25zdCBzYXZlSGFzaCA9IChvYmopID0+IGxvY2F0aW9uLnJlcGxhY2UoIiMiICsgZW5jb2RlVVJJQ29tcG9uZW50KEpTT04uc3RyaW5naWZ5KG9iaikpKTsKZXhwb3J0IGNvbnN0IGxvYWRIYXNoID0gKCkgPT4gewogICAgdHJ5IHsKICAgICAgICByZXR1cm4gSlNPTi5wYXJzZShkZWNvZGVVUklDb21wb25lbnQobG9jYXRpb24uaGFzaC5zbGljZSgxKSkgfHwgInt9Iik7CiAgICB9CiAgICBjYXRjaCB7CiAgICAgICAgcmV0dXJuIHt9OwogICAgfQp9Owpjb25zdCBpc1R5cGluZyA9ICh0KSA9PiB0IGluc3RhbmNlb2YgSFRNTEVsZW1lbnQgJiYgKC9eKElOUFVUfFRFWFRBUkVBfFNFTEVDVCkkLy50ZXN0KHQudGFnTmFtZSkgfHwgdC5pc0NvbnRlbnRFZGl0YWJsZSk7CmV4cG9ydCBmdW5jdGlvbiBzdGVwcGVyKHsgbiwgb25TdGVwLCBhdXRvcGxheU1zID0gMCwgaGFzaEtleSA9ICJzdGVwIiwgdGFyZ2V0ID0gZG9jdW1lbnQgfSkgewogICAgbGV0IGkgPSBNYXRoLm1pbihNYXRoLm1heChOdW1iZXIobG9hZEhhc2goKVtoYXNoS2V5XSA/PyAwKSwgMCksIG4gLSAxKTsKICAgIGxldCB0aW1lciA9IG51bGw7CiAgICBjb25zdCBlbWl0ID0gKCkgPT4gewogICAgICAgIHNhdmVIYXNoKHsgLi4ubG9hZEhhc2goKSwgW2hhc2hLZXldOiBpIH0pOwogICAgICAgIG9uU3RlcD8uKGkpOwogICAgfTsKICAgIGNvbnN0IGdvID0gKHRvLCBtYW51YWwgPSB0cnVlKSA9PiB7CiAgICAgICAgY29uc3QgbmV4dCA9IE1hdGgubWluKE1hdGgubWF4KHRvLCAwKSwgbiAtIDEpOwogICAgICAgIGlmIChtYW51YWwpCiAgICAgICAgICAgIHBhdXNlKCk7IC8vIGEgbWFudWFsIG5hdiBhbHdheXMgd2lucyBvdmVyIGF1dG9wbGF5CiAgICAgICAgaWYgKG5leHQgPT09IGkpCiAgICAgICAgICAgIHJldHVybjsKICAgICAgICBpID0gbmV4dDsKICAgICAgICBlbWl0KCk7CiAgICB9OwogICAgY29uc3QgcGxheSA9ICgpID0+IHsKICAgICAgICBpZiAodGltZXIgfHwgIWF1dG9wbGF5TXMpCiAgICAgICAgICAgIHJldHVybjsKICAgICAgICB0aW1lciA9IHNldEludGVydmFsKCgpID0+IHsKICAgICAgICAgICAgaWYgKGkgPj0gbiAtIDEpCiAgICAgICAgICAgICAgICByZXR1cm4gcGF1c2UoKTsKICAgICAgICAgICAgZ28oaSArIDEsIGZhbHNlKTsKICAgICAgICB9LCBhdXRvcGxheU1zKTsKICAgIH07CiAgICBjb25zdCBwYXVzZSA9ICgpID0+IHsKICAgICAgICBpZiAodGltZXIpCiAgICAgICAgICAgIGNsZWFySW50ZXJ2YWwodGltZXIpOwogICAgICAgIHRpbWVyID0gbnVsbDsKICAgIH07CiAgICBjb25zdCBLRVlTID0gewogICAgICAgIEFycm93UmlnaHQ6IDEsIEFycm93RG93bjogMSwgUGFnZURvd246IDEsICIgIjogMSwKICAgICAgICBBcnJvd0xlZnQ6IC0xLCBBcnJvd1VwOiAtMSwgUGFnZVVwOiAtMSwKICAgIH07CiAgICB0YXJnZXQuYWRkRXZlbnRMaXN0ZW5lcigia2V5ZG93biIsIChldikgPT4gewogICAgICAgIGNvbnN0IGUgPSBldjsKICAgICAgICBpZiAoZS5tZXRhS2V5IHx8IGUuY3RybEtleSB8fCBlLmFsdEtleSkKICAgICAgICAgICAgcmV0dXJuOwogICAgICAgIGlmIChpc1R5cGluZyhlLnRhcmdldCkpCiAgICAgICAgICAgIHJldHVybjsKICAgICAgICBjb25zdCBkID0gS0VZU1tlLmtleV07CiAgICAgICAgaWYgKGQgIT09IHVuZGVmaW5lZCkgewogICAgICAgICAgICBlLnByZXZlbnREZWZhdWx0KCk7IC8vIGVsc2UgU3BhY2UvUGFnZURvd24gc2Nyb2xscyB0aGUgcGFnZSB0b28KICAgICAgICAgICAgZ28oaSArIGQpOwogICAgICAgIH0KICAgICAgICBlbHNlIGlmIChlLmtleSA9PT0gIkhvbWUiKSB7CiAgICAgICAgICAgIGUucHJldmVudERlZmF1bHQoKTsKICAgICAgICAgICAgZ28oMCk7CiAgICAgICAgfQogICAgICAgIGVsc2UgaWYgKGUua2V5ID09PSAiRW5kIikgewogICAgICAgICAgICBlLnByZXZlbnREZWZhdWx0KCk7CiAgICAgICAgICAgIGdvKG4gLSAxKTsKICAgICAgICB9CiAgICB9KTsKICAgIGVtaXQoKTsKICAgIGlmIChhdXRvcGxheU1zKQogICAgICAgIHBsYXkoKTsKICAgIHJldHVybiB7CiAgICAgICAgZ28sCiAgICAgICAgbmV4dDogKCkgPT4gZ28oaSArIDEpLAogICAgICAgIHByZXY6ICgpID0+IGdvKGkgLSAxKSwKICAgICAgICBwbGF5LAogICAgICAgIHBhdXNlLAogICAgICAgIGdldCBjdXJyZW50KCkgewogICAgICAgICAgICByZXR1cm4gaTsKICAgICAgICB9LAogICAgfTsKfQpleHBvcnQgZnVuY3Rpb24gdHdvQXhpcyhlbCwgeyB4OiB4ciA9IFswLCAxXSwgeTogeXIgPSBbMCwgMV0sIHN0YXJ0LCBvbkNoYW5nZSwgc3BlZWQgPSAxIH0gPSB7fSkgewogICAgY29uc3QgY2xhbXAgPSAodiwgW2xvLCBoaV0pID0+IE1hdGgubWluKGhpLCBNYXRoLm1heChsbywgdikpOwogICAgY29uc3Qgc3BhbiA9IChyKSA9PiByWzFdIC0gclswXTsKICAgIGxldCB4ID0gc3RhcnQgPyBzdGFydFswXSA6ICh4clswXSArIHhyWzFdKSAvIDI7CiAgICBsZXQgeSA9IHN0YXJ0ID8gc3RhcnRbMV0gOiAoeXJbMF0gKyB5clsxXSkgLyAyOwogICAgbGV0IHB4ID0gbnVsbCwgcHkgPSBudWxsOwogICAgLy8gSFRNTCBhbmQgU1ZHIGVsZW1lbnRzIHNoYXJlIG9uZSBzZXQgb2YgcG9pbnRlciBldmVudHMsIGJ1dCBUeXBlU2NyaXB0IGNhbid0IG1lcmdlIHRoZSB0d28KICAgIC8vIHR5cGVkIGFkZEV2ZW50TGlzdGVuZXIgb3ZlcmxvYWRzIG9mIHRoZSB1bmlvbiwgc28gdHlwZSBhZ2FpbnN0IHRoZSBzaGFyZWQgbWFwIGRpcmVjdGx5LgogICAgY29uc3Qgb24gPSAodHlwZSwgZikgPT4gZWwuYWRkRXZlbnRMaXN0ZW5lcih0eXBlLCBmKTsKICAgIGVsLnN0eWxlLnRvdWNoQWN0aW9uID0gIm5vbmUiOyAvLyBlbHNlIHRoZSBicm93c2VyIHNjcm9sbHMgaW5zdGVhZCBvZiBkcmFnZ2luZwogICAgZWwuc3R5bGUuY3Vyc29yID0gImdyYWIiOwogICAgb24oInBvaW50ZXJkb3duIiwgKGUpID0+IHsKICAgICAgICBweCA9IGUuY2xpZW50WDsKICAgICAgICBweSA9IGUuY2xpZW50WTsKICAgICAgICBlbC5zZXRQb2ludGVyQ2FwdHVyZShlLnBvaW50ZXJJZCk7CiAgICAgICAgZWwuc3R5bGUuY3Vyc29yID0gImdyYWJiaW5nIjsKICAgIH0pOwogICAgb24oInBvaW50ZXJtb3ZlIiwgKGUpID0+IHsKICAgICAgICBpZiAocHggPT09IG51bGwgfHwgcHkgPT09IG51bGwpCiAgICAgICAgICAgIHJldHVybjsKICAgICAgICBjb25zdCByID0gZWwuZ2V0Qm91bmRpbmdDbGllbnRSZWN0KCk7CiAgICAgICAgLy8gTm9ybWFsaXplIGJ5IGVsZW1lbnQgc2l6ZSBzbyBzZW5zaXRpdml0eSBkb2Vzbid0IGRlcGVuZCBvbiByZW5kZXIgc2NhbGUuCiAgICAgICAgeCA9IGNsYW1wKHggKyAoKGUuY2xpZW50WCAtIHB4KSAvIHIud2lkdGgpICogc3Bhbih4cikgKiBzcGVlZCwgeHIpOwogICAgICAgIHkgPSBjbGFtcCh5ICsgKChlLmNsaWVudFkgLSBweSkgLyByLmhlaWdodCkgKiBzcGFuKHlyKSAqIHNwZWVkLCB5cik7CiAgICAgICAgcHggPSBlLmNsaWVudFg7CiAgICAgICAgcHkgPSBlLmNsaWVudFk7CiAgICAgICAgb25DaGFuZ2U/Lih4LCB5KTsKICAgIH0pOwogICAgY29uc3QgZW5kID0gKCkgPT4gewogICAgICAgIHB4ID0gcHkgPSBudWxsOwogICAgICAgIGVsLnN0eWxlLmN1cnNvciA9ICJncmFiIjsKICAgIH07CiAgICBvbigicG9pbnRlcnVwIiwgZW5kKTsKICAgIG9uKCJwb2ludGVyY2FuY2VsIiwgZW5kKTsKICAgIG9uQ2hhbmdlPy4oeCwgeSk7CiAgICByZXR1cm4gewogICAgICAgIHNldDogKG54LCBueSkgPT4gewogICAgICAgICAgICB4ID0gY2xhbXAobngsIHhyKTsKICAgICAgICAgICAgeSA9IGNsYW1wKG55LCB5cik7CiAgICAgICAgICAgIG9uQ2hhbmdlPy4oeCwgeSk7CiAgICAgICAgfSwKICAgICAgICBnZXQgdmFsdWUoKSB7CiAgICAgICAgICAgIHJldHVybiBbeCwgeV07CiAgICAgICAgfSwKICAgIH07Cn0KZXhwb3J0IGZ1bmN0aW9uIGZpZ3VyZUxpZmVjeWNsZShmaWd1cmVzLCB7IHJvb3QgPSBudWxsIH0gPSB7fSkgewogICAgY29uc3Qgc2VlbiA9IG5ldyBNYXAoKTsKICAgIGNvbnN0IGlvID0gbmV3IEludGVyc2VjdGlvbk9ic2VydmVyKChlbnRyaWVzKSA9PiB7CiAgICAgICAgZm9yIChjb25zdCBlIG9mIGVudHJpZXMpIHsKICAgICAgICAgICAgY29uc3QgZiA9IGZpZ3VyZXMuZmluZCgoZikgPT4gZi5lbCA9PT0gZS50YXJnZXQpOwogICAgICAgICAgICBpZiAoIWYpCiAgICAgICAgICAgICAgICBjb250aW51ZTsKICAgICAgICAgICAgc2Vlbi5zZXQoZiwgZS5pc0ludGVyc2VjdGluZyk7CiAgICAgICAgICAgIGYuc2V0VmlzaWJsZT8uKGUuaXNJbnRlcnNlY3RpbmcgJiYgIWRvY3VtZW50LmhpZGRlbik7CiAgICAgICAgfQogICAgICAgIHBpY2tBY3RpdmUoKTsKICAgIH0sIHsgcm9vdCwgdGhyZXNob2xkOiAwIH0pOwogICAgZmlndXJlcy5mb3JFYWNoKChmKSA9PiBpby5vYnNlcnZlKGYuZWwpKTsKICAgIGxldCBhY3RpdmVGID0gbnVsbDsKICAgIGZ1bmN0aW9uIHBpY2tBY3RpdmUoKSB7CiAgICAgICAgY29uc3QgbWlkID0gd2luZG93LmlubmVySGVpZ2h0IC8gMjsKICAgICAgICBsZXQgYmVzdCA9IG51bGwsIGJlc3REID0gSW5maW5pdHk7CiAgICAgICAgZm9yIChjb25zdCBmIG9mIGZpZ3VyZXMpIHsKICAgICAgICAgICAgaWYgKCFzZWVuLmdldChmKSkKICAgICAgICAgICAgICAgIGNvbnRpbnVlOwogICAgICAgICAgICBjb25zdCByID0gZi5lbC5nZXRCb3VuZGluZ0NsaWVudFJlY3QoKTsKICAgICAgICAgICAgY29uc3QgZCA9IE1hdGguYWJzKHIudG9wICsgci5oZWlnaHQgLyAyIC0gbWlkKTsKICAgICAgICAgICAgaWYgKGQgPCBiZXN0RCkgewogICAgICAgICAgICAgICAgYmVzdEQgPSBkOwogICAgICAgICAgICAgICAgYmVzdCA9IGY7CiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICAgICAgaWYgKGJlc3QgPT09IGFjdGl2ZUYpCiAgICAgICAgICAgIHJldHVybjsKICAgICAgICBhY3RpdmVGPy5zZXRBY3RpdmU/LihmYWxzZSk7CiAgICAgICAgYWN0aXZlRiA9IGJlc3Q7CiAgICAgICAgYWN0aXZlRj8uc2V0QWN0aXZlPy4odHJ1ZSk7CiAgICB9CiAgICBsZXQgcXVldWVkID0gZmFsc2U7CiAgICBjb25zdCBvblNjcm9sbCA9ICgpID0+IHsKICAgICAgICBpZiAocXVldWVkKQogICAgICAgICAgICByZXR1cm47CiAgICAgICAgcXVldWVkID0gdHJ1ZTsKICAgICAgICByZXF1ZXN0QW5pbWF0aW9uRnJhbWUoKCkgPT4geyBxdWV1ZWQgPSBmYWxzZTsgcGlja0FjdGl2ZSgpOyB9KTsKICAgIH07CiAgICBhZGRFdmVudExpc3RlbmVyKCJzY3JvbGwiLCBvblNjcm9sbCwgeyBwYXNzaXZlOiB0cnVlIH0pOwogICAgYWRkRXZlbnRMaXN0ZW5lcigicmVzaXplIiwgb25TY3JvbGwsIHsgcGFzc2l2ZTogdHJ1ZSB9KTsKICAgIGRvY3VtZW50LmFkZEV2ZW50TGlzdGVuZXIoInZpc2liaWxpdHljaGFuZ2UiLCAoKSA9PiB7CiAgICAgICAgZm9yIChjb25zdCBmIG9mIGZpZ3VyZXMpCiAgICAgICAgICAgIGYuc2V0VmlzaWJsZT8uKCFkb2N1bWVudC5oaWRkZW4gJiYgISFzZWVuLmdldChmKSk7CiAgICB9KTsKICAgIHBpY2tBY3RpdmUoKTsKICAgIHJldHVybiB7CiAgICAgICAgZ2V0IGFjdGl2ZSgpIHsgcmV0dXJuIGFjdGl2ZUY7IH0sCiAgICAgICAgZGVzdHJveSgpIHsKICAgICAgICAgICAgaW8uZGlzY29ubmVjdCgpOwogICAgICAgICAgICByZW1vdmVFdmVudExpc3RlbmVyKCJzY3JvbGwiLCBvblNjcm9sbCk7CiAgICAgICAgICAgIHJlbW92ZUV2ZW50TGlzdGVuZXIoInJlc2l6ZSIsIG9uU2Nyb2xsKTsKICAgICAgICB9LAogICAgfTsKfQpsZXQgX3ZpekVudlA7CmV4cG9ydCBmdW5jdGlvbiB2aXpFbnYoKSB7CiAgICByZXR1cm4gKF92aXpFbnZQID8/PSAoYXN5bmMgKCkgPT4gewogICAgICAgIGlmICh0eXBlb2Ygd2luZG93ICE9PSAidW5kZWZpbmVkIiAmJiB3aW5kb3cuX19WSVpfU1RBVElDX18pCiAgICAgICAgICAgIHJldHVybiAic3RhdGljIjsKICAgICAgICB0cnkgewogICAgICAgICAgICBjb25zdCByID0gYXdhaXQgZmV0Y2goIi9faGVhbHRoIiwgeyBjYWNoZTogIm5vLXN0b3JlIiB9KTsKICAgICAgICAgICAgcmV0dXJuIHIub2sgPyAibGl2ZSIgOiAib2ZmbGluZSI7CiAgICAgICAgfQogICAgICAgIGNhdGNoIHsKICAgICAgICAgICAgcmV0dXJuICJvZmZsaW5lIjsKICAgICAgICB9CiAgICB9KSgpKTsKfQovLyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KLy8gTmFycmF0aW9uIOKAlCBwbGF5IGEgZmlsbSdzIG5hcnJhdGlvbi5qc29uIGluIHN5bmMgd2l0aCBpdHMgdGltZWxpbmUuCi8vCi8vIGB2aXogdmVyaWZ5YCAvIGB2aXogcmVuZGVyYCBjb21waWxlIG5hcnJhdGlvbi5qc29uIGludG8gLnR0cy9tYW5pZmVzdC5qc29uIChLb2tvcm8KLy8gY2xpcHMgKyB5b3VyIGF1ZGlvLyBmaWxlcywgZWFjaCBwbGFjZWQgYXQgYSB0aW1lKS4gVGhpcyBwbGF5cyB0aGUgc2FtZSBjbGlwcyBhdCB0aGUKLy8gc2FtZSBtb21lbnRzLCBzbyBzdGVwcGluZyB0aGUgcGFnZSBzb3VuZHMgbGlrZSB0aGUgcmVuZGVyZWQgdmlkZW8uIENhcHRpb25zIHNob3cKLy8gb24gdGhlIHBhZ2UgYmVoaW5kIGEgQ0MgdG9nZ2xlOyBgdml6IHJlbmRlcmAgaGlkZXMgdGhlbSAodGhlIG1wNCBjYXJyaWVzIGEgc3VidGl0bGUKLy8gdHJhY2sgaW5zdGVhZCkuIENhbGwgb25jZSwgYWZ0ZXIgcmVnaXN0ZXJpbmcgdGhlIHRpbWVsaW5lOgovLyAgIHdpbmRvdy5fX3ZpeiA9IHsgdGltZWxpbmU6IHsgdG90YWwsIHNlZWssIHBsYXksIHBhdXNlLCBhdCwgY2hhcHRlcnMgfSB9OwovLyAgIG5hcnJhdGUod2luZG93Ll9fdml6LnRpbWVsaW5lKTsKLy8gSXQgb25seSByZWFkcyB0aW1lbGluZS5hdCgpOiB0aGUgcGxheWhlYWQgY3JlZXBpbmcgZm9yd2FyZCBmcmFtZSB0byBmcmFtZSBpcyAicGxheWluZyI7Ci8vIHN0YW5kaW5nIHN0aWxsIG9yIGp1bXBpbmcgKGEgc2VlaywgYSBzdGVwKSBpcyBub3QuIFNvIGl0IG5lZWRzIG5vIGhvb2tzIGludG8gdGhlIGZpbG0sCi8vIGFuZCBhIGZpbG0gdGhhdCBhdXRvcGxheXMsIGxvb3BzIG9yIGVuZHMgb24gaXRzIG93biBzdGlsbCBzb3VuZHMgcmlnaHQuCmV4cG9ydCBhc3luYyBmdW5jdGlvbiBuYXJyYXRlKHRpbWVsaW5lLCB7IG1hbmlmZXN0ID0gIi50dHMvbWFuaWZlc3QuanNvbiIsIGNvbnRyb2xzID0gbnVsbCB9ID0ge30pIHsKICAgIC8vIEEgcHVibGlzaGVkIGJ1aWxkIGlubGluZXMgdGhlIG1hbmlmZXN0IChjbGlwcyBhcyBkYXRhOiBVUkxzKTsgYSBsaXZlIHBhZ2UgZmV0Y2hlcyBpdC4KICAgIGNvbnN0IGRhdGEgPSB3aW5kb3cuX192aXpUdHMgPz8gKGF3YWl0IGZldGNoKG1hbmlmZXN0KS50aGVuKChyKSA9PiAoci5vayA/IHIuanNvbigpIDogbnVsbCksICgpID0+IG51bGwpKTsKICAgIGlmICghZGF0YSkKICAgICAgICByZXR1cm4gY29uc29sZS5pbmZvKCJbdml6IG5hcnJhdGlvbl0gbm8gLnR0cy9tYW5pZmVzdC5qc29uIHlldCDigJQgYHZpeiB2ZXJpZnlgIGNvbXBpbGVzIG5hcnJhdGlvbi5qc29uIik7CiAgICBmb3IgKGNvbnN0IHcgb2YgZGF0YS53YXJuaW5ncyA/PyBbXSkKICAgICAgICBjb25zb2xlLndhcm4oYFt2aXogbmFycmF0aW9uXSAke3d9YCk7CiAgICBjb25zdCBjdWVzID0gZGF0YS5jdWVzLm1hcCgoYykgPT4gKHsgLi4uYywgZWw6IE9iamVjdC5hc3NpZ24obmV3IEF1ZGlvKGMuc3JjKSwgeyBwcmVsb2FkOiAiYXV0byIsIHZvbHVtZTogTWF0aC5taW4oMSwgMTAgKiogKChjLmdhaW4gPz8gMCkgLyAyMCkpIH0pIH0pKTsKICAgIC8vIENhcHRpb25zOiBib3R0b20tY2VudHJlIGJ5IGRlZmF1bHQ7IGRyYWcgdGhlbSBhbnl3aGVyZSAocmVtZW1iZXJlZCBwZXIgcGFnZSksIGRvdWJsZS1jbGljawogICAgLy8gdG8gcHV0IHRoZW0gYmFjay4gI3Zpei1jYXB0aW9ucyBpcyBoaWRkZW4gaW4gcmVuZGVycyDigJQgdGhlIG1wNCBjYXJyaWVzIGEgc3VidGl0bGUgdHJhY2suCiAgICBjb25zdCBib3ggPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCJkaXYiKTsKICAgIGJveC5pZCA9ICJ2aXotY2FwdGlvbnMiOwogICAgY29uc3QgdGV4dCA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoInAiKTsKICAgIHRleHQuaGlkZGVuID0gdHJ1ZTsKICAgIHRleHQudGl0bGUgPSAiZHJhZyB0byBtb3ZlIMK3IGRvdWJsZS1jbGljayB0byByZXNldCI7CiAgICBib3guYXBwZW5kKHRleHQpOwogICAgYm94LnN0eWxlLmNzc1RleHQgPSAicG9zaXRpb246Zml4ZWQ7aW5zZXQ6MDtwb2ludGVyLWV2ZW50czpub25lO3otaW5kZXg6MjE0NzQ4MzAwMCI7CiAgICB0ZXh0LnN0eWxlLmNzc1RleHQgPSAicG9zaXRpb246Zml4ZWQ7bWFyZ2luOjA7bWF4LXdpZHRoOm1pbig4MGNoLDkwdncpO3BhZGRpbmc6NnB4IDEycHg7Ym9yZGVyLXJhZGl1czo2cHg7YmFja2dyb3VuZDpyZ2JhKDAsMCwwLC43NSk7Y29sb3I6I2ZmZjtmb250OjUwMCAyMHB4LzEuMzUgc3lzdGVtLXVpLHNhbnMtc2VyaWY7dGV4dC1hbGlnbjpjZW50ZXI7cG9pbnRlci1ldmVudHM6YXV0bztjdXJzb3I6Z3JhYjt1c2VyLXNlbGVjdDpub25lO3RvdWNoLWFjdGlvbjpub25lIjsKICAgIGRvY3VtZW50LmJvZHkuYXBwZW5kKGJveCk7CiAgICBjb25zdCBwb3NLZXkgPSBgdml6LWNjLXBvczoke2xvY2F0aW9uLnBhdGhuYW1lfWA7CiAgICBjb25zdCBwbGFjZSA9IChwKSA9PiB7CiAgICAgICAgaWYgKHApCiAgICAgICAgICAgIE9iamVjdC5hc3NpZ24odGV4dC5zdHlsZSwgeyBsZWZ0OiBwLnggKiBpbm5lcldpZHRoICsgInB4IiwgdG9wOiBwLnkgKiBpbm5lckhlaWdodCArICJweCIsIGJvdHRvbTogIiIsIHRyYW5zZm9ybTogInRyYW5zbGF0ZSgtNTAlLC01MCUpIiB9KTsKICAgICAgICBlbHNlCiAgICAgICAgICAgIE9iamVjdC5hc3NpZ24odGV4dC5zdHlsZSwgeyBsZWZ0OiAiNTAlIiwgdG9wOiAiIiwgYm90dG9tOiAidmFyKC0tdml6LWNhcHRpb25zLWJvdHRvbSwyNHB4KSIsIHRyYW5zZm9ybTogInRyYW5zbGF0ZVgoLTUwJSkiIH0pOwogICAgfTsKICAgIHBsYWNlKEpTT04ucGFyc2UobG9jYWxTdG9yYWdlLmdldEl0ZW0ocG9zS2V5KSA/PyAibnVsbCIpKTsKICAgIHRleHQuYWRkRXZlbnRMaXN0ZW5lcigicG9pbnRlcmRvd24iLCAoZSkgPT4gewogICAgICAgIHRleHQuc2V0UG9pbnRlckNhcHR1cmUoZS5wb2ludGVySWQpOwogICAgICAgIHRleHQuc3R5bGUuY3Vyc29yID0gImdyYWJiaW5nIjsKICAgICAgICBjb25zdCBtb3ZlID0gKGV2KSA9PiBwbGFjZSh7IHg6IGV2LmNsaWVudFggLyBpbm5lcldpZHRoLCB5OiBldi5jbGllbnRZIC8gaW5uZXJIZWlnaHQgfSk7CiAgICAgICAgY29uc3QgdXAgPSAoZXYpID0+IHsKICAgICAgICAgICAgdGV4dC5yZW1vdmVFdmVudExpc3RlbmVyKCJwb2ludGVybW92ZSIsIG1vdmUpOwogICAgICAgICAgICB0ZXh0LnN0eWxlLmN1cnNvciA9ICJncmFiIjsKICAgICAgICAgICAgbG9jYWxTdG9yYWdlLnNldEl0ZW0ocG9zS2V5LCBKU09OLnN0cmluZ2lmeSh7IHg6IGV2LmNsaWVudFggLyBpbm5lcldpZHRoLCB5OiBldi5jbGllbnRZIC8gaW5uZXJIZWlnaHQgfSkpOwogICAgICAgIH07CiAgICAgICAgdGV4dC5hZGRFdmVudExpc3RlbmVyKCJwb2ludGVybW92ZSIsIG1vdmUpOwogICAgICAgIHRleHQuYWRkRXZlbnRMaXN0ZW5lcigicG9pbnRlcnVwIiwgdXAsIHsgb25jZTogdHJ1ZSB9KTsKICAgIH0pOwogICAgdGV4dC5hZGRFdmVudExpc3RlbmVyKCJkYmxjbGljayIsICgpID0+IHsgbG9jYWxTdG9yYWdlLnJlbW92ZUl0ZW0ocG9zS2V5KTsgcGxhY2UobnVsbCk7IH0pOwogICAgLy8gQ0MgdG9nZ2xlOiBpbnNpZGUgdGhlIHBhZ2UncyBvd24gY29udHJvbHMgd2hlbiBpdCBoYXMgdGhlbSAoZmlsbSgpIHBhc3NlcyBpdHMgYmFyKSwgZWxzZQogICAgLy8gYm90dG9tLWxlZnQg4oCUIGJvdHRvbS1yaWdodCBiZWxvbmdzIHRvIHRoZSB2aXogY29tbWVudCBidWJibGUuCiAgICBjb25zdCBjYyA9IE9iamVjdC5hc3NpZ24oZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgiYnV0dG9uIiksIHsgdHlwZTogImJ1dHRvbiIsIHRpdGxlOiAiQ2FwdGlvbnMgKGMpIiwgdGV4dENvbnRlbnQ6ICJDQyIgfSk7CiAgICBjYy5zZXRBdHRyaWJ1dGUoImFyaWEtcHJlc3NlZCIsICJ0cnVlIik7CiAgICBpZiAoY29udHJvbHMpCiAgICAgICAgY29udHJvbHMuYXBwZW5kKGNjKTsKICAgIGVsc2UgewogICAgICAgIGNjLnN0eWxlLmNzc1RleHQgPSAicG9zaXRpb246Zml4ZWQ7bGVmdDoxMnB4O2JvdHRvbToxMnB4O2ZvbnQ6NjAwIDExcHggdWktbW9ub3NwYWNlLG1vbm9zcGFjZTtwYWRkaW5nOjNweCA3cHg7Ym9yZGVyLXJhZGl1czo0cHg7Ym9yZGVyOjFweCBzb2xpZCB2YXIoLS1ib3JkZXIsIzMwMzYzZCk7YmFja2dyb3VuZDp2YXIoLS1wYW5lbCwjMTYxYjIyKTtjb2xvcjp2YXIoLS10ZXh0LCNlNmVkZjMpO2N1cnNvcjpwb2ludGVyO3otaW5kZXg6MjE0NzQ4MzAwMCI7CiAgICAgICAgZG9jdW1lbnQuYm9keS5hcHBlbmQoY2MpOwogICAgfQogICAgY2MuZGF0YXNldFsidml6Q2hyb21lIl0gPSAiIjsKICAgIGxldCBvbiA9IGxvY2FsU3RvcmFnZS5nZXRJdGVtKCJ2aXotY2MiKSAhPT0gIjAiOwogICAgY29uc3Qgc2hvdyA9ICgpID0+IHsgY2Muc2V0QXR0cmlidXRlKCJhcmlhLXByZXNzZWQiLCBTdHJpbmcob24pKTsgY2Muc3R5bGUub3BhY2l0eSA9IG9uID8gIjEiIDogIi41IjsgfTsKICAgIGNvbnN0IHRvZ2dsZSA9ICgpID0+IHsgb24gPSAhb247IGxvY2FsU3RvcmFnZS5zZXRJdGVtKCJ2aXotY2MiLCBvbiA/ICIxIiA6ICIwIik7IHNob3coKTsgfTsKICAgIHNob3coKTsKICAgIGNjLm9uY2xpY2sgPSB0b2dnbGU7CiAgICBhZGRFdmVudExpc3RlbmVyKCJrZXlkb3duIiwgKGUpID0+IHsgaWYgKGUua2V5ID09PSAiYyIgJiYgIWUubWV0YUtleSAmJiAhZS5jdHJsS2V5ICYmICEoZS50YXJnZXQgaW5zdGFuY2VvZiBIVE1MRWxlbWVudCAmJiAvSU5QVVR8VEVYVEFSRUEvLnRlc3QoZS50YXJnZXQudGFnTmFtZSkpKQogICAgICAgIHRvZ2dsZSgpOyB9KTsKICAgIGxldCBsYXN0ID0gdGltZWxpbmUuYXQoKTsKICAgIChmdW5jdGlvbiBsb29wKCkgewogICAgICAgIGNvbnN0IHQgPSB0aW1lbGluZS5hdCgpOwogICAgICAgIGNvbnN0IHN0ZXAgPSB0IC0gbGFzdDsKICAgICAgICBsYXN0ID0gdDsKICAgICAgICBjb25zdCBwbGF5aW5nID0gc3RlcCA+IDAgJiYgc3RlcCA8IDAuMjU7IC8vIGZvcndhcmQgYnkgYWJvdXQgYSBmcmFtZTsgYmlnZ2VyIGp1bXBzIGFyZSBzZWVrcwogICAgICAgIGNvbnN0IHJhdGUgPSB0aW1lbGluZS5yYXRlID8/IDE7IC8vIGZpbG0oKSBoYXMgYSBzcGVlZCBjb250cm9sOyB0aGUgY2xpcHMgZm9sbG93IGl0CiAgICAgICAgZm9yIChjb25zdCBjIG9mIGN1ZXMpIHsKICAgICAgICAgICAgaWYgKGMuZWwucGxheWJhY2tSYXRlICE9PSByYXRlKQogICAgICAgICAgICAgICAgYy5lbC5wbGF5YmFja1JhdGUgPSByYXRlOwogICAgICAgICAgICBjb25zdCBpbnRvID0gdCAtIGMudDsKICAgICAgICAgICAgaWYgKHBsYXlpbmcgJiYgaW50byA+PSAwICYmIGludG8gPCBjLmR1cikgewogICAgICAgICAgICAgICAgLy8gU3RhcnQsIG9yIHB1bGwgYmFjayBpbnRvIHN5bmMgaWYgdGhlIGZpbG0gYW5kIHRoZSBjbGlwIGhhdmUgZHJpZnRlZCBhcGFydC4KICAgICAgICAgICAgICAgIGlmIChjLmVsLnBhdXNlZCB8fCBNYXRoLmFicyhjLmVsLmN1cnJlbnRUaW1lIC0gaW50bykgPiAwLjMpIHsKICAgICAgICAgICAgICAgICAgICBjLmVsLmN1cnJlbnRUaW1lID0gaW50bzsKICAgICAgICAgICAgICAgICAgICBjLmVsLnBsYXkoKS5jYXRjaCgoKSA9PiB7IH0pOwogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CiAgICAgICAgICAgIGVsc2UgaWYgKCFjLmVsLnBhdXNlZCkKICAgICAgICAgICAgICAgIGMuZWwucGF1c2UoKTsKICAgICAgICB9CiAgICAgICAgY29uc3Qgc2FpZCA9IG9uICYmIGN1ZXMuZmluZCgoYykgPT4gYy50ZXh0ICYmIHQgPj0gYy50ICYmIHQgPCBjLnQgKyBjLmR1cik7CiAgICAgICAgdGV4dC50ZXh0Q29udGVudCA9IHNhaWQgPyBzYWlkLnRleHQgPz8gIiIgOiAiIjsKICAgICAgICB0ZXh0LmhpZGRlbiA9ICFzYWlkOwogICAgICAgIHJlcXVlc3RBbmltYXRpb25GcmFtZShsb29wKTsKICAgIH0pKCk7Cn0K","/_kit/poster.js":"data:text/javascript;base64,Ly8gR0VORVJBVEVEIGZyb20ga2l0L3NyYy9wb3N0ZXIudHMgYnkgYGJ1biBydW4gc3luYzpraXRgIOKAlCBlZGl0IHRoYXQgZmlsZSwgbm90IHRoaXMgb25lLgovLyBQb3N0ZXIgbWVjaGFuaWNzIOKAlCBgL19raXQvcG9zdGVyLmpzYC4gTG9hZCBhcyBhIG1vZHVsZTsgaXQgc2VsZi1ydW5zLgovLwovLyAgIDxsaW5rIHJlbD0ic3R5bGVzaGVldCIgaHJlZj0iL19raXQvcG9zdGVyLmNzcyI+Ci8vICAgPHNjcmlwdCB0eXBlPSJtb2R1bGUiIHNyYz0iL19raXQvcG9zdGVyLmpzIj48L3NjcmlwdD4KLy8KLy8gU2V0cyBgLS1zYCBvbiBkb2N1bWVudEVsZW1lbnQg4oCUIHRoZSBzaW5nbGUgdmFsdWUgdGhhdCBkcml2ZXMgQk9USCB0aGUgY2FyZCdzCi8vIHNjYWxlIGFuZCwgaW4gZGl2ZSBtb2RlLCB0aGUgaGVpZ2h0IGAjZml0YCByZXNlcnZlcyBmb3IgaXQuIEV2ZXJ5dGhpbmcgZWxzZQovLyBhYm91dCB3aHkgaXMgaW4gcG9zdGVyLmNzczsgdGhpcyBpcyBqdXN0IHRoZSBvbmUgbnVtYmVyLgovLwovLyBNb2RlIGNvbWVzIGZyb20gdGhlIGJvZHkgY2xhc3MsIHNvIHRoZSBzYW1lIGZpbGUgc2VydmVzIGJvdGggdGVtcGxhdGVzOgovLyAgIC5vZy1wb3N0ZXIgICAgICAgIHNjYWxlIHRvIGZpdCBib3RoIGF4ZXMgKHRoZSBjYXJkIGlzIHRoZSB3aG9sZSBwYWdlKQovLyAgIC5vZy1wb3N0ZXIucG9zdGVyLWRpdmUgIHNjYWxlIHRvIFdJRFRIIG9ubHkgICAgKHRoZSBjYXJkIHRvcHMgYSBzY3JvbGxhYmxlIHBhZ2UpCi8vCi8vIENhcHBlZCBhdCAxIHNvIHRoZSAtLW9nIHNob3Qgc3RheXMgcGl4ZWwtbmF0aXZlIGluc3RlYWQgb2YgYmVpbmcgdXBzY2FsZWQuCmNvbnN0IGZpdCA9ICgpID0+IHsKICAgIGNvbnN0IGRpdmUgPSBkb2N1bWVudC5ib2R5LmNsYXNzTGlzdC5jb250YWlucygib2ctcG9zdGVyLWRpdmUiKTsKICAgIGNvbnN0IHMgPSBkaXZlCiAgICAgICAgPyBNYXRoLm1pbihpbm5lcldpZHRoIC8gMTIwMCwgMSkKICAgICAgICA6IE1hdGgubWluKGlubmVyV2lkdGggLyAxMjAwLCBpbm5lckhlaWdodCAvIDYzMCk7CiAgICBkb2N1bWVudC5kb2N1bWVudEVsZW1lbnQuc3R5bGUuc2V0UHJvcGVydHkoIi0tcyIsIFN0cmluZyhzKSk7Cn07CmFkZEV2ZW50TGlzdGVuZXIoInJlc2l6ZSIsIGZpdCk7CmZpdCgpOwpleHBvcnQge307Cg=="}}</script>
+<script>window.__VIZ_STATIC__=true;</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>analyze-github-workflow-failure — it never reads the whole log</title>
+<!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+<meta name="viz:uid" content="v-414b2e199ede">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="analyze-github-workflow-failure">
+<meta name="viz:description" content="Finds the root cause of a failed GitHub Actions run by pulling only the failed steps first, and escalating to five capped, error-typed greps over the log zip only when that isn't enough.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:page-kind" content="poster-dive">
+<style>
+/* viz-kit.css — the /viz house style. Load with:
+     <link rel="stylesheet" href="/_kit/viz-kit.css">
+   Served by the viz server at /_kit/viz-kit.css from the skill's own kit/ dir.
+
+   Why this exists: nearly every viz independently re-derived the same dark theme
+   (a GitHub-dark palette), re-guessed the exact hexes (so the "same" background
+   drifted across files), and invented its own variable names (--txt vs --text vs
+   --ink) for identical concepts. This file fixes the palette and the names ONCE so
+   you can reach for var(--accent) / var(--good) instead of re-picking colors.
+
+   The dark GitHub-ish palette is the DEFAULT, not a constraint. Every rule below
+   reads its colors through var() — there is not one hardcoded hex outside :root —
+   so a page needing a brand or one-off palette overrides the tokens in a later
+   :root and keeps every component. Re-theme; don't fork. See kit/README.md. */
+
+:root {
+  /* Surfaces, back to front */
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel-2: #21262d;
+  --border: #30363d;
+
+  /* Text — three tiers. --faint is for de-emphasized chrome (axis ticks, units,
+     footnotes, "n of m" counters); 72 vizzes re-derived a third tier by hand
+     before it existed here, at half a dozen different grays. */
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --faint: #6e7681;
+
+  /* Intent — accents that carry meaning */
+  --accent: #58a6ff; /* primary / links / selection */
+  --good: #3fb950; /* success / healthy / "yes" */
+  --warn: #d29922; /* caution / pending */
+  --danger: #f85149; /* error / blocked / "no" */
+
+  /* Categorical ramp — visually separable hues for diagram categories / series.
+     Use these when you need N separable colors, NOT meaning.
+
+     ⚠ ALIASING TRAP — c1/c2/c3/c6 are byte-identical to the intent colors above:
+       --c1 == --accent   --c2 == --good   --c3 == --warn   --c6 == --danger
+     So a categorical series rendered in --c2 reads as "success" next to anything
+     using --good, and --c6 reads as "error". Only --c4, --c5, --c7, --c8 are
+     unique to this ramp. This has already caused rework (a poster themed on --c2
+     went monochrome against a --good meter and had to be re-themed to --c5).
+     If your viz mixes categorical series WITH semantic color, pick from
+     --c4/--c5/--c7/--c8 first, then reach for the aliased four knowingly.
+
+     The four aliased slots are DEFINED AS the intent colors rather than repeating
+     their hexes. That's deliberate: the aliasing is self-evident wherever you read
+     this file, it cannot drift, and a re-theme keeps them in sync automatically.
+     The slots with a literal hex are the meaning-free ones. */
+  --c1: var(--accent); /* blue  — ALIAS, reads as "primary/selected" */
+  --c2: var(--good); /* green — ALIAS, reads as "success" */
+  --c3: var(--warn); /* amber — ALIAS, reads as "caution" */
+  --c4: #bc8cff; /* purple — meaning-free */
+  --c5: #4ec9b0; /* teal   — meaning-free */
+  --c6: var(--danger); /* red — ALIAS, reads as "error" */
+  --c7: #5d52b4; /* indigo  — meaning-free (ΔE 21.3 from the nearest intent color) */
+  --c8: #b70385; /* magenta — meaning-free (ΔE 20.9) */
+  /* No orange slot exists on purpose: every orange sits between --danger (hue 27°)
+     and --warn (80°), and none clears ΔE 15 from both under CVD simulation. The
+     obvious #f0883e is ΔE 1.5 from --warn to a protanope — indistinguishable. */
+
+  /* Type */
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Spacing rhythm */
+  --r: 8px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+html {
+  /* Paint the canvas itself. body is height:100% (one viewport), so on a page taller
+     than the viewport the area BELOW the body box would otherwise reveal the browser's
+     default (lighter) canvas when scrolled — showing as a horizontal "line" mid-page
+     where body's --bg ends. Putting --bg on the root keeps the whole canvas dark. */
+  background-color: var(--bg);
+}
+
+body {
+  /* A faint top-glow over the flat background — the recurring "radial-gradient at
+     60% 0%" idiom, standardized. Sized large and faded to transparent well past the
+     fold (color-mix dilutes --panel) so the glow→--bg transition never forms a
+     visible edge mid-page — the earlier tight 600px gradient left a "boundary" band. */
+  background:
+    radial-gradient(1600px 1000px at 50% -30%, color-mix(in srgb, var(--panel) 55%, transparent), transparent 75%),
+    var(--bg);
+  color: var(--text);
+  font: 14px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Links. There was no bare `a` rule here until 2026-08-19, so every naked anchor
+   in every viz fell through to the user-agent default: #0000EE on a #0d1117
+   background (2.3:1 — below the 4.5:1 floor), and #551A8B once visited, which is
+   1.5:1 and effectively invisible. Both tiers now come from tokens, so they follow
+   a re-theme. --c4 keeps the "visited is purple" convention at 8.2:1 instead of
+   abandoning it. Lowest possible specificity, so any component rule still wins. */
+a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+a:visited { color: var(--c4); }
+a:hover { color: var(--text); text-decoration-thickness: 2px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+/* Header: title + one-line muted subtitle — the chrome ~19/22 vizzes open with. */
+.viz-header {
+  padding: 20px 24px;
+}
+.viz-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.viz-header .sub,
+.sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* Panels / cards */
+.panel,
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--r) * 1.5);
+  padding: 16px;
+}
+
+/* Slide-in detail drawer (click a node → details). Toggle .open. */
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(420px, 90vw);
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  transform: translateX(100%);
+  transition: transform 0.2s ease;
+  overflow: auto;
+  padding: 20px;
+  z-index: 50;
+}
+.drawer.open {
+  transform: none;
+}
+
+/* Legend: the single most common component (~16/22), reinvented differently each
+   time. Two swatch shapes: a filled square for nodes, a short rule for edge types. */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex: none;
+  background: var(--accent);
+}
+/* Colour comes from `background` (inherited from .swatch), NOT border-top. It was
+   `height:0` + `border-top` until 2026-08-19, which made the documented way to
+   colour a swatch — an inline `background:` — a silent no-op: every line swatch in
+   the corpus rendered accent-blue regardless of what it was labelling. All 5
+   usages passed `background`; none passed `border-top-color`. */
+.swatch.line {
+  width: 16px;
+  height: 2px;
+  border-radius: 0;
+}
+/* Round swatch. Its absence is why 25 vizzes abandoned .swatch entirely and
+   hand-rolled a .dot/.sw at five different sizes — the shape was the blocker,
+   not the component. */
+.swatch.dot {
+  border-radius: 50%;
+}
+
+/* Status / label pill — uppercase micro-badge. Recurs in ~120 files (the
+   border-radius:999px + text-transform:uppercase idiom) and was re-derived at a
+   different size almost every time. Modifiers tint text + border together. */
+.pill {
+  display: inline-block;
+  font: 700 11px var(--sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.pill.accent {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+.pill.good {
+  color: var(--good);
+  border-color: color-mix(in srgb, var(--good) 50%, transparent);
+}
+.pill.warn {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 50%, transparent);
+}
+.pill.danger {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 50%, transparent);
+}
+
+/* Animated "flow" edge — dashed line whose dashes drift along the path. The
+   @keyframes was identical everywhere but for the offset magnitude; here it's one
+   class. Apply to an SVG <path>/<line>: <path class="flow" .../>. */
+@keyframes viz-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+.flow {
+  stroke-dasharray: 6 4;
+  animation: viz-dash 1s linear infinite;
+}
+
+/* Reduced motion. 108 of 161 corpus vizzes animate (rAF, @keyframes, transitions,
+   setInterval); 3 guarded it. Guarding per-viz was never going to happen, so the
+   kit does it once for everyone that links this file.
+
+   Motion is not removed, it is collapsed: near-zero durations keep transition/
+   animation END events firing, so state machines that advance on `transitionend`
+   still advance instead of deadlocking (the usual bug in a naive
+   `animation: none !important` reset).
+
+   This cannot reach a JS rAF loop. If your viz animates in JS, gate it yourself:
+     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+   and jump to the end state instead of tweening to it. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* The dashed-edge drift reads as decoration, not information — stop it dead
+     rather than freezing it mid-dash. */
+  .flow {
+    animation: none !important;
+  }
+}
+
+/* Auto-wrapping SVG label (see labelBox() in viz.js). Fills its <foreignObject>
+   and centers; overflow is clipped, never spilled. */
+.vsvg-label {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text);
+  font: 12px/1.25 var(--sans);
+  overflow: hidden;
+  padding: 2px 6px;
+}
+
+/* --- .elsewhere — third-party explainers -------------------------------------
+   A pointer to somebody ELSE explaining the same thing. Deliberately its own
+   look, because a page that cites standards needs three visually distinct
+   kinds of evidence and a reader must never mistake one for another:
+
+     normative   what makes the claim true      (RFC / NIST / regulator)
+     first-party what we read or decided        (source code, our own choice)
+     elsewhere   a second teacher               <- this
+
+   Uses --c5 (teal, one of the meaning-free categorical slots) so it reads as
+   "a different kind of thing" rather than as success or warning.
+
+   Convention that makes it worth having: the `.why` line says what the source
+   is actually good for, INCLUDING where it is thinner than its reputation. An
+   unread link presented as authoritative is the exact impression this component
+   exists to prevent. Pair it with a rot checker — external pages 404.  */
+.elsewhere {
+  border-left: 2px solid var(--c5);
+  padding: 8px 0 2px 12px;
+  margin-top: 12px;
+}
+.elsewhere > .lbl {
+  display: block;
+  font: 700 9px/1 var(--sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c5);
+  margin-bottom: 5px;
+}
+.elsewhere a {
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid var(--c5);
+}
+.elsewhere a:hover { color: var(--c5) }
+.elsewhere .who { color: var(--faint); font-size: 0.85em; margin-left: 6px }
+.elsewhere .why {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.92em;
+  line-height: 1.55;
+}
+
+</style>
+<style>
+/* Poster mechanics — `/_kit/poster.css`.
+ *
+ * A POSTER is a viz that IS its own 1200×630 OG card (`viz:card=self`):
+ * viz verify --og clips `.og-card` straight to og.auto.png, so there is no
+ * separate hero.html. This file is the *mechanics* only — scaling the fixed
+ * card to any viewport. Everything visual comes from `/_kit/viz-og.css`
+ * (`.frame`, `.left`, `.title`, `.essence`, `.chips`, `.panel`, `.stat`…),
+ * exactly as it does for a scaffolded hero.
+ *
+ * THE MODE CLASS IS NAMESPACED, AND MUST STAY THAT WAY. It was `.poster` for
+ * about an hour, which broke a real card: that page had its own inner
+ * <div class="poster"> carrying transform:scale(.735), so putting `poster` on
+ * <body> made the page's own rule style the body and shrank the whole card to
+ * exactly 73.5%. A poster is a likely thing for a poster to call something.
+ * Same reason the dive mode is `og-poster-dive` and not `dive` — the dive
+ * template already uses `.dive` for the article below the card. Anything this
+ * file puts on <body> shares a namespace with every page that loads it.
+ *
+ * Two modes, one stylesheet:
+ *
+ *   <body class="poster">        the card IS the whole page — scale to fit BOTH
+ *                                axes, page does not scroll.
+ *   <body class="poster poster-dive">   the card is the TOP of a scrollable page —
+ *                                scale to WIDTH only, page scrolls beneath it.
+ *
+ * These were two forked templates that shared nine hand-copied lines. The trap
+ * that fork existed to document is real and is handled below: `transform:scale()`
+ * shrinks a box VISUALLY but leaves its layout box full size, so a dive poster
+ * that merely unlocks scrolling reserves the full 630px and opens a dead gap
+ * under the card. `#fit`'s height has to be collapsed to the SCALED height,
+ * which is why one `--s` drives both.
+ *
+ * `--s` is set on documentElement, NOT on `.og-card`: custom properties inherit
+ * DOWNWARD and `#fit` is the card's PARENT, so setting it on the card would
+ * leave `#fit`'s height:calc() resolving against an undefined `--s`.
+ *
+ * Capped at 1 so the --og shot (taken at a 1200px-wide viewport) stays
+ * pixel-native rather than being upscaled.
+ */
+
+.og-poster #fit {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.og-poster .og-card {
+  position: relative;
+  width: 1200px;
+  height: 630px;
+  overflow: hidden;
+  transform: scale(var(--s, 1));
+}
+
+/* --- mode 1: the card is the whole page ------------------------------ */
+.og-poster:not(.og-poster-dive),
+html:has(.og-poster:not(.og-poster-dive)) { overflow: hidden }
+
+.og-poster:not(.og-poster-dive) #fit {
+  position: fixed;
+  inset: 0;
+}
+.og-poster:not(.og-poster-dive) .og-card { transform-origin: center }
+
+/* --- mode 2: the card tops a scrollable page ------------------------- */
+/* top-centre origin + a collapsed reserved height is the whole fix for the
+   dead-gap trap described above. */
+.og-poster-dive #fit {
+  height: calc(630px * var(--s, 1));
+}
+.og-poster-dive .og-card { transform-origin: top center }
+
+</style>
+<style>
+  /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c4) 15%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 112%, color-mix(in srgb, var(--c5) 12%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 486px; gap:36px; align-items:center; padding:54px 62px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:13.5px;
+            letter-spacing:.13em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:54px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.4px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c4); }
+  p.sub{ font-size:18px; line-height:1.46; color:var(--muted); margin:0 0 20px; max-width:520px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:15px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:520px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:15px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the probe switchboard = the "proof" slot. ONE cheap command up top; the zip
+     only opens on a named condition, and then it is never read — it is sniped by
+     five error-typed greps, each with its own hard line cap. The caps ARE the
+     argument, so they get the strongest treatment in the panel. */
+  .cap{ font-family:var(--mono); font-size:11.5px; letter-spacing:.13em; color:var(--muted); margin-bottom:9px; }
+  .cap b{ color:var(--c5); }
+  .cmd{ font-family:var(--mono); font-size:13px; color:var(--text); background:color-mix(in srgb, var(--panel) 80%, transparent);
+        border:1px solid var(--border); border-left:3px solid var(--c5); border-radius:9px; padding:9px 12px; }
+  .cmd i{ font-style:normal; color:var(--muted); }
+  .gate{ display:flex; align-items:center; gap:9px; font-family:var(--mono); font-size:11px;
+         letter-spacing:.1em; color:var(--warn); margin:10px 0 9px; }
+  .gate .ln{ flex:1; height:1px; background:color-mix(in srgb, var(--warn) 35%, transparent); }
+  .probes{ display:flex; flex-direction:column; gap:5px; }
+  .p{ display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center;
+      background:color-mix(in srgb, var(--panel) 70%, transparent); border:1px solid var(--border);
+      border-left:3px solid var(--faint); border-radius:8px; padding:7px 10px 7px 11px; }
+  .p .k{ font-family:var(--mono); font-size:12px; letter-spacing:.04em; color:var(--text); }
+  .p .n{ display:block; font-family:var(--mono); font-size:10.5px; color:var(--muted); margin-top:2px;
+         white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .p .lim{ font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:var(--c5);
+           border:1px solid color-mix(in srgb, var(--c5) 40%, transparent); border-radius:99px;
+           padding:2px 8px; white-space:nowrap; }
+  .p.a{ border-left-color:var(--c4); } .p.b{ border-left-color:var(--c5); }
+  .p.c{ border-left-color:var(--c8); } .p.d{ border-left-color:var(--c7); }
+  .p.e{ border-left-color:var(--faint); }
+  .p.e .k{ color:var(--muted); }
+  .pfoot{ font-family:var(--mono); font-size:11px; letter-spacing:.09em; color:var(--faint); margin-top:10px; }
+  .pfoot b{ color:var(--c5); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); text-decoration:none; }
+  .dive a:hover{ text-decoration:underline; }
+  code{ font-family:var(--mono); font-size:.9em; color:var(--c5); }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  /* ── poster-standard dive additions: h3 under a beat, the where table, the figure ── */
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); border-bottom:none; color:var(--text);
+                  padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--c5); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+<meta property="og:type" content="website">
+<meta property="og:title" content="analyze-github-workflow-failure">
+<meta property="og:description" content="Finds the root cause of a failed GitHub Actions run by pulling only the failed steps first, and escalating to five capped, error-typed greps over the log zip only when that isn't enough.">
+<meta property="og:url" content="https://rascaltwo.github.io/ai-setup/skill-analyze-github-workflow-failure/">
+<meta property="og:image" content="https://rascaltwo.github.io/ai-setup/skill-analyze-github-workflow-failure/og.auto.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="analyze-github-workflow-failure" data-viz-id="poster-card" data-label="analyze-github-workflow-failure poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · ANALYZE-GITHUB-WORKFLOW-FAILURE</div>
+      <h1 class="hook">It never reads<br><em>the whole log.</em></h1>
+      <p class="sub">A failed Actions run is mostly green. The first pass pulls <b>only the failed steps</b> — one <b>gh</b> command — and usually that is the answer. The full log zip opens only when that came back <b>truncated or ambiguous</b>, and even then nothing is read end to end: five error-typed greps, each with a hard line cap.</p>
+      <p class="not">It names the broken step and the cause.<br>It writes <b>no fix</b> and re-runs <b>nothing</b>.</p>
+      <div class="trigger"><span>say</span>&nbsp;"analyze run 1234" — or just "latest"</div>
+    </div>
+    <div>
+      <div class="cap">PASS 1 &nbsp;·&nbsp; FAILED STEPS ONLY, <b>NO ZIP</b></div>
+      <div class="cmd">gh run view &lt;id&gt; --log-failed <i>2&gt;&amp;1</i></div>
+      <div class="gate"><span>↓&nbsp; ESCALATE ONLY IF: TRUNCATED · UNCLEAR · NEEDS CONTEXT</span><span class="ln"></span></div>
+      <div class="cap">PASS 2 &nbsp;·&nbsp; UNZIP THE RUN, THEN <b>SNIPE IT</b></div>
+      <div class="probes">
+        <div class="p a"><div><span class="k">TERRAFORM ERROR BLOCK</span><span class="n">grep "│" minus the ─ ╷ ╵ rules</span></div><span class="lim">head −30</span></div>
+        <div class="p b"><div><span class="k">PROVIDER CRASH</span><span class="n">panic | goroutine | SIGSEGV</span></div><span class="lim">head −20</span></div>
+        <div class="p c"><div><span class="k">HTTP API ERROR</span><span class="n">HTTP/x.y 4xx-5xx | errorCode | errorSummary</span></div><span class="lim">head −20</span></div>
+        <div class="p d"><div><span class="k">MISSING SCOPE / 403</span><span class="n">Www-Authenticate | insufficient_scope</span></div><span class="lim">head −10</span></div>
+        <div class="p e"><div><span class="k">TYPE UNKNOWN — CATCH-ALL</span><span class="n">Error: | error | panic | failed | Fatal, minus a noise list</span></div><span class="lim">head −40</span></div>
+      </div>
+      <div class="pfoot">↑ FIVE PROBES, <b>120 LINES</b> OF CEILING BETWEEN THEM</div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">The failure is four lines. The log is not.</h2>
+  <p>The thing you actually want out of a red CI run — which job, which step, what it said — is a handful of lines buried in megabytes of successful setup, cache restores and dependency chatter. Handing all of that to a model is how you spend a fortune to read something you didn't need.</p>
+  <p class="m">So the skill is built around one refusal: <b>never download the whole log until you have a reason to</b>. Two passes, and the second one has named conditions instead of a judgement call.</p>
+
+  <h2 data-beat="using">"Latest" is narrower than it sounds</h2>
+  <p>You can hand it a run ID, or say <b>latest</b>. But "latest" resolves through a one-element list — it takes the single most recent run and <em>then</em> checks whether it failed:</p>
+  <pre>gh run list --limit 1 --json databaseId,conclusion \
+  -q '.[] | select(.conclusion=="failure") | .databaseId'</pre>
+  <p class="m">So it means <b>"the latest run, if that run failed"</b> — not "the most recent failure". If something has since gone green, or a run is still in flight, the selector matches nothing and you get an empty string rather than an older failure. Fine for the real use case (you just watched it go red), worth knowing before you hunt a phantom bug in the skill.</p>
+
+  <h2 data-beat="limits">It stops at the diagnosis</h2>
+  <p>Both passes end at the same four-part report, and the shape is the deliverable: <b>which job and step failed</b>, <b>the exact error message</b>, <b>the likely root cause</b>, <b>the suggested fix or next step</b>. Suggested. Nothing is patched, nothing is re-run, nothing is pushed — the fix is a sentence handed back to you, and applying it is a separate decision you make.</p>
+  <ul>
+    <li><b>It never re-runs anything.</b> No <code>gh run rerun</code>, no dispatch. Triggering is a different skill's job.</li>
+    <li><b>It reads one run.</b> No comparison against the last green run, no history, no flake detection.</li>
+    <li><b>Every probe is bounded by <code>head</code>.</b> That caps the cost and it also means a failure whose evidence sits past the cut is simply not seen.</li>
+  </ul>
+
+  <h2 data-beat="limits">When the answer isn't in the log at all</h2>
+  <p class="m">This skill is a reader. It works on the assumption that the run already printed the truth somewhere and the job is to find it. When a provider swallowed the real error and emitted an opaque "unknown error" instead, no grep will recover it — that's <a href="../skill-diagnose-terraform-unknown-error/">diagnose-terraform-unknown-error</a>, which adds temporary debug logging, triggers a fresh run, and extracts the actual HTTP exchange. Different tool, because it's a different problem: this one reads evidence, that one has to go create some.</p>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>Integrates</td><td><b>GitHub Actions run logs, via the <code>gh</code> CLI</b> — two endpoints and nothing else: <code>gh run view --log-failed</code> for the cheap pass, and the REST route <code>repos/&lt;owner&gt;/&lt;repo&gt;/actions/runs/&lt;id&gt;/logs</code> for the zip.</td></tr>
+    <tr><td>Requires</td><td><code>gh</code>, already authenticated against the repo. Plus <code>unzip</code>, <code>grep</code> and <code>head</code> — every probe in the deep pass is those three.</td></tr>
+    <tr><td>Where it reads from</td><td>The repo you are standing in. It does not take an owner/repo argument for the cheap pass; <code>gh</code> resolves that from the git remote.</td></tr>
+    <tr><td>Its state</td><td><b>None.</b> It <b>keeps nothing between runs</b> — no cache, no index, no history. The one file it creates is <code>/tmp/run-logs.zip</code>, overwritten by the next invocation and owned by the OS's temp cleanup, not by the skill. Nothing under <code>~/.agents/state/</code>.</td></tr>
+    <tr><td>Its other half</td><td>Two files in the skill directory, not one prompt: <code>quick-analysis.md</code> and <code>deep-analysis.md</code>. <code>SKILL.md</code> is a router that says which to read and when.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">Two passes, and what fires the second</h2>
+  <p class="m">From a run ID to a root cause, tracing the one path the skill actually takes.</p>
+
+  <div class="fig" data-viz-id="log-pipeline" data-label="stepper: cheap pass, escalation test, targeted probe">
+    <div class="stage" id="stage"></div>
+    <p class="lede" id="lede"></p>
+    <div class="ctrl">
+      <button id="prev" aria-label="previous step">‹ back</button>
+      <button id="play">▶ play</button>
+      <button id="next" aria-label="next step">next ›</button>
+      <span class="pos" id="pos"></span>
+      <span class="hint">← → arrow keys</span>
+    </div>
+  </div>
+
+  <h3>Pass one asks GitHub to do the filtering</h3>
+  <pre>gh run view &lt;run-id&gt; --log-failed 2&gt;&amp;1   <span class="c"># every failed step, one shot, no zip</span></pre>
+  <p>Then it scans that output for the four things that usually carry the answer: the job and step name, the error message / exit code / exception, any <b>HTTP status code</b> in the 4xx–5xx range, and provider-specific error summaries. Most runs end here. The skill calls this pass "lightweight and token-efficient" and means it as the reason to try it first, not as a disclaimer.</p>
+
+  <h3>The escalation has named conditions</h3>
+  <p>Pass two is not "be thorough anyway". It fires on exactly three states, and they're all properties of the pass-one <em>output</em>, not of the failure: the output was <b>truncated</b>, the error was <b>unclear</b>, or <b>more context is needed</b>. Only then does it pull the whole run:</p>
+  <pre>gh api repos/&lt;owner&gt;/&lt;repo&gt;/actions/runs/&lt;run-id&gt;/logs &gt; /tmp/run-logs.zip</pre>
+  <p>And having paid for the zip, it still doesn't read it. It picks a probe by what the error <em>looks</em> like and greps for that signature alone — the Terraform box-drawing block (<code>grep -a "│"</code> minus the rule characters), a Go panic (<code>panic|goroutine|SIGSEGV</code>), an HTTP status line, a <code>Www-Authenticate</code> header or <code>insufficient_scope</code>. Every one is piped through <code>head</code>, so the worst case is bounded before it starts.</p>
+  <pre><span class="c"># the catch-all, for when you can't type the error yet</span>
+unzip -p /tmp/run-logs.zip \
+  | grep -a -E "(Error:|error|panic|failed|Fatal)" \
+  | grep -v "azure\|microsoft\|github\.com\|blob\|management\|login\|storage" \
+  | head -40</pre>
+  <p class="m"><code>unzip -p</code> is doing real work there: it streams the archive members to stdout <b>without ever unpacking them to disk</b>, so a multi-hundred-megabyte log costs one pipe and no extraction. <code>-a</code> is on every probe for the matching reason — that concatenated stream contains control bytes, and without <code>-a</code> grep decides it is binary and stops printing matching lines.</p>
+
+  <h3>The denylist cuts both ways</h3>
+  <div class="callout"><b>It filters on substrings, not on sources.</b> That second <code>grep -v</code> exists because "error" matches a thousand innocent Azure and GitHub URLs — but a genuine failure whose message contains <em>management</em>, <em>storage</em>, <em>login</em> or <em>blob</em> is thrown out with the noise. It is a noise filter tuned against one shop's pipelines, not a general one. If the catch-all comes back empty, that is the first thing to suspect — not evidence that the run is clean.</div>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module">import "/_kit/poster.js";</script>
+<script type="module">
+// app.ts
+import { stepper, $ } from "/_kit/viz.js";
+var S = [
+  {
+    t: "RESOLVE THE RUN",
+    rows: [
+      ["an explicit run id", "use it", "ok"],
+      ['"latest" → gh run list --limit 1', '+ select(.conclusion=="failure")', "ok"],
+      ["latest run went green", "empty string, not an older failure", "bad"]
+    ],
+    lede: '"Latest" is <b>the latest run, if it failed</b> — a one-element list filtered after the fact, not a search for the most recent failure.'
+  },
+  {
+    t: "PASS ONE — LET GITHUB FILTER",
+    rows: [
+      ["gh run view &lt;id&gt; --log-failed", "failed steps only", "ok"],
+      ["the zip", "not downloaded", "ok"],
+      ["cost", "kilobytes, not megabytes", "ok"]
+    ],
+    lede: "The cheap pass exists because the expensive one is almost never needed. Most runs are diagnosed and finished at this step."
+  },
+  {
+    t: "SCAN FOR FOUR THINGS",
+    rows: [
+      ["job + step name", "found", "ok"],
+      ["error / exit code / exception", "found", "ok"],
+      ["HTTP 4xx–5xx", "found", "ok"],
+      ["provider error summary", "found", "ok"]
+    ],
+    lede: "A fixed checklist, not free reading. Those four carry the answer in the overwhelming majority of red runs."
+  },
+  {
+    t: "ESCALATE?",
+    rows: [
+      ["output truncated", "escalate", "bad"],
+      ["error unclear", "escalate", "bad"],
+      ["more context needed", "escalate", "bad"],
+      ["none of the three", "report and stop", "ok"]
+    ],
+    lede: 'Three named conditions, all properties of the <b>pass-one output</b> rather than of the failure. "Be thorough anyway" is not one of them.'
+  },
+  {
+    t: "PULL THE ZIP",
+    rows: [
+      ["gh api …/actions/runs/&lt;id&gt;/logs", "&gt; /tmp/run-logs.zip", "ok"],
+      ["unzip -p", "streamed, never extracted", "ok"],
+      ["read the whole thing", "still no", "bad"]
+    ],
+    lede: "Paying for the archive does not mean reading it. <code>unzip -p</code> concatenates the members to stdout so the next stage can be a single grep."
+  },
+  {
+    t: "PICK ONE PROBE",
+    rows: [
+      ["terraform", 'grep -a "│" minus ─ ╷ ╵', "ok"],
+      ["provider crash", "panic|goroutine|SIGSEGV", "ok"],
+      ["http", "HTTP/1.1 [4-5]xx · Www-Authenticate", "ok"],
+      ["unknown", "catch-all + denylist | head -40", "bad"]
+    ],
+    lede: "Probe chosen by what the error <em>looks</em> like. <code>-a</code> on every one, because the stream carries control bytes and grep would otherwise call it binary and go quiet."
+  },
+  {
+    t: "REPORT, THEN STOP",
+    rows: [
+      ["which job and step", "named", "ok"],
+      ["the exact error", "quoted", "ok"],
+      ["likely root cause", "stated", "ok"],
+      ["the fix", "suggested, never applied", "bad"]
+    ],
+    lede: "Same four-part shape from either pass. Nothing is patched, re-run or pushed — applying the fix is a decision that stays with you."
+  }
+];
+var stage = $("#stage");
+var lede = $("#lede");
+var pos = $("#pos");
+var render = (i) => {
+  const s = S[i];
+  stage.innerHTML = `<div style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--c4);margin-bottom:12px">${i + 1} · ${s.t}</div>` + s.rows.map(([k, v, st]) => `
+      <div style="display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:13px;
+                  padding:7px 0;border-bottom:1px solid var(--border)">
+        <span style="color:var(--text)">${k}</span>
+        <span style="color:${st === "ok" ? "var(--good)" : "var(--danger)"};white-space:nowrap">${st === "ok" ? "✓" : "✗"} ${v}</span>
+      </div>`).join("");
+  lede.innerHTML = s.lede;
+  pos.textContent = `${i + 1} / ${S.length}`;
+};
+var st = stepper({ n: S.length, onStep: render, autoplayMs: 2600, hashKey: "pass" });
+$("#next").onclick = () => st.next();
+$("#prev").onclick = () => st.prev();
+var play = $("#play");
+var on = false;
+play.onclick = () => {
+  on = !on;
+  on ? st.play() : st.pause();
+  play.textContent = on ? "❚❚ pause" : "▶ play";
+};
+for (const el of [$("#next"), $("#prev")])
+  el.addEventListener("click", () => {
+    on = false;
+    play.textContent = "▶ play";
+  });
+</script>
+<a id="__viz_dl" href="#" role="button" aria-label="Save a copy of this page"
+title="Save a copy" style="position:fixed;bottom:14px;right:14px;z-index:2147483646;
+width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+border-radius:8px;background:rgba(20,20,22,.55);color:#fff;opacity:.35;
+backdrop-filter:blur(4px);transition:opacity .15s;text-decoration:none"
+onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.35">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/>
+<line x1="12" y1="15" x2="12" y2="3"/></svg></a>
+<script>(function(){
+  var a=document.getElementById("__viz_dl");
+  var name=(document.title||"visualization").toLowerCase()
+    .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60)||"visualization";
+  var plain="<!DOCTYPE html>\n"+document.documentElement.outerHTML;
+  function save(text){
+    var url=URL.createObjectURL(new Blob([text],{type:"text/html"}));
+    var t=document.createElement("a"); t.href=url; t.download=name+".html";
+    document.body.appendChild(t); t.click(); t.remove();
+    setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  }
+  a.addEventListener("click",function(e){
+    e.preventDefault();
+    fetch(location.href).then(function(r){return r.text();})
+      .then(function(t){ save(t.indexOf("staticrypt"+"Config")>0?plain:t); })
+      .catch(function(){ save(plain); });
+  });
+})();</script>
+</body>
+</html>
