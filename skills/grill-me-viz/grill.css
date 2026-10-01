@@ -1,0 +1,60 @@
+/* grill.css — the shared look of a grill-me-viz page. Load after /_kit/viz-kit.css.
+   Markup contract lives in SKILL.md; page-specific visuals (mockups, diagrams) stay in the page. */
+
+/* The kit pins body to the viewport height, which swallows bottom padding; a grill page grows,
+   so let it. The bottom room lets the newest round scroll to the top. */
+body { max-width: 1440px; margin: 0 auto; padding: 0 24px 40vh; height: auto; min-height: 100vh; }
+.round { border-top: 1px solid var(--border); padding-top: 18px; margin-top: 28px; }
+.round > h2 { font-size: 15px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin: 0 0 14px; }
+
+/* An open question. */
+.q { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin-bottom: 18px; }
+.q h3 { margin: 0 0 6px; font-size: 18px; }
+.q h3 .n, .decided summary .n { color: var(--accent); font-family: var(--mono); margin-right: 8px; }
+.q p { color: var(--muted); margin: 6px 0 14px; line-height: 1.5; }
+.rec { color: var(--text); background: var(--panel-2); border-left: 3px solid var(--good); padding: 8px 12px; border-radius: 4px; margin-top: 14px; line-height: 1.5; }
+
+/* Options. Buttons centre their content vertically by default; a column flex pins
+   every header to the top so they line up across cards of different heights. */
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+button[data-pick] { all: unset; box-sizing: border-box; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-start;
+  background: var(--bg); border: 2px solid var(--border); border-radius: var(--r); padding: 12px; position: relative; }
+button[data-pick]:hover { border-color: var(--muted); }
+button[data-pick][data-rec] { border-color: var(--good); }
+button[data-pick][data-rec]::before { content: "recommended"; position: absolute; top: -10px; right: 12px; background: var(--good); color: #0d1117;
+  font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 10px; }
+button[data-pick].picked { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
+.opt-label { font-weight: 600; margin-bottom: 8px; }
+.opt-label .k { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+.opt-note { color: var(--muted); font-size: 13px; margin-top: 8px; line-height: 1.4; }
+
+/* Picked but not yet sent: the question folds to its header plus the answer; click the header to reopen.
+   Padding stays the same folded or open, so the header never moves; the body eases shut. */
+/* The chosen letter sits at the far right of every folded or decided line, so the picks scan as one column. */
+.q .answer { display: none; flex: 1; color: var(--muted); font-weight: 600; margin-left: 10px; }
+.q .answer .k, .decided summary .pick { margin-left: auto; font-family: var(--mono); font-size: 14px; color: #0d1117; background: var(--good);
+  border-radius: 6px; min-width: 24px; padding: 2px 6px; text-align: center; box-sizing: border-box; }
+.q.collapsed h3 { display: flex; align-items: center; }
+.q .body { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .35s ease, opacity .35s ease; }
+.q .body > div { overflow: hidden; }
+.q.collapsed { cursor: pointer; }
+.q.collapsed h3 { margin-bottom: 0; }
+.q.collapsed .answer { display: flex; align-items: center; gap: 8px; }
+.q.collapsed .body { grid-template-rows: 0fr; opacity: 0; }
+
+/* Decided: rewritten in place by the agent as <details class="decided">. */
+.decided { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--good); border-radius: var(--r); padding: 8px 16px; margin-bottom: 10px; }
+.decided summary { cursor: pointer; color: var(--good); font-weight: 600; display: flex; align-items: center; }
+.decided summary::before { content: "▸"; margin-right: 8px; }
+.decided[open] summary::before { content: "▾"; }
+.decided[open] summary { margin-bottom: 10px; }
+
+button[data-send] { font: inherit; font-weight: 600; background: var(--accent); color: #0d1117; border: 0; border-radius: var(--r); padding: 10px 22px; cursor: pointer; }
+button[data-send]:disabled { background: var(--panel-2); color: var(--good); cursor: default; }
+.hint { color: var(--faint); font-size: 13px; margin-left: 12px; }
+
+/* The question as originally asked, kept inside its decision behind a second click. */
+.decided .original { margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 8px; }
+.decided .original > summary { color: var(--muted); font-weight: 500; font-size: 13px; }
+.decided .original .q { margin: 10px 0 0; opacity: .85; }
+.decided .original button[data-pick] { cursor: default; }

@@ -1,0 +1,101 @@
+{
+  "_comment": "Third-party skills installed via `npx skills`. install.ts --externals reproduces these deterministically (npx skills add <repo> -s <skills>). Owned skills live in skills/; these are NOT vendored.",
+  "repos": {
+    "mattpocock/skills": [
+      "ask-matt",
+      "code-review",
+      "codebase-design",
+      "diagnosing-bugs",
+      "domain-modeling",
+      "grilling",
+      "handoff",
+      "implement",
+      "improve-codebase-architecture",
+      "prototype",
+      "research",
+      "resolving-merge-conflicts",
+      "setup-matt-pocock-skills",
+      "teach",
+      "to-spec",
+      "to-tickets",
+      "triage",
+      "wayfinder",
+      "to-questionnaire",
+      "wait-what",
+      "wizard",
+      "writing-for-agents",
+      "implement-spec",
+      "writing-fragments",
+      "writing-shape",
+      "writing-beats"
+    ],
+    "anthropics/skills": [
+      "docx",
+      "frontend-design",
+      "pdf",
+      "pptx",
+      "skill-creator",
+      "xlsx"
+    ],
+    "vercel-labs/skills": [
+      "find-skills"
+    ],
+    "dietrichgebert/ponytail": [
+      "ponytail",
+      "ponytail-audit",
+      "ponytail-debt",
+      "ponytail-gain",
+      "ponytail-help",
+      "ponytail-review"
+    ],
+    "safishamsi/graphify": [
+      "graphify"
+    ],
+    "mrwadams/mcp-stride-gpt": [
+      "stride-threat-modelling"
+    ],
+    "levnikolaevich/claude-code-skills": [
+      "ln-11-opportunity-evaluator",
+      "ln-12-product-requirements-builder",
+      "ln-13-interaction-design-builder",
+      "ln-21-system-design-baseline-builder",
+      "ln-22-current-architecture-documenter",
+      "ln-23-system-design-proposal-builder",
+      "ln-24-architecture-decision-recorder",
+      "ln-25-architecture-diagram-builder",
+      "ln-26-architecture-migration-planner",
+      "ln-31-delivery-plan-builder",
+      "ln-32-test-strategy-planner",
+      "ln-33-plan-reviewer",
+      "ln-41-surgical-change-implementer",
+      "ln-42-dependency-upgrader",
+      "ln-43-code-modernizer",
+      "ln-44-performance-optimizer",
+      "ln-45-benchmark-comparator",
+      "ln-51-acceptance-test-builder",
+      "ln-52-delivery-reviewer",
+      "ln-53-documentation-auditor",
+      "ln-54-codebase-auditor",
+      "ln-55-test-suite-auditor",
+      "ln-56-architecture-auditor",
+      "ln-57-persistence-auditor",
+      "ln-61-repository-publisher",
+      "ln-62-release-publisher",
+      "ln-63-deployment-engineer",
+      "ln-64-community-announcer",
+      "ln-71-operations-investigator",
+      "ln-72-product-outcome-evaluator",
+      "ln-81-skill-reviewer"
+    ],
+    "cursor/plugins": [
+      "cli-for-agents",
+      "unslop"
+    ],
+    "alexgreensh/anidoodle": [
+      "anidoodle"
+    ],
+    "spillwavesolutions/design-doc-mermaid": [
+      "design-doc-mermaid"
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+# run-tab's herdr keybindings. Merged into ~/.config/herdr/config.toml by
+# install.ts. `~` is expanded by install.ts — herdr does not expand it here.
+#
+# prefix+c is herdr's built-in new_tab; install.ts unbinds it (new_tab = "") inside
+# any existing [keys] table — a second [keys] header here would be invalid TOML.
+# Empty input to run-tab still gives a plain tab, so nothing is lost.
+# type = "popup": the prompt needs a terminal, and a popup doesn't disturb the layout.
+
+[[keys.command]]
+key = "prefix+c"
+type = "popup"
+command = "~/.agents/ai-setup/tools/run-tab/run-tab"
+description = "new tab running a command (empty = plain tab)"
+width = "60%"
+height = 5
+
+[[keys.command]]
+key = "prefix+shift+c"
+type = "popup"
+command = "~/.agents/ai-setup/tools/run-tab/run-tab --close"
+description = "new tab running a command, closed when it exits"
+width = "60%"
+height = 5

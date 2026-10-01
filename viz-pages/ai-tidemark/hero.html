@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ai-tidemark — hero card</title>
+<!-- The OG / hero card for ai-tidemark. `viz verify <url> --og` renders THIS file and
+     clips to .og-card → og.auto.png. The figure is drawn from fixtures/demo.json (the
+     same generated data the published page shows), so it never carries real usage.
+     Plain fetch, no /_kit/viz.js: publish inlines kit CSS into a hero, not kit JS. -->
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/viz-og.css">
+<style>
+  :root { --src-claude: var(--c4); --src-codex: var(--c5); }
+  html, body { margin: 0; background: #05060a; }
+  .graph text { font-family: var(--mono); }
+</style>
+</head>
+<body>
+
+<div class="og-card">
+  <div class="frame"></div>
+
+  <div class="left">
+    <div class="eyebrow"><span class="dot"></span>ai-tidemark</div>
+
+    <h1 class="title">You paid for it.<br><span class="hl">Did you use it?</span></h1>
+
+    <div class="essence">
+      tidemark keeps the <span class="hl">high-water mark</span> of every
+      5-hour and weekly window before the reset erases it.
+    </div>
+
+
+    <div class="chips">
+      <span class="chip"><span class="tk"></span>5-hour + weekly</span>
+      <span class="chip"><span class="tk"></span>Claude Code · Codex</span>
+      <span class="chip"><span class="tk"></span>local data only</span>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="panel">
+      <div class="panel-cap">
+        <span class="t">One week, used vs. paid for</span>
+        <span class="s">demo data</span>
+      </div>
+      <svg class="graph" id="fig" viewBox="0 0 392 200" fill="none" xmlns="http://www.w3.org/2000/svg"
+           data-viz-id="hero-week" data-label="One demo week: weekly use against even pace, with the unused gap to 100%"></svg>
+      <div class="foot">
+        <div class="stat accent"><div class="n" id="used">—</div><div class="l">used</div><div class="d">the week's high-water mark</div></div>
+        <div class="stat warn"><div class="n" id="gone">—</div><div class="l">expired</div><div class="d" id="goneD">reset away, unused</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="./hero.js"></script>
+</body>
+</html>

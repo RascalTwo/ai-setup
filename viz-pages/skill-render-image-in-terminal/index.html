@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>render-image-in-terminal — "show me", and it's in the transcript</title>
+<meta name="viz:uid" content="v-5a7243c4ad07">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="render-image-in-terminal">
+<meta name="viz:description" content="When you say &quot;show me&quot;, Claude runs show-image on a path, URL or the clipboard, and the ttyimgspool hook draws it inline in the Claude Code transcript as a thumbnail — Ctrl+click for full resolution.">
+<!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+<meta name="viz:card" content="self">
+<meta name="viz:page-kind" content="poster-dive">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="/_kit/poster.css">
+<style>
+  /* ── POSTER + DIVE ──────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls beneath it.
+     poster.css owns the scale mechanics.
+     ─────────────────────────────────────────────────────────────────────────── */
+  :root{ --s:1; }
+  html,body{margin:0; background:var(--bg);} body{overflow-x:hidden;}
+
+  /* ── the card ── */
+  .og-card{background:
+      radial-gradient(820px 480px at 96% -10%, color-mix(in srgb, var(--c3) 16%, transparent), transparent 60%),
+      radial-gradient(760px 460px at -6% 108%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+      linear-gradient(160deg, #0b0f16, #0d1117 60%); color:var(--text); font-family:var(--sans);
+      display:grid; grid-template-columns:1fr 500px; gap:40px; align-items:center; padding:54px 64px;}
+  .og-card::after{ content:""; position:absolute; inset:0; border:1px solid var(--border); pointer-events:none; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14px;
+            letter-spacing:.14em; color:var(--accent); margin-bottom:18px; }
+  .eyebrow .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent);
+                 box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); }
+  h1.hook{ font-size:54px; line-height:1.05; margin:0 0 18px; letter-spacing:-1.5px; font-weight:700; }
+  h1.hook em{ font-style:normal; color:var(--c3); }
+  p.sub{ font-size:18.5px; line-height:1.45; color:var(--muted); margin:0 0 20px; max-width:500px; }
+  p.sub b{ color:var(--text); font-weight:600; }
+  .not{ font-size:14.5px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:500px;
+        font-family:var(--mono); border-left:2px solid var(--border); padding-left:12px; }
+  .not b{ color:var(--text); }
+  .trigger{ display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:14.5px;
+            background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+            border-radius:9px; padding:10px 15px; color:var(--text); }
+  .trigger span{ color:var(--muted); }
+
+  /* the proof slot: a mock Claude Code transcript with the thumbnail drawn in it */
+  .term{ background:#07090d; border:1px solid var(--border); border-radius:14px; overflow:hidden;
+         box-shadow:0 24px 60px rgba(0,0,0,.45); font-family:var(--mono); }
+  .term .bar{ display:flex; align-items:center; gap:7px; padding:10px 14px; border-bottom:1px solid var(--border);
+              font-size:11px; color:var(--faint); letter-spacing:.08em; }
+  .term .bar i{ width:10px; height:10px; border-radius:50%; background:#2a2f38; display:inline-block; }
+  .term .body{ padding:16px 18px 18px; font-size:13px; line-height:1.55; }
+  .term .you{ color:var(--text); margin-bottom:10px; }
+  .term .you b{ color:var(--accent); font-weight:600; }
+  .term .call{ color:var(--muted); }
+  .term .call b{ color:var(--text); font-weight:600; }
+  .term .out{ color:var(--faint); padding-left:16px; margin-bottom:10px; }
+  .term .out b{ color:var(--good); font-weight:500; }
+  .thumb{ margin-left:16px; width:300px; height:150px; border-radius:6px; position:relative; overflow:hidden;
+          border:1px solid color-mix(in srgb, var(--c3) 45%, transparent);
+          background:linear-gradient(180deg, #111723, #0c111a); }
+  .thumb svg{ position:absolute; inset:0; width:100%; height:100%; }
+  .cap{ margin:0 0 6px 16px; font-size:11.5px; color:var(--muted); }
+  .cap u{ color:var(--c3); text-decoration-color:color-mix(in srgb, var(--c3) 50%, transparent); }
+  .hint2{ margin:12px 0 0 16px; display:flex; gap:8px; align-items:center; font-size:11.5px; color:var(--faint); }
+  .kbd{ border:1px solid var(--border); border-bottom-width:2px; border-radius:5px; padding:1px 6px; color:var(--text);
+        background:var(--panel); }
+
+  /* ── the dive (below the fold) ── */
+  .scroll-cue{ text-align:center; color:var(--muted); font-family:var(--mono); font-size:12px;
+               letter-spacing:.16em; padding-top:30px; }
+  .dive{ max-width:820px; margin:0 auto; padding:26px 28px 90px; }
+  .dive h2{ font-size:12.5px; text-transform:uppercase; letter-spacing:.16em; color:var(--accent);
+            margin:40px 0 12px; font-family:var(--mono); }
+  .dive h2:first-of-type{ margin-top:18px; }
+  .dive p{ font-size:16.5px; line-height:1.65; color:var(--text); margin:0 0 14px; }
+  .dive p.m{ color:var(--muted); }
+  .dive ul{ margin:0 0 14px; padding-left:20px; }
+  .dive li{ font-size:16px; line-height:1.6; margin-bottom:9px; }
+  .dive b{ color:#fff; }
+  .dive a{ color:var(--accent); }
+  .dive code{ font-family:var(--mono); font-size:.9em; color:var(--accent); background:var(--panel);
+              border:1px solid var(--border); border-radius:6px; padding:1px 5px; }
+  pre{ background:var(--panel); border:1px solid var(--border); border-radius:11px;
+       padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px;
+       line-height:1.6; color:var(--text); margin:0 0 16px; }
+  pre .c{ color:var(--muted); }
+  .callout{ border-left:3px solid var(--warn); background:color-mix(in srgb, var(--warn) 8%, transparent);
+            border-radius:0 10px 10px 0; padding:14px 18px; margin:0 0 16px; font-size:15.5px; line-height:1.6; }
+  .callout b{ color:var(--warn); }
+  .dive h3{ font-size:17px; color:#fff; margin:26px 0 10px; font-weight:600; }
+  table.where{ border-collapse:collapse; width:100%; margin:0 0 16px; font-size:15px; }
+  table.where td{ border-top:1px solid var(--border); padding:10px 12px 10px 0; vertical-align:top; line-height:1.55; }
+  table.where td:first-child{ width:150px; color:var(--muted); font-family:var(--mono); font-size:12.5px;
+                              letter-spacing:.04em; padding-right:18px; }
+  .fig{ border:1px solid var(--border); border-radius:14px; background:var(--panel);
+        padding:18px 20px 16px; margin:0 0 16px; }
+  .fig .stage{ background:#0b0f16; border:1px solid var(--border); border-radius:11px;
+               padding:16px 18px; min-height:190px; }
+  .fig .lede{ font-size:15.5px; line-height:1.55; color:var(--text); margin:14px 0 0; min-height:46px; }
+  .fig .lede b{ color:#fff; }
+  .ctrl{ display:flex; align-items:center; gap:9px; margin-top:13px; }
+  .ctrl button{ font-family:var(--mono); font-size:13px; color:var(--text); background:#0b0f16;
+                border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+  .ctrl button:hover{ border-color:var(--accent); color:#fff; }
+  .ctrl .pos{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-left:4px; }
+  .ctrl .hint{ margin-left:auto; font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .foot{ margin-top:50px; padding-top:22px; border-top:1px solid var(--border);
+         color:var(--muted); font-size:13.5px; font-family:var(--mono); }
+  .foot a{ color:var(--accent); text-decoration:none; }
+  .foot a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body class="og-poster og-poster-dive">
+<div id="fit">
+  <div class="og-card" data-atom="render-image-in-terminal" data-viz-id="poster-card" data-label="render-image-in-terminal poster card">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>OWNED SKILL · RENDER-IMAGE-IN-TERMINAL</div>
+      <h1 class="hook">Say “show me”.<br>It's <em>in the<br>transcript.</em></h1>
+      <p class="sub">A file, a URL, the clipboard, or a chart Claude just made — drawn <b>inline under the tool call</b> as a captioned thumbnail. No second pane, no <b>open</b>, no hunting for the path.</p>
+      <p class="not"><b>Ctrl+click</b> → full pane, full resolution.<br>Click, key or scroll closes it.</p>
+      <div class="trigger"><span>say</span>&nbsp;"show me the logo"</div>
+    </div>
+    <div class="term">
+      <div class="bar"><i></i><i></i><i></i>&nbsp;&nbsp;CLAUDE CODE · GHOSTTY</div>
+      <div class="body">
+        <div class="you"><b>&gt;</b> show me the chart you just made</div>
+        <div class="call">● <b>Bash</b>(show-image /tmp/latency.png)</div>
+        <div class="out">⎿ <b>show-image:</b> /tmp/1790-4411.png</div>
+        <div class="cap"><u>show-image · 1600×800 · ctrl+click to enlarge</u></div>
+        <div class="thumb" aria-label="inline thumbnail">
+          <svg viewBox="0 0 300 150" preserveAspectRatio="none">
+            <g stroke="#1f2733" stroke-width="1">
+              <line x1="20" y1="30" x2="290" y2="30"/><line x1="20" y1="65" x2="290" y2="65"/>
+              <line x1="20" y1="100" x2="290" y2="100"/><line x1="20" y1="132" x2="290" y2="132"/>
+            </g>
+            <g fill="#58a6ff" opacity=".85">
+              <rect x="34" y="92" width="22" height="40" rx="2"/><rect x="68" y="74" width="22" height="58" rx="2"/>
+              <rect x="102" y="84" width="22" height="48" rx="2"/><rect x="136" y="52" width="22" height="80" rx="2"/>
+              <rect x="170" y="62" width="22" height="70" rx="2"/><rect x="204" y="36" width="22" height="96" rx="2"/>
+              <rect x="238" y="46" width="22" height="86" rx="2"/>
+            </g>
+            <polyline points="45,86 79,66 113,76 147,44 181,54 215,28 249,38" fill="none" stroke="#e3b341" stroke-width="2.5"/>
+          </svg>
+        </div>
+        <div class="hint2"><span class="kbd">ctrl</span>+<span class="kbd">click</span> full pane &nbsp;·&nbsp; up to 40×12 cells inline</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+<div class="dive">
+  <h2 data-beat="why">Claude could see it. You couldn't.</h2>
+  <p>Claude Code's TUI draws text and nothing else. Claude reads screenshots, renders charts, downloads logos — and the transcript showed a file path. The only way to see what Claude saw was a separate gallery pane on <b>prefix+i</b>, or copying the path into <code>open</code> and leaving the terminal altogether. "Show me" had no honest answer.</p>
+  <p><a href="../tool-ttyimgspool/">ttyimgspool</a> fixed the drawing: its hook can now put a picture <b>inline</b> in the transcript. Screenshots, <code>Read</code>s and pastes appear automatically. <code>render-image-in-terminal</code> exists for everything else — the image that is <em>not</em> already a tool Claude ran, but a thing you asked to see.</p>
+
+  <h2 data-beat="using">Say "show me"</h2>
+  <p>The skill fires when you ask to <b>see</b> an image, logo, chart, diagram, screenshot or picture — or when an image Claude produced <em>is</em> the answer. Claude then runs, as its own Bash call:</p>
+  <pre>~/.agents/ai-setup/tools/ttyimgspool/show-image &lt;source&gt;
+
+<span class="c"># &lt;source&gt; is one of</span>
+/path/to/logo.svg                 <span class="c"># a local file, any format sips reads</span>
+https://example.com/diagram.png   <span class="c"># fetched with curl</span>
+clipboard                         <span class="c"># an image on the clipboard — or, failing that, its text as the source</span></pre>
+  <p>To show something it makes — a chart, a rendered page, a diagram — Claude writes it to a file first, then shows that file. It is done when the command printed its <code>show-image: &lt;png&gt;</code> line; a <code>show-image: &lt;reason&gt;</code> on stderr means nothing was shown, and Claude is told to say why.</p>
+  <p class="m">In the transcript you get a captioned thumbnail under the call. <b>Ctrl+click</b> it (or the caption) and the original opens full-pane at full resolution; a click, a key or a scroll closes it.</p>
+
+  <h2 data-beat="limits">What it doesn't do</h2>
+  <ul>
+    <li><b>Kitty-graphics terminals only.</b> Ghostty, kitty, WezTerm — or herdr with <code>kitty_graphics = true</code>. Anywhere else the hook stays silent and you get the <code>show-image:</code> line and nothing more.</li>
+    <li><b>Ctrl+click, not click.</b> A plain click is Claude Code's, and it only opens an allowlist of schemes; the <code>file://</code> link becomes a Finder reveal (<a href="https://github.com/anthropics/claude-code/issues/95675">anthropics/claude-code#95675</a>). Ctrl+click reaches the herdr plugin instead.</li>
+    <li><b>The thumbnail is fixed when drawn.</b> Up to 40×12 cells, sized at the moment the hook ran; resizing the pane later does not redraw it. The full-pane view is only as sharp as the source.</li>
+    <li><b>It does not repeat what already shows.</b> A screenshot or an image Claude <code>Read</code> is drawn by the hook on its own; there is nothing for <code>show-image</code> to add.</li>
+    <li><b>It is not a viewer or an editor.</b> One image per call, as-is. No crop, no zoom inline, no annotation — and no memory of what it showed; browsing old images is ttyimgspool's gallery.</li>
+  </ul>
+
+  <h2 data-beat="where">Where it lives</h2>
+  <table class="where"><tbody>
+    <tr><td>The skill</td><td><code>skills/render-image-in-terminal/SKILL.md</code> — a dozen lines of prompt. It tells Claude which command to run, what counts as done, and what not to bother showing. The skill ships no code of its own.</td></tr>
+    <tr><td>Integrates</td><td><b>Claude Code</b>: the ttyimgspool <code>PostToolUse</code> hook is what draws it. The skill only produces the line the hook is listening for.</td></tr>
+    <tr><td>Requires</td><td><b><a href="../tool-ttyimgspool/">ttyimgspool</a></b> — its <code>show-image</code> script and its hook, reached through <code>~/.agents/ai-setup/tools/ttyimgspool/</code>. Without the tool installed, the command does not exist.</td></tr>
+    <tr><td>Its state</td><td><b>None</b> — <code>state: false</code>. The normalised PNG goes to <code>$TMPDIR</code>, and the copy the hook spools belongs to ttyimgspool, not to this skill.</td></tr>
+    <tr><td>Safe to delete</td><td>Nothing of its own to delete. Removing the skill leaves ttyimgspool drawing screenshots, Reads and pastes exactly as before; you just lose "show me" for everything else.</td></tr>
+  </tbody></table>
+
+  <h2 data-beat="how">From "show me" to a thumbnail</h2>
+  <p class="m">One request, from your words to pixels in the transcript. The terminal half — uploading over the tty, placeholder cells, the Ctrl+click viewer — is <a href="../tool-ttyimgspool/">ttyimgspool's poster</a> in full; here it is one step.</p>
+
+  <div class="fig" data-viz-id="show-figure" data-label="stepper: one show-me request from skill to inline thumbnail">
+    <div class="stage" id="stage"></div>
+    <p class="lede" id="lede"></p>
+    <div class="ctrl">
+      <button id="prev" aria-label="previous step">‹ back</button>
+      <button id="play">▶ play</button>
+      <button id="next" aria-label="next step">next ›</button>
+      <span class="pos" id="pos"></span>
+      <span class="hint">← → arrow keys</span>
+    </div>
+  </div>
+
+  <h3>The skill is a contract, not a program</h3>
+  <p>Everything the model is told fits in four instructions: run <code>show-image</code> <b>as its own Bash call</b>; write anything it creates to a file first; skip images that already appear (screenshots, <code>Read</code>s); and treat the printed <code>show-image:</code> line as done, a stderr reason as a failure to report. "Its own Bash call" matters — the hook scans that call's output, and a line buried in a longer pipeline is easy to swallow.</p>
+
+  <h3><code>show-image</code>: every source becomes one PNG</h3>
+  <p>A 22-line bash script. An <code>http(s)://</code> source is fetched with <code>curl -fsSL</code>; <code>clipboard</code> tries <code>osascript</code> for <code>«class PNGf»</code> data and, when the clipboard holds text instead, re-runs itself on <code>pbpaste</code>. Whatever arrives is passed through <code>sips -s format png</code> into <code>$TMPDIR/&lt;epoch&gt;-&lt;pid&gt;.png</code>, so the hook only ever sees PNG. The single line of stdout is the whole interface:</p>
+  <pre>show-image: /var/folders/…/T/1790571037-4411.png   <span class="c"># success → stdout</span>
+show-image: not an image: notes.txt                <span class="c"># failure → stderr, exit 1</span></pre>
+
+  <h3>The hook: a regex, then the drawing</h3>
+  <p>When the Bash call returns, <code>ttyimgspool-hook.py</code> joins every string in the tool response and matches <code>SHOW_RE = ^show-image: (/.+)$</code>. Each hit is spooled under the <code>show-image</code> tool name and handed to <code>show_inline()</code>, which uploads the PNG to Claude Code's tty in kitty APC chunks and returns a <code>systemMessage</code> of Unicode placeholder cells whose 24-bit foreground colour is the image id. Above the cells goes a caption, <code>show-image · &lt;w&gt;×&lt;h&gt; · ctrl+click to enlarge</code>. Claude Code prints that message as text; the terminal paints the picture onto those cells, wrapped in an OSC 8 <code>file://</code> link for the Ctrl+click viewer.</p>
+
+  <div class="foot">Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · machinery: <a href="../tool-ttyimgspool/">ttyimgspool</a> · one atom, justifying its own existence.</div>
+</div>
+
+<script type="module" src="/_kit/poster.js"></script>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

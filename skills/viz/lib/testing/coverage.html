@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coverage</title>
+<style>
+  :root { --bg: #14181d; --panel: #1b2027; --line: #2b333d; --text: #e3e7ec; --muted: #8894a2; --run: #2f9e62; --miss: #d0473f; --part: #d69a2d; --skip: #5b6573; --pick: #5aa9f0; --only: #b07cf0; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; display: grid; grid-template-columns: 300px 1fr 330px; grid-template-rows: auto 1fr; font: 13px/1.45 system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  header { grid-column: 1 / -1; display: flex; gap: 18px; align-items: baseline; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 15px; margin: 0; } header b { font-size: 15px; } .muted { color: var(--muted); }
+  aside, #side, main { overflow: auto; }
+  aside { border-right: 1px solid var(--line); } #side { border-left: 1px solid var(--line); padding: 12px 14px; }
+  .tabs { display: flex; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--bg); z-index: 1; }
+  .tabs button { flex: 1; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); padding: 9px; font: inherit; cursor: pointer; }
+  .tabs button[aria-pressed="true"] { color: var(--text); border-bottom-color: var(--pick); }
+  .item { display: block; width: 100%; text-align: left; background: none; border: 0; border-left: 3px solid transparent; color: var(--text); padding: 6px 10px; font: inherit; cursor: pointer; }
+  .item:hover { background: var(--panel); } .item[aria-current="true"] { background: var(--panel); border-left-color: var(--pick); }
+  .item small { display: block; color: var(--muted); }
+  details.group > summary { padding: 7px 10px; cursor: pointer; color: var(--muted); font-weight: 600; list-style-position: inside; }
+  details.group > summary span { color: var(--muted); font-weight: 400; }
+  details.group .item { padding-left: 24px; }
+  .bar { height: 4px; background: var(--miss); border-radius: 2px; margin-top: 4px; overflow: hidden; } .bar i { display: block; height: 100%; background: var(--run); }
+  .tag { font-size: 10.5px; padding: 0 6px; border-radius: 99px; background: #4a3a1a; color: #f3c775; margin-left: 4px; white-space: nowrap; }
+  .tag.only { background: #3a2a55; color: #d6b8ff; }
+  .tools { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 7px 12px; background: var(--bg); border-bottom: 1px solid var(--line); color: var(--muted); }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+  .seg button { background: none; border: 0; color: var(--muted); padding: 4px 9px; font: inherit; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--panel); color: var(--text); }
+  .nav button { background: var(--panel); border: 1px solid var(--line); color: var(--text); border-radius: 5px; padding: 2px 8px; cursor: pointer; font: inherit; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 4px 0 8px; vertical-align: -1px; }
+  pre { margin: 0; font: 12px/1.6 ui-monospace, Menlo, monospace; }
+  .ln { display: grid; grid-template-columns: 52px 34px 1fr; cursor: pointer; scroll-margin: 90px; }
+  .ln:hover { background: #ffffff08; }
+  .ln .n { color: #5d6875; text-align: right; padding-right: 10px; user-select: none; }
+  .ln .g { text-align: center; font-size: 10.5px; color: #0c0f12; font-weight: 600; user-select: none; }
+  .ln code { white-space: pre; padding-right: 20px; }
+  .ln.run .g { background: var(--run); } .ln.miss .g { background: var(--miss); } .ln.part .g { background: var(--part); } .ln.skip .g { background: var(--skip); }
+  .ln.miss code { background: #d0473f22; } .ln.skip code { opacity: .55; }
+  .ln.only .g { background: var(--only); color: #fff; }
+  .ln.dim { opacity: .3; } .ln.mine code { background: #5aa9f01c; } .ln.only code { background: #b07cf02a; }
+  .ln.match code { box-shadow: inset 3px 0 0 var(--pick); background-color: #5aa9f026; }
+  .ln.sel { outline: 1px solid var(--pick); outline-offset: -1px; }
+  .untaken { text-decoration: underline wavy var(--part); text-decoration-thickness: 1.5px; text-underline-offset: 3px; background: #d69a2d1f; }
+  /* Prism tokens, for a dark ground */
+  .token.comment { color: #6b7686; font-style: italic; } .token.string, .token.template-string { color: #9fd08a; }
+  .token.keyword { color: #d49bf0; } .token.function { color: #7cc3f5; } .token.number, .token.boolean { color: #f0a86c; }
+  .token.operator, .token.punctuation { color: #aab3be; } .token.regex { color: #e7c16e; } .token.class-name { color: #f2d17c; }
+  .token.property, .token.parameter, .token.literal-property { color: #e3e7ec; } .token.interpolation-punctuation { color: #d49bf0; }
+  h2 { font-size: 13px; margin: 0 0 8px; } #side p { color: var(--muted); margin: 0 0 10px; }
+  #side ul { list-style: none; padding: 0; margin: 0 0 14px; } #side li { margin-bottom: 5px; }
+  #side a { color: var(--pick); cursor: pointer; text-decoration: none; } #side a:hover { text-decoration: underline; }
+  #side code { font: 11.5px ui-monospace, Menlo, monospace; background: var(--panel); padding: 1px 4px; border-radius: 3px; }
+  .note { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
+</style>
+<script>window.Prism = { manual: true };</script>
+<script>/*PRISM*/</script>
+</head>
+<body>
+<header><h1 id="title"></h1><span id="totals"></span><span class="muted" id="when"></span></header>
+<aside>
+  <div class="tabs"><button data-tab="files" aria-pressed="true">Files</button><button data-tab="tests" aria-pressed="false">Tests</button></div>
+  <div id="list"></div>
+</aside>
+<main>
+  <div class="tools">
+    <span>Highlight</span>
+    <span class="seg" id="hl">
+      <button data-hl="" aria-pressed="true">nothing</button>
+      <button data-hl="miss">not run</button>
+      <button data-hl="part">branch not taken</button>
+      <button data-hl="one">run by one test</button>
+    </span>
+    <span class="nav" id="nav" hidden><button data-go="-1" title="previous (k)">▲</button> <span id="navpos"></span> <button data-go="1" title="next (j)">▼</button></span>
+    <span class="legend"><i style="background:var(--run)"></i>run<i style="background:var(--part)"></i>branch not taken<i style="background:var(--miss)"></i>not run<i style="background:var(--skip)"></i>excluded<i style="background:var(--only)"></i>only the picked test</span>
+  </div>
+  <pre id="code"></pre>
+</main>
+<section id="side"></section>
+<script>const DATA = /*COVERAGE-DATA*/null;</script>
+<script>/*COVERAGE-JS*/</script>
+</body>
+</html>

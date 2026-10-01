@@ -1,0 +1,5 @@
+# herdr-autolabel's sidebar row. Merged into ~/.config/herdr/config.toml by
+# install.ts. herdr hardcodes " · " between tokens, so the row is a single token
+# (the tab name this tool keeps current) after the status dot.
+[ui.sidebar.agents]
+rows = [["state_icon", "tab"]]

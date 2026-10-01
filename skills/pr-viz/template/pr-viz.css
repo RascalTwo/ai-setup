@@ -1,0 +1,237 @@
+/* pr-viz.css — scene kinds, for a 1920×1080 film stage and the review page alike.
+   Film mode: kit film.js drives --p / --q on [data-b] / [data-fx]. Review mode: everything
+   is shown at its final state (see the bottom of this file). Style rules: reference/style.md. */
+
+code { font: .92em var(--mono); background: #0b1019; border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; }
+abbr { text-decoration: underline dotted var(--muted); text-underline-offset: 5px; cursor: help; }
+.scene h2 { margin: 0 0 28px; font-size: 50px; letter-spacing: -.01em; }
+.scene h2 small { display: block; font-size: 27px; color: var(--muted); font-weight: 400; margin-top: 8px; }
+.mut { color: var(--muted); }
+.badge { display: inline-block; font: 600 21px var(--sans); padding: 6px 14px; border-radius: 999px; background: var(--panel-2); color: var(--text); }
+.tone-good.badge { background: #12301b; color: #8ee29c; } .tone-bad.badge { background: #3d1418; color: #ffb3ad; }
+.tone-warn.badge { background: #3a2a0c; color: #f5cf73; } .tone-info.badge { background: #0f2a4a; color: #9ecbff; }
+
+/* statement — a title card or a one-line claim */
+.k-statement { padding-top: 110px; text-align: center; }
+.k-statement .big { font-size: 84px; font-weight: 700; letter-spacing: -.02em; line-height: 1.12; }
+.k-statement .sub { font-size: 36px; color: var(--muted); margin-top: 24px; }
+.k-statement .chips { display: flex; gap: 24px; justify-content: center; margin-top: 64px; flex-wrap: wrap; }
+.k-statement .chips span { font: 600 30px var(--sans); padding: 14px 28px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); }
+
+/* compare — before / after. Same words muted; what changed is the only colour on screen. */
+.k-compare { display: grid; gap: 30px; }
+.k-compare .lbl { font: 600 24px var(--sans); color: var(--muted); margin-bottom: 10px; }
+.k-compare .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.k-compare .side { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px 24px; }
+.k-compare .tag { display: block; font: 600 17px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--faint); margin-bottom: 8px; }
+.k-compare .txt { font: 27px/1.55 var(--mono); color: #7d8894; word-break: break-word; }
+.k-compare del { color: #ff9d95; background: rgba(248,81,73,.16); text-decoration: line-through; border-radius: 4px; }
+.k-compare ins { color: #8ee29c; background: rgba(63,185,80,.18); text-decoration: none; border-radius: 4px; }
+.k-compare .note { margin-top: 10px; font-size: 24px; color: var(--muted); }
+
+/* chat — what a user asks and what they get */
+.k-chat { display: grid; gap: 18px; max-width: 1400px; margin-top: 20px; }
+.k-chat .bubble { padding: 18px 26px; border-radius: 20px; font-size: 32px; width: fit-content; }
+.k-chat .q { background: #1f3b64; justify-self: end; }
+.k-chat .a { background: var(--panel-2); border: 1px solid var(--border); }
+
+/* flow — a source, a step, what survives (v1's page → index → answer, as a kind) */
+.k-flow .flow { display: grid; grid-template-columns: 1fr 150px 1fr; align-items: stretch; }
+.k-flow .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 26px 30px; }
+.k-flow .lbl { font: 600 18px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px; }
+.k-flow .card p { margin: 0; font-size: 30px; line-height: 1.75; } .k-flow .card p.mut { color: var(--muted); }
+.k-flow a.lnk { color: var(--accent); text-decoration: underline; text-underline-offset: 4px; }
+.k-flow .url { font: 18px var(--mono); padding: 2px 8px; border-radius: 6px; background: #0f2a4a; color: #9ecbff; margin-left: 4px; white-space: nowrap; display: inline-block; }
+.k-flow.keep .url { background: #12301b; color: #8ee29c; }
+/* A dropped detail turns red, strikes through, then collapses out of the sentence. */
+.k-flow .drop { display: inline-block; vertical-align: bottom; overflow: hidden; white-space: nowrap; transform: none;
+  max-width: calc((1 - max(0, var(--q, 0) - .5) * 2) * 300px); opacity: calc(var(--p, 0) * (1 - max(0, var(--q, 0) - .5) * 2)); }
+.k-flow .drop .url { background: color-mix(in srgb, #0f2a4a calc((1 - var(--q, 0)) * 100%), #4a1216); color: color-mix(in srgb, #9ecbff calc((1 - var(--q, 0)) * 100%), #ff9d95);
+  text-decoration: line-through; text-decoration-color: rgba(255, 120, 110, var(--q, 0)); }
+.k-flow.keep .drop .url { background: #12301b; color: #8ee29c; text-decoration: none; }
+.k-flow .arrow { font-size: 64px; color: var(--muted); align-self: center; text-align: center; } .k-flow .arrow small { display: block; font-size: 20px; }
+.k-flow .tobadge { margin-top: 14px; }
+.k-flow .k-chat { margin-top: 30px; }
+.k-flow .bubble code { font: 18px var(--mono); padding: 2px 8px; border-radius: 6px; border: 0; background: #0f2a4a; color: #9ecbff; }
+.k-flow.keep .bubble code { background: #12301b; color: #8ee29c; }
+.k-flow .flowcards { margin-top: 30px; }
+
+/* callgraph — entry points → callers → the new code; green changed, amber reached */
+.k-callgraph { display: grid; gap: 34px; }
+.k-callgraph .cg { position: relative; }
+.k-callgraph .cgcols { display: flex; gap: 90px; align-items: center; position: relative; z-index: 1; }
+.k-callgraph .cgcol { display: grid; gap: 16px; }
+.k-callgraph .cgnode { padding: 12px 18px; border-radius: 12px; background: var(--panel); border: 2px solid var(--border); font: 22px var(--mono); }
+.k-callgraph .cgnode small { display: block; font: 16px var(--sans); color: var(--muted); margin-top: 2px; }
+.k-callgraph .cgnode.changed { border-color: var(--good); } .k-callgraph .cgnode.affected { border-color: var(--warn); }
+.k-callgraph .cgnode.helper { background: #0f2416; color: #8ee29c; border-width: 3px; }
+.k-callgraph svg.cgedges { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.k-callgraph svg.cgedges path { fill: none; stroke: #6e7681; stroke-width: 2.5; } .k-callgraph svg.cgedges path.head { stroke-width: 2.5; }
+.k-callgraph .cgfoot { margin-top: 12px; font-size: 20px; color: var(--muted); }
+.k-callgraph .cgfoot .changed { color: var(--good); } .k-callgraph .cgfoot .affected { color: var(--warn); }
+
+/* fixture — the real test PDF page, its real link rectangles, and what's malformed */
+.k-fixture { display: grid; gap: 34px; max-width: 1500px; }
+.k-fixture .fxhead { font-size: 22px; color: var(--muted); margin-bottom: 10px; }
+.k-fixture .fximg { position: relative; overflow: hidden; background: #fff; border-radius: 8px; box-shadow: 0 16px 50px rgba(0,0,0,.5); }
+.k-fixture .fximg img { position: absolute; max-width: none; }
+.k-fixture .fxlink { position: absolute; border: 3px dashed #0e8a74; border-radius: 4px; background: rgba(78,201,176,.14); }
+.k-fixture .fxlink span { position: absolute; left: -12px; top: -14px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 700 15px var(--sans); color: #04201a; background: #4ec9b0; }
+.k-fixture .fxlegend { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 12px; font: 20px var(--mono); color: #9ff0de; }
+.k-fixture .fxlegend i { display: inline-grid; place-items: center; width: 24px; height: 24px; margin-right: 8px; border-radius: 50%; background: #4ec9b0; color: #04201a; font: 700 14px var(--sans); font-style: normal; }
+.k-fixture .fxbad { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.k-fixture .fxbad span { font: 17px var(--mono); padding: 4px 10px; border-radius: 6px; background: #3d1418; color: #ffb3ad; }
+
+/* pipeline — rows of steps; identical steps are joined by a line to the row below */
+.k-pipeline { position: relative; display: grid; gap: 62px; margin-top: 10px; }
+.k-pipeline .plbl { font: 600 22px var(--mono); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 12px; }
+.k-pipeline .steps { display: flex; align-items: center; gap: 16px; flex-wrap: nowrap; } /* a row is one line, or the connectors lie */
+.k-pipeline .step { white-space: nowrap; font: 25px var(--mono); padding: 16px 20px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); color: #8b96a3; }
+.k-pipeline .step.new { border: 3px solid var(--good); color: #8ee29c; background: #0f2416; }
+.k-pipeline .step.old { border: 3px dashed var(--danger); color: #ffb3ad; }
+.k-pipeline .ar { color: var(--faint); font-size: 30px; }
+.k-pipeline .grp { display: inline-flex; align-items: center; gap: 16px; padding: 30px 16px 14px; border: 2px dashed var(--muted); border-radius: 14px; position: relative; }
+.k-pipeline .grp .glbl { position: absolute; top: 5px; left: 14px; font: 18px var(--mono); color: var(--muted); }
+.k-pipeline .note { margin-top: 12px; font-size: 24px; color: var(--muted); }
+.k-pipeline svg.links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.k-pipeline svg.links path { fill: none; stroke: #6e7681; stroke-width: 3; stroke-dasharray: 6 6; opacity: var(--links, 1); }
+
+/* rules — input → output, one row per case, each with its proof */
+.k-rules { display: grid; gap: 12px; }
+.k-rules .rrow { display: grid; grid-template-columns: 260px 1fr 46px 1.25fr; column-gap: 18px; align-items: center; }
+.k-rules .name { font: 600 26px var(--sans); }
+.k-rules .in, .k-rules .out { font: 21px/1.4 var(--mono); padding: 12px 16px; border-radius: 10px; background: #0b1019; border: 1px solid var(--border); word-break: break-all; color: #a5b0bc; }
+.k-rules .out b { color: #8ee29c; font-weight: 400; }
+.k-rules .to { color: var(--faint); font-size: 34px; text-align: center; }
+.k-rules .test { grid-column: 2 / -1; font: 17px var(--mono); color: var(--good); margin-top: 4px; }
+
+/* bars — length = the number. Tones: good / info / warn / bad / muted (hatched) */
+.k-bars { display: grid; gap: 22px; }
+.k-bars .brow { display: grid; grid-template-columns: 360px 1fr 330px; gap: 26px; align-items: center; }
+.k-bars .blbl { font: 600 30px var(--sans); } .k-bars .blbl small { display: block; font: 18px var(--mono); color: var(--muted); font-weight: 400; }
+.k-bars .btrack { position: relative; display: flex; gap: 6px; height: 46px; }
+.k-bars .limit { position: absolute; top: -10px; bottom: -10px; border-left: 3px dashed var(--warn); }
+.k-bars .limit b { position: absolute; bottom: 100%; left: -60px; font: 600 20px var(--mono); color: var(--warn); white-space: nowrap; }
+.k-bars .bar { display: flex; align-items: center; padding-left: 10px; box-sizing: border-box; border-radius: 6px; font: 600 20px var(--mono); color: #04121f; white-space: nowrap; overflow: hidden;
+  width: calc(var(--w) * var(--p, 1)); min-width: calc(var(--p, 1) * 56px); background: var(--accent); }
+.k-bars .bar.tone-good { background: var(--good); } .k-bars .bar.tone-warn { background: var(--warn); } .k-bars .bar.tone-bad { background: var(--danger); }
+.k-bars .bar.tone-teal { background: var(--c5); } .k-bars .bar.tone-muted { background: repeating-linear-gradient(135deg, #3a4452 0 10px, #2b333e 10px 20px); color: var(--text); }
+.k-bars .btag { font-size: 25px; padding: 8px 16px; border-radius: 10px; border: 2px solid var(--border); color: var(--muted); }
+.k-bars .legend { display: flex; gap: 34px; font-size: 23px; color: var(--muted); margin-top: 10px; }
+.k-bars .legend i { display: inline-block; width: 30px; height: 18px; border-radius: 4px; vertical-align: middle; margin-right: 10px; --w: 30px; padding: 0; }
+.k-bars .bnote { font-size: 31px; margin-top: 6px; }
+
+/* cards — a few findings, each with a verdict badge */
+.k-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.k-cards .card { position: relative; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 26px 30px; font-size: 27px; color: #c3cdd7; }
+.k-cards .card > b { display: block; font-size: 33px; color: var(--text); margin-bottom: 10px; padding-right: 170px; }
+.k-cards .card .badge { position: absolute; top: 22px; right: 22px; }
+.k-cards.small { margin-top: 36px; grid-template-columns: repeat(3, 1fr); } .k-cards.small .card { font-size: 22px; } .k-cards.small .card > b { font-size: 25px; }
+
+/* steps — a horizontal sequence (rollout, lifecycle) */
+.k-steps { position: relative; }
+.k-steps .line { position: absolute; left: 28px; right: 60px; top: 28px; height: 6px; background: var(--border); transform: none; transform-origin: left; scale: var(--p, 1) 1; }
+.k-steps .nodes { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 24px; position: relative; }
+.k-steps .node i { display: block; width: 56px; height: 56px; border-radius: 50%; background: var(--panel-2); border: 5px solid var(--accent); box-sizing: border-box; }
+.k-steps .node.tone-good i { border-color: var(--good); } .k-steps .node.tone-warn i { border-color: var(--warn); } .k-steps .node.tone-teal i { border-color: var(--c5); }
+.k-steps .node b { display: block; font-size: 31px; margin-top: 16px; } .k-steps .node small { font-size: 23px; color: var(--muted); }
+
+/* checklist — the verdict */
+.k-check { display: grid; gap: 24px; margin-top: 20px; }
+.k-check > div { font-size: 40px; display: flex; gap: 24px; align-items: center; }
+.k-check > div::before { content: "✓"; color: var(--good); font-weight: 700; font-size: 46px; }
+
+/* trace — each behavior and what proves it; colour = how well */
+.k-trace { display: grid; gap: 10px; }
+.k-trace .trow { display: grid; grid-template-columns: 70px 560px 1fr; gap: 18px; align-items: center; padding: 10px 16px; border-radius: 10px; background: var(--panel); border-left: 8px solid var(--good); font-size: 23px; }
+.k-trace .st-partial { border-left-color: var(--warn); } .k-trace .st-untested { border-left-color: var(--danger); }
+.k-trace .bid { font: 600 22px var(--mono); color: var(--muted); }
+.k-trace .ev { display: flex; flex-wrap: wrap; gap: 8px; } .k-trace .ev span { font: 17px var(--mono); padding: 3px 10px; border-radius: 6px; background: #0b1019; color: #a5b0bc; }
+.k-trace .ev .gap { color: #f5cf73; background: #3a2a0c; }
+
+/* tour — one production hunk at a time */
+.k-tour { position: relative; height: 760px; }
+.k-tour .hunk { position: absolute; left: 0; right: 0; top: 0; transform: none; transform-origin: top left; }
+.k-tour .hhead { position: absolute; right: 0; top: -40px; font: 20px var(--mono); color: var(--muted); }
+.k-tour .hfile { display: flex; gap: 18px; align-items: baseline; font: 21px var(--mono); margin: 14px 0 8px; }
+.k-tour .hfile .file { color: var(--accent); font-weight: 600; } .k-tour .hfile .same { color: var(--c5); font-size: 18px; }
+.k-tour .hfile.only .file { color: var(--muted); font-weight: 400; font-size: 18px; } .k-tour .hfile .stat { color: var(--muted); font-size: 18px; margin-left: auto; }
+.k-tour pre, .files pre { margin: 0; background: #0b1019; border: 1px solid var(--border); border-radius: 12px; padding: 14px 0; font: 20px/1.45 var(--mono); overflow: hidden; }
+.k-tour .hunk.small pre { font-size: 16px; }
+.l { display: block; padding: 0 18px; white-space: pre-wrap; color: #abb2bf; }
+.l em { display: inline-block; width: 3.2em; color: #484f58; font-style: normal; text-align: right; margin-right: .6em; }
+.l i { display: inline-block; width: 1.4em; font-style: normal; color: #484f58; }
+.l.add i { color: #3fb950; } .l.del i { color: #f85149; }
+.l.gap { color: #484f58; padding-left: 5.4em; }
+/* Changed lines keep their syntax colours; the row tint says added / removed. */
+.l.add { background: rgba(63,185,80,.16); } .l.del { background: rgba(248,81,73,.16); }
+.l:not(.add):not(.del) { opacity: .6; }
+.k-tour .say { display: none; } /* on the film the narration (and its subtitle track) says it; review mode shows it */
+#review .k-tour .say { display: block; margin-top: 18px; font-size: 27px; color: var(--text); max-width: 1500px; }
+
+/* review-mode buttons that live on the film */
+#to-review { position: fixed; top: 14px; right: 16px; z-index: 10; font: 600 14px var(--mono); color: var(--text); background: rgba(22,27,34,.92); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; text-decoration: none; }
+
+/* ============================ review mode ============================ */
+body.review-mode { background: var(--bg); color: var(--text); font: 17px/1.5 var(--sans); margin: 0; overflow: auto; }
+#review { max-width: 1240px; margin: 0 auto; padding: 36px 28px 120px; }
+#review header h1 { margin: 6px 0 14px; font-size: 32px; }
+#review header .bar { display: flex; gap: 18px; align-items: center; }
+#review .watch { font: 600 13px var(--mono); color: var(--accent); text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 3px 9px; margin-left: 10px; vertical-align: middle; }
+#review .watch.big { font-size: 15px; padding: 8px 14px; margin: 0; background: var(--panel); }
+#review #tally { color: var(--muted); font: 14px var(--mono); }
+#review .sec > h2 { font-size: 26px; margin: 46px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+#review h3 { font-size: 20px; margin: 26px 0 10px; }
+#review .beh { display: block; padding: 8px 12px; margin: 6px 0; border-radius: 8px; background: var(--panel); border-left: 5px solid var(--good); cursor: pointer; }
+#review .beh.st-partial { border-left-color: var(--warn); } #review .beh.st-untested { border-left-color: var(--danger); }
+#review .beh input { margin-right: 10px; }
+#review .frame { --k: .6; border: 1px solid var(--border); border-radius: 12px; background: #0d1117; overflow: hidden; }
+#review .frame > .scene { width: 1920px; box-sizing: border-box; padding: 40px 70px 50px; zoom: var(--k); font: 30px/1.35 var(--sans); }
+#review .frame [data-b], #review .frame [data-fx] { --p: 1; --q: 1; opacity: 1; transform: none; }
+#review .k-tour { height: auto; } #review .k-tour .hunk { position: static; margin-bottom: 30px; }
+#review blockquote { margin: 10px 0 0; padding: 10px 16px; border-left: 3px solid var(--border); color: var(--muted); font-size: 16px; }
+#review .files details { margin: 10px 0; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); }
+#review .files summary { padding: 12px 16px; cursor: pointer; font-size: 20px; }
+#review .files .fk { font: 600 15px var(--mono); color: var(--muted); text-transform: uppercase; margin: 0 8px; }
+#review .files .say { margin: 18px 20px 8px; font-size: 24px; }
+#review .files pre { margin: 0 14px 14px; }
+#review .files label { font: 15px var(--mono); color: var(--muted); }
+
+/* pointers — what the narration is talking about right now (--h, from data-h marks).
+   The look is ui-narration's highlight box (orange #ff7a00 frame + glow), so a film points the
+   same way a browser-capture recording does. */
+.l[data-h] { box-shadow: inset 6px 0 0 rgba(255, 122, 0, var(--h, 0)); background-image: linear-gradient(rgba(255, 122, 0, calc(var(--h, 0) * .16)), rgba(255, 122, 0, calc(var(--h, 0) * .16))); }
+.l[data-h] em { color: color-mix(in srgb, #ffb266 calc(var(--h, 0) * 100%), #484f58); }
+[data-h]:not(.l):not(.ptbox) { box-shadow: 0 0 0 calc(var(--h, 0) * 3px) #ff7a00, 0 0 0 calc(var(--h, 0) * 6px) rgba(255, 122, 0, .25), 0 0 calc(var(--h, 0) * 18px) rgba(255, 122, 0, calc(var(--h, 0) * .45)); }
+.ptbox { position: absolute; pointer-events: none; opacity: var(--h, 0); border: 3px solid #ff7a00; border-radius: 14px; background: rgba(255, 122, 0, .10);
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, .25), 0 0 18px 2px rgba(255, 122, 0, .45); transform: none; }
+.k-tour pre, .files pre { position: relative; }
+.k-tour .hgap { margin: 10px 0 8px; font: 18px var(--mono); color: var(--muted); text-align: center; }
+.k-tour .hgap code { font-size: 17px; }
+#review u { text-decoration: underline dotted rgba(255, 122, 0, .8); text-underline-offset: 4px; }
+#review .beh { cursor: default; } #review .beh .proof { display: block; margin-top: 4px; font: 13px var(--mono); color: var(--muted); } #review .beh .gap { color: #f5cf73; }
+#player { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .72); display: grid; place-items: center; }
+#player iframe { width: min(92vw, calc(88vh * 16 / 9)); aspect-ratio: 16 / 9; border: 0; border-radius: 12px; box-shadow: 0 20px 80px rgba(0, 0, 0, .6); background: #000; }
+#player button { position: fixed; top: 16px; right: 20px; font: 600 18px var(--sans); background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; cursor: pointer; }
+
+/* poster mode — the review page with only the pictures, captured as one image (scripts/stills.ts) */
+.poster-mode #review { max-width: none; width: 1400px; padding: 40px 48px 56px; }
+.poster-mode #review .sec > h2 { margin-top: 36px; }
+.poster-mode #review .rscene + .rscene { margin-top: 20px; }
+
+/* 3D diff tour (tour "view": "3d"): panels at natural size in space; the camera frames each */
+.k-tour.t3d { height: 820px; overflow: hidden; }
+.k-tour.t3d .hunk { position: static; width: 1480px; }
+.k-tour.t3d .hhead { display: none; }
+.t3d-panel { width: 1480px; }
+.t3d-strip { background: rgba(22,27,34,.75); border-radius: 18px; }
+.t3d-route { height: 16px; background: var(--accent); opacity: .7; border-radius: 8px; }
+.t3d-stop { width: 150px; height: 150px; border-radius: 50%; background: var(--accent); color: #05070a; font: 700 96px/150px var(--sans); text-align: center; }
+.t3d-labels { position: absolute !important; inset: 0; pointer-events: none; }
+.t3d-lane { text-align: center; line-height: 1.15; font: 600 20px var(--mono); color: #fff; background: #10233d; border: 2px solid var(--accent); border-radius: 8px; padding: 2px 10px; }
+.t3d-mini { position: absolute; right: 0; top: 0; }
+.t3d-mini text { fill: var(--muted); font: 18px var(--mono); text-anchor: end; } .t3d-mini text.on { fill: var(--text); font-weight: 700; }
+.t3d-mini line { stroke: #21262d; stroke-width: 2; }
+.t3d-mini polyline { fill: none; stroke: var(--accent); stroke-width: 3; opacity: .5; }
+.t3d-mini circle { fill: #0d1117; stroke: var(--muted); stroke-width: 3; }
+.t3d-mini circle.past { fill: var(--muted); } .t3d-mini circle.on { fill: var(--accent); stroke: #fff; }

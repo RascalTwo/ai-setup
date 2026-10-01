@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>anidoodle</title>
+<!-- Publish posture — the SOLE source of truth for viz publish. Default "local" = stays
+     on this machine, never published. Change to "public" (open web) or "private"
+     (magic-link sealed) ONLY when you intend to share this viz. -->
+<meta name="viz:uid" content="v-2141cf5c17cf">
+<meta name="viz:approved" content="h-249d77449b44">
+<meta name="viz:posture" content="public">
+<meta name="viz:listed" content="listed">
+<meta name="viz:title" content="anidoodle">
+<meta name="viz:description" content="A nine-chapter tour of the external /anidoodle skill: 31 hand-drawn styles, 11 kinds of output, characters, composed scores and live web pieces, every image and sound on the page made by anidoodle itself.">
+<!-- <meta name="viz:spoiler" content="true"> -->
+<!-- Runtime media the single-file builder can't see (JS-set video/audio/iframe src, fetch): shipped beside the page. -->
+<meta name="viz:asset" content="media">
+<meta name="viz:asset" content="data.json">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<style>
+  :root {
+    --bg: #15110d; --panel: #201a14; --panel-2: #2a221a; --border: #3b3128;
+    --text: #f3eadc; --muted: #b9ab98; --faint: #8a7c6b; --accent: #e5a55a;
+    --paper: #efe7d9; --ink: #2a1c14; --red: #c8553d;
+  }
+  body { margin: 0; background: var(--bg); }
+  .top { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); }
+  .top-in { max-width: 1320px; margin: 0 auto; padding: 10px 20px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .brand { font-weight: 700; letter-spacing: .02em; }
+  .brand em { font-style: normal; color: var(--accent); }
+  .chaps { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+  .chap { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 4px 11px; font: inherit; font-size: 12.5px; cursor: pointer; }
+  .chap b { color: var(--faint); font-weight: 600; margin-right: 5px; }
+  .chap.on { background: var(--accent); color: #1a120a; border-color: var(--accent); }
+  .chap.on b { color: #1a120a; }
+  .chap.seen:not(.on) { color: var(--text); }
+  .ctl { display: flex; gap: 6px; align-items: center; }
+  .ctl button { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font: inherit; cursor: pointer; }
+  .ctl .pos { font-family: var(--mono); color: var(--muted); font-size: 12px; min-width: 44px; text-align: center; }
+  .progress { height: 3px; background: var(--panel-2); }
+  .progress i { display: block; height: 100%; background: var(--accent); transition: width .4s; }
+  main { max-width: 1320px; margin: 0 auto; padding: 22px 20px 80px; }
+  section.ch { display: none; }
+  section.ch.on { display: block; animation: rise .35s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+  h2 { font-size: 30px; margin: 4px 0 4px; letter-spacing: -.01em; }
+  h2 small { font-size: 14px; color: var(--accent); font-weight: 600; display: block; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+  h3 { margin: 20px 0 8px; font-size: 17px; }
+  .lede { color: var(--muted); max-width: 900px; font-size: 15.5px; line-height: 1.55; margin: 0 0 16px; }
+  .lede b { color: var(--text); }
+  .grid2 { display: grid; grid-template-columns: 1.25fr 1fr; gap: 18px; align-items: start; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 980px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+  .panel { padding: 14px 16px; }
+  .media { width: 100%; border-radius: 8px; display: block; background: #000; }
+  .cap { color: var(--faint); font-size: 12.5px; margin-top: 6px; line-height: 1.45; }
+  code, .mono { font-family: var(--mono); font-size: 12.5px; }
+  .cmd { background: #0e0b08; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-family: var(--mono); font-size: 12.5px; color: #f1d7ae; white-space: pre-wrap; word-break: break-word; }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 13.5px; }
+  .kv dt { color: var(--faint); } .kv dd { margin: 0; }
+  .chipset { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chipbtn { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 999px; padding: 4px 10px; font: inherit; font-size: 12.5px; cursor: pointer; }
+  .chipbtn.on { border-color: var(--accent); color: var(--accent); }
+  .gate { display: inline-block; font-size: 11px; background: var(--accent); color: #1a120a; border-radius: 4px; padding: 0 5px; font-weight: 700; margin-left: 4px; }
+  /* pipeline */
+  #pipe svg { width: 100%; height: auto; }
+  .pnode rect { fill: var(--panel-2); stroke: var(--border); }
+  .pnode.gatey rect { stroke: var(--accent); stroke-width: 2; }
+  .pnode.sel rect { fill: color-mix(in srgb, var(--accent) 22%, var(--panel-2)); }
+  .pnode { cursor: pointer; }
+  /* gallery */
+  .fams { display: flex; gap: 3px; align-items: flex-end; height: 70px; margin: 6px 0 12px; }
+  .fam { flex: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .fam i { display: block; width: 26px; border-radius: 3px 3px 0 0; }
+  .fam span { font-size: 10px; color: var(--muted); writing-mode: vertical-rl; transform: rotate(180deg); max-height: 0; }
+  .famlegend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--muted); }
+  .famlegend label { display: flex; gap: 5px; align-items: center; cursor: pointer; }
+  .famlegend label.off { opacity: .35; }
+  .famlegend .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .tile { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; position: relative; }
+  .tile.sel { outline: 2px solid var(--accent); }
+  .tile .img { aspect-ratio: 1; background: #0b0907 center/cover no-repeat; position: relative; }
+  .tile video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .15s; }
+  .tile:hover video { opacity: 1; }
+  .tile .nm { padding: 6px 8px 7px; font-size: 12.5px; line-height: 1.25; }
+  .tile .nm small { display: block; color: var(--faint); font-size: 11px; }
+  .tile .band { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+  .tile.dim { opacity: .18; pointer-events: none; }
+  .detail { position: sticky; top: 78px; }
+  #scrubber { width: 100%; }
+  /* kinds matrix */
+  table.mx { border-collapse: collapse; width: 100%; font-size: 13px; }
+  table.mx th, table.mx td { border-bottom: 1px solid var(--border); padding: 6px 8px; text-align: left; vertical-align: middle; }
+  table.mx th { color: var(--faint); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; }
+  table.mx tr.row { cursor: pointer; }
+  table.mx tr.row:hover td { background: var(--panel); }
+  table.mx tr.row.sel td { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+  .gbar { display: inline-flex; gap: 3px; }
+  .gbar i { width: 12px; height: 12px; border: 1.5px solid var(--accent); border-radius: 3px; }
+  .gbar i.f { background: var(--accent); }
+  .lenbar { height: 8px; background: var(--c5); border-radius: 4px; opacity: .85; }
+  .steps { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+  .steps b { color: var(--text); }
+  .say { border-left: 3px solid var(--accent); padding: 6px 10px; background: var(--panel-2); border-radius: 0 6px 6px 0; font-size: 13.5px; }
+  /* music */
+  #scatter svg, #tempo svg, #moods svg { width: 100%; height: auto; }
+  .pt { cursor: pointer; }
+  .pt.playing circle { stroke: #fff; stroke-width: 3; }
+  /* shapes */
+  #shapes svg { width: 100%; height: auto; }
+  iframe.live { width: 100%; height: 560px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+  .check { display: grid; grid-template-columns: 52px 1fr; gap: 3px 10px; font-size: 13px; }
+  .check .p { color: var(--good); font-family: var(--mono); font-weight: 700; }
+  .check .x { color: var(--danger); font-family: var(--mono); font-weight: 700; }
+  .laws { counter-reset: law; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .law { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 13.5px; color: var(--muted); }
+  .law b { color: var(--text); display: block; margin-bottom: 4px; font-size: 14.5px; }
+  .law b::before { counter-increment: law; content: counter(law) ". "; color: var(--accent); }
+  .tell { display: flex; gap: 8px; align-items: baseline; font-size: 13.5px; padding: 3px 0; }
+  .tell::before { content: "✗"; color: var(--danger); font-weight: 700; }
+  .cheat td:first-child { color: #f1d7ae; font-family: var(--mono); font-size: 12.5px; }
+  .hint { color: var(--faint); font-size: 12px; }
+  .endcard { text-align: center; padding: 26px; border: 1px dashed var(--border); border-radius: 12px; margin-top: 22px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="top-in">
+    <div class="brand">/<em>anidoodle</em> · the whole skill</div>
+    <nav class="chaps" id="chaps"></nav>
+    <div class="ctl">
+      <button id="prev" title="Previous chapter (←)">←</button>
+      <span class="pos" id="pos"></span>
+      <button id="next" title="Next chapter (→)">→</button>
+      <button id="tour" title="Auto-advance through every chapter">▶ Tour</button>
+    </div>
+  </div>
+  <div class="progress"><i id="bar"></i></div>
+</div>
+
+<main>
+<!-- 0 ─────────────────────────────── OVERVIEW -->
+<section class="ch" data-title="What it is">
+  <h2><small>Chapter 1 · What it is</small>Hand-drawn art, written as code</h2>
+  <p class="lede"><b>What you're looking at:</b> a tour of the <code>/anidoodle</code> Claude Code skill. Everything visual or audible on this page was made by anidoodle: the film below, all 31 style plates, the timelapses, the characters, the scores and the live web pieces. None of it came from an image generator or a download. <b>One pure function paints every frame; another composes and synthesizes every audio sample.</b> So the same source rebuilds the same pixels and the same sound on any machine, at any size and any length. Use <b>← →</b> to move between the nine chapters, or press <b>▶ Tour</b>.</p>
+  <div class="grid2">
+    <div>
+      <video class="media" src="media/showcaseTitle.mp4" autoplay muted loop playsinline data-viz-id="title-film" data-label="Title film, drawn by anidoodle for this page"></video>
+      <div class="cap">Made for this page with anidoodle. <code>showcaseTitle.ts</code> is a 20-second "drawing" film, 1280×720, 600 frames on a 120 bpm grid. The pen writes the name, the capitals go down stroke by stroke, and six prints are set down one per beat. It passed the skill's own 14-check gate (chapter 8 shows where it failed first).</div>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">The whole idea in four lines</h3>
+      <dl class="kv">
+        <dt>You ask</dt><dd>“a fox at dusk, in cut paper” · “a 45-second film about a lighthouse keeper, woodcut, with a nocturne” · “teach me to draw an owl” · “make our signup form's mascot react to typing”</dd>
+        <dt>It asks back</dt><dd>one question at a time, and only what you left open: what, style, shape, length, sound, characters (chapter 2)</dd>
+        <dt>It builds</dt><dd>TypeScript that draws every frame in one of <b>31 hands</b>, the way that medium really makes its marks, plus a <b>composed score</b> as note data</dd>
+        <dt>You get</dt><dd>PNG · MP4 with the score · GIF · WebM/APNG with alpha · one offline HTML player · a live interactive canvas · WAV · a drawing lesson set</dd>
+      </dl>
+    </div>
+  </div>
+  <h3>How a piece gets made <span class="hint">· click any step · orange border = a human approval gate (three at most)</span></h3>
+  <div class="panel" id="pipe"></div>
+  <div class="panel" id="pipeDetail" style="margin-top:10px"></div>
+</section>
+
+<!-- 1 ─────────────────────────────── INTAKE -->
+<section class="ch" data-title="Asking">
+  <h2><small>Chapter 2 · Asking for something</small>Six questions, then it draws</h2>
+  <p class="lede">anidoodle asks <b>one question per turn</b>, gives its recommendation first, and skips anything your request already answered. If you say <b>“you pick”</b>, it picks and tells you why in one line. The answers go into a short <b>brief file</b> before anything is drawn. <b>Try it:</b> change the answers below. The frame is drawn to the real aspect ratio, and you get the brief, the beat grid, the workflow it follows and the exact scaffold command.</p>
+  <div class="grid2">
+    <div class="panel">
+      <dl class="kv" id="intake" style="row-gap:10px"></dl>
+    </div>
+    <div>
+      <div class="panel" id="shapePreview"></div>
+      <div class="panel" style="margin-top:10px" id="intakeOut"></div>
+    </div>
+  </div>
+  <h3>Defaults when you don't say</h3>
+  <table class="mx">
+    <tr><th>Open question</th><th>Default</th><th>Why</th></tr>
+    <tr><td>Style</td><td>the hand whose recipe best fits the subject, named with a reason</td><td>a style is a decision, not a coin toss</td></tr>
+    <tr><td>Shape</td><td>1x1 social · 16x9 web heroes/YouTube · 9x16 Reels/Shorts/TikTok</td><td>where it lives decides it</td></tr>
+    <tr><td>Length</td><td>still 1 frame · loop 4–8 s · logo 2–4 s · film as long as its arc · explainer one idea per chapter</td><td>the content sets the length; <b>never capped</b></td></tr>
+    <tr><td>Sound</td><td>films get a score in a fitting style; loops and stills are silent; interactive pieces never have sound</td><td>silence is a choice too</td></tr>
+    <tr><td>fps</td><td>30 · 24 for a hand-drawn cartoon feel · 12 “on twos” for paper and stop-motion</td><td>the medium's own rhythm</td></tr>
+  </table>
+</section>
+
+<!-- 2 ─────────────────────────────── STYLES -->
+<section class="ch" data-title="31 hands">
+  <h2><small>Chapter 3 · The styles</small>31 hands, each a different way of making marks</h2>
+  <p class="lede">A style here is <b>not a palette swap</b>. Each hand changes the <b>medium, the edge and the order of the marks</b>: crayon skips the paper's valleys, riso overprints one ink drum at a time, a woodblock pulls the keyblock and then the colour blocks. <b>Hover a tile</b> to watch that plate draw itself. <b>Click</b> to open its recipe, then scrub the timelapse. The bar chart shows how many hands each family has, and clicking a bar filters the grid.</p>
+  <div class="fams" id="fams"></div>
+  <div class="famlegend" id="famlegend"></div>
+  <div class="grid2" style="grid-template-columns: 1.6fr 1fr; margin-top: 12px">
+    <div class="tiles" id="tiles"></div>
+    <div class="detail panel" id="styleDetail"></div>
+  </div>
+  <p class="cap">Each tile is the last frame of that style's draw film, rendered for this page with <code>node tools/render.mjs &lt;drawFilm&gt; --out x.webm</code> (480 px here; any size at full resolution). Other routes: <b>“match my image”</b> analyses your picture and grows the nearest plate into a new hand (chapter 4). <b>“a house style”</b> reloads one saved earlier from <code>styles/house/</code>.</p>
+</section>
+
+<!-- 3 ─────────────────────────────── KINDS -->
+<section class="ch" data-title="What it makes">
+  <h2><small>Chapter 4 · Output kinds</small>Eleven kinds of thing, one engine</h2>
+  <p class="lede">Every piece is a <b>Film</b> (meta, shots that tile the frames, an optional score), and a still is just a film one frame long. Each kind has its own workflow. The <b>gate squares</b> count the human approvals it spends, the <b>teal bar</b> shows typical length on a log scale, and the dots mark motion, sound and interactivity. <b>Click a row</b> to see a real example made by the skill, with its steps and a line you could say to ask for one.</p>
+  <div class="grid2">
+    <div class="panel" style="padding:6px 8px"><table class="mx" id="kinds"></table></div>
+    <div class="detail panel" id="kindDetail"></div>
+  </div>
+</section>
+
+<!-- 4 ─────────────────────────────── CHARACTERS -->
+<section class="ch" data-title="Characters">
+  <h2><small>Chapter 5 · Characters</small>One character, identical in every hand</h2>
+  <p class="lede">A character is built <b>once, as a module</b>: canon proportions, a 3D rig with joint limits, drawn views, palette roles and distinguishing features. Every shot and every style poses that one module, so <b>Mira</b> is the same girl in woodcut, pixel art or toy brick. A gate checks bone lengths, joint limits, five digits, feet on the floor and identity across styles (IoU &gt; 0.8 for grid styles). <b>Pick a sheet:</b></p>
+  <div class="chipset" id="charPick" style="margin-bottom:10px"></div>
+  <div class="grid2">
+    <div id="charMedia"></div>
+    <div class="panel" id="charInfo"></div>
+  </div>
+  <h3>The character gate <span class="hint">· <code>node tools/character-check.mjs</code> · every check has a “negative twin” that must fail</span></h3>
+  <div class="chipset" id="charChecks"></div>
+</section>
+
+<!-- 5 ─────────────────────────────── MUSIC -->
+<section class="ch" data-title="Music">
+  <h2><small>Chapter 6 · Scores</small>Music as note data, then measured</h2>
+  <p class="lede">anidoodle writes the notes itself, as bar-checked data (a bar that doesn't add up throws). It synthesizes every instrument and masters to a loudness target. No samples, no loops. <b>Music gets a plan, never an adjective</b>: a style, a mood per section, the notes, then measurements. Because the model can't hear, <b>one human listens to 8 seconds</b> before it ships. <b>Click any dot to play</b> the piece, rendered for this page. It's plotted by what <code>music.mjs meter</code> measured: note onsets per second → busier, spectral centroid → brighter.</p>
+  <div class="grid2">
+    <div class="panel"><div id="scatter"></div><div class="cap" id="nowPlaying">Nothing playing · the red dot is the <b>ghost fixture</b>, a deliberately hated sustained drone that the “ghost” guard exists to reject.</div></div>
+    <div class="panel"><h3 style="margin-top:0">11 styles · tempo ranges (bpm)</h3><div id="tempo"></div></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="panel"><h3 style="margin-top:0">15 moods, blendable <span class="hint">· red links are the blends it refuses</span></h3><div id="moods"></div></div>
+    <div class="panel">
+      <h3 style="margin-top:0">What a score looks like</h3>
+      <div class="cmd">line(3, "C5:2 Bb4:.5 Ab4:.5 | Bb4:2 Eb4:1 | [Ab1 Eb2 Ab2]:3@0.8",
+     { role: "melody", bpb: 3 })</div>
+      <dl class="kv" style="margin-top:10px">
+        <dt>Plan</dt><dd>sections, each with a mood (or a blend), key + mode, melody types, a dynamic arc and an ending</dd>
+        <dt>13 modes</dt><dd>major, aeolian, harmonic/melodic minor, dorian, phrygian, lydian, mixolydian, major/minor pentatonic, blues, whole-tone, locrian</dd>
+        <dt>9 melody types</dt><dd>arpeggio, stepwise, hook, ostinato, drone, call &amp; response, counter-melody, sequence, theme transformation</dd>
+        <dt>Instruments</dt><dd>modal piano, music box, bell, celesta, marimba, vibes, harp and guitar (Karplus-Strong), strings, FM bell, e-piano, chip pulse/triangle/noise, kick, snare, hat, bass, vinyl</dd>
+        <dt>Any length</dt><dd><code>fitToDuration</code> drops optional sections, restates repeatable ones and moves the tempo within the style's range</dd>
+        <dt>Measured</dt><dd>integrated LUFS, LRA, true peak, onsets/s, centroid; guards for <i>ghost</i>, <i>reverb</i>, <i>masking</i> and <i>plan</i> (the declared mode matches the notes)</dd>
+        <dt>Mastering</dt><dd>gentle styles: −16 LUFS, static gain, never a compressor · dense styles: −14 LUFS through a look-ahead limiter</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- 6 ─────────────────────────────── INTERACTIVE -->
+<section class="ch" data-title="Interactive">
+  <h2><small>Chapter 7 · Interactive web pieces</small>Art that reacts to your UI, live</h2>
+  <p class="lede">An interactive piece is a <b>live canvas in your page</b>, not a video. It reacts to pointer, hover, focus, clicks, scroll, typing (length and caret only, <b>never the text</b>) and UI state (idle, busy, success, error). Every input goes into a 60 Hz log, and a frame is a pure function of that log, so any session can be <b>replayed</b> and hashed exactly. These three demos were emitted for this page with <code>emit-interactive.mjs</code> and each passed 11 of 11 checks. <b>Go on, use them.</b></p>
+  <div class="chipset" id="intPick" style="margin-bottom:10px"></div>
+  <div class="grid2">
+    <iframe class="live" id="intFrame" title="anidoodle interactive demo" data-viz-id="int-frame" data-label="Live interactive anidoodle piece"></iframe>
+    <div class="panel" id="intInfo"></div>
+  </div>
+</section>
+
+<!-- 7 ─────────────────────────────── ENGINE -->
+<section class="ch" data-title="Engine">
+  <h2><small>Chapter 8 · The engine</small>Deterministic, gated, any size</h2>
+  <p class="lede">The engine is a portable art core that knows nothing about the DOM, plus the tooling around it. <b>The contract is absolute:</b> <code>renderFrame(frame, env)</code> is pure, randomness comes only from <code>rng(seed)</code>, and nothing reads a clock, uses <code>ctx.filter</code> or loads a file. That's why a piece can render on four workers, backwards, on another backend, and still come out hash-identical. <b>Click a tool</b> to see its flags.</p>
+  <div class="panel" id="tools"></div>
+  <div class="panel" id="toolDetail" style="margin-top:10px"></div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="panel">
+      <h3 style="margin-top:0">Shapes, drawn to scale <span class="hint">· any W×H works too</span></h3>
+      <div id="shapes"></div>
+      <h3>Outputs</h3>
+      <table class="mx">
+        <tr><th>File</th><th>Command</th><th>Notes</th></tr>
+        <tr><td>PNG</td><td><code>still.mjs</code></td><td>drawn twice, hash printed, <i>reproducible</i> · <code>--scale 3</code> for print</td></tr>
+        <tr><td>MP4</td><td><code>render.mjs</code></td><td>with the synthesized score, at the film's own size</td></tr>
+        <tr><td>GIF</td><td><code>--out x.gif</code></td><td>one palette for the whole piece, loops forever</td></tr>
+        <tr><td>WebM / APNG</td><td><code>--out x.webm</code></td><td>alpha kept: stickers and overlays</td></tr>
+        <tr><td>HTML player</td><td><code>emit.mjs</code></td><td>one offline file that synthesizes its own sound</td></tr>
+        <tr><td>Interactive</td><td><code>emit-interactive.mjs</code></td><td><code>.html</code> + an ES module with <code>mount()</code></td></tr>
+        <tr><td>WAV</td><td><code>music.mjs render</code></td><td>48 kHz, 32-bit float</td></tr>
+        <tr><td>Lesson set</td><td><code>lesson.mjs</code></td><td>steps sheet, timelapse, contact sheet, final, LESSON.md</td></tr>
+      </table>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">The gate, run on this page's title film</h3>
+      <p class="hint" style="margin-top:0">A real transcript. Run 1 <b>failed</b> on dead air, the gate doing its job. Toggle to see the fix.</p>
+      <div class="chipset" id="gateRun" style="margin-bottom:8px"></div>
+      <div class="check" id="gateList"></div>
+      <div class="cap" id="gateNote"></div>
+      <h3>Four backends, one art core</h3>
+      <table class="mx">
+        <tr><th>Backend</th><th>What it delivers</th><th>Catches</th></tr>
+        <tr><td>playwright</td><td>frames → MP4</td><td>—</td></tr>
+        <tr><td>html-player</td><td>one offline HTML file; warm shared cache</td><td>bad cache keys</td></tr>
+        <tr><td>remotion</td><td>a Remotion <code>&lt;Composition&gt;</code>; every frame cold</td><td>frame-order dependence</td></tr>
+        <tr><td>hyperframes</td><td>frames seeked via <code>window.FILM.seek(n)</code></td><td>seek bugs</td></tr>
+      </table>
+      <p class="cap">A backend that isn't installed reports <b>CANNOT RUN</b> instead of a wrong answer.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 8 ─────────────────────────────── LAWS -->
+<section class="ch" data-title="Craft & recap">
+  <h2><small>Chapter 9 · The craft bar and the recap</small>Would a proud illustrator ship this?</h2>
+  <p class="lede">The engine is the easy half. Work gets thrown away because it had no point, because the subject was an icon of itself, because a style was only a palette swap, because the music had no form, or because the person spent their patience approving fragments. The skill carries the craft that prevents each of those.</p>
+  <div class="laws">
+    <div class="law"><b>Every piece has a point.</b>A still: one idea, one focal subject, one light. A film: one transformation, one payoff, one token that returns.</div>
+    <div class="law"><b>State the realism.</b>Name the anatomy, the view and the reference opened, for animals, objects and people alike.</div>
+    <div class="law"><b>A style is a way of making marks.</b>Change the medium, the edge and the order of the marks, not just the palette.</div>
+    <div class="law"><b>Prove the look on ONE still, then build end to end.</b>After that, approval gates cost more than they save.</div>
+    <div class="law"><b>The contract is absolute.</b>Pure in (frame, env), rng(seed) only, no clock, no ctx.filter, nothing generated or downloaded. Your own images may be embedded, pinned by hash.</div>
+    <div class="law"><b>Music gets a plan, never an adjective.</b>Style, a mood per section, notes as data, then measurements, then one human listens.</div>
+    <div class="law"><b>One directs, one builds, both write everything down.</b>When a session degrades, reset: the files are the memory.</div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="panel">
+      <h3 style="margin-top:0">The tells it hunts for and fixes</h3>
+      <div class="tell">subjects built from ellipses (an icon of a pear, not a pear)</div>
+      <div class="tell">one style recoloured into another</div>
+      <div class="tell">things that fade in instead of being drawn</div>
+      <div class="tell">people with rubber joints, mitten hands, floating feet</div>
+      <div class="tell">a character drawn differently from shot to shot</div>
+      <div class="tell">flat colour fields, same-weight strokes, evenly stamped scatter</div>
+      <div class="tell">gradient skies, oval bokeh, decoration without a reason</div>
+      <div class="tell">dead air: something must visibly change every second</div>
+      <h3>Honest limits</h3>
+      <p class="hint" style="font-size:13px">It can't hear the score, watch the film move or use the interactive piece. Every claim about them comes from a <b>measurement</b> or from <b>a human</b>, and it tells you which. A green check is a claim until it's re-run.</p>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">Cheat sheet · things you can say</h3>
+      <table class="mx cheat" id="cheat"></table>
+    </div>
+  </div>
+  <div class="endcard">
+    <div style="font-size:20px;font-weight:700">That's everything anidoodle can do.</div>
+    <div class="hint" style="margin-top:6px">31 hands · 11 kinds · characters in any hand · 11 music styles × 15 moods · live web pieces · 4 backends · one pure function per frame.<br>Start with <code>/anidoodle</code> and one sentence of what you want.</div>
+    <div class="hint" style="margin-top:12px">anidoodle is by Alex Greenshpun (10x Company), Apache-2.0: <a href="https://github.com/alexgreensh/anidoodle">github.com/alexgreensh/anidoodle</a>. The style plates, the butterfly film, Bit, Mira and Theo are its designs, rendered here by its own code. This tour and its title film were made with it.</div>
+  </div>
+</section>
+</main>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

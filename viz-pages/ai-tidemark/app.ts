@@ -1,0 +1,328 @@
+import * as d3 from "https://esm.sh/d3@7";
+import { $, esc, saveHash, loadHash, vizEnv } from "/_kit/viz.js";
+import { api } from "/_kit/api.js";
+import type { Data, Routes, Sample, Source } from "./contract.js";
+
+const { get } = api<Routes>();
+
+// Sample: { t: ms, w: window minutes (300 | 10080), v: % used, r: resets_at ms, q: exact | lagged }
+interface Win { r: number; pts: Sample[]; peak: number; start: number; id: string; wkDelta?: number | null }
+type Dom = "all" | (number | Date)[];
+interface State { hide: string[]; lag: boolean; zoom: Dom | null; heat: string | null; sel: string | null }
+type Model = ReturnType<typeof model>;
+type Layer = "pace" | "fives" | "lag" | "weekly" | "proj";
+type G = d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
+
+const H = 3600e3, WEEK = 168 * H, FIVE = 5 * H;
+const st: State = Object.assign<State, Partial<State>>({ hide: [], lag: false, zoom: null, heat: null, sel: null }, loadHash<State>());   // zoom: null (default two weeks) | "all" | [from, to]
+const tip = $("#tip")!;
+const fmt = (t: number | Date, o: Intl.DateTimeFormatOptions = { weekday: "short", hour: "numeric", minute: "2-digit" }) => new Date(t).toLocaleString([], o);
+const day = (t: number) => fmt(t, { weekday: "short", month: "short", day: "numeric" });
+const pct = (v: number | null | undefined) => (v == null ? "—" : `${Math.round(v)}%`);
+const showTip = (e: MouseEvent, html: string) => { tip.innerHTML = html; tip.style.display = "block"; tip.style.left = Math.min(e.clientX + 14, innerWidth - 320) + "px"; tip.style.top = e.clientY + 14 + "px"; };
+const hideTip = () => (tip.style.display = "none");
+const onTip = <E extends d3.BaseType, T, P extends d3.BaseType>(sel: d3.Selection<E, T, P, unknown>, html: (d: T) => string) => sel.on("mousemove", (e, d) => showTip(e as MouseEvent, html(d))).on("mouseleave", hideTip);
+
+// ── data: live from api/data, else the generated demo ─────────────────────
+let D: Data, M: Record<string, Model>, live = false;
+async function load() {
+  let d: Data | null = null;
+  // A published copy has no api/data (vizEnv says "static"); don't even ask.
+  if (!new URLSearchParams(location.search).has("demo") && (await vizEnv()) === "live")
+    try { live = true; d = await get("/data", { timeout: 8000 }); } catch {}
+  d ??= await (await fetch("fixtures/demo.json")).json();
+  D = d!; M = Object.fromEntries(D.sources.map((s) => [s.id, model(s)]));
+  render();
+}
+addEventListener("visibilitychange", () => document.visibilityState === "visible" && live && load());
+setInterval(() => document.visibilityState === "visible" && live && load(), 60_000);
+
+// ── per-source model: weeks, 5h windows, exchange rate, burn rate ─────────
+function model(src: Source) {
+  const exact = src.samples.filter((s) => s.q === "exact"), lagged = src.samples.filter((s) => s.q === "lagged");
+  const group = (w: number): Win[] => d3.groups(exact.filter((s) => s.w === w), (s) => s.r).map(([r, pts]) => {
+    const peak = d3.max([...pts, ...lagged.filter((p) => p.w === w && p.r === r)], (p) => p.v)!;
+    return { r, pts, peak, start: r - (w === 300 ? FIVE : WEEK), id: `${src.id}-${w}-${r}` };
+  })
+    // A window that only ever read 0% was reported before any use (Codex restarts
+    // its clock on first use), so it never really existed. Keep the current one.
+    .filter((g) => g.peak > 0 || g.r > D.now)
+    .sort((a, b) => a.r - b.r);
+  const weekly = exact.filter((s) => s.w === 10080), weeks = group(10080), fives = group(300);
+  for (const f of fives) {
+    const wk = weeks.find((w) => w.start < f.r && f.r <= w.r);
+    const before = wk && weekly.filter((s) => s.r === wk.r && s.t <= f.start).at(-1);
+    const inside = wk && weekly.filter((s) => s.r === wk.r && s.t <= f.r).at(-1);
+    f.wkDelta = before && inside && inside.t > f.start ? inside.v - before.v : null;
+  }
+  const pts = fives.filter((f) => f.wkDelta != null && f.peak > 0);
+  let burn = 0;
+  for (let i = 1; i < weekly.length; i++) { const a = weekly[i - 1]!, c = weekly[i]!; if (c.t >= D.now - WEEK && a.r === c.r && c.v > a.v) burn += c.v - a.v; }
+  const cur = weekly.at(-1), curWeek = cur && cur.r > D.now ? weeks.find((w) => w.r === cur.r) : null;
+  return { src, exact, lagged, weekly, weeks, fives, k: fitK(pts), rate: burn / WEEK, cur, curWeek };
+}
+function fitK(pts: Win[]) { const sxx = d3.sum(pts, (p) => p.peak ** 2); return sxx ? d3.sum(pts, (p) => p.peak * p.wkDelta!) / sxx : null; }
+
+// One colour per source everywhere; shape carries the window (filled = 5-hour, line = weekly).
+const col = (id: string) => ({ claude: "var(--src-claude)", codex: "var(--src-codex)" } as Record<string, string>)[id] ?? "var(--c7)";
+const visible = () => D.sources.filter((s) => !st.hide.includes(s.id)).map((s) => M[s.id]!);
+let x0: d3.ScaleTime<number, number>, x: d3.ScaleTime<number, number>;   // full-range and zoomed time scales, shared by every panel
+const inView = (a: number, b: number) => b >= +x.domain()[0]! && a <= +x.domain()[1]!;
+
+function render() {
+  $("#stamp")!.textContent = D.demo ? "" : `Updated ${fmt(D.now)}.`;
+  $("#banner")!.innerHTML = D.demo ? `<div class="banner"><b>Demo data</b>: generated, not anyone's real usage. Installed locally, this page shows your own history. See <code>tools/ai-tidemark/README.md</code>.</div>` : "";
+  if (!D.sources.length) {
+    $("#kpis")!.innerHTML = `<div class="empty">No history recorded yet. Once the statusline wrapper or the poller has run, windows appear here.</div>`;
+    for (const id of ["tlPanel"]) $("#" + id)!.style.display = "none";
+    return;
+  }
+  kpis(); timeline(); heat(); weeksPanel(); table();
+  $("#errs")!.textContent = D.errors || "(empty)";
+}
+
+function kpis() {
+  const tone = (v: number) => (v >= 100 ? "danger" : v >= 80 ? "good" : "warn");
+  $("#kpis")!.innerHTML = D.sources.map((s) => {
+    const m = M[s.id]!, { cur, curWeek, rate, k } = m;
+    const tiles: [string, string, string, string?][] = [];
+    if (curWeek) {
+      const elapsed = (D.now - curWeek.start) / WEEK, proj = cur!.v + rate * (curWeek.r - D.now);
+      tiles.push(["This week", pct(cur!.v), `${Math.round(elapsed * 100)}% of the week gone · so far ${(cur!.v / Math.max(0.01, elapsed * 100)).toFixed(1)}× even pace`]);
+      tiles.push(["Projected at reset", proj >= 100 ? "100%+" : pct(proj), proj >= 100 && rate ? `limit hit ≈ ${fmt(D.now + (100 - cur!.v) / rate)}` : `at your 7-day-average rate · resets ${day(curWeek.r)}`, tone(proj)]);
+    }
+    const prev = m.weeks.filter((w) => w.r <= D.now).at(-1);
+    if (prev) tiles.push(["Last week closed at", pct(prev.peak), `${Math.round(100 - prev.peak)}% expired unused`, tone(prev.peak)]);
+    const best = d3.greatest(m.fives, (f) => f.peak);
+    if (best) tiles.push(["Busiest 5h window", pct(best.peak), `${fmt(best.start, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} → ${fmt(best.r, { hour: "numeric" })}`]);
+    if (k) tiles.push(["Full 5h window =", `${pct(100 * k)} wk`, `≈ ${(1 / k).toFixed(1)} maxed windows empty the week`]);
+    return `<div class="kpis"><div class="src"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col(s.id)}"></span> ${esc(s.label)}${s.plan ? ` <span class="pill">${esc(s.plan)}</span>` : ""}${s.tier ? ` <span class="pill">${esc(s.tier.name)}</span>` : ""}</div>` +
+      tiles.map(([l, n, d, c]) => `<div class="kpi" data-viz-id="kpi-${s.id}-${l}" data-label="${esc(s.label)} ${l}: ${n}"><div class="l">${l}</div><div class="n ${c || ""}">${n}</div><div class="d">${esc(d)}</div></div>`).join("") + "</div>";
+  }).join("");
+}
+
+// ── the zoomable timeline: every visible source overlaid on one chart ─────
+function timeline() {
+  const W = 1240, L = 44, R = 150, PH = 260, T = 12;
+  const vis = visible();
+  const hasLag = D.sources.some((s) => M[s.id]!.lagged.length);
+  $("#tlCtl")!.innerHTML = (D.sources.length > 1 ? D.sources.map((s) => `<label><input type="checkbox" data-src="${s.id}" ${st.hide.includes(s.id) ? "" : "checked"}> ${esc(s.label)}</label>`).join("") : "") +
+    ["all|All", "lastweek|Last week", "thisweek|This week", "24h|Last 24h"].map((p) => `<button data-p="${p.split("|")[0]}">${p.split("|")[1]}</button>`).join("") +
+    (hasLag ? `<label><input type="checkbox" id="lagT" ${st.lag ? "checked" : ""}> statusline samples (lagged lower bounds)</label>` : "") +
+    `<span class="hint">scroll = zoom · drag = pan</span>`;
+  $("#tlCtl")!.querySelectorAll<HTMLInputElement>("[data-src]").forEach((c) => (c.onchange = () => { st.hide = c.checked ? st.hide.filter((i) => i !== c.dataset["src"]) : [...st.hide, c.dataset["src"]!]; render(); }));
+  if ($("#lagT")) $("#lagT")!.onchange = (e) => { st.lag = (e.target as HTMLInputElement).checked; render(); };
+
+  $("#legend")!.innerHTML = vis.map((m) => `<span class="legend-item"><span class="swatch line" style="background:${col(m.src.id)}"></span>${esc(m.src.label)} weekly</span><span class="legend-item"><span class="swatch" style="background:color-mix(in srgb,${col(m.src.id)} 30%,transparent);border:1px solid ${col(m.src.id)}"></span>${esc(m.src.label)} 5-hour windows</span>`).join("") +
+    `<span class="legend-item"><span class="swatch line" style="background:repeating-linear-gradient(90deg,var(--muted) 0 6px,transparent 6px 11px)"></span>Even pace → 100% at reset (in the source's colour)</span><span class="legend-item"><span class="swatch line" style="background:repeating-linear-gradient(90deg,var(--muted) 0 3px,transparent 3px 6px)"></span>Projection at trailing-7-day rate</span>`;
+  const all = vis.flatMap((m) => m.exact);
+  if (!all.length) { d3.select("#tl").html(""); d3.select("#ov").html(""); return; }
+  const end = d3.max([D.now, ...vis.map((m) => m.curWeek?.r ?? 0)]);
+  x0 = d3.scaleTime().domain([d3.min(all, (s) => s.t)!, end!]).range([L, W - R]);
+  x = x0.copy();
+  const Ht = T + PH + 24;
+  const svg = d3.select<SVGSVGElement, unknown>("#tl").attr("viewBox", `0 0 ${W} ${Ht}`).html("");
+  svg.append("defs").append("clipPath").attr("id", "clip").append("rect").attr("x", L).attr("y", 0).attr("width", W - L - R).attr("height", Ht);
+  const y = d3.scaleLinear().domain([0, 100]).range([T + PH, T]);
+  svg.append("g").attr("transform", `translate(${L},0)`).call(d3.axisLeft(y).ticks(4).tickFormat((d) => d + "%").tickSize(-(W - L - R))).call((a) => a.selectAll("line").attr("class", "grid")).call((a) => a.select(".domain").remove());
+  const xAxis = svg.append("g").attr("transform", `translate(0,${T + PH})`);
+  const p = svg.append("g").attr("clip-path", "url(#clip)");
+  const now = p.append("line").attr("stroke", "var(--accent)");
+  // Layers, not panels: every source's pace lines under every source's windows under every weekly line.
+  const lay = ["pace", "fives", "lag", "weekly", "proj"].map((k): [string, G] => [k, p.append("g")]);
+  const panels = vis.map((m) => ({ m, y, c: col(m.src.id), ...(Object.fromEntries(lay.map(([k, g]) => [k, g.append("g")])) as Record<Layer, G>) }));
+  const labels = svg.append("g");   // unclipped: projection labels sit in the right margin
+  const hit = svg.append("rect").attr("class", "hit").attr("x", L).attr("y", T).attr("width", W - L - R).attr("height", Ht - T);
+  const xh = svg.append("line").attr("pointer-events", "none").attr("stroke", "var(--text)").attr("opacity", 0).attr("y1", T).attr("y2", T + PH);
+
+  function draw() {
+    xAxis.call(d3.axisBottom(x).ticks(8).tickSizeOuter(0)).call((a) => a.select(".domain").attr("stroke", "var(--border)"));
+    now.attr("x1", x(D.now)).attr("x2", x(D.now)).attr("y1", y(100)).attr("y2", y(0));
+    for (const P of panels) {
+      const { m, c } = P;
+      // Codex windows can overlap; end each pace line where the next window begins.
+      const paceEnd = (w: Win, i: number) => Math.min(w.r, m.weeks[i + 1]?.start ?? Infinity);
+      P.pace.selectAll("line").data(m.weeks).join("line").attr("x1", (w) => x(w.start)).attr("y1", y(0)).attr("x2", (w, i) => x(paceEnd(w, i))).attr("y2", (w, i) => y(((paceEnd(w, i) - w.start) / WEEK) * 100)).attr("stroke", c).attr("opacity", 0.5).attr("stroke-dasharray", "6 5").attr("stroke-width", 1.25);
+      P.fives.selectAll("path").data(m.fives).join("path")
+        .attr("d", (f) => d3.area<[number, number]>().x((p) => x(p[0])).y0(y(0)).y1((p) => y(p[1]))([[f.start, 0], ...f.pts.map((p): [number, number] => [p.t, p.v]), [Math.min(f.r, D.now), f.pts.at(-1)!.v]]))
+        .attr("fill", (f) => `color-mix(in srgb,${c} ${st.sel === f.id ? 55 : 20}%,transparent)`).attr("stroke", (f) => (st.sel === f.id ? "var(--text)" : c)).attr("stroke-width", 1.25)
+        .attr("data-viz-id", (f) => f.id).attr("data-label", (f) => `${m.src.label} 5h window ending ${fmt(f.r)}, peak ${pct(f.peak)}`);
+      // weekly: solid while sampled, faint dashes across gaps (Mac asleep)
+      P.weekly.selectAll("path").data(m.weeks).join("path")
+        .attr("d", (w) => d3.line<Sample>().x((p) => x(p.t)).y((p) => y(p.v)).curve(d3.curveStepAfter)(w.pts)).attr("fill", "none").attr("stroke", c).attr("stroke-width", 2.5).attr("data-src", m.src.id)
+        .attr("data-viz-id", (w) => w.id).attr("data-label", (w) => `${m.src.label} week ending ${day(w.r)}, closed ${pct(w.peak)}`);
+      P.lag.selectAll("circle").data(st.lag ? m.lagged : []).join("circle").attr("cx", (p) => x(p.t)).attr("cy", (p) => y(p.v)).attr("r", 1.6).attr("fill", c).attr("opacity", 0.45);
+      const cw = m.curWeek, last = m.cur;
+      const pv = cw ? last!.v + m.rate * (cw.r - last!.t) : 0, capT = cw && pv > 100 && m.rate ? last!.t + (100 - last!.v) / m.rate : cw?.r;
+      P.proj.selectAll("*").remove();
+      if (P === panels[0]) labels.selectAll("*").remove();
+      if (cw) {
+        P.proj.append("line").attr("x1", x(last!.t)).attr("y1", y(last!.v)).attr("x2", x(capT!)).attr("y2", y(Math.min(100, pv))).attr("stroke", c).attr("stroke-dasharray", "3 3").attr("stroke-width", 1.5);
+        if (x(capT!) <= W - R + 1) labels.append("text").attr("class", "lbl").attr("x", x(capT!) + 6).attr("y", y(Math.min(100, pv)) + 4).style("fill", c).text(`${m.src.label} ${pv > 100 ? `hits 100% ${fmt(capT!, { weekday: "short", hour: "numeric" })}` : `→ ${pct(pv)}`}`);
+      }
+    }
+  }
+
+  // overview strip + brush, driven by and driving the zoom
+  const ov = d3.select<SVGSVGElement, unknown>("#ov").attr("viewBox", `0 0 ${W} 60`).html(""), yo = d3.scaleLinear().domain([0, 100]).range([44, 4]);
+  for (const m of vis) ov.append("path").attr("d", d3.area<Sample>().x((p) => x0(p.t)).y0(yo(0)).y1((p) => yo(p.v)).curve(d3.curveStepAfter)(m.weekly)).attr("fill", `color-mix(in srgb,${col(m.src.id)} 30%,transparent)`);
+  ov.append("g").attr("transform", "translate(0,44)").call(d3.axisBottom(x0).ticks(8).tickSize(3)).call((a) => a.select(".domain").attr("stroke", "var(--border)"));
+  const brush = d3.brushX().extent([[L, 2], [W - R, 44]]).on("brush end", (e) => {
+    if (!e.sourceEvent || e.sourceEvent.type === "zoom") return;
+    if (e.selection) setDomain(e.selection.map(x0.invert));
+  });
+  const gb = ov.append("g").attr("class", "brush").call(brush);
+  const zoom = d3.zoom<SVGSVGElement, unknown>().scaleExtent([1, 500]).translateExtent([[L, 0], [W - R, Ht]]).extent([[L, 0], [W - R, Ht]]).on("zoom", (e) => {
+    x = e.transform.rescaleX(x0); draw(); followers();
+    if (e.sourceEvent) { st.zoom = x.domain().map(Number); saveHash(st); }   // a hand zoom; presets save their own
+    if (e.sourceEvent?.type !== "brush") gb.call(brush.move, st.zoom ? (x.range().map(e.transform.invertX, e.transform) as [number, number]) : null);
+  });
+  svg.call(zoom).on("dblclick.zoom", null);
+  function setDomain(dom: Dom, save = true): typeof svg | void {
+    if (save) { st.zoom = dom; saveHash(st); }
+    if (dom === "all") return svg.call(zoom.transform, d3.zoomIdentity);
+    let [a, b] = dom as [number | Date, number | Date];
+    a = Math.max(+x0.domain()[0]!, +a); b = Math.min(+x0.domain()[1]!, +b);
+    const k = (W - L - R) / (x0(b) - x0(a));
+    svg.call(zoom.transform, d3.zoomIdentity.scale(k).translate(-x0(a) + L / k, 0));
+  }
+  timeline.setDomain = setDomain;
+  $("#tlCtl")!.querySelectorAll<HTMLElement>("[data-p]").forEach((b) => (b.onclick = () => {
+    const ref = vis[0]!, cw = (ref.curWeek ?? ref.weeks.at(-1))!;
+    const p = b.dataset["p"];
+    if (p === "all") setDomain("all");
+    if (p === "thisweek") setDomain([cw.start, cw.r]);
+    if (p === "lastweek") setDomain([cw.start - WEEK, cw.start]);
+    if (p === "24h") setDomain([D.now - 24 * H, D.now]);
+  }));
+
+  // hover: nearest exact reading of each window, per visible source
+  hit.on("mousemove", (e) => {
+    const t = x.invert(d3.pointer(e)[0]);
+    xh.attr("x1", x(t)).attr("x2", x(t)).attr("opacity", 0.3);
+    const rows = vis.map((m) => {
+      const near = (w: number) => { const a = m.exact.filter((s) => s.w === w); return a.length ? a[d3.bisector((s: Sample): number | Date => s.t).center(a, t)] : null; };
+      const wk = near(10080), f = near(300), wkW = wk && m.weeks.find((w) => w.r === wk.r);
+      const pace = wkW ? ((wk.t - wkW.start) / WEEK) * 100 : null, gap = wk && pace != null ? wk.v - pace : null;
+      return `<b style="color:${col(m.src.id)}">${esc(m.src.label)}</b> <span class="m">(nearest reading ${wk ? Math.round(Math.abs(wk.t - +t) / 6e4) : "—"} min away)</span><br>` +
+        (wk ? `<span style="color:${col(m.src.id)}">weekly</span> ${pct(wk.v)} <span class="m">· ${Math.abs(Math.round(gap!))} points ${gap! >= 0 ? "ahead of" : "behind"} pace</span><br>` : "") +
+        (f ? `<span style="color:${col(m.src.id)}">5-hour</span> ${pct(f.v)} <span class="m">· resets ${fmt(f.r, { hour: "numeric", minute: "2-digit" })}</span>` : "");
+    });
+    showTip(e, `<b>${fmt(t)}</b><br>${rows.join("<br>")}`);
+  }).on("mouseleave", () => { hideTip(); xh.attr("opacity", 0); });
+
+  draw();
+  // Default view: the last two weeks of the first source, not all history.
+  const ref = (vis[0]!.curWeek ?? vis[0]!.weeks.at(-1))!;
+  setDomain(st.zoom ?? [ref.start - WEEK, Math.max(ref.r, D.now)], false);
+}
+
+// timeline() hangs its setDomain on itself for the bar and week panels to call.
+declare namespace timeline { let setDomain: (dom: Dom, save?: boolean) => unknown; }
+
+// ── panels that follow the zoom ───────────────────────────────────────────
+let pending = false;
+function followers() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; bars(); exchange(); }); }
+
+function bars() {
+  const withFives = visible().filter((m) => m.fives.length);
+  $("#bars")!.innerHTML = withFives.length ? "" : `<div class="empty">No 5-hour windows in the visible sources.</div>`;
+  for (const m of withFives) {
+    const ws = m.fives.filter((f) => inView(f.start, f.r)), tier = m.src.tier;
+    const host = d3.select("#bars").append("div");
+    const over = tier ? ws.filter((f) => f.peak > tier.line).length : 0;
+    host.append("div").attr("class", "sub-src").text(`${m.src.label} · ${ws.length} windows in view${tier && ws.length ? ` · ${over} would have hit the ${tier.down} limit` : ""}`);
+    if (!ws.length) continue;
+    const W = 720, Ht = 220, L = 34, R = 8, T = 10, B = 34, bw = (W - L - R) / Math.max(1, ws.length), y = d3.scaleLinear().domain([0, 100]).range([Ht - B, T]);
+    const svg = host.append("svg").attr("viewBox", `0 0 ${W} ${Ht}`);
+    svg.append("g").attr("transform", `translate(${L},0)`).call(d3.axisLeft(y).ticks(2).tickFormat((d) => d + "%").tickSize(-(W - L - R))).call((a) => a.selectAll("line").attr("class", "grid")).call((a) => a.select(".domain").remove());
+    const g = svg.selectAll("g.b").data(ws).join("g").attr("class", "b").attr("data-viz-id", (f) => f.id).attr("data-label", (f) => `${m.src.label} 5h window ${fmt(f.start)}: peak ${pct(f.peak)}`);
+    g.append("rect").attr("x", (_f, i) => L + i * bw + 1).attr("y", y(100)).attr("width", Math.max(1, bw - 2)).attr("height", y(0) - y(100)).attr("rx", Math.min(3, bw / 3)).attr("fill", "var(--panel-2)");
+    g.append("rect").attr("x", (_f, i) => L + i * bw + 1).attr("y", (f) => y(f.peak)).attr("width", Math.max(1, bw - 2)).attr("height", (f) => Math.max(1, y(0) - y(f.peak))).attr("rx", Math.min(3, bw / 3)).attr("fill", (f) => (st.sel === f.id ? "var(--text)" : col(m.src.id)));
+    onTip(g, (f) => `<b>${fmt(f.start)} → ${fmt(f.r, { hour: "numeric", minute: "2-digit" })}</b><br><span style="color:${col(m.src.id)}">peak ${pct(f.peak)}</span> · <span class="m">${pct(100 - f.peak)} expired unused</span><br>weekly burned: ${f.wkDelta == null ? "<span class=m>unknown (no reading before it began)</span>" : `+${f.wkDelta} pts`}${tier && f.peak > tier.line ? `<br><span style="color:var(--warn)">▲ over the ${tier.down} limit</span>` : ""}`);
+    g.on("click", (_e, f) => { st.sel = st.sel === f.id ? null : f.id; timeline.setDomain([f.start - 6 * H, f.r + 6 * H]); });
+    let lastDay = "";
+    ws.forEach((f, i) => { const d = fmt(f.start, { month: "short", day: "numeric" }); if (d !== lastDay && (i === 0 || i * bw > 40)) { svg.append("text").attr("x", L + i * bw).attr("y", Ht - B + 14).text(d); lastDay = d; } });
+    if (tier) {
+      svg.append("line").attr("x1", L).attr("x2", W - R).attr("y1", y(tier.line)).attr("y2", y(tier.line)).attr("stroke", "var(--warn)").attr("stroke-dasharray", "5 4").attr("stroke-width", 1.5);
+      svg.append("text").attr("class", "lbl").attr("x", W - R).attr("y", y(tier.line) - 5).attr("text-anchor", "end").style("fill", "var(--warn)").text(`${tier.down} would stop here (${tier.line}%)`);
+    }
+  }
+}
+
+function exchange() {
+  const withK = visible().filter((m) => m.k);
+  $("#xr")!.innerHTML = withK.length ? "" : `<div class="empty">Needs windows with both 5-hour and weekly readings.</div>`;
+  for (const m of withK) {
+    // Fit to what's in view once there are enough dots to mean something; else all-time.
+    const pts = m.fives.filter((f) => f.wkDelta != null && f.peak > 0 && inView(f.start, f.r)), local = pts.length >= 3, k = local ? fitK(pts) : m.k;
+    const host = d3.select("#xr").append("div");
+    host.append("div").attr("class", "sub-src").text(`${m.src.label} · ${pts.length} windows in view · slope ${local ? "fitted to these" : "from all history"}`);
+    if (!pts.length) continue;
+    const W = 460, Ht = 240, L = 40, R = 14, T = 16, B = 34;
+    const xs = d3.scaleLinear().domain([0, Math.max(40, d3.max(pts, (p) => p.peak) ?? 0) * 1.08]).range([L, W - R]);
+    const ys = d3.scaleLinear().domain([0, Math.max(10, d3.max(pts, (p) => p.wkDelta) ?? 0) * 1.15]).range([Ht - B, T]);
+    const svg = host.append("svg").attr("viewBox", `0 0 ${W} ${Ht}`);
+    svg.append("g").attr("transform", `translate(0,${Ht - B})`).call(d3.axisBottom(xs).ticks(5).tickFormat((d) => d + "%").tickSize(-(Ht - B - T))).call((a) => a.selectAll("line").attr("class", "grid")).call((a) => a.select(".domain").remove());
+    svg.append("g").attr("transform", `translate(${L},0)`).call(d3.axisLeft(ys).ticks(5)).call((a) => a.select(".domain").remove());
+    svg.append("text").attr("class", "lbl").attr("x", W - R).attr("y", Ht - 2).attr("text-anchor", "end").text("5-hour peak →");
+    svg.append("text").attr("class", "lbl").attr("x", L).attr("y", T - 4).text("↑ weekly pts burned");
+    const xm = xs.domain()[1]!;
+    svg.append("line").attr("x1", xs(0)).attr("y1", ys(0)).attr("x2", xs(xm)).attr("y2", ys(k! * xm)).attr("stroke", "var(--muted)").attr("stroke-width", 2).attr("stroke-dasharray", "6 5");
+    svg.append("text").attr("class", "lbl").attr("x", xs(xm) - 4).attr("y", Math.max(T + 12, ys(k! * xm) + 16)).attr("text-anchor", "end").style("fill", "var(--muted)").text(`100% of 5h ≈ ${Math.round(100 * k!)}% of week`);
+    const c = svg.selectAll("circle").data(pts).join("circle").attr("cx", (p) => xs(p.peak)).attr("cy", (p) => ys(p.wkDelta!)).attr("r", 5).attr("fill", col(m.src.id)).attr("stroke", "var(--panel)").attr("stroke-width", 2)
+      .attr("data-viz-id", (p) => `xr-${p.id}`).attr("data-label", (p) => `window ending ${fmt(p.r)}: ${pct(p.peak)} of 5h, +${p.wkDelta} weekly`);
+    onTip(c, (p) => `<b>${fmt(p.start)} → ${fmt(p.r, { hour: "numeric" })}</b><br>5h peak ${pct(p.peak)} · weekly +${p.wkDelta} pts`);
+  }
+}
+
+// ── heatmap: weekly points burned by local day × hour ─────────────────────
+function heat() {
+  if (!D.sources.some((s) => s.id === st.heat)) st.heat = D.sources[0]!.id;
+  $("#heatSrc")!.innerHTML = D.sources.length > 1 ? D.sources.map((s) => `<button data-k="${s.id}" class="${st.heat === s.id ? "on" : ""}">${esc(s.label)}</button>`).join("") : "";
+  $("#heatSrc")!.onclick = (e) => { const b = (e.target as Element).closest("button"); if (b) { st.heat = b.dataset["k"]!; saveHash(st); heat(); } };
+  const w = M[st.heat!]!.weekly, g = Array.from({ length: 7 }, () => Array<number>(24).fill(0));
+  // spread each increment across the hours between readings, capped at 6h so sleep gaps don't smear
+  for (let i = 1; i < w.length; i++) {
+    const a = w[i - 1]!, c = w[i]!;
+    if (a.r !== c.r || c.v <= a.v) continue;
+    const from = Math.max(a.t, c.t - 6 * H), n = Math.max(1, Math.ceil((c.t - from) / H));
+    for (let j = 0; j < n; j++) { const d = new Date(from + (j + 0.5) * ((c.t - from) / n)); g[(d.getDay() + 6) % 7]![d.getHours()]! += (c.v - a.v) / n; }
+  }
+  const L = 36, T = 16, cw = (720 - L - 4) / 24, ch = 26, mx = Math.max(0.01, d3.max(g.flat())!), days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const svg = d3.select("#heat").html("");
+  for (let h = 0; h < 24; h += 3) svg.append("text").attr("x", L + h * cw + cw / 2).attr("y", T - 4).attr("text-anchor", "middle").text(h === 0 ? "12a" : h === 12 ? "12p" : h < 12 ? h + "a" : h - 12 + "p");
+  days.forEach((d, i) => svg.append("text").attr("x", L - 6).attr("y", T + i * ch + ch / 2 + 4).attr("text-anchor", "end").text(d));
+  const cells = svg.selectAll("rect").data(g.flatMap((row, d) => row.map((v, h) => ({ d, h, v })))).join("rect")
+    .attr("x", (c) => L + c.h * cw + 1).attr("y", (c) => T + c.d * ch + 1).attr("width", cw - 2).attr("height", ch - 2).attr("rx", 3)
+    .attr("fill", (c) => (c.v ? `color-mix(in srgb,${col(st.heat!)} ${Math.round(12 + 88 * (c.v / mx))}%,var(--panel-2))` : "var(--panel-2)"))
+    .attr("data-viz-id", (c) => `h-${c.d}-${c.h}`).attr("data-label", (c) => `${days[c.d]} ${c.h}:00 — ${c.v.toFixed(1)} weekly pts`);
+  onTip(cells, (c) => `${days[c.d]} ${c.h}:00 · <b>${c.v.toFixed(1)}</b> weekly pts`);
+  svg.append("text").attr("x", L).attr("y", T + 7 * ch + 18).text(`darkest = ${mx.toFixed(1)} weekly pts in that hour-slot`);
+}
+
+// ── every weekly window, per source ───────────────────────────────────────
+function weeksPanel() {
+  $("#weeks")!.innerHTML = "";
+  for (const s of D.sources) {
+    const ws = M[s.id]!.weeks, host = d3.select("#weeks").append("div");
+    host.append("div").attr("class", "sub-src").text(`${s.label} · ${ws.length} weeks`);
+    const W = 460, Ht = 150, L = 34, R = 8, T = 8, B = 30, bw = (W - L - R) / Math.max(1, ws.length), y = d3.scaleLinear().domain([0, 100]).range([Ht - B, T]);
+    const svg = host.append("svg").attr("viewBox", `0 0 ${W} ${Ht}`);
+    svg.append("g").attr("transform", `translate(${L},0)`).call(d3.axisLeft(y).ticks(2).tickFormat((d) => d + "%").tickSize(-(W - L - R))).call((a) => a.selectAll("line").attr("class", "grid")).call((a) => a.select(".domain").remove());
+    const g = svg.selectAll("g.w").data(ws).join("g").attr("class", "w").attr("data-viz-id", (w) => w.id).attr("data-label", (w) => `${s.label} week ending ${day(w.r)}: ${pct(w.peak)}`);
+    g.append("rect").attr("x", (_w, i) => L + i * bw + 1).attr("y", y(100)).attr("width", Math.max(1, bw - 2)).attr("height", y(0) - y(100)).attr("rx", 3).attr("fill", "var(--panel-2)");
+    g.append("rect").attr("x", (_w, i) => L + i * bw + 1).attr("y", (w) => y(w.peak)).attr("width", Math.max(1, bw - 2)).attr("height", (w) => Math.max(1, y(0) - y(w.peak))).attr("rx", 3).attr("fill", col(s.id)).attr("opacity", (w) => (w.r > D.now ? 0.55 : 1));
+    onTip(g, (w) => `<b>Week ending ${day(w.r)}</b><br>${w.r > D.now ? "in progress: " : "closed at "}${pct(w.peak)}`);
+    g.on("click", (_e, w) => timeline.setDomain([w.start, w.r]));
+    const every = Math.ceil(ws.length / 6);
+    ws.forEach((w, i) => i % every === 0 && svg.append("text").attr("x", L + i * bw).attr("y", Ht - B + 14).text(fmt(w.r, { month: "short", day: "numeric" })));
+  }
+}
+
+function table() {
+  const rows = D.sources.flatMap((s) => M[s.id]!.fives.map((f) => ({ s, f }))).sort((a, b) => b.f.r - a.f.r);
+  $("#tbl")!.innerHTML = `<table><tr><th>window</th><th>source</th><th>5h peak</th><th>weekly Δ</th><th>readings</th></tr>${rows.map(({ s, f }) => `<tr><td>${fmt(f.start)} → ${fmt(f.r, { hour: "numeric", minute: "2-digit" })}</td><td>${esc(s.label)}</td><td>${pct(f.peak)}</td><td>${f.wkDelta ?? "—"}</td><td>${f.pts.length}</td></tr>`).join("")}</table>`;
+}
+
+load();
