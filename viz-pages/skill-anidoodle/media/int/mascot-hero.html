@@ -1,0 +1,3336 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tinker &amp; Ink · a hero that watches back</title>
+    <meta
+      name="description"
+      content="An anidoodle interactive demo: a hand-drawn mascot who follows your pointer and your keyboard focus."
+    />
+    <style>
+      :root {
+        --paper: #fbf6ea;
+        --paper-2: #f4ead6;
+        --ink: #3d3437;
+        --ink-soft: #6b5f62;
+        --rose: #c9566b;
+        --rose-soft: #f2899c;
+        --butter: #f3d577;
+        --sage: #6fa874;
+        --line: rgba(61, 52, 55, 0.18);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        background: var(--paper);
+      }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--paper);
+        font:
+          17px/1.55 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .serif {
+        font-family:
+          "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+      }
+      a {
+        color: inherit;
+      }
+      nav {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 22px 28px;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+      .brand {
+        font-weight: 700;
+        font-size: 20px;
+        letter-spacing: -0.01em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+      }
+      .brand i {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--butter);
+        box-shadow: 0 0 0 2px var(--ink);
+        display: inline-block;
+      }
+      nav .links {
+        display: flex;
+        gap: 22px;
+        margin-left: auto;
+        font-size: 15px;
+        color: var(--ink-soft);
+      }
+      nav .links a {
+        text-decoration: none;
+      }
+      nav .links a:hover {
+        color: var(--ink);
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+      .hero {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 24px 28px 40px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+        gap: 40px;
+        align-items: center;
+      }
+      .eyebrow {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        padding: 6px 12px;
+        border: 1.5px dashed var(--line);
+        border-radius: 999px;
+      }
+      h1 {
+        font-size: clamp(40px, 5.4vw, 68px);
+        line-height: 1.02;
+        letter-spacing: -0.025em;
+        margin: 18px 0 18px;
+        font-weight: 600;
+      }
+      h1 em {
+        font-style: italic;
+        color: var(--rose);
+      }
+      .lede {
+        font-size: 19px;
+        color: var(--ink-soft);
+        max-width: 34ch;
+        margin: 0 0 30px;
+      }
+      .ctas {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: center;
+      }
+      .btn {
+        font:
+          600 17px/1 ui-sans-serif,
+          system-ui,
+          sans-serif;
+        padding: 16px 26px;
+        border-radius: 999px;
+        border: 2px solid var(--ink);
+        cursor: pointer;
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease,
+          background 0.15s ease;
+      }
+      .btn.primary {
+        background: var(--ink);
+        color: var(--paper);
+        box-shadow: 4px 4px 0 var(--rose-soft);
+      }
+      .btn.primary:hover,
+      .btn.primary:focus-visible {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0 var(--rose-soft);
+      }
+      .btn.primary:active {
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0 var(--rose-soft);
+      }
+      .btn.ghost {
+        background: transparent;
+        color: var(--ink);
+      }
+      .btn.ghost:hover,
+      .btn.ghost:focus-visible {
+        background: #fff8e3;
+      }
+      .btn:focus-visible {
+        outline: 3px solid var(--butter);
+        outline-offset: 3px;
+      }
+      .hint {
+        margin-top: 26px;
+        font-size: 14px;
+        color: var(--ink-soft);
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .hint kbd {
+        font:
+          600 12px/1 ui-monospace,
+          monospace;
+        padding: 3px 6px;
+        border: 1.5px solid var(--line);
+        border-bottom-width: 3px;
+        border-radius: 6px;
+        background: #fff;
+      }
+      .stage {
+        position: relative;
+      }
+      .stage ani-doodle {
+        display: block;
+        max-width: 540px;
+        margin-left: auto;
+        border-radius: 6px;
+      }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 28px;
+        transform: translate(-50%, 220%);
+        visibility: hidden;
+        background: var(--ink);
+        color: var(--paper);
+        padding: 14px 20px;
+        border-radius: 14px;
+        font-size: 15px;
+        transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+        box-shadow: 4px 4px 0 var(--butter);
+      }
+      .toast.on {
+        transform: translate(-50%, 0);
+        visibility: visible;
+      }
+      .features {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 10px 28px 70px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 22px;
+      }
+      .card {
+        border: 1.5px solid var(--line);
+        border-radius: 18px;
+        padding: 22px 22px 20px;
+        background: linear-gradient(#fffdf6, #fbf6ea);
+        transition:
+          border-color 0.2s ease,
+          transform 0.2s ease;
+      }
+      .card:hover,
+      .card:focus-visible {
+        border-color: var(--ink);
+        transform: translateY(-3px);
+        outline: none;
+      }
+      .card h3 {
+        margin: 0 0 6px;
+        font-size: 21px;
+      }
+      .card p {
+        margin: 0;
+        color: var(--ink-soft);
+        font-size: 15.5px;
+      }
+      .dot {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        margin-bottom: 14px;
+        border: 2px solid var(--ink);
+      }
+      footer {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 24px 28px 40px;
+        color: var(--ink-soft);
+        font-size: 13.5px;
+        border-top: 1.5px dashed var(--line);
+      }
+      @media (max-width: 860px) {
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+        .stage {
+          order: -1;
+        }
+        .stage ani-doodle {
+          margin: 0 auto;
+          max-width: 420px;
+        }
+        .features {
+          grid-template-columns: 1fr;
+        }
+        nav .links {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a class="brand serif" href="#"><i></i>Tinker &amp; Ink</a>
+      <div class="links">
+        <a href="#">Work</a><a href="#">Studio</a><a href="#">Pricing</a><a href="#">Journal</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div>
+        <span class="eyebrow">Illustrated onboarding · made by hand</span>
+        <h1 class="serif">Give your product a <em>friend</em> who is paying attention.</h1>
+        <p class="lede">
+          Characters drawn in pencil and watercolour, living on your page. They notice people.
+          People notice them.
+        </p>
+        <div class="ctas">
+          <button class="btn primary" data-anidoodle="start" id="start">
+            Get started, it's free
+          </button>
+          <button class="btn ghost" data-anidoodle="tour">Take the tour</button>
+        </div>
+        <p class="hint">
+          He is watching your pointer. <kbd>Tab</kbd> works too, and so does poking him.
+        </p>
+      </div>
+      <div class="stage">
+        <ani-doodle piece="mascot-hero"></ani-doodle>
+      </div>
+    </header>
+
+    <section class="features">
+      <div class="card" tabindex="0" data-anidoodle="f1">
+        <div class="dot" style="background: #a9cdea"></div>
+        <h3 class="serif">Drawn, not generated</h3>
+        <p>Every mark is a pencil stroke in code: one source, the same pixels on every screen.</p>
+      </div>
+      <div class="card" tabindex="0" data-anidoodle="f2">
+        <div class="dot" style="background: #f3d577"></div>
+        <h3 class="serif">Watches, politely</h3>
+        <p>
+          Pointer, keyboard focus and touch, with a pause button and a calm mode for reduced motion.
+        </p>
+      </div>
+      <div class="card" tabindex="0" data-anidoodle="f3">
+        <div class="dot" style="background: #f2899c"></div>
+        <h3 class="serif">Weighs almost nothing</h3>
+        <p>No images, no fonts, no framework. One small module and a custom element.</p>
+      </div>
+    </section>
+
+    <footer>
+      Tinker &amp; Ink is a made-up studio. The robot is Bit, from the anidoodle storybook plate,
+      drawn entirely in code.
+    </footer>
+
+    <div class="toast" role="status" aria-live="polite" id="toast">You're in. Bit is thrilled.</div>
+    <script>
+      document.getElementById("start").addEventListener("click", () => {
+        const t = document.getElementById("toast");
+        t.classList.add("on");
+        clearTimeout(window.__toast);
+        window.__toast = setTimeout(() => t.classList.remove("on"), 2400);
+      });
+    </script>
+    <script type="module">
+      var Dn = Object.defineProperty;
+      var Fn = (e, t, n) =>
+        t in e
+          ? Dn(e, t, { enumerable: !0, configurable: !0, writable: !0, value: n })
+          : (e[t] = n);
+      var U = (e, t, n) => Fn(e, typeof t != "symbol" ? t + "" : t, n);
+      var re = (e) => {
+          let t = e >>> 0;
+          return () => {
+            t = (t + 1831565813) | 0;
+            let n = Math.imul(t ^ (t >>> 15), 1 | t);
+            return (
+              (n = (n + Math.imul(n ^ (n >>> 7), 61 | n)) ^ n),
+              ((n ^ (n >>> 14)) >>> 0) / 4294967296
+            );
+          };
+        },
+        Wt = new Map(),
+        Wn = (e) => {
+          let t = Wt.get(e);
+          if (!t) {
+            let n = re(e * 7919 + 13),
+              a = new Uint16Array(512),
+              r = new Float32Array(256),
+              o = new Float32Array(256),
+              i = Array.from({ length: 256 }, (s, c) => c);
+            for (let s = 255; s > 0; s--) {
+              let c = Math.floor(n() * (s + 1));
+              [i[s], i[c]] = [i[c], i[s]];
+            }
+            for (let s = 0; s < 512; s++) a[s] = i[s & 255];
+            for (let s = 0; s < 256; s++) {
+              let c = n() * Math.PI * 2;
+              ((r[s] = Math.cos(c)), (o[s] = Math.sin(c)));
+            }
+            ((t = { perm: a, gx: r, gy: o }), Wt.set(e, t));
+          }
+          return t;
+        },
+        Bn = (e, t, n, a = 0, r = 0) => {
+          let { perm: o, gx: i, gy: s } = Wn(e),
+            c = Math.floor(t),
+            u = Math.floor(n),
+            p = t - c,
+            l = n - u,
+            h = (E, R) => (R > 0 ? ((E % R) + R) % R : E) & 255,
+            b = (E, R, $, W) => {
+              let M = o[o[h(E, a)] + h(R, r)];
+              return i[M] * $ + s[M] * W;
+            },
+            d = p * p * (3 - 2 * p),
+            y = l * l * (3 - 2 * l),
+            x = b(c, u, p, l),
+            k = b(c + 1, u, p - 1, l),
+            P = b(c, u + 1, p, l - 1),
+            g = b(c + 1, u + 1, p - 1, l - 1);
+          return x + d * (k - x) + y * (P + d * (g - P) - (x + d * (k - x)));
+        },
+        Ne = (e, t, n, a, r, o, i = 0) => {
+          let s = 0,
+            c = 1,
+            u = i ? Math.max(1, Math.round(a * i)) : 0,
+            p = i ? Math.max(1, Math.round(r * i)) : 0,
+            l = i ? u / i : a,
+            h = i ? p / i : r;
+          for (let b = 0; b < o; b++)
+            ((s += Bn(e + b * 101, t * l, n * h, u, p) * c),
+              (c *= 0.5),
+              (l *= 2),
+              (h *= 2),
+              (u *= 2),
+              (p *= 2));
+          return (s + 1) / 2;
+        },
+        ot = (e, t = 0, n = 1) => Math.max(t, Math.min(n, e)),
+        Me = (e, t, n) => {
+          if (t <= 0) return e;
+          let a = re(n);
+          return e.map(([r, o]) => [r + (a() - 0.5) * 2 * t, o + (a() - 0.5) * 2 * t]);
+        },
+        Pe = (e, t = !1, n = 10) => {
+          if (e.length < 2) return e;
+          let a = e.length,
+            r = (s) => (t ? e[((s % a) + a) % a] : e[Math.max(0, Math.min(a - 1, s))]),
+            o = [],
+            i = t ? a : a - 1;
+          for (let s = 0; s < i; s++) {
+            let [c, u, p, l] = [r(s - 1), r(s), r(s + 1), r(s + 2)];
+            for (let h = 0; h < n; h++) {
+              let b = h / n,
+                d = b * b,
+                y = d * b;
+              o.push([
+                0.5 *
+                  (2 * u[0] +
+                    (-c[0] + p[0]) * b +
+                    (2 * c[0] - 5 * u[0] + 4 * p[0] - l[0]) * d +
+                    (-c[0] + 3 * u[0] - 3 * p[0] + l[0]) * y),
+                0.5 *
+                  (2 * u[1] +
+                    (-c[1] + p[1]) * b +
+                    (2 * c[1] - 5 * u[1] + 4 * p[1] - l[1]) * d +
+                    (-c[1] + 3 * u[1] - 3 * p[1] + l[1]) * y),
+              ]);
+            }
+          }
+          return (o.push(t ? o[0] : e[a - 1]), o);
+        },
+        Gn = (e, t) => {
+          let n = [e[0]];
+          for (let a = 1; a < e.length; a++) {
+            let r = e[a - 1],
+              o = e[a],
+              i = Math.max(1, Math.ceil(Math.hypot(o[0] - r[0], o[1] - r[1]) / t));
+            for (let s = 1; s <= i; s++)
+              n.push([r[0] + ((o[0] - r[0]) * s) / i, r[1] + ((o[1] - r[1]) * s) / i]);
+          }
+          return n;
+        },
+        Bt = (e, t, n, a, r, o = 0) => {
+          let i = o ? Gn(e, 1.5) : e,
+            s = (n % 17) * 0.37,
+            c = (n % 11) * 0.53,
+            u = [],
+            p = [],
+            l = re(n * 31 + 7);
+          for (let h = 0; h < i.length; h++) {
+            let b = h / (i.length - 1),
+              d = i[h],
+              y = i[Math.min(i.length - 1, h + 1)],
+              x = i[Math.max(0, h - 1)],
+              k = y[0] - x[0],
+              P = y[1] - x[1],
+              g = Math.hypot(k, P) || 1,
+              E = Math.min(1, b / 0.14, (1 - b) / 0.2),
+              R = 1 - a + a * Math.pow(Math.max(0.04, E), 0.7),
+              $ = Math.max(
+                0.14,
+                1 - 0.26 * r + r * (0.3 * Math.sin(b * 5.5 + s) + 0.14 * Math.sin(b * 17 + c)),
+              ),
+              W = (t * R * $) / 2,
+              M = (l() - 0.5) * o,
+              H = (l() - 0.5) * o;
+            (u.push([d[0] - (P / g) * (W + M), d[1] + (k / g) * (W + M)]),
+              p.push([d[0] + (P / g) * (W + H), d[1] - (k / g) * (W + H)]));
+          }
+          return [...u, ...p.reverse()];
+        },
+        A = (e, t, n, a = n, r = 10, o = -1.9) =>
+          Array.from({ length: r }, (i, s) => {
+            let c = o + (s / r) * Math.PI * 2;
+            return [e + Math.cos(c) * n, t + Math.sin(c) * a];
+          });
+      var G = (e, t, n, a, r, o, i = 6) =>
+          Array.from({ length: i }, (s, c) => {
+            let u = r + (c / (i - 1)) * (o - r);
+            return [e + Math.cos(u) * n, t + Math.sin(u) * a];
+          }),
+        F = (e, t, n = 0) => {
+          let a = -(t[1] - e[1]),
+            r = t[0] - e[0],
+            o = Math.hypot(a, r) || 1;
+          return [e, [(e[0] + t[0]) / 2 + (a / o) * n, (e[1] + t[1]) / 2 + (r / o) * n], t];
+        },
+        ae = (e, t, n, a) => {
+          let r = (a * Math.PI) / 180,
+            o = Math.cos(r),
+            i = Math.sin(r);
+          return e.map(([s, c]) => [t + (s - t) * o - (c - n) * i, n + (s - t) * i + (c - n) * o]);
+        };
+      var pe = (e, t, n) =>
+          Array.from({ length: 14 }, (a, r) => {
+            let o = (r / 14) * Math.PI * 2;
+            return [
+              e + n * Math.sin(o) ** 3,
+              t -
+                (n *
+                  (13 * Math.cos(o) -
+                    5 * Math.cos(2 * o) -
+                    2 * Math.cos(3 * o) -
+                    Math.cos(4 * o))) /
+                  16,
+            ];
+          }),
+        jt = (e, t, n = t, a = !0) => {
+          let r = Pe(e, !1, 5),
+            o = [],
+            i = [];
+          r.forEach((d, y) => {
+            let x = r[Math.min(r.length - 1, y + 1)],
+              k = r[Math.max(0, y - 1)],
+              P = x[0] - k[0],
+              g = x[1] - k[1],
+              E = Math.hypot(P, g) || 1,
+              R = t + ((n - t) * y) / (r.length - 1);
+            (o.push([d[0] - (g / E) * R, d[1] + (P / E) * R]),
+              i.push([d[0] + (g / E) * R, d[1] - (P / E) * R]));
+          });
+          let s = r[r.length - 1],
+            c = r[r.length - 2],
+            u = s[0] - c[0],
+            p = s[1] - c[1],
+            l = Math.hypot(u, p) || 1,
+            h = a ? [[s[0] + (u / l) * n, s[1] + (p / l) * n]] : [],
+            b = (d) => d.filter((y, x) => x % 3 === 0 || x === d.length - 1);
+          return [...b(o), ...h, ...b(i).reverse()];
+        },
+        Nn = (e) => {
+          let t = 1e9,
+            n = 1e9,
+            a = -1e9,
+            r = -1e9;
+          return (
+            e.forEach(([o, i]) => {
+              ((t = Math.min(t, o)),
+                (n = Math.min(n, i)),
+                (a = Math.max(a, o)),
+                (r = Math.max(r, i)));
+            }),
+            { x0: t, y0: n, x1: a, y1: r, cx: (t + a) / 2, cy: (n + r) / 2 }
+          );
+        },
+        jn = (e, t, n = 0, a = 0) => {
+          let r = Nn(e);
+          return e.map(([o, i]) => [r.cx + (o - r.cx) * t + n, r.cy + (i - r.cy) * t + a]);
+        },
+        Gt = (e, t, n, a, r) =>
+          e.map(([o, i]) => [
+            o + (Ne(r, o, i, n, n, a) - 0.5) * t,
+            i + (Ne(r + 50, o, i, n, n, a) - 0.5) * t,
+          ]);
+      var at = 512,
+        qn = {
+          pencilTooth: { fx: 1.3, oct: 1, seed: 8, k: -2, o: 2.05 },
+          washGran: { fx: 0.09, oct: 2, seed: 11, k: -0.45, o: 1.2 },
+          risoSpeck: { fx: 1.15, oct: 2, seed: 18, k: -3, o: 2.35 },
+          risoMottle: { fx: 0.012, fy: 0.05, oct: 3, seed: 22, k: -0.9, o: 1.38 },
+          paper: { fx: 0.75, oct: 3, seed: 21, gray: !0 },
+          coldpress: { fx: 0.16, oct: 4, seed: 23, gray: !0 },
+          draftTooth: { fx: 0.95, oct: 2, seed: 33, k: -1.7, o: 1.95 },
+          blueMottle: { fx: 0.0065, oct: 4, seed: 37, gray: !0 },
+        },
+        Nt = (e, t) => {
+          let n = `tile:${t}:${e.scale}`,
+            a = e.cache.get(n);
+          if (a) return a;
+          let r = qn[t],
+            o = Math.round(at * e.scale);
+          a = e.canvas(o, o);
+          let i = a.ctx.createImageData(o, o),
+            s = i.data;
+          for (let c = 0; c < o; c++)
+            for (let u = 0; u < o; u++) {
+              let p = u / e.scale,
+                l = c / e.scale,
+                h = (c * o + u) * 4,
+                b = Ne(r.seed, p, l, r.fx, r.fy ?? r.fx, r.oct, at);
+              if (r.gray) {
+                let d = ot((b + Ne(r.seed + 7, p, l, r.fx, r.fy ?? r.fx, r.oct, at)) / 2),
+                  y = 255 * (d <= 0.0031308 ? d * 12.92 : 1.055 * Math.pow(d, 1 / 2.4) - 0.055);
+                ((s[h] = s[h + 1] = s[h + 2] = y), (s[h + 3] = 255));
+              } else ((s[h] = s[h + 1] = s[h + 2] = 0), (s[h + 3] = 255 * ot(r.k * b + r.o)));
+            }
+          return (a.ctx.putImageData(i, 0, 0), e.cache.set(n, a), a);
+        },
+        je = { nib: 1.45, taper: 1, pressure: 1, retrace: !0, wobble: 1, rough: 1.15 };
+      var ue = "#3d3437",
+        L = {
+          white: "#fffaf3",
+          blush: "#f2899c",
+          rose: "#e9a3ad",
+          butter: "#f3d577",
+          sky: "#a9c8e6",
+          denim: "#6f93c4",
+          sage: "#a9cfa6",
+          lilac: "#c7b3e0",
+          peach: "#f5b98a",
+          glow: "#ffe9a3",
+        },
+        he = class {
+          constructor(t, n, a, r) {
+            this.main = t;
+            this.env = n;
+            this.frame = a;
+            this.medium = r;
+            U(this, "drawn", null);
+            U(this, "cur");
+            U(this, "pool", []);
+            U(this, "stack", [[0, 0, 1]]);
+            U(this, "box", null);
+            ((this.cur = t), this.base(t));
+            let o = `pool:${Math.round(n.W * n.scale)}x${Math.round(n.H * n.scale)}`,
+              i = n.cache.get(o);
+            (i || ((i = []), n.cache.set(o, i)), (this.pool = i));
+          }
+          get m() {
+            return this.stack[this.stack.length - 1];
+          }
+          get DW() {
+            return Math.round(this.env.W * this.env.scale);
+          }
+          get DH() {
+            return Math.round(this.env.H * this.env.scale);
+          }
+          base(t) {
+            let [n, a, r] = this.m,
+              o = this.env.scale;
+            t.setTransform(o * r, 0, 0, o * r, o * n, o * a);
+          }
+          dev(t) {
+            t.setTransform(1, 0, 0, 1, 0, 0);
+          }
+          clip(t, n = 0) {
+            return [
+              Math.max(0, Math.floor(t[0] - n)),
+              Math.max(0, Math.floor(t[1] - n)),
+              Math.min(this.DW, Math.ceil(t[2] + n)),
+              Math.min(this.DH, Math.ceil(t[3] + n)),
+            ];
+          }
+          join(t, n) {
+            return t
+              ? [
+                  Math.min(t[0], n[0]),
+                  Math.min(t[1], n[1]),
+                  Math.max(t[2], n[2]),
+                  Math.max(t[3], n[3]),
+                ]
+              : n;
+          }
+          boxOf(t, n) {
+            let [a, r, o] = this.m,
+              i = this.env.scale,
+              s = 1e9,
+              c = 1e9,
+              u = -1e9,
+              p = -1e9;
+            for (let [l, h] of t)
+              (l < s && (s = l), h < c && (c = h), l > u && (u = l), h > p && (p = h));
+            return this.clip([
+              i * (a + (s - n) * o),
+              i * (r + (c - n) * o),
+              i * (a + (u + n) * o),
+              i * (r + (p + n) * o),
+            ]);
+          }
+          mark(t, n = 4) {
+            this.box = this.join(this.box, this.boxOf(t, n));
+          }
+          touch(t, n, a, r) {
+            this.mark(
+              [
+                [t, n],
+                [a, r],
+              ],
+              0,
+            );
+          }
+          layer() {
+            let t = this.pool.pop();
+            if (
+              (t || ((t = this.env.canvas(this.DW, this.DH)), (t.dirty = null)),
+              this.dev(t.ctx),
+              (t.ctx.globalCompositeOperation = "source-over"),
+              (t.ctx.globalAlpha = 1),
+              t.dirty)
+            ) {
+              let n = t.dirty;
+              (t.ctx.clearRect(n[0], n[1], n[2] - n[0], n[3] - n[1]), (t.dirty = null));
+            }
+            return t;
+          }
+          release(t, n) {
+            ((t.dirty = n ? this.join(t.dirty ?? null, n) : t.dirty), this.pool.push(t));
+          }
+          push(t, n, a) {
+            let [r, o, i] = this.m;
+            (this.stack.push([r + t * i, o + n * i, i * a]), this.base(this.cur));
+          }
+          pop() {
+            (this.stack.pop(), this.base(this.cur));
+          }
+          path(t, n) {
+            (t.beginPath(),
+              n.forEach(([a, r], o) => (o ? t.lineTo(a, r) : t.moveTo(a, r))),
+              t.closePath());
+          }
+          soften(t, n, a) {
+            let r = this.clip(a, n * this.env.scale * 3),
+              o = Math.max(1, Math.round(Math.log2(Math.max(2, n * this.env.scale * 1.6)))),
+              i = this.layer(),
+              s = this.layer(),
+              c = r[2] - r[0],
+              u = r[3] - r[1];
+            if (c < 2 || u < 2) return (this.release(i, null), this.release(s, null), r);
+            let p = [[c, u]],
+              l = t,
+              h = r[0],
+              b = r[1],
+              d = i,
+              y = s;
+            for (let k = 0; k < o; k++) {
+              let P = Math.max(1, Math.ceil(c / 2)),
+                g = Math.max(1, Math.ceil(u / 2));
+              (d.ctx.clearRect(0, 0, P + 1, g + 1),
+                (d.ctx.imageSmoothingEnabled = !0),
+                d.ctx.drawImage(l.canvas, h, b, c, u, 0, 0, P, g),
+                p.push([P, g]),
+                (l = d),
+                (h = 0),
+                (b = 0),
+                (c = P),
+                (u = g),
+                ([d, y] = [y, d]));
+            }
+            for (let k = o - 1; k >= 1; k--) {
+              let [P, g] = p[k];
+              (d.ctx.clearRect(0, 0, P + 1, g + 1),
+                d.ctx.drawImage(l.canvas, 0, 0, c, u, 0, 0, P, g),
+                (l = d),
+                (c = P),
+                (u = g),
+                ([d, y] = [y, d]));
+            }
+            (this.dev(t.ctx),
+              t.ctx.clearRect(r[0], r[1], r[2] - r[0], r[3] - r[1]),
+              (t.ctx.imageSmoothingEnabled = !0),
+              t.ctx.drawImage(l.canvas, 0, 0, c, u, r[0], r[1], r[2] - r[0], r[3] - r[1]));
+            let x = [0, 0, p[1][0] + 1, p[1][1] + 1];
+            return (this.release(i, x), this.release(s, x), r);
+          }
+          tooth(t, n, a, r = 1) {
+            let o = t.ctx,
+              i = Nt(this.env, n);
+            (o.save(),
+              o.setTransform(r, 0, 0, r, 0, 0),
+              (o.globalCompositeOperation = "destination-in"),
+              (o.fillStyle = o.createPattern(i.canvas, "repeat")),
+              o.beginPath(),
+              o.rect(a[0] / r, a[1] / r, (a[2] - a[0]) / r, (a[3] - a[1]) / r),
+              o.clip(),
+              o.fillRect(a[0] / r - 1, a[1] / r - 1, (a[2] - a[0]) / r + 2, (a[3] - a[1]) / r + 2),
+              o.restore());
+          }
+          group(t, n, a = {}) {
+            let r = this.layer(),
+              o = this.cur,
+              i = this.box;
+            ((this.cur = r.ctx),
+              (this.box = null),
+              this.base(r.ctx),
+              n(),
+              (this.cur = o),
+              o !== this.main && this.base(o));
+            let s = this.box ?? [0, 0, this.DW, this.DH];
+            this.box = i;
+            let c = this.m[2];
+            (t === "paint" && ((s = this.soften(r, 0.9 * c, s)), this.tooth(r, "washGran", s, c)),
+              t === "ink" && this.tooth(r, "pencilTooth", s, c),
+              a.blur && (s = this.soften(r, a.blur, s)),
+              (a.textures ?? []).forEach((h) => this.tooth(r, h, s)));
+            let u = this.main,
+              p = s[2] - s[0],
+              l = s[3] - s[1];
+            if (p > 0 && l > 0) {
+              let h = Math.round((a.off?.[0] ?? 0) * this.env.scale),
+                b = Math.round((a.off?.[1] ?? 0) * this.env.scale);
+              this.drawn = this.join(
+                this.drawn,
+                this.clip([s[0] + h, s[1] + b, s[2] + h, s[3] + b]),
+              );
+            }
+            (p > 0 &&
+              l > 0 &&
+              (u.save(),
+              this.dev(u),
+              (u.globalCompositeOperation = a.blend ?? "source-over"),
+              (u.globalAlpha = a.alpha ?? 1),
+              u.drawImage(
+                r.canvas,
+                s[0],
+                s[1],
+                p,
+                l,
+                s[0] + Math.round((a.off?.[0] ?? 0) * this.env.scale),
+                s[1] + Math.round((a.off?.[1] ?? 0) * this.env.scale),
+                p,
+                l,
+              ),
+              u.restore()),
+              this.release(r, s));
+          }
+          inkGroup(t, n = {}) {
+            let a = this.layer(),
+              r = this.cur,
+              o = this.box;
+            ((this.cur = a.ctx),
+              (this.box = null),
+              this.base(a.ctx),
+              t(),
+              (this.cur = r),
+              r !== this.main && this.base(r));
+            let i = this.box ?? [0, 0, this.DW, this.DH];
+            this.box = o;
+            let s = i[2] - i[0],
+              c = i[3] - i[1];
+            if (s <= 0 || c <= 0) {
+              this.release(a, i);
+              return;
+            }
+            let u = this.layer(),
+              p = this.clip(i, (n.blur ?? 1.8) * this.env.scale * 3);
+            (this.dev(u.ctx), u.ctx.drawImage(a.canvas, i[0], i[1], s, c, i[0], i[1], s, c));
+            let l = this.soften(u, n.blur ?? 1.8, i);
+            ((n.textures ?? ["draftTooth"]).forEach((b) => this.tooth(a, b, i)),
+              (this.drawn = this.join(this.drawn, this.join(l, i))));
+            let h = this.main;
+            (h.save(),
+              this.dev(h),
+              (h.globalCompositeOperation = "source-over"),
+              (h.globalAlpha = n.alpha ?? 0.28),
+              h.drawImage(
+                u.canvas,
+                l[0],
+                l[1],
+                l[2] - l[0],
+                l[3] - l[1],
+                l[0],
+                l[1],
+                l[2] - l[0],
+                l[3] - l[1],
+              ),
+              (h.globalAlpha = 1),
+              h.drawImage(a.canvas, i[0], i[1], s, c, i[0], i[1], s, c),
+              h.restore(),
+              this.base(h),
+              this.release(a, i),
+              this.release(u, p));
+          }
+          upTo(t, n) {
+            if (n >= 1) return t;
+            let a = (t.length - 1) * n,
+              r = Math.floor(a),
+              o = a - r,
+              i = t.slice(0, r + 1);
+            return (
+              o > 1e-9 &&
+                r + 1 < t.length &&
+                i.push([
+                  t[r][0] + (t[r + 1][0] - t[r][0]) * o,
+                  t[r][1] + (t[r + 1][1] - t[r][1]) * o,
+                ]),
+              i.length > 1 ? i : t.slice(0, 2)
+            );
+          }
+          pen(t, n = {}) {
+            let {
+                w: a = 3.4,
+                color: r = ue,
+                seed: o = 1,
+                closed: i = !1,
+                wobble: s = 1.1,
+                boil: c = 0.55,
+                taper: u = 1,
+                opacity: p = 0.96,
+                retrace: l = !0,
+                progress: h = 1,
+              } = n,
+              b = this.medium,
+              d = Math.floor(this.frame / 4),
+              y = this.cur;
+            if (h <= 0) return;
+            let x = i ? [...t, t[0], t[1]] : t,
+              k = Me(x, s * b.wobble, o),
+              P = a * b.nib,
+              g = Bt(
+                this.upTo(Pe(Me(k, c, o * 911 + d)), h),
+                P,
+                o,
+                u * b.taper,
+                b.pressure,
+                b.rough,
+              );
+            if (
+              (this.mark(g, 2),
+              (y.fillStyle = r),
+              (y.globalAlpha = p),
+              this.path(y, g),
+              y.fill(),
+              l && b.retrace)
+            ) {
+              let E = Bt(
+                this.upTo(Pe(Me(k, c + 1.3 * b.wobble, o * 577 + d)), h),
+                P * 0.5,
+                o + 5,
+                1,
+                b.pressure,
+                b.rough,
+              );
+              (this.mark(E, 2), (y.globalAlpha = p * 0.4), this.path(y, E), y.fill());
+            }
+            y.globalAlpha = 1;
+          }
+          hatch(t, n, a, r = {}) {
+            let {
+                n: o = 8,
+                len: i = 16,
+                angle: s = -1.05,
+                color: c = ue,
+                seed: u = 1,
+                pw: p = 1.9,
+                opacity: l = 0.55,
+              } = r,
+              h = re(u);
+            for (let b = 0; b < o; b++) {
+              let d = t + (a * b) / Math.max(1, o - 1) + (h() - 0.5) * 3,
+                y = i * (0.7 + h() * 0.6),
+                x = s + (h() - 0.5) * 0.18;
+              this.pen(
+                [
+                  [d, n],
+                  [d + Math.cos(x) * y * 0.5, n + Math.sin(x) * y * 0.5],
+                  [d + Math.cos(x) * y, n + Math.sin(x) * y],
+                ],
+                { w: p, color: c, seed: u + b, wobble: 0.6, opacity: l, retrace: !1 },
+              );
+            }
+          }
+          fill(t, n, a = 1) {
+            let r = this.cur;
+            (this.mark(t, 2),
+              (r.globalAlpha = a),
+              (r.fillStyle = n),
+              this.path(r, t),
+              r.fill(),
+              (r.globalAlpha = 1));
+          }
+          wash(t, n, a = {}) {
+            let {
+                alpha: r = 0.62,
+                seed: o = 1,
+                dx: i = 3,
+                dy: s = 2,
+                shrink: c = 0.94,
+                rim: u = !0,
+              } = a,
+              p = this.cur,
+              l = Gt(jn(Pe(Me(t, 2.2, o), !0, 8), c, i, s), 13, 0.022, 3, 5);
+            (this.mark(l, 5),
+              (p.globalAlpha = r),
+              (p.fillStyle = n),
+              this.path(p, l),
+              p.fill(),
+              u &&
+                ((p.globalAlpha = r * 0.55),
+                (p.strokeStyle = n),
+                (p.lineWidth = 3.5),
+                (p.lineJoin = "round"),
+                p.stroke()),
+              (p.globalAlpha = 1));
+          }
+          form(t, n, a, r = {}) {
+            let { seed: o = 1, light: i = [-8, -9], alpha: s = 0.98, hi: c } = r,
+              u = Gt(Pe(Me(t, 1.2, o), !0, 8), 13, 0.022, 3, 5),
+              p = this.m[2],
+              l = this.boxOf(u, 3);
+            this.box = this.join(this.box, l);
+            let h = this.layer();
+            (this.base(h.ctx), (h.ctx.fillStyle = a), this.path(h.ctx, u), h.ctx.fill());
+            let b = this.layer();
+            (this.base(b.ctx),
+              (b.ctx.fillStyle = n),
+              b.ctx.translate(i[0], i[1]),
+              this.path(b.ctx, u),
+              b.ctx.fill());
+            let d = this.soften(
+                b,
+                5 * p,
+                this.boxOf(
+                  u.map(([P, g]) => [P + i[0], g + i[1]]),
+                  2,
+                ),
+              ),
+              y = l[2] - l[0],
+              x = l[3] - l[1];
+            if (
+              (h.ctx.save(),
+              this.base(h.ctx),
+              this.path(h.ctx, u),
+              h.ctx.clip(),
+              this.dev(h.ctx),
+              h.ctx.drawImage(b.canvas, l[0], l[1], y, x, l[0], l[1], y, x),
+              this.base(h.ctx),
+              h.ctx.translate(i[0] * 2.2, i[1] * 2.2),
+              (h.ctx.fillStyle = n),
+              this.path(h.ctx, u),
+              h.ctx.fill(),
+              c)
+            ) {
+              let P = this.layer();
+              (this.base(P.ctx),
+                (P.ctx.fillStyle = "#ffffff"),
+                (P.ctx.globalAlpha = 0.75),
+                P.ctx.beginPath(),
+                P.ctx.ellipse(
+                  c[0],
+                  c[1],
+                  c[2],
+                  c[3],
+                  ((c[4] ?? -30) * Math.PI) / 180,
+                  0,
+                  Math.PI * 2,
+                ),
+                P.ctx.fill());
+              let g = Math.max(c[2], c[3]),
+                E = this.soften(
+                  P,
+                  5 * p,
+                  this.boxOf(
+                    [
+                      [c[0] - g, c[1] - g],
+                      [c[0] + g, c[1] + g],
+                    ],
+                    1,
+                  ),
+                );
+              (this.dev(h.ctx),
+                h.ctx.drawImage(
+                  P.canvas,
+                  E[0],
+                  E[1],
+                  E[2] - E[0],
+                  E[3] - E[1],
+                  E[0],
+                  E[1],
+                  E[2] - E[0],
+                  E[3] - E[1],
+                ),
+                this.release(P, E));
+            }
+            h.ctx.restore();
+            let k = this.cur;
+            (k.save(),
+              this.dev(k),
+              (k.globalAlpha = s),
+              k.drawImage(h.canvas, l[0], l[1], y, x, l[0], l[1], y, x),
+              k.restore(),
+              this.base(k),
+              this.release(h, l),
+              this.release(b, d));
+          }
+          glow(t, n, a, r, o) {
+            let i = this.cur,
+              s = i.createRadialGradient(t, n, 0, t, n, a * 1.7),
+              c = (u) =>
+                Math.round(255 * ot(u * o))
+                  .toString(16)
+                  .padStart(2, "0");
+            ([
+              [0, 1],
+              [0.35, 0.9],
+              [0.6, 0.55],
+              [0.8, 0.2],
+              [1, 0],
+            ].forEach(([u, p]) => s.addColorStop(u, r + c(p))),
+              this.touch(t - a * 1.8, n - a * 1.8, t + a * 1.8, n + a * 1.8),
+              (i.fillStyle = s),
+              i.fillRect(t - a * 2, n - a * 2, a * 4, a * 4));
+          }
+          paper(t, n) {
+            let a = this.main,
+              r = Nt(this.env, t);
+            (a.save(),
+              this.dev(a),
+              (a.globalCompositeOperation = "multiply"),
+              (a.globalAlpha = n),
+              (a.fillStyle = a.createPattern(r.canvas, "repeat")),
+              a.fillRect(0, 0, this.DW, this.DH),
+              a.restore(),
+              this.base(a));
+          }
+          vignette(t) {
+            let n = this.main,
+              a = this.env.W,
+              r = this.env.H;
+            (n.save(), this.base(n), n.translate(a / 2, r * 0.46), n.scale(1, r / a));
+            let o = n.createRadialGradient(0, 0, 0, 0, 0, a * 0.72);
+            (o.addColorStop(0, "rgba(255,250,240,0.08)"),
+              o.addColorStop(0.45, "rgba(255,250,240,0)"),
+              o.addColorStop(1, t),
+              (n.fillStyle = o),
+              n.fillRect(-a, -r, a * 2, r * 2),
+              n.restore());
+          }
+        };
+      var ke = { baked: 0, bytes: 0, ms: 0 },
+        qt = (e) => !!e && typeof e.reset == "function",
+        Un = (e) => {
+          let t = Math.round(e.W * e.scale),
+            n = Math.round(e.H * e.scale),
+            a = `bake:scratch:${t}x${n}`,
+            r = e.cache.get(a);
+          return (r && qt(r.ctx) ? r.ctx.reset() : ((r = e.canvas(t, n)), e.cache.set(a, r)), r);
+        },
+        oe = (e, t, n, a = {}) => {
+          let r = `sprite:${t}@${e.scale}`,
+            o = e.cache.get(r);
+          if (o) return o;
+          let i = Un(e),
+            s = Math.round(e.W * e.scale),
+            c = Math.round(e.H * e.scale),
+            u = i.ctx;
+          (u.setTransform(1, 0, 0, 1, 0, 0),
+            (u.globalAlpha = 1),
+            (u.globalCompositeOperation = "source-over"),
+            u.clearRect(0, 0, s, c));
+          let p = e.cache.get(`pool:${s}x${c}`);
+          p &&
+            (qt(p[0]?.ctx)
+              ? p.forEach((P) => {
+                  (P.ctx.reset(), (P.dirty = null));
+                })
+              : (p.length = 0));
+          let l = new he(u, e, a.frame ?? 0, a.medium ?? je);
+          n(l);
+          let h = a.full || !l.drawn ? [0, 0, s, c] : l.drawn,
+            b = Math.max(1, h[2] - h[0]),
+            d = Math.max(1, h[3] - h[1]),
+            y = e.canvas(b, d);
+          (y.ctx.drawImage(i.canvas, h[0], h[1], b, d, 0, 0, b, d),
+            u.setTransform(1, 0, 0, 1, 0, 0),
+            u.clearRect(0, 0, s, c));
+          let x = e.cache.get("bake:paper");
+          x && !a.raw && (y = zn(e, y, h[0], h[1], b, d, x));
+          let k = { c: y.canvas, x: h[0], y: h[1], w: b, h: d };
+          return (e.cache.set(r, k), ke.baked++, (ke.bytes += b * d * 4), k);
+        },
+        ve = (e, t, n = 0, a = 0, r = 1) => {
+          r <= 0 ||
+            (e.setTransform(1, 0, 0, 1, 0, 0),
+            (e.globalAlpha = r),
+            e.drawImage(t.c, t.x + Math.round(n), t.y + Math.round(a)),
+            (e.globalAlpha = 1));
+        };
+      var Ut = (e, t) =>
+          oe(
+            e,
+            `paper:${t.map((n) => n.join("=")).join(",")}`,
+            (n) => {
+              let a = n.main;
+              (a.setTransform(1, 0, 0, 1, 0, 0),
+                (a.fillStyle = "#ffffff"),
+                a.fillRect(0, 0, Math.round(e.W * e.scale), Math.round(e.H * e.scale)),
+                t.forEach(([r, o]) => n.paper(r, o)));
+            },
+            { full: !0, raw: !0 },
+          ),
+        it = (e, t) => {
+          if (e.cache.has("bake:paper")) return;
+          let n = Ut(e, t),
+            a = Math.round(e.W * e.scale),
+            r = Math.round(e.H * e.scale),
+            o = e.canvas(a, r);
+          (o.ctx.drawImage(n.c, 0, 0),
+            e.cache.set("bake:paper", { data: o.ctx.getImageData(0, 0, a, r).data, DW: a }));
+        },
+        zn = (e, t, n, a, r, o, i) => {
+          let s = t.ctx.getImageData(0, 0, r, o),
+            c = s.data,
+            u = i.data;
+          for (let l = 0; l < o; l++) {
+            let h = l * r * 4,
+              b = ((a + l) * i.DW + n) * 4;
+            for (let d = 0; d < r; d++, h += 4, b += 4)
+              c[h + 3] &&
+                ((c[h] = (c[h] * u[b] + 127) / 255),
+                (c[h + 1] = (c[h + 1] * u[b + 1] + 127) / 255),
+                (c[h + 2] = (c[h + 2] * u[b + 2] + 127) / 255));
+          }
+          let p = e.canvas(r, o);
+          return (p.ctx.putImageData(s, 0, 0), p);
+        };
+      var st = class extends he {
+          constructor(n, a, r, o, i) {
+            super(n, a, r, o);
+            this.keep = i;
+            U(this, "n", 0);
+            U(this, "census", []);
+          }
+          group(n, a, r = {}) {
+            let o = this.n++;
+            (this.census.push(n), this.keep(o) && super.group(n, a, r));
+          }
+          inkGroup(n, a = {}) {
+            let r = this.n++;
+            (this.census.push("inkGroup"), this.keep(r) && super.inkGroup(n, a));
+          }
+        },
+        zt = (e, t, n, a, r = {}) =>
+          oe(
+            e,
+            t,
+            (o) => {
+              let i = new st(o.main, e, r.frame ?? 0, r.medium ?? je, n);
+              (a(i), (o.drawn = i.drawn));
+            },
+            r,
+          );
+      var Qt = (e) => ({
+          pointer: null,
+          device: "mouse",
+          hover: null,
+          focus: null,
+          pressed: null,
+          scroll: e.init?.scroll ?? 0,
+          state: e.init?.state ?? "idle",
+          reduced: e.init?.reduced ?? !1,
+          scale: 1,
+          rects: {},
+          fields: {},
+          since: {},
+          count: {},
+        }),
+        Yn = (e) => ({
+          ...e,
+          rects: { ...e.rects },
+          fields: { ...e.fields },
+          since: { ...e.since },
+          count: { ...e.count },
+        }),
+        O = (e, t, n) => {
+          ((e.since[t] = n), (e.count[t] = (e.count[t] ?? 0) + 1));
+        },
+        Xn = (e, t) => {
+          let n = t.tick,
+            a = t.target;
+          switch (t.type) {
+            case "move":
+              ((e.pointer = [t.x ?? 0, t.y ?? 0]),
+                typeof t.value == "string" && (e.device = t.value),
+                O(e, "move", n));
+              break;
+            case "leave":
+              ((e.pointer = null), (e.hover = null), O(e, "leave", n));
+              break;
+            case "enter":
+              a && ((e.hover = a), O(e, "hover", n), O(e, `hover:${a}`, n));
+              break;
+            case "exit":
+              a && e.hover === a && ((e.hover = null), O(e, "unhover", n));
+              break;
+            case "down":
+              ((e.pressed = a ?? "self"), O(e, "press", n), O(e, `press:${e.pressed}`, n));
+              break;
+            case "up": {
+              let r = e.pressed;
+              ((e.pressed = null),
+                O(e, "release", n),
+                r && (a ?? "self") === r && (O(e, "click", n), O(e, `click:${r}`, n)));
+              break;
+            }
+            case "cancel":
+              ((e.pressed = null), O(e, "cancel", n));
+              break;
+            case "focus":
+              a && ((e.focus = a), O(e, "focus", n), O(e, `focus:${a}`, n));
+              break;
+            case "blur":
+              a && e.focus === a && ((e.focus = null), O(e, "blur", n));
+              break;
+            case "key":
+              a &&
+                ((e.fields[a] = {
+                  len: Number(t.value ?? 0),
+                  caret: t.x !== void 0 ? [t.x, t.y ?? 0] : null,
+                }),
+                O(e, "key", n),
+                O(e, `key:${a}`, n));
+              break;
+            case "scroll":
+              ((e.scroll = Qn(Number(t.value ?? 0))), O(e, "scroll", n));
+              break;
+            case "state": {
+              let r = String(t.value ?? "idle");
+              r !== e.state && ((e.state = r), O(e, "state", n), O(e, `state:${r}`, n));
+              break;
+            }
+            case "rect":
+              a && (e.rects[a] = { x: t.x ?? 0, y: t.y ?? 0, w: t.w ?? 0, h: t.h ?? 0 });
+              break;
+            case "view":
+              e.scale = Number(t.value ?? 1);
+              break;
+            case "motion":
+              e.reduced = t.value === "reduce";
+              break;
+          }
+        },
+        Vt = (e) => (typeof e == "number" ? [e] : [e[0], e[1]]),
+        Yt = (e) => (e.length === 1 ? e[0] : [e[0], e[1]]),
+        Kt = (e, t, n) => {
+          let a = n - e.t0;
+          if (a <= 0) return { x: e.tgt.map((o, i) => o + e.x0[i]), v: e.v0.slice() };
+          let r = Math.exp(-t * a);
+          return {
+            x: e.tgt.map((o, i) => {
+              let s = e.v0[i] + t * e.x0[i];
+              return o + (e.x0[i] + s * a) * r;
+            }),
+            v: e.tgt.map((o, i) => {
+              let s = e.v0[i] + t * e.x0[i];
+              return (e.v0[i] - t * s * a) * r;
+            }),
+          };
+        },
+        Zn = (e, t) => e.length === t.length && e.every((n, a) => n === t[a]);
+      var Xt = new WeakMap(),
+        Jn = (e) => {
+          let t = Qt(e),
+            n = {};
+          for (let [a, r] of Object.entries(e.springs)) {
+            let o = Vt(r.target(t));
+            n[a] = { t0: 0, tgt: o, x0: o.map(() => 0), v0: o.map(() => 0) };
+          }
+          return { tick: -1, idx: 0, d: t, segs: n, ref: null };
+        },
+        Zt = (e, t) => ({ tick: t, idx: e.idx, d: Yn(e.d), segs: { ...e.segs }, ref: e.ref }),
+        Jt = (e, t, n, a) => {
+          for (; n.idx < t.length && t[n.idx].tick <= a;) {
+            let r = t[n.idx];
+            if (!Number.isFinite(r.tick) || r.tick < 0)
+              throw new Error(`input log: event ${n.idx} has tick ${r.tick}`);
+            if (n.ref && r.tick < n.ref.tick)
+              throw new Error(
+                `input log: ticks go backwards at event ${n.idx} (${n.ref.tick} -> ${r.tick})`,
+              );
+            Xn(n.d, r);
+            for (let [o, i] of Object.entries(e.springs)) {
+              let s = Vt(i.target(n.d)),
+                c = n.segs[o];
+              if (Zn(s, c.tgt)) continue;
+              if (n.d.reduced) {
+                n.segs[o] = { t0: r.tick, tgt: s, x0: s.map(() => 0), v0: s.map(() => 0) };
+                continue;
+              }
+              let { x: u, v: p } = Kt(c, i.omega, r.tick);
+              n.segs[o] = { t0: r.tick, tgt: s, x0: u.map((l, h) => l - s[h]), v0: p };
+            }
+            ((n.ref = r), n.idx++);
+          }
+          n.tick = a;
+        },
+        qe = (e, t, n) => {
+          let a = Math.max(0, Math.floor(e)),
+            r = Xt.get(n);
+          r || ((r = new WeakMap()), Xt.set(n, r));
+          let o = r.get(t);
+          o || ((o = [Jn(n)]), r.set(t, o));
+          let i = (l) =>
+              (l.idx === 0 || t[l.idx - 1] === l.ref) &&
+              (l.idx >= t.length || t[l.idx].tick > l.tick),
+            s = Math.min(o.length - 1, Math.floor(a / 60));
+          for (; s > 0 && !i(o[s]);) ((o.length = s), s--);
+          let c = Zt(o[s], o[s].tick);
+          for (let l = (s + 1) * 60; l <= a; l += 60)
+            (Jt(n, t, c, l), o.length === l / 60 && o.push(Zt(c, l)));
+          Jt(n, t, c, a);
+          let u = {},
+            p = {};
+          for (let [l, h] of Object.entries(n.springs)) {
+            let b = Kt(c.segs[l], h.omega, a);
+            ((u[l] = Yt(b.x)), (p[l] = Yt(b.v)));
+          }
+          return { ...c.d, tick: a, attention: Ee(c.d), spring: u, vel: p };
+        },
+        en = (e, t) => {
+          let n = Qt(t),
+            a = {},
+            r = {};
+          for (let [o, i] of Object.entries(t.springs)) {
+            let s = i.target(n);
+            ((a[o] = s), (r[o] = typeof s == "number" ? 0 : [0, 0]));
+          }
+          return { ...n, tick: e, attention: null, spring: a, vel: r };
+        },
+        Qn = (e) => (e <= 0 ? 0 : e >= 1 ? 1 : e);
+      var lt = (e) => [e.x + e.w / 2, e.y + e.h / 2],
+        Ee = (e) =>
+          e.focus && e.hover
+            ? (e.since.focus ?? -1) >= (e.since.hover ?? -1)
+              ? e.focus
+              : e.hover
+            : (e.focus ?? e.hover);
+      var Ue = (e, t, n) => {
+        let a = e.since[t];
+        if (a === void 0) return null;
+        let r = e.tick - a;
+        return r >= 0 && r < n ? { f: r, u: r / n, n: e.count[t] ?? 1 } : null;
+      };
+      var tn = (e, t) => {
+        let n = 2166136261,
+          a = `${t}|${e.since[t] ?? -1}|${e.count[t] ?? 0}`;
+        for (let r = 0; r < a.length; r++) ((n ^= a.charCodeAt(r)), (n = Math.imul(n, 16777619)));
+        return n >>> 0;
+      };
+      var nn = (e) => (t, n) => {
+          let a =
+            typeof OffscreenCanvas < "u"
+              ? new OffscreenCanvas(t, n)
+              : Object.assign(document.createElement("canvas"), { width: t, height: n });
+          return { canvas: a, ctx: a.getContext("2d", e ? { willReadFrequently: !0 } : void 0) };
+        },
+        rn = nn(!1),
+        Ie = (e, t) => ({ W: e.meta.W, H: e.meta.H, scale: t, cache: new Map(), canvas: rn }),
+        ze = (e, t) => Math.round(e / t) * t,
+        Kn = (e) => {
+          let t = 2166136261;
+          for (let n = 0; n < e.length; n++) ((t ^= e[n]), (t = Math.imul(t, 16777619)));
+          return (t >>> 0).toString(16).padStart(8, "0");
+        },
+        ct = (e, t) => {
+          if (!e.length) return 0;
+          let n = [...e].sort((a, r) => a - r);
+          return n[Math.min(n.length - 1, Math.floor(t * n.length))];
+        },
+        an = (e, t, n = {}) => {
+          let { W: a, H: r } = t.meta,
+            o = n.root ?? document,
+            i = n.clock ?? window.__ANI_CLOCK__ ?? (() => performance.now()),
+            s = document.createElement("canvas");
+          (s.setAttribute("role", "img"),
+            s.setAttribute("aria-label", t.meta.alt),
+            Object.assign(s.style, {
+              display: "block",
+              width: "100%",
+              height: "auto",
+              aspectRatio: `${a} / ${r}`,
+              opacity: "0",
+              transition: "opacity .4s ease",
+              touchAction: "manipulation",
+            }),
+            getComputedStyle(e).position === "static" && (e.style.position = "relative"),
+            e.appendChild(s));
+          let c = (n.raster ?? window.__ANI_RASTER__) === "cpu";
+          ((rn = nn(c)),
+            (n = {
+              ...n,
+              sampleEvery: n.sampleEvery ?? window.__ANI_SAMPLE__,
+              syncTiming: n.syncTiming ?? window.__ANI_SYNC__,
+            }));
+          let u = s.getContext("2d", { alpha: !1, willReadFrequently: c }),
+            p = [],
+            l = 0,
+            h = !1,
+            b = !1,
+            d = 0,
+            y = 0,
+            x = -1,
+            k = !1,
+            P = () => (h ? Math.floor((((b ? d : i()) - l - y) * 60) / 1e3) : 0),
+            g = (m) => {
+              let f = { tick: Math.max(x + 1, P()), ...m },
+                w = p[p.length - 1];
+              (w &&
+              w.tick === f.tick &&
+              w.type === f.type &&
+              w.target === f.target &&
+              (f.type === "move" ||
+                f.type === "scroll" ||
+                f.type === "rect" ||
+                f.type === "key" ||
+                f.type === "view")
+                ? (p[p.length - 1] = f)
+                : p.push(f),
+                ce());
+            },
+            E = () => s.getBoundingClientRect(),
+            R = (m, f, w = E()) => [
+              ze(((m - w.left) * a) / (w.width || 1), 0.25),
+              ze(((f - w.top) * r) / (w.height || 1), 0.25),
+            ],
+            $ = new Map(),
+            W = new Map(),
+            M = new Map(),
+            H = () => {
+              ($.clear(),
+                o
+                  .querySelectorAll("[data-anidoodle]")
+                  .forEach((m) => $.set(m, m.getAttribute("data-anidoodle") || "target")));
+            },
+            _ = (m) => {
+              for (let f = m; f; f = f.parentElement) {
+                let w = $.get(f);
+                if (w) return { el: f, name: w };
+              }
+              return null;
+            },
+            V = () =>
+              typeof n.scrollTrack == "string"
+                ? document.querySelector(n.scrollTrack)
+                : n.scrollTrack,
+            v = "",
+            S = () => {
+              let m = E();
+              if (!m.width) return;
+              $.forEach((w, T) => {
+                let D = T.getBoundingClientRect(),
+                  [X, q] = R(D.left, D.top, m),
+                  [We, Be] = R(D.right, D.bottom, m),
+                  Ge = `${X},${q},${We},${Be}`;
+                W.get(w) !== Ge &&
+                  (W.set(w, Ge), g({ type: "rect", target: w, x: X, y: q, w: We - X, h: Be - q }));
+              });
+              let f = V();
+              if (f) {
+                let w = f.getBoundingClientRect(),
+                  T = window.innerHeight,
+                  D = w.height - T,
+                  X = D > 1 ? -w.top / D : (T - w.top) / (T + w.height),
+                  q = Math.max(0, Math.min(1, ze(X, 1e-4))).toFixed(4);
+                q !== v && ((v = q), g({ type: "scroll", value: Number(q) }));
+              }
+            },
+            z = n.maxScale ?? 3,
+            Y = () => {
+              let m = E().width || a;
+              return Math.max(0.5, Math.min(z, ze((m * (window.devicePixelRatio || 1)) / a, 0.25)));
+            },
+            I = Ie(t, Y()),
+            C = null,
+            ye = 0,
+            Oe = (m) => {
+              ((s.width = Math.round(a * m.scale)), (s.height = Math.round(r * m.scale)));
+            },
+            Pt = (m, f) => {
+              let w = performance.now();
+              for (; performance.now() - w < f;)
+                if (m.next().done) return ((ye += performance.now() - w), !0);
+              return ((ye += performance.now() - w), !1);
+            },
+            kt = 0,
+            vt = () => {
+              let m = Y();
+              (m === I.scale && !C) ||
+                (C?.env.scale !== m &&
+                  (clearTimeout(kt),
+                  (kt = window.setTimeout(() => {
+                    if (m === I.scale) {
+                      C = null;
+                      return;
+                    }
+                    let f = Ie(t, m);
+                    ((C = { env: f, gen: (t.bake?.(f) ?? [])[Symbol.iterator]() }), ce());
+                  }, 180))));
+            },
+            se = [],
+            Et = [],
+            It = 0,
+            St = () => Kn(u.getImageData(0, 0, s.width, s.height).data),
+            $e = (m) => {
+              let f = qe(m, p, t.input),
+                w = performance.now();
+              (t.draw(u, m, I, f),
+                n.syncTiming && u.getImageData(0, 0, 1, 1),
+                se.push(performance.now() - w),
+                se.length > 3600 && se.shift(),
+                (x = m),
+                It++,
+                n.sampleEvery &&
+                  It % n.sampleEvery === 0 &&
+                  Et.push({ tick: m, scale: I.scale, hash: St() }));
+            },
+            le = 0,
+            Ct = !0,
+            _n = 0,
+            Rt = () => h && !b && Ct && !k && document.visibilityState === "visible",
+            At = () => {
+              if (((le = 0), k)) return;
+              (C &&
+                Pt(C.gen, 6) &&
+                ((I = C.env),
+                (C = null),
+                Oe(I),
+                g({ type: "view", value: I.scale }),
+                $e(Math.max(x, P()))),
+                ++_n % 30 === 0 && (S(), vt()));
+              let m = P();
+              (m > x && $e(m), (Rt() || C) && (le = requestAnimationFrame(At)));
+            },
+            ce = () => {
+              !le && (Rt() || C) && (le = requestAnimationFrame(At));
+            },
+            N = (m, f, w, T = { passive: !0 }) => {
+              (m.addEventListener(f, w, T), et.push(() => m.removeEventListener(f, w, T)));
+            },
+            et = [],
+            K = null,
+            ie = null;
+          (N(window, "pointermove", (m) => {
+            let f = m,
+              [w, T] = R(f.clientX, f.clientY);
+            g({ type: "move", x: w, y: T, value: f.pointerType || "mouse" });
+          }),
+            N(document, "pointerout", (m) => {
+              m.relatedTarget || g({ type: "leave" });
+            }),
+            N(window, "blur", () => g({ type: "leave" })),
+            N(window, "pointerover", (m) => {
+              let f = _(m.target);
+              f?.el !== ie &&
+                (ie && g({ type: "exit", target: $.get(ie) }),
+                (ie = f?.el ?? null),
+                f && g({ type: "enter", target: f.name }));
+            }),
+            N(window, "pointerdown", (m) => {
+              let f = m;
+              if (f.pointerType !== "mouse") {
+                let [D, X] = R(f.clientX, f.clientY);
+                g({ type: "move", x: D, y: X, value: f.pointerType });
+              }
+              let w = _(m.target),
+                T = m.target === s;
+              (!w && !T) || ((K = w?.el ?? s), g({ type: "down", target: w?.name ?? "self" }));
+            }),
+            N(window, "pointerup", (m) => {
+              let f = m,
+                w = _(m.target),
+                T = K && (K === s ? m.target === s : !!w && w.el === K);
+              (K && g(T ? { type: "up", target: K === s ? "self" : $.get(K) } : { type: "cancel" }),
+                (K = null),
+                f.pointerType === "touch" &&
+                  (ie && g({ type: "exit", target: $.get(ie) }),
+                  (ie = null),
+                  g({ type: "leave" })));
+            }),
+            N(window, "pointercancel", () => {
+              (K && g({ type: "cancel" }), (K = null));
+            }),
+            N(window, "click", (m) => {
+              if (m.detail !== 0) return;
+              let f = _(m.target);
+              f && (g({ type: "down", target: f.name }), g({ type: "up", target: f.name }));
+            }),
+            N(window, "focusin", (m) => {
+              let f = _(m.target);
+              if (!f) return;
+              let w = m.target;
+              (w.matches?.(":focus-visible") || w.matches?.("input,textarea,select")) &&
+                g({ type: "focus", target: f.name });
+            }),
+            N(window, "focusout", (m) => {
+              let f = _(m.target);
+              f && g({ type: "blur", target: f.name });
+            }));
+          let Tt = document.createElement("canvas").getContext("2d"),
+            On = (m) => {
+              let f = _(m.target),
+                w = m.target;
+              if (!f || !w.matches?.("input,textarea")) return;
+              let T = getComputedStyle(w),
+                D = w.value.length,
+                X = w.type === "password" ? "\u2022".repeat(D) : w.value;
+              Tt.font = T.font || `${T.fontStyle} ${T.fontWeight} ${T.fontSize} ${T.fontFamily}`;
+              let q = w.getBoundingClientRect(),
+                We = parseFloat(T.paddingLeft) + parseFloat(T.borderLeftWidth),
+                Be = parseFloat(T.paddingRight) + parseFloat(T.borderRightWidth),
+                Ge = Math.min(
+                  q.right - Be,
+                  q.left +
+                    We +
+                    Tt.measureText(X.slice(0, w.selectionStart ?? D)).width -
+                    w.scrollLeft,
+                ),
+                [$t, Dt] = R(Ge, q.top + q.height / 2),
+                Ft = `${D},${$t},${Dt}`;
+              M.get(f.name) !== Ft &&
+                (M.set(f.name, Ft), g({ type: "key", target: f.name, value: D, x: $t, y: Dt }));
+            };
+          ["input", "keyup", "focusin", "select"].forEach((m) => N(window, m, On));
+          let tt = !1,
+            nt = () => {
+              tt ||
+                ((tt = !0),
+                requestAnimationFrame(() => {
+                  ((tt = !1), S(), vt());
+                }));
+            };
+          (N(window, "scroll", nt), N(window, "resize", nt));
+          let Lt = typeof ResizeObserver < "u" ? new ResizeObserver(nt) : null;
+          Lt?.observe(s);
+          let De = window.matchMedia?.("(prefers-reduced-motion: reduce)"),
+            Ht = () =>
+              n.reducedMotion === void 0 || n.reducedMotion === "auto"
+                ? !!De?.matches
+                : n.reducedMotion;
+          if (De && (n.reducedMotion ?? "auto") === "auto") {
+            let m = () => g({ type: "motion", value: Ht() ? "reduce" : "full" });
+            (De.addEventListener?.("change", m),
+              et.push(() => De.removeEventListener?.("change", m)));
+          }
+          let _t =
+            typeof IntersectionObserver < "u"
+              ? new IntersectionObserver((m) => {
+                  ((Ct = m.some((f) => f.isIntersecting)), ce());
+                })
+              : null;
+          (_t?.observe(s), N(document, "visibilitychange", () => ce()));
+          let j = null,
+            rt = () => {
+              j &&
+                (j.setAttribute("aria-pressed", String(b)),
+                j.setAttribute("aria-label", b ? "Play animation" : "Pause animation"),
+                (j.dataset.state = b ? "paused" : "playing"),
+                (j.textContent = b ? "\u25B6" : "\u2759\u2759"));
+            };
+          (n.pauseControl !== !1 &&
+            ((j = document.createElement("button")),
+            (j.type = "button"),
+            (j.className = "ani-doodle-pause"),
+            Object.assign(j.style, {
+              position: "absolute",
+              right: "10px",
+              bottom: "10px",
+              width: "34px",
+              height: "34px",
+              borderRadius: "50%",
+              border: "1.5px solid rgba(61,52,55,.55)",
+              background: "rgba(251,246,234,.85)",
+              color: "#3d3437",
+              cursor: "pointer",
+              font: "600 12px/1 system-ui, sans-serif",
+              display: "grid",
+              placeItems: "center",
+              padding: "0",
+            }),
+            j.addEventListener("click", (m) => {
+              (m.stopPropagation(), b ? xe.play() : xe.pause());
+            }),
+            e.appendChild(j),
+            rt()),
+            H(),
+            g({ type: "motion", value: Ht() ? "reduce" : "full" }),
+            n.state && g({ type: "state", value: n.state }),
+            S(),
+            g({ type: "view", value: I.scale }));
+          let $n = (async () => {
+              Oe(I);
+              let m = (t.bake?.(I) ?? [])[Symbol.iterator]();
+              (await new Promise((f) => {
+                let w = () => (k || Pt(m, 12) ? f() : requestAnimationFrame(w));
+                w();
+              }),
+                (h = !0),
+                (l = i()),
+                $e(0),
+                (s.style.opacity = "1"),
+                ce());
+            })(),
+            xe = {
+              el: e,
+              canvas: s,
+              piece: t,
+              ready: $n,
+              setState: (m) => g({ type: "state", value: m }),
+              pause: () => {
+                b || ((d = i()), (b = !0), rt());
+              },
+              play: () => {
+                b && ((y += i() - d), (b = !1), rt(), ce());
+              },
+              get paused() {
+                return b;
+              },
+              destroy: () => {
+                ((k = !0),
+                  et.forEach((f) => f()),
+                  Lt?.disconnect(),
+                  _t?.disconnect(),
+                  le && cancelAnimationFrame(le),
+                  s.remove(),
+                  j?.remove());
+                let m = window.__anidoodle;
+                m && m.splice(m.indexOf(xe), 1);
+              },
+              log: () => p.map((m) => ({ ...m })),
+              tick: () => x,
+              scale: () => I.scale,
+              state: (m = x) => qe(m, p, t.input),
+              render: (m, f, w = I.scale, T = !1) => {
+                let D = T
+                  ? Ie(t, w)
+                  : w === I.scale
+                    ? I
+                    : (Fe.get(w) ?? Fe.set(w, Ie(t, w)).get(w));
+                (s.width !== Math.round(a * w) &&
+                  ((s.width = Math.round(a * w)), (s.height = Math.round(r * w))),
+                  (Ot = D));
+                let X = performance.now();
+                return (
+                  t.draw(u, m, D, qe(m, f, t.input)),
+                  u.getImageData(0, 0, 1, 1),
+                  performance.now() - X
+                );
+              },
+              renderRest: (m, f = I.scale) => {
+                let w = f === I.scale ? I : (Fe.get(f) ?? Fe.set(f, Ie(t, f)).get(f));
+                (s.width !== Math.round(a * f) &&
+                  ((s.width = Math.round(a * f)), (s.height = Math.round(r * f))),
+                  t.draw(u, m, w, en(m, t.input)));
+              },
+              hash: St,
+              renderNow: () => {
+                S();
+                let m = P();
+                h && m > x && $e(m);
+              },
+              samples: () => Et.slice(),
+              envs: () => ({ live: I, last: Ot }),
+              stats: () => ({
+                bakeMs: Math.round(ye),
+                sprites: ke.baked,
+                spriteMB: +(ke.bytes / 1048576).toFixed(1),
+                frames: se.length,
+                p50: +ct(se, 0.5).toFixed(2),
+                p95: +ct(se, 0.95).toFixed(2),
+                max: +ct(se, 1).toFixed(2),
+                scale: I.scale,
+                log: p.length,
+              }),
+            },
+            Fe = new Map(),
+            Ot = null;
+          return ((window.__anidoodle ?? (window.__anidoodle = [])).push(xe), xe);
+        },
+        on = (e, t = "ani-doodle") => {
+          var n;
+          typeof customElements > "u" ||
+            customElements.get(t) ||
+            customElements.define(
+              t,
+              ((n = class extends HTMLElement {
+                constructor() {
+                  super(...arguments);
+                  U(this, "controller", null);
+                }
+                connectedCallback() {
+                  if (this.controller) return;
+                  let r = this.getAttribute("piece") ?? Object.keys(e)[0],
+                    o = e[r];
+                  if (!o) {
+                    this.textContent = `ani-doodle: no piece "${r}" (have: ${Object.keys(e).join(", ")})`;
+                    return;
+                  }
+                  (this.style.display || (this.style.display = "block"),
+                    (this.controller = an(this, o, {
+                      scrollTrack: this.getAttribute("scroll-track"),
+                      state: this.getAttribute("state") ?? void 0,
+                      pauseControl: !this.hasAttribute("no-pause"),
+                    })),
+                    this.hasAttribute("paused") && this.controller.pause());
+                }
+                disconnectedCallback() {
+                  (this.controller?.destroy(), (this.controller = null));
+                }
+                attributeChangedCallback(r, o, i) {
+                  this.controller &&
+                    (r === "state" && i && this.controller.setState(i),
+                    r === "paused" &&
+                      (i === null ? this.controller.play() : this.controller.pause()));
+                }
+                setState(r) {
+                  this.controller?.setState(r);
+                }
+              }),
+              U(n, "observedAttributes", ["state", "paused"]),
+              n),
+            );
+        };
+      var Z = { white: "#c9d2e4", rose: "#cf8291", denim: "#52739f", butter: "#d9b24f" },
+        ee = (e, t) => t.map(([n, a]) => [e[0] + n, e[1] + a]),
+        ut = (e, t) => Math.atan2(t[1] - e[1], t[0] - e[0]),
+        sn = [
+          [-70, -40],
+          [-52, -58],
+          [-10, -65],
+          [34, -63],
+          [62, -51],
+          [75, -22],
+          [77, 14],
+          [67, 44],
+          [34, 58],
+          [-8, 61],
+          [-46, 56],
+          [-70, 39],
+          [-79, 6],
+          [-78, -20],
+        ],
+        ln = [
+          [-44, -42],
+          [-20, -50],
+          [16, -50],
+          [42, -42],
+          [54, -14],
+          [57, 18],
+          [45, 42],
+          [14, 52],
+          [-16, 52],
+          [-46, 42],
+          [-57, 16],
+          [-54, -16],
+        ],
+        cn = [
+          [-13, -8],
+          [-14, 6],
+          [-9, 12],
+          [20, 12],
+          [28, 9],
+          [29, 1],
+          [22, -6],
+          [10, -9],
+          [4, -13],
+        ],
+        er = (e, t) => {
+          let n = 13 * t,
+            a = [15 * t, 0],
+            r =
+              e === "open"
+                ? { a: [-0.62, -0.04, 0.54], len: 17, w: 0.3, thumb: [-1.75, 13] }
+                : { a: [-0.46, 0, 0.46], len: 10, w: 0.2, thumb: [-1.5, 10] },
+            o = (p, l) => [a[0] + Math.cos(p) * l, a[1] + Math.sin(p) * l],
+            i = [
+              [0, -7.5 * t],
+              [5 * t, -11 * t],
+            ],
+            s = r.thumb[0],
+            c = r.thumb[1] * t,
+            u = [];
+          return (
+            i.push(
+              o(s - 0.34, n),
+              o(s - 0.16, n + c * 0.8),
+              o(s, n + c),
+              o(s + 0.2, n + c * 0.7),
+              o(s + 0.36, n * 0.98),
+            ),
+            r.a.forEach((p, l) => {
+              let h = r.len * t * (l === 1 ? 1.08 : 1);
+              if (
+                (i.push(
+                  o(p - r.w, n + h * 0.55),
+                  o(p - r.w * 0.5, n + h * 0.95),
+                  o(p, n + h),
+                  o(p + r.w * 0.5, n + h * 0.95),
+                  o(p + r.w, n + h * 0.55),
+                ),
+                l < 2)
+              ) {
+                let b = o((p + r.a[l + 1]) / 2, e === "open" ? n : n + h * 0.42);
+                (i.push(b), u.push(b));
+              }
+            }),
+            i.push(o(1.15, n), o(1.9, n * 0.98), [5 * t, 11 * t], [0, 7.5 * t]),
+            { pts: i, valleys: u, c: a }
+          );
+        },
+        Ye = (e, t, n, a, r) => {
+          let o = Math.cos(n) < 0 ? -1 : 1,
+            i = (p) =>
+              ae(
+                p.map(([l, h]) => [t[0] + l, t[1] + h * o]),
+                t[0],
+                t[1],
+                (n * 180) / Math.PI,
+              ),
+            s = er(a, 1),
+            c = i(s.pts),
+            u = i([
+              [-7, -9.5],
+              [3, -10.5],
+              [4, 0],
+              [3, 10.5],
+              [-7, 9.5],
+              [-8, 0],
+            ]);
+          (e.group("paint", () => {
+            (e.form(c, L.white, Z.white, { seed: r, light: [-3, -4] }),
+              e.form(u, L.rose, Z.rose, { seed: r + 1, light: [-2, -3] }));
+          }),
+            e.group("ink", () => {
+              (e.pen(c, { closed: !0, w: 2.9, seed: r + 2, wobble: 0.5, boil: 0.35, taper: 0.5 }),
+                a === "open" &&
+                  s.valleys.forEach((p, l) => {
+                    let h = [p[0] + (s.c[0] - p[0]) * 0.32, p[1] + (s.c[1] - p[1]) * 0.32];
+                    e.pen(i(F(p, h, 0.5)), {
+                      w: 1.5,
+                      seed: r + 3 + l,
+                      wobble: 0.3,
+                      boil: 0.3,
+                      opacity: 0.75,
+                      retrace: !1,
+                    });
+                  }),
+                e.pen(u, { closed: !0, w: 2.5, seed: r + 7, wobble: 0.4, boil: 0.3, taper: 0.5 }),
+                [-0.45, 0.45].forEach((p, l) =>
+                  e.pen(i(F([-5.5, p * 9], [2, p * 9.6])), {
+                    w: 1.6,
+                    seed: r + 8 + l,
+                    wobble: 0.2,
+                    opacity: 0.65,
+                    retrace: !1,
+                  }),
+                ));
+            }));
+        },
+        be = (e, t, n, a, r, o) => {
+          let i = F(t, n, a)[1],
+            s = jt([t, i, n], r, r * 0.86, !1),
+            c = (u) => {
+              let p = u < 0.5 ? t : i,
+                l = u < 0.5 ? i : n,
+                h = u < 0.5 ? u * 2 : (u - 0.5) * 2;
+              return [p[0] + (l[0] - p[0]) * h, p[1] + (l[1] - p[1]) * h];
+            };
+          (e.group("paint", () => e.form(s, L.white, Z.white, { seed: o, light: [-3, -3] })),
+            e.group("ink", () => {
+              (e.pen(s, { closed: !0, w: 2.8, seed: o + 1, wobble: 0.5, boil: 0.35, taper: 0.4 }),
+                [0.2, 0.36, 0.52, 0.68, 0.84].forEach((u, p) => {
+                  let l = c(u),
+                    h = c(u + 0.04),
+                    b = ut(l, h) + Math.PI / 2;
+                  e.pen(
+                    F(
+                      [l[0] - Math.cos(b) * r * 0.85, l[1] - Math.sin(b) * r * 0.85],
+                      [l[0] + Math.cos(b) * r * 0.85, l[1] + Math.sin(b) * r * 0.85],
+                      2.2,
+                    ),
+                    { w: 1.7, seed: o + 2 + p, wobble: 0.2, opacity: 0.6, retrace: !1 },
+                  );
+                }));
+            }));
+        },
+        un = (e, t, n, a) => {
+          let { look: r, tilt: o, lean: i, handL: s, handR: c } = a,
+            u = [i * 0.6, -200],
+            p = [0, -86],
+            l = (v) => ae(ee(u, v), u[0], u[1], o),
+            h = (v) => ae(ee(p, v), 0, 0, i * 0.12),
+            b = [
+              [28, -64],
+              [41, -71],
+              [27, -80],
+              [43, -88],
+              [30, -97],
+              [45, -105],
+              [38, -114],
+            ],
+            d = [39, -130],
+            y = l([d])[0],
+            x = Math.abs(Math.cos(t * 0.22)),
+            k = h([[-50, -28]])[0],
+            P = h([[50, -28]])[0],
+            g = [28, -12],
+            E = ee(g, cn),
+            R = ee(
+              [-28, -12],
+              cn.map(([v, S]) => [-v, S]),
+            );
+          (e.group("ink", () =>
+            e.hatch(-62, 8, 130, { n: 15, len: 12, angle: -0.45, seed: n + 1, opacity: 0.32 }),
+          ),
+            e.group("paint", () => {
+              (e.form(A(90, -111, 9, 13 * x + 3, 8), L.butter, Z.butter, {
+                seed: n + 2,
+                light: [-2, -3],
+              }),
+                e.form(A(90, -81, 9, 13 * x + 3, 8), L.butter, Z.butter, {
+                  seed: n + 3,
+                  light: [-2, -3],
+                }));
+            }),
+            e.group("ink", () => {
+              (e.pen(F([52, -94], [84, -96], 1), { w: 3.6, seed: n + 4, wobble: 0.4 }),
+                e.pen(A(90, -96, 5, 5, 7), {
+                  closed: !0,
+                  w: 2.4,
+                  seed: n + 7,
+                  wobble: 0.2,
+                  taper: 0.4,
+                }),
+                e.pen(A(90, -111, 4, Math.max(1.5, 6 * x), 7), {
+                  closed: !0,
+                  w: 1.7,
+                  seed: n + 8,
+                  wobble: 0.2,
+                  taper: 0.3,
+                  retrace: !1,
+                }),
+                e.pen(A(90, -81, 4, Math.max(1.5, 6 * x), 7), {
+                  closed: !0,
+                  w: 1.7,
+                  seed: n + 9,
+                  wobble: 0.2,
+                  taper: 0.3,
+                  retrace: !1,
+                }),
+                e.pen(A(90, -111, 9, 13 * x + 3, 8), {
+                  closed: !0,
+                  w: 2.6,
+                  seed: n + 5,
+                  wobble: 0.3,
+                  taper: 0.5,
+                }),
+                e.pen(A(90, -81, 9, 13 * x + 3, 8), {
+                  closed: !0,
+                  w: 2.6,
+                  seed: n + 6,
+                  wobble: 0.3,
+                  taper: 0.5,
+                }));
+            }),
+            be(e, [-24, -40], [-27, -16], -2, 7.5, n + 10),
+            be(e, [24, -40], [27, -16], 2, 7.5, n + 20),
+            e.group("paint", () => {
+              (e.form(R, L.denim, Z.denim, { seed: n + 30, light: [-3, -4] }),
+                e.form(E, L.denim, Z.denim, { seed: n + 31, light: [-3, -4] }));
+            }),
+            e.group("ink", () =>
+              [R, E].forEach((v, S) => {
+                let z = S ? g : [-28, -12],
+                  Y = S ? 1 : -1,
+                  I = (C) => C.map(([ye, Oe]) => [z[0] + ye * Y, z[1] + Oe]);
+                (e.pen(v, {
+                  closed: !0,
+                  w: 3,
+                  seed: n + 32 + S,
+                  wobble: 0.5,
+                  boil: 0.35,
+                  taper: 0.5,
+                }),
+                  e.pen(
+                    I([
+                      [-13, 7],
+                      [6, 8],
+                      [28, 6],
+                    ]),
+                    { w: 2, seed: n + 34 + S, wobble: 0.3, opacity: 0.75, retrace: !1 },
+                  ),
+                  e.pen(I(G(18, 3, 10, 10, 1.05 * Math.PI, 1.75 * Math.PI, 5)), {
+                    w: 2,
+                    seed: n + 36 + S,
+                    wobble: 0.3,
+                    opacity: 0.7,
+                    retrace: !1,
+                  }),
+                  [0, 1].forEach((C) =>
+                    e.pen(I(F([-3 + C * 6, -7 + C], [3 + C * 6, -3 + C])), {
+                      w: 1.7,
+                      color: "#f4efe6",
+                      seed: n + 38 + S * 2 + C,
+                      wobble: 0.2,
+                      retrace: !1,
+                    }),
+                  ));
+              }),
+            ),
+            be(e, k, s, -14, 7.5, n + 40),
+            be(e, P, c, 14, 7.5, n + 50),
+            Ye(e, s, ut(F(k, s, -14)[1], s), "rest", n + 60),
+            Ye(e, c, ut(F(P, c, 14)[1], c), "open", n + 80));
+          let $ = h(
+            ee(
+              [0, -12],
+              [
+                [-27, -19],
+                [0, -22],
+                [27, -19],
+                [29, 0],
+                [27, 17],
+                [0, 20],
+                [-27, 17],
+                [-29, 0],
+              ],
+            ),
+          );
+          (e.group("paint", () => {
+            (e.form(h(ln), L.white, Z.white, {
+              seed: n + 100,
+              light: [-7, -8],
+              hi: [-24, -112, 12, 7, -30],
+            }),
+              e.form($, L.glow, "#f0c868", { seed: n + 101, light: [-3, -3] }));
+            let v = { dx: 0, dy: 0, shrink: 1, rim: !1 };
+            (e.wash(h(pe(0, -13, 10)), L.blush, { alpha: 0.95, seed: n + 102, ...v }),
+              e.wash(h(G(0, 30, 15, 14, Math.PI, 2 * Math.PI, 7)), "#fffaf0", {
+                alpha: 0.95,
+                seed: n + 103,
+                ...v,
+              }),
+              e.wash(h(G(7, 30, 7, 9, Math.PI, 2 * Math.PI, 5)), L.sage, {
+                alpha: 0.75,
+                seed: n + 104,
+                ...v,
+              }));
+          }),
+            e.group("ink", () => {
+              (e.pen(h(ln), {
+                closed: !0,
+                w: 4,
+                seed: n + 110,
+                wobble: 0.8,
+                boil: 0.4,
+                taper: 0.6,
+              }),
+                e.pen($, { closed: !0, w: 2.6, seed: n + 111, wobble: 0.4, boil: 0.3, taper: 0.5 }),
+                e.pen(
+                  h(
+                    ee(
+                      [0, -12],
+                      [
+                        [-21, -13],
+                        [0, -16],
+                        [21, -13],
+                      ],
+                    ),
+                  ),
+                  { w: 1.6, seed: n + 112, wobble: 0.3, opacity: 0.45, retrace: !1 },
+                ),
+                e.pen(h(pe(0, -13, 10)), {
+                  closed: !0,
+                  w: 1.9,
+                  color: "#c9566b",
+                  seed: n + 113,
+                  wobble: 0.3,
+                  taper: 0.4,
+                }),
+                e.pen(h(G(0, 30, 15, 14, Math.PI, 2 * Math.PI, 8)), {
+                  w: 2.2,
+                  seed: n + 114,
+                  wobble: 0.3,
+                }),
+                e.pen(h(F([-16, 30], [16, 30])), { w: 2.2, seed: n + 115, wobble: 0.3 }),
+                e.pen(h(F([0, 29], [9, 19])), {
+                  w: 2.4,
+                  color: "#c9566b",
+                  seed: n + 116,
+                  wobble: 0.2,
+                  retrace: !1,
+                }),
+                [
+                  [-43, -34],
+                  [43, -34],
+                  [-47, 34],
+                  [47, 34],
+                ].forEach(([S, z], Y) => {
+                  let I = h([[S * 0.9, z]])[0];
+                  e.pen(A(I[0], I[1], 2.6, 2.6, 6), {
+                    closed: !0,
+                    w: 1.6,
+                    seed: n + 117 + Y,
+                    wobble: 0.2,
+                    opacity: 0.7,
+                    retrace: !1,
+                  });
+                }));
+              let v = h([[24, 30]])[0];
+              e.hatch(v[0], v[1], 24, { n: 5, len: 13, angle: -0.9, seed: n + 125, opacity: 0.35 });
+            }));
+          let W = ee(
+            [i * 0.3, -140],
+            [
+              [-24, -7],
+              [0, -10],
+              [24, -7],
+              [26, 3],
+              [0, 8],
+              [-26, 3],
+            ],
+          );
+          (e.group("paint", () =>
+            e.form(W, "#e6dfd6", "#b9b0a6", { seed: n + 130, light: [-2, -3] }),
+          ),
+            e.group("ink", () =>
+              e.pen(W, { closed: !0, w: 2.6, seed: n + 131, wobble: 0.4, taper: 0.5 }),
+            ),
+            e.group("plain", () =>
+              e.glow(y[0], y[1], 46, L.glow, 0.35 * (0.7 + 0.2 * Math.sin(t * 0.2)) * 2),
+            ),
+            e.group("paint", () =>
+              e.form(l(A(d[0], d[1], 13, 15, 9)), "#fff0b0", "#f2c65a", {
+                seed: n + 140,
+                light: [-3, -4],
+                hi: [y[0] - 5, y[1] - 6, 4, 2.4],
+              }),
+            ),
+            e.group("ink", () => {
+              (e.pen(l(b), { w: 2.8, seed: n + 141, wobble: 0.5, boil: 0.5, taper: 0.4 }),
+                e.pen(l(A(d[0], d[1], 13, 15, 9)), {
+                  closed: !0,
+                  w: 2.7,
+                  seed: n + 142,
+                  wobble: 0.4,
+                  taper: 0.5,
+                }),
+                e.pen(
+                  l(
+                    ee(d, [
+                      [-5, 6],
+                      [-3, -3],
+                      [0, 3],
+                      [3, -3],
+                      [5, 6],
+                    ]),
+                  ),
+                  {
+                    w: 1.7,
+                    color: "#c9872a",
+                    seed: n + 143,
+                    wobble: 0.2,
+                    opacity: 0.8,
+                    retrace: !1,
+                  },
+                ),
+                [0, 1, 2, 3, 4, 5].forEach((v) => {
+                  let S = -2.9 + v * 0.55;
+                  e.pen(
+                    l(
+                      F(
+                        [d[0] + Math.cos(S) * 22, d[1] + Math.sin(S) * 22],
+                        [
+                          d[0] + Math.cos(S) * (33 + (v % 2) * 5),
+                          d[1] + Math.sin(S) * (33 + (v % 2) * 5),
+                        ],
+                      ),
+                    ),
+                    { w: 2.3, color: "#c9973a", seed: n + 144 + v, wobble: 0.3, retrace: !1 },
+                  );
+                }));
+            }),
+            e.group("paint", () => {
+              ([-1, 1].forEach((v) =>
+                e.form(l(A(v * 81 + 1, 2, 11, 17, 9)), L.rose, Z.rose, {
+                  seed: n + 150 + v,
+                  light: [-2, -3],
+                }),
+              ),
+                e.form(l(sn), L.white, Z.white, {
+                  seed: n + 152,
+                  light: [-9, -10],
+                  hi: [u[0] - 40, u[1] - 40, 16, 8, -28],
+                }));
+            }),
+            e.group("ink", () => {
+              ([-1, 1].forEach((S) => {
+                (e.pen(l(A(S * 81 + 1, 2, 11, 17, 9)), {
+                  closed: !0,
+                  w: 2.8,
+                  seed: n + 153 + S,
+                  wobble: 0.4,
+                  taper: 0.5,
+                }),
+                  e.pen(l(F([S * 81 - 3, -5], [S * 81 + 5, 9])), {
+                    w: 1.8,
+                    seed: n + 156 + S,
+                    wobble: 0.2,
+                    opacity: 0.6,
+                    retrace: !1,
+                  }));
+              }),
+                e.pen(l(sn), {
+                  closed: !0,
+                  w: 4.2,
+                  seed: n + 160,
+                  wobble: 0.9,
+                  boil: 0.4,
+                  taper: 0.6,
+                }),
+                e.pen(
+                  l([
+                    [-68, -33],
+                    [-30, -41],
+                    [10, -43],
+                    [44, -41],
+                    [69, -34],
+                  ]),
+                  { w: 1.9, seed: n + 161, wobble: 0.4, opacity: 0.5, retrace: !1 },
+                ),
+                [
+                  [-54, -46],
+                  [58, -47],
+                ].forEach(([S, z], Y) =>
+                  e.pen(l(A(S, z, 2.6, 2.6, 6)), {
+                    closed: !0,
+                    w: 1.6,
+                    seed: n + 162 + Y,
+                    wobble: 0.2,
+                    opacity: 0.7,
+                    retrace: !1,
+                  }),
+                ),
+                e.pen(l(G(26, -62, 9, 7, Math.PI, 2 * Math.PI, 5)), {
+                  w: 2.4,
+                  seed: n + 164,
+                  wobble: 0.3,
+                }));
+              let v = l([[36, 44]])[0];
+              e.hatch(v[0], v[1], 30, {
+                n: 6,
+                len: 14,
+                angle: -0.95,
+                seed: n + 165,
+                opacity: 0.33,
+              });
+            }));
+          let M = [u[0] + r * 4, u[1] + 6],
+            H = n + 170,
+            _ = 31,
+            V = (v) => ae(ee(M, v), M[0], M[1], o);
+          (e.group("paint", () =>
+            [-1, 1].forEach((v) =>
+              e.wash(V(A(v * (_ + 22), 20, 14, 8.5, 8)), L.blush, {
+                alpha: 0.5,
+                seed: H + v,
+                dx: 0,
+                dy: 0,
+                shrink: 1,
+                rim: !1,
+              }),
+            ),
+          ),
+            e.group("ink", () => {
+              ([-1, 1].forEach((v, S) => {
+                let z = v * _ + r * 3,
+                  Y = S ? -1 : 0,
+                  I = V([[z, Y]])[0],
+                  C = e.cur;
+                (e.touch(I[0] - 13, I[1] - 13, I[0] + 13, I[1] + 13),
+                  (C.fillStyle = ue),
+                  C.beginPath(),
+                  C.ellipse(I[0], I[1], 8.4, 10.8, (o * Math.PI) / 180, 0, Math.PI * 2),
+                  C.fill(),
+                  (C.fillStyle = "#fffaf3"),
+                  C.beginPath(),
+                  C.arc(I[0] - 2.6 + r * 1.5, I[1] - 3.8, 3.3, 0, Math.PI * 2),
+                  C.fill(),
+                  (C.globalAlpha = 0.85),
+                  C.beginPath(),
+                  C.arc(I[0] + 2.8 + r * 1.5, I[1] + 3.6, 1.5, 0, Math.PI * 2),
+                  C.fill(),
+                  (C.globalAlpha = 1),
+                  e.pen(V(G(z, Y - 13, 10, 6, 1.25 * Math.PI, 1.75 * Math.PI, 4)), {
+                    w: 2,
+                    seed: H + 14 + S,
+                    wobble: 0.3,
+                    opacity: 0.55,
+                    retrace: !1,
+                  }));
+              }),
+                e.pen(V(G(0, 20, 9, 8, 0.12 * Math.PI, 0.88 * Math.PI, 6)), {
+                  w: 2.9,
+                  seed: H + 20,
+                  wobble: 0.3,
+                  boil: 0.3,
+                }),
+                [-1, 1].forEach((v) => {
+                  let S = V([[v * (_ + 22) - 7, 17]])[0];
+                  e.hatch(S[0], S[1], 13, {
+                    n: 3,
+                    len: 9,
+                    color: L.blush,
+                    pw: 2.6,
+                    opacity: 0.9,
+                    seed: H + 30 + v,
+                  });
+                }));
+            }));
+        };
+      var tr = 560,
+        Le = 272,
+        He = 492,
+        Q = 2.75 * (tr / 1080),
+        de = 3,
+        nr = { look: 0, tilt: 0, lean: 0, handL: [-80, -58], handR: [94, -178] };
+      var rr = [0, -140],
+        ne = [0, -194],
+        mn = [39, -330],
+        ge = (e) => [Le + e[0] * Q, He + e[1] * Q],
+        Xe = 2,
+        Re = 8,
+        Ze = 16,
+        Je = 0.8;
+      var J = (e, t) => [
+          e[0] * t[0] + e[2] * t[1],
+          e[1] * t[0] + e[3] * t[1],
+          e[0] * t[2] + e[2] * t[3],
+          e[1] * t[2] + e[3] * t[3],
+          e[0] * t[4] + e[2] * t[5] + e[4],
+          e[1] * t[4] + e[3] * t[5] + e[5],
+        ],
+        te = (e, t) => [1, 0, 0, 1, e, t],
+        Se = (e, t, n = 1, a = 1) => {
+          let r = (t * Math.PI) / 180,
+            o = Math.cos(r),
+            i = Math.sin(r);
+          return J(te(e[0], e[1]), J([o * n, i * n, -i * a, o * a, 0, 0], te(-e[0], -e[1])));
+        },
+        hn = (e, t) => [e[0] * t[0] + e[2] * t[1] + e[4], e[1] * t[0] + e[3] * t[1] + e[5]],
+        B = (e, t, n, a = 1) => {
+          if (!(a <= 0)) {
+            if (n[0] === 1 && n[1] === 0 && n[2] === 0 && n[3] === 1)
+              return ve(e, t, n[4], n[5], a);
+            if (Math.hypot(n[0], n[1]) > 1 + 1e-9 || Math.hypot(n[2], n[3]) > 1 + 1e-9)
+              throw new Error("bitRig: a sprite may only be scaled down");
+            (e.setTransform(n[0], n[1], n[2], n[3], n[4], n[5]),
+              (e.globalAlpha = a),
+              e.drawImage(t.c, t.x, t.y),
+              e.setTransform(1, 0, 0, 1, 0, 0),
+              (e.globalAlpha = 1));
+          }
+        },
+        ar = (e) =>
+          oe(e, "bit:glow", (t) => {
+            let n = ge(mn),
+              a = 46 * Q * 1.2;
+            t.group("plain", () => {
+              (t.touch(n[0] - a * 2, n[1] - a * 2, n[0] + a * 2, n[1] + a * 2),
+                t.glow(n[0], n[1], a, L.glow, 1));
+            });
+          }),
+        or = (e, t, n) => {
+          let a = `bit:headLayer:${t}x${n}`,
+            r = e.cache.get(a);
+          return (r || ((r = e.canvas(t, n)), e.cache.set(a, r)), r);
+        },
+        me = (e, t) => {
+          let n = ge(t);
+          return [n[0] * e.scale, n[1] * e.scale];
+        },
+        _e = (e, t, n, a, r = a * 4) =>
+          zt(
+            e,
+            `bit:${t}:${a}`,
+            (o) => n.includes(o),
+            (o) => {
+              (o.push(Le, He, Q), un(o, r, de, nr), o.pop());
+            },
+            { frame: r },
+          ),
+        sr = [0, 3, 4, 5, 6, 7, 8],
+        ir = [1, 2],
+        lr = [17, 18, 19, 20],
+        cr = [22, 23, 24, 25],
+        ur = [26],
+        ht = (e, t) => _e(e, "legs", sr, t),
+        pt = (e, t) => _e(e, "body", lr, t),
+        bt = (e, t) => _e(e, "head", cr, t),
+        fn = (e) => _e(e, "blush", ur, 0),
+        mt = (e, t) => _e(e, `key${t}`, ir, 0, (t * Math.PI) / Re / 0.22),
+        dn = (e) => [e * 50, -114],
+        hr = (e) => 62 - 177 * e,
+        pr = (e) => 64 + 12 * Math.min(1, e / 0.66),
+        br = (e, t) => {
+          let n = (hr(t) * Math.PI) / 180,
+            a = pr(t),
+            r = dn(e);
+          return [r[0] + e * Math.cos(n) * a, r[1] + Math.sin(n) * a];
+        },
+        pn = (e) => Math.max(0, Math.min(Ze - 1, Math.round((e / Je) * (Ze - 1)))),
+        fe = (e, t, n) =>
+          oe(e, `bit:arm:${t}:${n}`, (a) => {
+            let r = (n / (Ze - 1)) * Je,
+              o = dn(t),
+              i = br(t, r),
+              s = t * 14,
+              c = F(o, i, s)[1];
+            (a.push(Le, He, Q),
+              be(a, o, i, s, 7.5, de + (t < 0 ? 40 : 50)),
+              Ye(
+                a,
+                i,
+                Math.atan2(i[1] - c[1], i[0] - c[0]),
+                r < 0.16 ? "rest" : "open",
+                de + (t < 0 ? 60 : 80),
+              ),
+              a.pop());
+          }),
+        gn = 31,
+        Te = de + 170,
+        Ve = (e) => [ne[0] + e * gn, ne[1] + (e > 0 ? -1 : 0)],
+        we = (e, t, n) =>
+          oe(e, `bit:face:${t}`, (a) => {
+            (a.push(Le, He, Q), n(a), a.pop());
+          }),
+        wn = (e, t) =>
+          we(e, `eye${t}`, (n) =>
+            n.group("ink", () => {
+              let a = Ve(t),
+                r = n.cur;
+              (n.touch(a[0] - 13, a[1] - 13, a[0] + 13, a[1] + 13),
+                (r.fillStyle = ue),
+                r.beginPath(),
+                r.ellipse(a[0], a[1], 8.4, 10.8, 0, 0, Math.PI * 2),
+                r.fill(),
+                (r.fillStyle = "#fffaf3"),
+                r.beginPath(),
+                r.arc(a[0] - 2.6, a[1] - 3.8, 3.3, 0, Math.PI * 2),
+                r.fill(),
+                (r.globalAlpha = 0.85),
+                r.beginPath(),
+                r.arc(a[0] + 2.8, a[1] + 3.6, 1.5, 0, Math.PI * 2),
+                r.fill(),
+                (r.globalAlpha = 1));
+            }),
+          ),
+        ft = (e, t, n) =>
+          we(e, `lid-${t}${n}`, (a) =>
+            a.group("ink", () => {
+              let [r, o] = Ve(n),
+                i = { w: 2.6, seed: Te + 40 + n, wobble: 0.3, boil: 0.25, taper: 0.5 };
+              (t === "happy" && a.pen(G(r, o + 4, 9, 8, 1.1 * Math.PI, 1.9 * Math.PI, 6), i),
+                t === "blink" && a.pen(G(r, o - 3, 9, 4, 0.12 * Math.PI, 0.88 * Math.PI, 5), i),
+                t === "shut" &&
+                  a.pen(
+                    [
+                      [r - 8 * n, o - 7],
+                      [r + 5 * n, o],
+                      [r - 8 * n, o + 7],
+                    ],
+                    { ...i, w: 2.9 },
+                  ),
+                t === "squint" &&
+                  a.pen(G(r, o + 1, 9, 5, 1.08 * Math.PI, 1.92 * Math.PI, 5), { ...i, w: 3 }));
+            }),
+          ),
+        dt = (e, t, n) =>
+          we(e, `brow-${t}${n}`, (a) =>
+            a.group("ink", () => {
+              let [r, o] = Ve(n),
+                i = t === "up" ? -6 : t === "worried" ? -3 : 0,
+                s = G(r, o - 13 + i, 10, 6, 1.25 * Math.PI, 1.75 * Math.PI, 4);
+              a.pen(t === "worried" ? ae(s, r, o - 13 + i, n * 16) : s, {
+                w: 2.1,
+                seed: Te + 14 + (n > 0 ? 1 : 0),
+                wobble: 0.3,
+                opacity: t === "neutral" ? 0.55 : 0.75,
+                retrace: !1,
+              });
+            }),
+          ),
+        gt = (e, t) =>
+          we(e, `mouth-${t}`, (n) => {
+            let [a, r] = [ne[0], ne[1] + 20],
+              o = { w: 2.9, seed: Te + 20, wobble: 0.3, boil: 0.3 };
+            if (t === "grin") {
+              let i = [
+                  [a - 13, r - 3],
+                  [a - 6, r - 4],
+                  [a, r - 4],
+                  [a + 6, r - 4],
+                  [a + 13, r - 3],
+                ],
+                s = [...i, ...G(a, r - 3, 13, 12, 0.05 * Math.PI, 0.95 * Math.PI, 9)];
+              (n.group("paint", () => {
+                (n.fill(s, "#5b3a44", 0.92),
+                  n.wash(A(a + 1, r + 5, 7, 4, 8), L.blush, {
+                    alpha: 0.9,
+                    seed: Te + 23,
+                    dx: 0,
+                    dy: 0,
+                    shrink: 1,
+                    rim: !1,
+                  }));
+              }),
+                n.group("ink", () => n.pen(s, { ...o, closed: !0, w: 2.6, taper: 0.4 })));
+            } else
+              n.group("ink", () => {
+                (t === "smile" && n.pen(G(a, r, 9, 8, 0.12 * Math.PI, 0.88 * Math.PI, 6), o),
+                  t === "o" &&
+                    n.pen(A(a, r + 3, 5.5, 6.5, 8), { ...o, closed: !0, w: 2.6, taper: 0.4 }),
+                  t === "wobble" &&
+                    n.pen(
+                      [
+                        [a - 10, r + 5],
+                        [a - 5, r + 2],
+                        [a, r + 5],
+                        [a + 5, r + 2],
+                        [a + 10, r + 5],
+                      ],
+                      { ...o, w: 2.5 },
+                    ),
+                  t === "flat" && n.pen(F([a - 7, r + 4], [a + 7, r + 3], 0.5), o));
+              });
+          }),
+        yn = (e) =>
+          we(e, "cheeks", (t) =>
+            t.group("ink", () =>
+              [-1, 1].forEach((n) => {
+                let a = [ne[0] + n * (gn + 22) - 7, ne[1] + 17];
+                t.hatch(a[0], a[1], 13, {
+                  n: 3,
+                  len: 9,
+                  color: L.blush,
+                  pw: 2.6,
+                  opacity: 0.9,
+                  seed: Te + 30 + n,
+                });
+              }),
+            ),
+          ),
+        Ce = [0, -99],
+        Ae = 1.25,
+        xn = (e) =>
+          we(e, "heart", (t) => {
+            (t.group("paint", () =>
+              t.wash(pe(Ce[0], Ce[1], 10 * Ae), L.blush, {
+                alpha: 0.95,
+                seed: de + 102,
+                dx: 0,
+                dy: 0,
+                shrink: 1,
+                rim: !1,
+              }),
+            ),
+              t.group("ink", () =>
+                t.pen(pe(Ce[0], Ce[1], 10 * Ae), {
+                  closed: !0,
+                  w: 1.9 * Ae,
+                  color: "#c9566b",
+                  seed: de + 113,
+                  wobble: 0.3,
+                  taper: 0.4,
+                }),
+              ));
+          }),
+        Mn = (e, t) =>
+          oe(e, `bit:twinkle:${t}`, (n) => {
+            let a = Pn(t);
+            (n.push(Le, He, Q),
+              n.group("paint", () =>
+                n.wash(A(a[0], a[1], 11, 11, 7), L.butter, {
+                  alpha: 0.9,
+                  seed: 900 + t,
+                  dx: 0,
+                  dy: 0,
+                  shrink: 1,
+                  rim: !1,
+                }),
+              ),
+              n.group("ink", () =>
+                [0, 1, 2, 3].forEach((r) => {
+                  let o = (r * Math.PI) / 2 + t * 0.4,
+                    i = 15,
+                    s = 34 + (r % 2) * 10;
+                  n.pen(
+                    F(
+                      [a[0] + Math.cos(o) * i, a[1] + Math.sin(o) * i],
+                      [a[0] + Math.cos(o) * s, a[1] + Math.sin(o) * s],
+                    ),
+                    { w: 3, seed: 910 + t * 4 + r, wobble: 0.3, retrace: !1 },
+                  );
+                }),
+              ),
+              n.pop());
+          }),
+        Pn = (e) => [-140 + e * 60, -60],
+        kn = () => ({
+          off: [0, 0],
+          bob: 0,
+          squash: 1,
+          lean: 0,
+          headOff: [0, 0],
+          tilt: 0,
+          look: [0, 0],
+          armL: 0,
+          armR: 0,
+          eyes: "open",
+          blink: 0,
+          brows: "neutral",
+          mouth: "smile",
+          blush: 0.8,
+          glow: 1,
+          heart: 0,
+          key: 0,
+          boil: 0,
+        }),
+        vn = (e, t, n) => {
+          let a = Q * t.scale,
+            r = ((n.boil % Xe) + Xe) % Xe,
+            o = J(
+              te(Math.round(n.off[0] * a), Math.round(n.off[1] * a)),
+              Se(me(t, [0, 0]), 0, 1, n.squash),
+            ),
+            i = J(o, te(Math.round(n.lean * 1.2 * a), Math.round(n.bob * a))),
+            s = J(i, J(te(n.headOff[0] * a, n.headOff[1] * a), Se(me(t, rr), n.tilt))),
+            c = (M) =>
+              M[0] === 1 && M[1] === 0 && M[2] === 0 && M[3] === 1
+                ? [1, 0, 0, 1, Math.round(M[4]), Math.round(M[5])]
+                : M;
+          if (
+            (B(e, ht(t, r), c(o)),
+            B(e, mt(t, ((n.key % Re) + Re) % Re), c(i)),
+            B(e, fe(t, -1, pn(n.armL)), c(i)),
+            B(e, fe(t, 1, pn(n.armR)), c(i)),
+            B(e, pt(t, r), c(i)),
+            n.heart > 0)
+          ) {
+            let M = me(t, Ce),
+              H = 1 / Ae + (1 - 1 / Ae) * Math.min(1, n.heart);
+            B(e, xn(t), J(i, Se(M, 0, H, H)));
+          }
+          let u = hn(s, me(t, mn)),
+            p = Math.min(1, 0.56 * n.glow),
+            l = ar(t);
+          p > 0.01 &&
+            ve(e, l, Math.round(u[0] - (l.x + l.w / 2)), Math.round(u[1] - (l.y + l.h / 2)), p);
+          let h = bt(t, r),
+            b = h.x - Math.round(12 * a),
+            d = h.y - Math.round(8 * a),
+            y = h.w + Math.round(24 * a),
+            x = h.h + Math.round(16 * a),
+            k = or(t, y, x),
+            P = e;
+          {
+            let M = k.ctx;
+            (M.setTransform(1, 0, 0, 1, 0, 0),
+              (M.globalAlpha = 1),
+              (M.globalCompositeOperation = "source-over"),
+              M.clearRect(0, 0, y, x));
+          }
+          let g = k.ctx,
+            E = te(-b, -d);
+          B(g, h, E);
+          let R = c(J(E, te(n.look[0] * 0.45 * a, n.look[1] * 0.35 * a))),
+            $ = c(J(E, te(n.look[0] * a, n.look[1] * a))),
+            W = (M, H) => {
+              H <= 0 ||
+                (B(g, fn(t), R, M.blush * H),
+                M.blush > 0.9 && B(g, yn(t), R, Math.min(1, (M.blush - 0.9) * 10) * H),
+                [-1, 1].forEach((_) => {
+                  let V = _ > 0 && M.eyesR ? M.eyesR : M.eyes;
+                  if (V === "open") {
+                    let v = Math.max(0, Math.min(1, M.blink));
+                    if (v < 0.85) {
+                      let S = hn($, me(t, Ve(_)));
+                      B(g, wn(t, _), J(Se(S, 0, 1, 1 - v * 0.9), $), H);
+                    } else B(g, ft(t, "blink", _), R, H);
+                  } else B(g, ft(t, V, _), R, H);
+                  M.brows !== "none" && B(g, dt(t, M.brows, _), R, H);
+                }),
+                B(g, gt(t, M.mouth), R, H));
+            };
+          if (n.faceFade !== void 0) {
+            let M = Math.max(0, Math.min(1, n.faceFade));
+            (W({ eyes: "open", blink: 0, brows: "neutral", mouth: "smile", blush: 0.8 }, 1 - M),
+              W(n, M));
+          } else W(n, 1);
+          (B(P, { c: k.canvas, x: b, y: d, w: y, h: x }, c(s)),
+            (n.twinkles ?? []).forEach((M) => {
+              let H = M.v % 3,
+                _ = me(t, Pn(H));
+              B(
+                e,
+                Mn(t, H),
+                J(
+                  te(M.at[0] * t.scale - _[0], M.at[1] * t.scale - _[1]),
+                  Se(_, M.v * 17, M.k, M.k),
+                ),
+                M.a,
+              );
+            }));
+        };
+      function* En(e) {
+        (yield "legs",
+          ht(e, 0),
+          yield "key",
+          mt(e, 0),
+          yield "arms",
+          fe(e, -1, 0),
+          fe(e, 1, 0),
+          yield "body",
+          pt(e, 0),
+          yield "head",
+          bt(e, 0),
+          yield "face",
+          fn(e),
+          yn(e),
+          [-1, 1].forEach((t) => {
+            (wn(e, t), dt(e, "neutral", t));
+          }),
+          gt(e, "smile"));
+        for (let t = 1; t < Xe; t++) (yield `boil${t}`, ht(e, t), pt(e, t), bt(e, t));
+        for (let t = 1; t < Re; t++) (yield `key${t}`, mt(e, t));
+        for (let t = 1; t < Ze; t++) (yield `arm${t}`, fe(e, -1, t), fe(e, 1, t));
+        (yield "expressions",
+          [-1, 1].forEach((t) => {
+            (["happy", "blink", "shut", "squint"].forEach((n) => ft(e, n, t)),
+              ["up", "worried"].forEach((n) => dt(e, n, t)));
+          }),
+          ["grin", "o", "wobble", "flat"].forEach((t) => gt(e, t)),
+          xn(e),
+          [0, 1, 2].forEach((t) => Mn(e, t)));
+      }
+      var mr = (e, t = {}) => {
+          let n = e.main,
+            a = e.env;
+          (t.base !== !1 &&
+            (n.setTransform(a.scale, 0, 0, a.scale, 0, 0),
+            (n.fillStyle = "#fbf6ea"),
+            n.fillRect(0, 0, a.W, a.H)),
+            e.group("paint", () => {
+              (e.wash(
+                [
+                  [40, 46],
+                  [170, 36],
+                  [300, 42],
+                  [430, 34],
+                  [522, 44],
+                  [528, 170],
+                  [520, 300],
+                  [526, 430],
+                  [518, 488],
+                  [400, 480],
+                  [280, 490],
+                  [150, 482],
+                  [42, 490],
+                  [34, 380],
+                  [42, 250],
+                  [36, 130],
+                ],
+                "#f3d9b4",
+                { alpha: 0.62, seed: 2 },
+              ),
+                e.wash(A(170, 150, 150, 105, 9), "#a9cdea", { alpha: 0.24, seed: 3 }),
+                e.wash(A(420, 330, 120, 150, 9), "#f2b9a0", { alpha: 0.26, seed: 4 }),
+                e.wash(A(318, 96, 80, 70, 8), L.glow, { alpha: 0.5, seed: 5 }),
+                e.wash(
+                  [
+                    [34, 470],
+                    [150, 452],
+                    [300, 460],
+                    [430, 450],
+                    [530, 466],
+                    [524, 530],
+                    [300, 538],
+                    [44, 530],
+                  ],
+                  "#9cc79a",
+                  { alpha: 0.62, seed: 6 },
+                ),
+                e.wash(
+                  [
+                    [60, 486],
+                    [200, 474],
+                    [330, 480],
+                    [330, 500],
+                    [190, 506],
+                    [70, 504],
+                  ],
+                  "#6fa874",
+                  { alpha: 0.35, seed: 7 },
+                ),
+                e.wash(A(292, 494, 124, 13, 10), "#7d6fa8", { alpha: 0.42, seed: 8 }));
+            }),
+            e.group("ink", () => {
+              let r = "#8d90a6";
+              (t.underdrawing !== !1 &&
+                (e.pen(ae(A(300, 214, 128, 104, 12), 300, 214, 6), {
+                  closed: !0,
+                  w: 1.4,
+                  color: r,
+                  seed: 9,
+                  opacity: 0.45,
+                  wobble: 2,
+                }),
+                e.pen(A(292, 392, 86, 92, 10), {
+                  closed: !0,
+                  w: 1.4,
+                  color: r,
+                  seed: 10,
+                  opacity: 0.42,
+                  wobble: 2,
+                }),
+                e.pen(
+                  [
+                    [318, 96],
+                    [300, 214],
+                    [288, 400],
+                    [286, 500],
+                  ],
+                  { w: 1.3, color: r, seed: 11, opacity: 0.42 },
+                ),
+                e.pen(
+                  [
+                    [170, 232],
+                    [300, 214],
+                    [432, 196],
+                  ],
+                  { w: 1.3, color: r, seed: 12, opacity: 0.4 },
+                )),
+                e.pen(
+                  [
+                    [36, 470],
+                    [150, 454],
+                    [300, 461],
+                    [430, 452],
+                    [530, 468],
+                  ],
+                  { w: 2, seed: 13, opacity: 0.55 },
+                ),
+                [
+                  [66, 0],
+                  [84, 1],
+                  [104, 0],
+                  [128, 1],
+                  [430, 0],
+                  [452, 1],
+                  [474, 0],
+                  [500, 1],
+                ].forEach(([o, i], s) =>
+                  e.pen(
+                    [
+                      [o, 472],
+                      [o + (i ? 5 : -4), 456 - (s % 3) * 4],
+                      [o + (i ? 9 : -8), 444 - (s % 3) * 5],
+                    ],
+                    { w: 1.9, color: "#5f8f62", seed: 20 + s, retrace: !1 },
+                  ),
+                ),
+                [
+                  [176, 512, 9, 5],
+                  [396, 516, 11, 6],
+                  [232, 524, 6, 4],
+                ].forEach(([o, i, s, c], u) =>
+                  e.pen(A(o, i, s, c, 7), { closed: !0, w: 1.6, seed: 40 + u, opacity: 0.6 }),
+                ));
+            }),
+            t.flowers !== !1 &&
+              [
+                [64, 440, "#f2899c", 50],
+                [488, 430, "#c7b3e0", 60],
+                [446, 452, "#f5b98a", 70],
+                [98, 462, "#f3d577", 80],
+              ].forEach(([r, o, i, s]) => {
+                (e.group("paint", () => {
+                  let c = { dx: 3, dy: 2, shrink: 0.94, rim: !0 };
+                  ([0, 1, 2, 3, 4].forEach((u) =>
+                    e.wash(
+                      A(
+                        r + Math.cos(u * 1.256 + 0.4) * 9,
+                        o + Math.sin(u * 1.256 + 0.4) * 9,
+                        7.5,
+                        7.5,
+                        6,
+                      ),
+                      i,
+                      { alpha: 0.85, seed: s + u, ...c },
+                    ),
+                  ),
+                    e.wash(A(r, o, 3.4, 3.4, 5), L.butter, { alpha: 0.95, seed: s + 6, ...c }));
+                }),
+                  e.group("ink", () => {
+                    (e.pen(
+                      [
+                        [r, o + 9],
+                        [r + 2, o + 24],
+                        [r - 1, o + 40],
+                      ],
+                      { w: 1.8, color: "#6f9b6a", seed: s + 7, retrace: !1 },
+                    ),
+                      e.pen(A(r, o, 16, 16, 9), {
+                        closed: !0,
+                        w: 1.5,
+                        seed: s + 8,
+                        opacity: 0.6,
+                        wobble: 2,
+                      }));
+                  }));
+              }),
+            (t.splatter ?? t.flowers) !== !1 && fr(e),
+            t.vignette !== !1 && e.vignette("rgba(90,50,50,0.11)"));
+        },
+        fr = (e) =>
+          e.group("paint", () => {
+            let t = e.cur;
+            [
+              [5, 26, [50, 60, 510, 470], "#e9a887", 3],
+              [8, 12, [60, 380, 500, 520], "#6fa874", 2.6],
+            ].forEach(([n, a, r, o, i]) => {
+              let s = re(n);
+              for (let c = 0; c < a; c++) {
+                let u = r[0] + s() * (r[2] - r[0]),
+                  p = r[1] + s() * (r[3] - r[1]),
+                  l = s();
+                (e.touch(u - 5, p - 5, u + 5, p + 5),
+                  (t.globalAlpha = 0.5 * (0.5 + s() * 0.5)),
+                  (t.fillStyle = o),
+                  t.beginPath(),
+                  t.arc(u, p, 0.5 + l * l * i, 0, Math.PI * 2),
+                  t.fill());
+              }
+              t.globalAlpha = 1;
+            });
+          });
+      var yt = 480,
+        wt = (e) => (e < 0.5 ? e * 2 : 2 - e * 2),
+        Qe = ge(ne);
+      var In = (e, t) => {
+          let n = t % yt;
+          ((e.key = Math.floor(t / 4)),
+            (e.boil = Math.floor(t / 8)),
+            (e.bob = -1.2 * Math.sin((2 * Math.PI * t) / 120)),
+            (e.glow = 1 + 0.25 * Math.sin((2 * Math.PI * t) / 60)));
+          let a = n >= 100 && n < 108 ? (n - 100) / 8 : n >= 330 && n < 338 ? (n - 330) / 8 : -1;
+          a >= 0 && (e.blink = wt(a));
+        },
+        Sn = (e, t, n) => {
+          let a = bn(Qe, t, 6 * Q, 160),
+            r = bn(Qe, n, 1, 260);
+          ((e.look = [a[0] / Q, Math.max(-4, Math.min(4, a[1] / Q))]),
+            (e.headOff = [r[0] * 5, r[1] * 3]),
+            (e.tilt = r[0] * 4),
+            (e.lean = r[0] * 2));
+        },
+        bn = (e, t, n, a) => {
+          let r = t[0] - e[0],
+            o = t[1] - e[1],
+            i = Math.hypot(r, o);
+          if (i < 1e-6) return [0, 0];
+          let s = n * Math.tanh(i / a);
+          return [(r / i) * s, (o / i) * s];
+        },
+        Ke = 72,
+        Cn = (e, t, n, a) => {
+          if (
+            ((e.eyes = "happy"),
+            (e.mouth = "grin"),
+            (e.brows = "up"),
+            (e.blush = 1),
+            (e.heart = wt((t % 18) / 18)),
+            a)
+          )
+            return;
+          ((e.squash =
+            t < 6 ? 1 - 0.05 * (t / 6) : t >= 30 && t < 38 ? 1 - 0.05 * wt((t - 30) / 8) : 1),
+            t >= 6 && t < 30 && (e.off = [0, -24 * Math.sin((Math.PI * (t - 6)) / 24)]),
+            (e.armL = Math.min(Je, 0.6 + 0.07 * Math.sin((2 * Math.PI * t) / 12))),
+            (e.armR = Math.min(Je, 0.6 + 0.07 * Math.sin((2 * Math.PI * (t + 3)) / 12))),
+            (e.key += t),
+            (e.look = [0, -2]),
+            (e.headOff = [0, -2]),
+            (e.tilt = 0),
+            (e.lean = 0));
+          let r = re(n);
+          e.twinkles = [];
+          for (let o = 0; o < 7; o++) {
+            let i = o % 2 ? 1 : -1,
+              s = -Math.PI * (0.5 + i * (0.12 + 0.36 * r())),
+              c = 175 + r() * 60,
+              u = 6 + o * 3,
+              p = t - u;
+            if (p < 0) continue;
+            let l = [Qe[0] + Math.cos(s) * c, Qe[1] + 60 + Math.sin(s) * c * 0.8];
+            e.twinkles.push({
+              at: l,
+              k: Math.min(1, 0.45 + p / 10),
+              a: Math.max(0, Math.min(1, (Ke - t) / 14)),
+              v: o,
+            });
+          }
+        },
+        Rn = (e, t = {}) =>
+          oe(e, `meadow:${t.flowers !== !1}:${t.underdrawing !== !1}`, (n) => mr(n, t), {
+            full: !0,
+          });
+      var xt = [
+        ["paper", 0.13],
+        ["coldpress", 0.2],
+      ];
+      var dr = ge(ne),
+        gr = (e) => ge([e * 50, -114]),
+        An = (e, t) => {
+          let n = Ee(e);
+          if (!n || n === "self" || !e.rects[n]) return 0;
+          let a = lt(e.rects[n]),
+            r = gr(t);
+          if ((a[0] - r[0]) * t <= 0) return 0;
+          let o = (Math.atan2(a[1] - r[1], (a[0] - r[0]) * t) * 180) / Math.PI;
+          return Math.max(0.2, Math.min(0.6, (62 - o) / 177));
+        },
+        Mt = {
+          meta: {
+            title: "Bit, watching",
+            W: 560,
+            H: 560,
+            loop: yt,
+            alt: "A pencil-and-watercolour wind-up robot in a meadow, who watches your pointer and cheers when you press Get started.",
+          },
+          input: {
+            springs: {
+              look: { omega: 0.3, target: (e) => Tn(e) },
+              head: { omega: 0.11, target: (e) => Tn(e) },
+              armL: { omega: 0.16, target: (e) => An(e, -1) },
+              armR: { omega: 0.16, target: (e) => An(e, 1) },
+              excite: {
+                omega: 0.09,
+                target: (e) => {
+                  let t = Ee(e);
+                  return t && t !== "self" ? 1 : 0;
+                },
+              },
+            },
+          },
+          bake: function* (e) {
+            (yield "paper", it(e, xt), yield "meadow", Ln(e), yield* En(e));
+          },
+          draw: (e, t, n, a) => {
+            (e.setTransform(1, 0, 0, 1, 0, 0),
+              (e.globalAlpha = 1),
+              (e.globalCompositeOperation = "source-over"),
+              it(n, xt),
+              ve(e, Ln(n)),
+              vn(e, n, wr(t, a)));
+          },
+        },
+        Tn = (e) => {
+          let t = Ee(e);
+          return t && t !== "self" && e.rects[t] ? lt(e.rects[t]) : (e.pointer ?? dr);
+        },
+        Ln = (e) => Rn(e),
+        Hn = (e) => (e < 0.5 ? e * 2 : 2 - e * 2),
+        wr = (e, t) => {
+          let n = kn(),
+            a = t.reduced;
+          a ||
+            (In(n, e),
+            Sn(n, t.spring.look, t.spring.head),
+            (n.armL = t.spring.armL),
+            (n.armR = t.spring.armR));
+          let r = t.spring.excite,
+            o = t.attention;
+          ((n.glow += r * 0.9),
+            o &&
+              o !== "self" &&
+              ((n.brows = "up"),
+              (n.mouth = o === "start" ? "grin" : "smile"),
+              o === "tour" && !a && (n.tilt += 5 * r)),
+            t.pressed &&
+              t.pressed !== "self" &&
+              ((n.mouth = "o"), (n.brows = "up"), a || (n.squash = 0.965)));
+          let i = Ue(t, "click:start", Ke),
+            s = Ue(t, "click:tour", 64),
+            c = Ue(t, "click:self", 48);
+          if (i) Cn(n, i.f, tn(t, "click:start"), a);
+          else if (s) {
+            let u = s.f;
+            ((n.eyes = "happy"),
+              (n.mouth = "smile"),
+              (n.brows = "up"),
+              (n.blush = 1),
+              a ||
+                ((n.armR = 0.56 + 0.09 * Math.sin((2 * Math.PI * u) / 16)),
+                (n.tilt = 7 * Math.sin((Math.PI * u) / 64)),
+                (n.look = [2, -1])));
+          } else if (c) {
+            let u = c.f;
+            ((n.eyes = "squint"),
+              (n.mouth = "grin"),
+              (n.blush = 1),
+              (n.heart = Hn((u % 16) / 16)),
+              a ||
+                ((n.tilt = 6 * Math.sin((2 * Math.PI * u) / 12) * (1 - u / 48)),
+                (n.squash = 1 - 0.03 * Hn((u % 12) / 12)),
+                (n.key += Math.floor(u / 2))));
+          }
+          if (a && (i || s || c)) {
+            let u = i ?? s ?? c,
+              p = i ? Ke : s ? 64 : 48;
+            n.faceFade = Math.min(1, u.f / 8, (p - u.f) / 8);
+          }
+          return n;
+        };
+      var Zr = Mt;
+      on({ "mascot-hero": Mt });
+      export { on as define, an as mount, Zr as piece };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,188 @@
+{
+  "cleanupPeriodDays": 99999,
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "VIZ_ALLOW_UNAPPROVED": "1",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
+  },
+  "permissions": {
+    "allow": [
+      "mcp__voicemode__converse",
+      "mcp__voicemode__service"
+    ],
+    "deny": [
+      "NotebookEdit",
+      "AskUserQuestion",
+      "ScheduleWakeup",
+      "ReportFindings",
+      "mcp__claude_ai_Claude_Docs"
+    ]
+  },
+  "model": "opus[1m]",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__voicemode__converse",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.agents/ai-setup/tools/voicemode-hold/transcript.py\" prime",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.agents/ai-setup/tools/ttyimgspool/ttyimgspool-hook.py\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__voicemode__converse",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.agents/ai-setup/tools/voicemode-hold/transcript.py\" heard",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.agents/ai-setup/tools/ttyimgspool/ttyimgspool-hook.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.claude/skills/timeline-studio-tasks/hooks/inflight.py\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "^(startup|resume|clear|compact|fork)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/herdr-agent-state.sh\" session",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.agents/ai-setup/tools/herdr-autolabel/herdr-autolabel\""
+          },
+          {
+            "type": "command",
+            "command": "\"$HOME/.agents/ai-setup/tools/auto-handoff/auto-handoff\" stop",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "disableArtifact": true,
+  "statusLine": {
+    "type": "command",
+    "command": "$HOME/.agents/ai-setup/tools/ai-tidemark/statusline-capture.sh ccstatusline",
+    "padding": 0,
+    "refreshInterval": 30
+  },
+  "enabledPlugins": {
+    "code-modernization@claude-plugins-official": false,
+    "pyright-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {},
+  "effortLevel": "high",
+  "syncClaudeAiSkills": false,
+  "skillOverrides": {
+    "branded-slides": "user-invocable-only",
+    "docx": "user-invocable-only",
+    "pdf": "user-invocable-only",
+    "pptx": "user-invocable-only",
+    "skill-creator": "user-invocable-only",
+    "stride-threat-modelling": "user-invocable-only",
+    "xlsx": "user-invocable-only",
+    "ponytail-review": "name-only",
+    "design-doc-mermaid": "user-invocable-only",
+    "ln-11-opportunity-evaluator": "user-invocable-only",
+    "ln-12-product-requirements-builder": "user-invocable-only",
+    "ln-13-interaction-design-builder": "user-invocable-only",
+    "ln-21-system-design-baseline-builder": "user-invocable-only",
+    "ln-22-current-architecture-documenter": "user-invocable-only",
+    "ln-23-system-design-proposal-builder": "user-invocable-only",
+    "ln-24-architecture-decision-recorder": "user-invocable-only",
+    "ln-25-architecture-diagram-builder": "user-invocable-only",
+    "ln-26-architecture-migration-planner": "user-invocable-only",
+    "ln-31-delivery-plan-builder": "user-invocable-only",
+    "ln-32-test-strategy-planner": "user-invocable-only",
+    "ln-33-plan-reviewer": "user-invocable-only",
+    "ln-41-surgical-change-implementer": "user-invocable-only",
+    "ln-42-dependency-upgrader": "user-invocable-only",
+    "ln-43-code-modernizer": "user-invocable-only",
+    "ln-44-performance-optimizer": "user-invocable-only",
+    "ln-45-benchmark-comparator": "user-invocable-only",
+    "ln-51-acceptance-test-builder": "user-invocable-only",
+    "ln-52-delivery-reviewer": "name-only",
+    "ln-53-documentation-auditor": "name-only",
+    "ln-54-codebase-auditor": "name-only",
+    "ln-55-test-suite-auditor": "name-only",
+    "ln-56-architecture-auditor": "name-only",
+    "ln-57-persistence-auditor": "name-only",
+    "ln-61-repository-publisher": "user-invocable-only",
+    "ln-62-release-publisher": "user-invocable-only",
+    "ln-63-deployment-engineer": "user-invocable-only",
+    "ln-64-community-announcer": "user-invocable-only",
+    "ln-71-operations-investigator": "user-invocable-only",
+    "ln-72-product-outcome-evaluator": "user-invocable-only",
+    "ln-81-skill-reviewer": "user-invocable-only",
+    "ponytail-audit": "user-invocable-only",
+    "ponytail-debt": "user-invocable-only",
+    "ponytail-gain": "user-invocable-only",
+    "ponytail-help": "user-invocable-only",
+    "wizard": "user-invocable-only"
+  },
+  "awaySummaryEnabled": false,
+  "dialogExpiry": "10m",
+  "tui": "fullscreen",
+  "autoMemoryEnabled": false,
+  "skipDangerousModePermissionPrompt": true,
+  "autoCompactEnabled": false,
+  "remoteControlAtStartup": false,
+  "crossSessionInbound": "accept",
+  "agentPushNotifEnabled": true,
+  "voiceEnabled": true,
+  "switchModelsOnFlag": true
+}

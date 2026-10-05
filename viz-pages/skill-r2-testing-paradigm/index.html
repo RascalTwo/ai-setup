@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>r2-testing-paradigm — scope, then the most real stand-in</title>
+    <!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+    <meta name="viz:uid" content="v-3c876b220e78" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="r2-testing-paradigm" />
+    <meta
+      name="viz:description"
+      content="The house testing philosophy: pick a scope, then the most real stand-in; prove every test can fail with break-it and a mutation sweep; three coverage signals; flaky and slow tests are bugs; gates, not willpower."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+      :root {
+        --s: 1;
+        /* the stand-in axis, one hue per rung, used on the card AND every figure */
+        --k-real: var(--c5);
+        --k-emu: color-mix(in srgb, var(--c5) 50%, var(--c4));
+        --k-fake: var(--c4);
+        --k-mock: var(--danger);
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 96% -10%,
+            color-mix(in srgb, var(--c5) 15%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 112%,
+            color-mix(in srgb, var(--c4) 12%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 500px;
+        gap: 40px;
+        align-items: center;
+        padding: 52px 62px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 13px;
+        letter-spacing: 0.13em;
+        color: var(--accent);
+        margin-bottom: 18px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 54px;
+        line-height: 1.05;
+        margin: 0 0 18px;
+        letter-spacing: -1.5px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c5);
+      }
+      p.sub {
+        font-size: 18px;
+        line-height: 1.46;
+        color: var(--muted);
+        margin: 0 0 18px;
+        max-width: 520px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 15px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 20px;
+        max-width: 520px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 15px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 9px;
+        padding: 10px 15px;
+        color: var(--text);
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the proof slot: scope (rows) × stand-in (columns). Column hue = which rung;
+     column STRENGTH = how preferred it is. Top-left is where every test starts. */
+      .cap {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.13em;
+        color: var(--muted);
+        margin-bottom: 12px;
+      }
+      .cap b {
+        color: var(--c5);
+      }
+      .axes {
+        display: grid;
+        grid-template-columns: 104px repeat(4, 1fr);
+        gap: 6px;
+      }
+      .axes .ch {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        color: var(--k);
+        text-align: center;
+        padding-bottom: 4px;
+        border-bottom: 2px solid var(--k);
+      }
+      .axes .ch i {
+        display: block;
+        font-style: normal;
+        font-size: 9.5px;
+        letter-spacing: 0.02em;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+      .axes .rh {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.06em;
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        line-height: 1.25;
+      }
+      .axes .rh i {
+        font-style: normal;
+        font-size: 9.5px;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+      }
+      .axes .cell {
+        height: 74px;
+        border-radius: 8px;
+        position: relative;
+        background: color-mix(in srgb, var(--k) var(--p), transparent);
+        border: 1px solid color-mix(in srgb, var(--k) 55%, transparent);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding-bottom: 7px;
+        font-family: var(--mono);
+        font-size: 9.5px;
+        color: var(--text);
+        text-align: center;
+      }
+      .k1 {
+        --k: var(--k-real);
+        --p: 48%;
+      }
+      .k2 {
+        --k: var(--k-emu);
+        --p: 32%;
+      }
+      .k3 {
+        --k: var(--k-fake);
+        --p: 20%;
+      }
+      .k4 {
+        --k: var(--k-mock);
+        --p: 7%;
+      }
+      .axes .cell.k4 {
+        border-style: dashed;
+      }
+      .axes .start {
+        position: absolute;
+        top: 7px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 9.5px;
+        letter-spacing: 0.1em;
+        color: #0b0f16;
+        background: var(--c5);
+        border-radius: 99px;
+        padding: 2px 7px;
+        white-space: nowrap;
+        font-weight: 700;
+      }
+      .axes .dflt {
+        color: var(--c5);
+      }
+      .arrows {
+        display: grid;
+        grid-template-columns: 104px 1fr;
+        gap: 6px;
+        margin-top: 10px;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.06em;
+        color: var(--faint);
+      }
+      .arrows b {
+        color: var(--muted);
+        font-weight: 400;
+      }
+
+      /* ── the dive (below the fold) ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin: 46px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .dive a:hover {
+        text-decoration: underline;
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 14px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      pre .bad {
+        color: var(--danger);
+      }
+      pre .ok {
+        color: var(--good);
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 30px 0 10px;
+        font-weight: 600;
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+
+      /* figures */
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 16px 18px 14px;
+        margin: 0 0 18px;
+      }
+      .fig .what {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        margin: 0 0 10px;
+      }
+      .fig .what b {
+        color: var(--text);
+        font-weight: 400;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 14px 14px;
+      }
+      .fig .stage svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        overflow: visible;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 12px 0 0;
+        min-height: 48px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .fig .lede code,
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .ctrl button[aria-pressed="true"] {
+        border-color: var(--accent);
+        color: #fff;
+        background: color-mix(in srgb, var(--accent) 16%, #0b0f16);
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .legend-row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      .legend-row span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .legend-row i {
+        width: 11px;
+        height: 11px;
+        border-radius: 3px;
+        display: inline-block;
+      }
+
+      /* svg label variants (labelBox → .vsvg-label) */
+      .vsvg-label.l {
+        justify-content: flex-start;
+        text-align: left;
+      }
+      .vsvg-label.col {
+        flex-direction: column;
+        gap: 2px;
+      }
+      .vsvg-label.col.l {
+        align-items: flex-start;
+      }
+      .vsvg-label .n {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text);
+      }
+      .vsvg-label .d {
+        font-size: 10.5px;
+        color: var(--muted);
+        line-height: 1.25;
+      }
+      .vsvg-label .mono {
+        font-family: var(--mono);
+      }
+      .vsvg-label .big {
+        font-family: var(--mono);
+        font-size: 22px;
+        color: #fff;
+      }
+      .vsvg-label.cap2 {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+      .vsvg-label.code {
+        font-family: var(--mono);
+        font-size: 12px;
+        justify-content: flex-start;
+        text-align: left;
+        white-space: pre;
+      }
+      svg .hit {
+        cursor: pointer;
+      }
+      svg .hit:hover rect.box {
+        stroke: var(--accent);
+      }
+      svg .dim {
+        opacity: 0.4;
+        transition: opacity 0.2s;
+      }
+      svg g,
+      svg path {
+        transition: opacity 0.2s;
+      }
+      svg .row-hl:hover rect.band {
+        fill: color-mix(in srgb, var(--accent) 10%, transparent);
+      }
+
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="r2-testing-paradigm"
+        data-viz-id="poster-card"
+        data-label="r2-testing-paradigm poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · R2-TESTING-PARADIGM</div>
+          <h1 class="hook">Pick the scope.<br />Then the <em>most real</em><br />stand-in.</h1>
+          <p class="sub">
+            Every test makes <b>two separate choices</b>: what it covers, and what replaces the
+            dependencies it doesn't own. Then it has to <b>prove it can fail</b> — break the code,
+            watch it go red.
+          </p>
+          <p class="not">
+            Unit tests aren't a rung to fall to.<br />They're a <b>scope</b>: logic with many
+            inputs.
+          </p>
+          <div class="trigger"><span>fires on</span>&nbsp;any test work</div>
+        </div>
+        <div data-viz-id="card-grid" data-label="scope × stand-in grid, shaded by preference">
+          <div class="cap">EVERY TEST · <b>SCOPE × STAND-IN</b></div>
+          <div class="axes">
+            <span></span>
+            <div class="ch k1">REAL<i>real service · DB</i></div>
+            <div class="ch k2">EMULATED<i>LocalStack · Prism</i></div>
+            <div class="ch k3">FAKE<i>MSW · in-memory</i></div>
+            <div class="ch k4">MOCK<i>vi.mock · jest.fn</i></div>
+
+            <div class="rh">
+              <span class="dflt">JOURNEY</span><i>a user's workflow · default</i>
+            </div>
+            <div
+              class="cell k1"
+              data-viz-id="card-journey-real"
+              data-label="journey × real — start here"
+            >
+              <span class="start">START</span>
+            </div>
+            <div class="cell k2"></div>
+            <div class="cell k3"></div>
+            <div class="cell k4">last resort</div>
+
+            <div class="rh">SERVICE<i>one API · one component</i></div>
+            <div class="cell k1"></div>
+            <div class="cell k2"></div>
+            <div class="cell k3"></div>
+            <div class="cell k4">last resort</div>
+
+            <div class="rh">FUNCTION<i>many-input logic</i></div>
+            <div class="cell k1">exhaustive</div>
+            <div class="cell k2"></div>
+            <div class="cell k3"></div>
+            <div class="cell k4">last resort</div>
+          </div>
+          <div class="arrows">
+            <span>↓ <b>narrower</b></span
+            ><span>→ <b>less real</b> · take the leftmost you can get</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">Bad tests drive out good</h2>
+      <p>
+        The easiest test to write mocks everything, so it proliferates — and the suite ends up
+        <b>green and lying</b>. A mock returning <code>{ ok: true }</code> passes whatever the code
+        sends. A test that passes with the code broken is theatre, and nothing in a green run tells
+        you which tests those are.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="truth-table"
+        data-label="truth table: code works/broken × test green/red"
+      >
+        <div class="what">WHAT A TEST RESULT MEANS · <b>columns: the code · rows: the test</b></div>
+        <div class="stage">
+          <svg
+            id="why-svg"
+            viewBox="0 0 760 236"
+            role="img"
+            aria-label="Truth table of code state against test result"
+          ></svg>
+        </div>
+        <p class="lede">
+          A test only earns its keep in the <b>bottom-right</b> cell. If nobody has ever seen it
+          land there, you can't tell it apart from the
+          <b style="color: var(--danger)">theatre</b> cell — which is why this skill makes you put
+          it there on purpose, every time.
+        </p>
+      </div>
+      <p class="m">
+        Reminders don't hold that back; the skill's answer is mechanical. Choose the most real
+        stand-in, prove each test can fail, measure the three things coverage can't see, and make
+        the lazy path <b>blocked</b> rather than discouraged.
+      </p>
+
+      <h2 data-beat="using">Any test work — loaded in slices</h2>
+      <p>
+        It fires on anything test-shaped: writing, reviewing or fixing tests, a flaky or slow test,
+        a coverage gate, a mutation sweep, a screenshot baseline, choosing a stand-in.
+        <code>SKILL.md</code> is short — what <em>every</em> test task needs — and a routing table
+        sends each task to the one reference file it reaches for.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="fanout"
+        data-label="who loads the skill, and which reference file each task opens"
+      >
+        <div class="what">PROGRESSIVE DISCLOSURE · <b>click a reader or a reference file</b></div>
+        <div class="stage">
+          <svg
+            id="fan-svg"
+            viewBox="0 0 760 372"
+            role="img"
+            aria-label="Who loads SKILL.md and which reference file each reaches"
+          ></svg>
+        </div>
+        <p class="lede" id="fan-lede"></p>
+      </div>
+
+      <h2 data-beat="limits">What it doesn't do</h2>
+      <ul>
+        <li>
+          <b>It doesn't ban unit tests.</b> Function scope is for logic with many input combinations
+          — date math, parsers, pricing, state machines. Call the real function, check outputs,
+          exhaustively.
+        </li>
+        <li>
+          <b>It won't narrow scope for convenience.</b> Journey is the default; a narrower scope
+          needs a narrower <em>subject</em>, not a test that was quicker to write.
+        </li>
+        <li>
+          <b>It hasn't adopted step helpers or Gherkin.</b> <code>given()/when()/then()</code> are
+          fine where the stack already has them; adding them is unproven, and a trial
+          (<code>viz-gwt-as-code</code>) is deciding. Until then, comments carry the clause.
+        </li>
+        <li>
+          <b>It doesn't pick horizontal.</b> Tests come one vertical slice at a time — unless you
+          ask for them up front. That choice is yours.
+        </li>
+        <li>
+          <b>No retries, no quarantine, no "slow" bucket.</b> There is no tolerated class of flaky
+          or slow test to file things under.
+        </li>
+        <li>
+          <b>The reviewer doesn't run the sweep or edit tests.</b> <code>test-reviewer</code> reads
+          the mutation report and reports findings; it changes nothing.
+        </li>
+        <li>
+          <b>It installs nothing.</b> Stryker, MSW, LocalStack and the rest are examples of a rung,
+          not requirements.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/r2-testing-paradigm/SKILL.md</code> — black box, the two axes (including
+              the real → emulated → fake → mock order), can-fail, GWT, and the routing table — plus
+              seven files under <code>reference/</code>: <code>writing</code>,
+              <code>scope-and-stand-ins</code>, <code>flaky-and-slow</code>,
+              <code>coverage-and-mutation</code>, <code>visual</code>, <code>reviewing</code>,
+              <code>enforcement</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Declared</td>
+            <td>
+              <code>kind: skill</code>, <code>state: false</code>. No <code>integrates</code>, no
+              <code>requires</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>None.</b> It keeps nothing between runs; which scope and stand-ins a repo uses is
+              read off its existing tests each time.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              Nothing installed. Testcontainers, LocalStack, Microcks, Prism, MSW and the mutation
+              tools are named as examples; the rule is "the most real stand-in you can get at that
+              scope".
+            </td>
+          </tr>
+          <tr>
+            <td>Read by</td>
+            <td>
+              <code>subagents/.claude/agents/test-reviewer.md</code> (and its
+              <code>.ruler/</code> and <code>.codex/</code> twins) — <code>SKILL.md</code>, then
+              <code>reference/reviewing.md</code> as its rubric.
+              <a href="../skill-r2-sdlc/">r2-sdlc</a> loads it in Implement and review;
+              <a href="../skill-r2-gauntlet/">r2-gauntlet</a> reaches it through the same reviewer.
+            </td>
+          </tr>
+          <tr>
+            <td>Its sibling</td>
+            <td>
+              <a href="../skill-r2-sdlc-documentation-philosophy/"
+                >r2-sdlc-documentation-philosophy</a
+              >
+              — the same arrangement for prose.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">Two axes: scope, then stand-in</h2>
+      <p class="m">
+        <b>Black box</b> first: test as a user of the thing and assert on what that user can observe
+        — and the user changes with the scope. Test hardest where a failure would be
+        <b>silent</b> (a wrong number, a dropped record); a crash is loud on its own. Pick the row
+        from what the test is <em>about</em>; then, for every dependency it doesn't own, take the
+        leftmost column you can get.
+      </p>
+
+      <div class="fig" data-viz-id="axes-figure" data-label="interactive scope × stand-in grid">
+        <div class="what">
+          ROWS: SCOPE, WIDEST FIRST · COLUMNS: STAND-IN, MOST REAL FIRST · <b>click a cell</b>
+        </div>
+        <div class="stage">
+          <svg
+            id="axes-svg"
+            viewBox="0 0 760 420"
+            role="img"
+            aria-label="Scope by stand-in grid"
+          ></svg>
+        </div>
+        <p class="lede" id="axes-lede"></p>
+        <div class="legend-row">
+          <span
+            ><i style="background: color-mix(in srgb, var(--k-real) 48%, transparent)"></i
+            >real</span
+          >
+          <span
+            ><i style="background: color-mix(in srgb, var(--k-emu) 32%, transparent)"></i>emulated —
+            provided or generated</span
+          >
+          <span
+            ><i style="background: color-mix(in srgb, var(--k-fake) 22%, transparent)"></i>fake —
+            hand-written, working</span
+          >
+          <span
+            ><i style="border: 1px dashed var(--k-mock)"></i>mock — call-and-return, last
+            resort</span
+          >
+          <span>fill strength = preference</span>
+        </div>
+      </div>
+
+      <h2 data-beat="how">A test must be able to fail</h2>
+      <p class="m">
+        One test at a time, the loop has five steps, and the fourth is the one most suites skip:
+        break the code on purpose and watch the test notice. When the whole change looks done, a
+        mutation sweep does the same thing across everything it touched.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="loop-figure"
+        data-label="stepper: red, green, refactor, break it, green, then the mutation sweep and its report"
+      >
+        <div class="what">THE LOOP, THEN THE SWEEP · <b>step through it</b></div>
+        <div class="stage">
+          <svg
+            id="loop-svg"
+            viewBox="0 0 760 440"
+            role="img"
+            aria-label="Test loop and mutation sweep"
+          ></svg>
+        </div>
+        <p class="lede" id="loop-lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+      <p>
+        Every test reads as <b>GIVEN / WHEN / THEN</b>, verbs in capitals, one clause each. A second
+        clause repeats the verb; <b>AND</b> never joins them. In code, the comment carries the whole
+        clause, never the bare verb. Expected values come from somewhere independent of the code — a
+        literal, a worked example, the spec.
+      </p>
+      <pre><span class="c">// GIVEN a user with no session</span>
+<span class="c">// WHEN they request the dashboard</span>
+<span class="c">// THEN they are redirected to /login</span>
+<span class="c">// THEN a login-required event is logged</span>     <span class="ok">✓ verb repeated</span>
+<span class="c">// GIVEN</span>                                     <span class="bad">✗ bare verb — the clause is missing</span></pre>
+
+      <h2 data-beat="how">Three coverage signals, three questions</h2>
+      <p class="m">
+        No signal answers another's question. Line coverage says a test <em>ran</em> a line, not
+        that anything <em>checked</em> it — so a suite of do-nothing mocks can hit 100%. Flip
+        between two suites of the same code:
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="coverage-figure"
+        data-label="three coverage instruments for two suites"
+      >
+        <div class="what">THE SAME CODE, TWO SUITES · <b>pick one</b> · numbers illustrative</div>
+        <div class="stage">
+          <svg
+            id="cov-svg"
+            viewBox="0 0 760 318"
+            role="img"
+            aria-label="Journey coverage, line and branch coverage, mutation score"
+          ></svg>
+        </div>
+        <p class="lede" id="cov-lede"></p>
+        <div class="ctrl">
+          <button id="suiteA" aria-pressed="true">A · mock everything, assert calls</button>
+          <button id="suiteB" aria-pressed="false">B · journeys, fakes, break-it</button>
+        </div>
+      </div>
+      <p>
+        The gate has rules of its own. <b>Aim for 100%</b> of lines and branches; hold a
+        <b>floor that only rises</b> — lowering it is a deliberate, reviewable edit; test the gate
+        both ways, since one never seen failing may not be wired up. And an exclusion carries its
+        reason on the exclusion itself:
+      </p>
+      <pre><span class="c">✓ passes the gate — the reason sits on the exclusion</span>
+<span class="ok">/* c8 ignore next -- only runs in browsers without a built-in QR decoder */</span>
+<span class="c">✗ bare — fails the gate</span>
+<span class="bad">/* c8 ignore next */</span></pre>
+
+      <h2 data-beat="how">Flaky and slow tests are bugs</h2>
+      <p class="m">
+        In the test or in the code — never a property of the suite. A fixed sleep is both at once:
+        too long on a fast run, too short on a loaded one.
+      </p>
+      <div
+        class="fig"
+        data-viz-id="flaky-figure"
+        data-label="sleep versus waiting on a signal, and reproducing a 1-in-25 hang"
+      >
+        <div class="what">TIME TO ASSERT · <b>same test, fast run vs loaded CI run</b></div>
+        <div class="stage">
+          <svg
+            id="wait-svg"
+            viewBox="0 0 760 232"
+            role="img"
+            aria-label="Fixed sleep versus waiting on a signal"
+          ></svg>
+        </div>
+        <div class="what" style="margin-top: 14px">
+          FIND THE ROOT CAUSE · <b>25 runs each · a real case from the skill</b>
+        </div>
+        <div class="stage">
+          <svg
+            id="flake-svg"
+            viewBox="0 0 760 132"
+            role="img"
+            aria-label="Reproducing a one-in-25 hang"
+          ></svg>
+        </div>
+        <p class="lede">
+          Retries and quarantine would have hidden a real defect.
+          <b>Force the rare condition</b> until it fails every run, then fix what that exposes. Make
+          tests independent so they run concurrently, test the end state with motion off, and leave
+          artifacts — video, DOM snapshot, network log, console, an error naming what was expected —
+          so nobody needs a re-run "with logging on".
+        </p>
+      </div>
+
+      <h2 data-beat="how">A person approves every baseline</h2>
+      <div
+        class="fig"
+        data-viz-id="visual-figure"
+        data-label="screenshot baseline flow with masking and human approval"
+      >
+        <div class="what">
+          SCREENSHOT TESTS · <b>mask what isn't under test, then a person decides</b>
+        </div>
+        <div class="stage">
+          <svg
+            id="vis-svg"
+            viewBox="0 0 760 226"
+            role="img"
+            aria-label="Baseline approval flow"
+          ></svg>
+        </div>
+        <p class="lede">
+          A new picture never becomes the baseline by itself. The clock, today's date, a random id —
+          anything that changes on its own — gets a solid box in <b>both</b> pictures, or the test
+          fails every run for nothing. Keep baselines few, clipped to the element that matters.
+        </p>
+      </div>
+
+      <h2 data-beat="how">Gates, not willpower</h2>
+      <p class="m">
+        Gresham's law is why the skill enforces instead of exhorting: if the lazy test is merely
+        <em>discouraged</em>, it still wins on effort. So the lazy shape is made unrepresentable or
+        blocked.
+      </p>
+      <div
+        class="fig"
+        data-viz-id="enforce-figure"
+        data-label="file shape enforces the tier; one artifact does several jobs"
+      >
+        <div class="what">TWO SHAPES THAT DO THE ENFORCING</div>
+        <div class="stage">
+          <svg
+            id="enf-svg"
+            viewBox="0 0 760 238"
+            role="img"
+            aria-label="File shape and one-artifact-several-jobs"
+          ></svg>
+        </div>
+        <p class="lede">
+          A journey test <b>is</b> a file in the journey folder with the journey suffix — there's no
+          in-between folder where a half-mocked journey can hide. Before adding a new kind of test,
+          see if an existing artifact can do the job: one story, three jobs, one place for bad tests
+          to grow instead of three. Every escape hatch — an exclusion, a mock where a fake would do,
+          a gate opt-out — carries a written reason, checked mechanically.
+        </p>
+      </div>
+      <p class="m">
+        The same file covers tooling. <b>Test every gate both ways</b> — see it fail on a violation
+        and pass without one. <b>Write down each tool's blind spots</b> and cover them elsewhere:
+        Cypress doesn't enforce CORS like a real browser on the real domain, so a
+        <code>curl</code> check against the deployed origin does. And prefer
+        <b>portable tooling</b>: a macOS-only decoder was swapped for ZXing/WASM so the same tests
+        run in Linux CI.
+      </p>
+
+      <h2 data-beat="how">What the reviewer checks, and where each rule lives</h2>
+      <p class="m">
+        <code>test-reviewer</code> asks three things of each test — <b>who is the user</b>,
+        <b>would it catch the bug</b>, <b>is there a more real version</b> — then runs twenty-one
+        checks. Each one points back to the file that explains it, and the finding cites it:
+        severity (<b>blocker</b> / <b>suggestion</b> / <b>fyi</b>), <code>file:line</code>, the
+        rule, a concrete fix.
+      </p>
+      <div
+        class="fig"
+        data-viz-id="review-figure"
+        data-label="matrix of the twenty-one review checks against the file explaining each"
+      >
+        <div class="what">reference/reviewing.md · <b>hover a row</b></div>
+        <div class="stage">
+          <svg
+            id="rev-svg"
+            viewBox="0 0 760 530"
+            role="img"
+            aria-label="Review checks by source file"
+          ></svg>
+        </div>
+      </div>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · loaded by
+        <a href="../skill-r2-sdlc/">r2-sdlc</a> and the test-reviewer · r2-testing-paradigm.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

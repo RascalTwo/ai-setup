@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How I Use AI</title>
+    <meta name="viz:uid" content="v-fc779e28822d" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="How I Use AI" />
+    <meta
+      name="viz:description"
+      content="An explorable of Rascal's AI usage philosophy — fifteen principles across three arcs, scored against the four things I think the work asks of me: teacher, leader, expert, owner."
+    />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <style>
+      :root {
+        --rail-w: 306px;
+        --glass: color-mix(in srgb, var(--panel) 72%, transparent);
+        --arc1: var(--c1);
+        --arc2: var(--c2);
+        --arc3: var(--c3);
+        /* The four values. Kit slots c2/c3/c6 alias good/warn/danger — a scorecard
+       must not render a value in error-red — and c7/c8 are too dark to read on
+       --panel at this cell size, so those two are re-themed brighter here. */
+        --v-teacher: var(--c4); /* violet   */
+        --v-leader: var(--c5); /* teal     */
+        --v-expert: #8ea2ff; /* periwinkle — brighter sibling of c7 */
+        --v-owner: #f2789f; /* rose      — brighter sibling of c8 */
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        background:
+          radial-gradient(
+            1100px 620px at 82% -8%,
+            color-mix(in srgb, var(--accent) 12%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            900px 520px at -6% 108%,
+            color-mix(in srgb, var(--c4) 12%, transparent),
+            transparent 60%
+          ),
+          var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        overflow: hidden;
+      }
+      .app {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        height: 100dvh;
+      }
+
+      /* ---- header ---- */
+      header.top {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 16px 26px 14px;
+        border-bottom: 1px solid var(--border);
+        background: linear-gradient(
+          180deg,
+          color-mix(in srgb, var(--panel) 55%, transparent),
+          transparent
+        );
+      }
+      header.top h1 {
+        font-size: 20px;
+        margin: 0;
+        letter-spacing: 0.2px;
+      }
+      header.top h1 .q {
+        color: var(--muted);
+        font-weight: 500;
+      }
+      header.top .spacer {
+        flex: 1;
+      }
+      header.top .hint {
+        color: var(--muted);
+        font-size: 12px;
+        font-family: var(--mono);
+      }
+      header.top .hint kbd {
+        font-family: var(--mono);
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-bottom-width: 2px;
+        border-radius: 5px;
+        padding: 1px 6px;
+        color: var(--text);
+        font-size: 11px;
+      }
+
+      /* ---- body layout ---- */
+      .body {
+        display: grid;
+        grid-template-columns: var(--rail-w) 1fr;
+        min-height: 0;
+      }
+
+      /* ---- rail ---- */
+      nav.rail {
+        border-right: 1px solid var(--border);
+        padding: 16px 14px;
+        overflow-y: auto;
+        background: linear-gradient(
+          180deg,
+          color-mix(in srgb, var(--panel) 40%, transparent),
+          transparent
+        );
+      }
+      .rail-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+        margin: 2px 8px 12px;
+      }
+      .arc-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 16px 8px 6px;
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.13em;
+        color: var(--muted);
+      }
+      .arc-head .bar {
+        width: 16px;
+        height: 3px;
+        border-radius: 2px;
+        background: var(--ac, var(--accent));
+        flex: none;
+      }
+      .arc-head .cnt {
+        margin-left: auto;
+        font-family: var(--mono);
+        opacity: 0.6;
+      }
+      .step {
+        position: relative;
+        display: flex;
+        gap: 11px;
+        align-items: center;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        color: var(--text);
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 11px;
+        padding: 7px 10px;
+        margin: 1px 0;
+        font: inherit;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+      .step:hover {
+        background: var(--panel);
+      }
+      .step .chip {
+        flex: none;
+        width: 25px;
+        height: 25px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        font-weight: 600;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .step .lbl {
+        font-size: 13px;
+        line-height: 1.25;
+      }
+      .step.active {
+        background: color-mix(in srgb, var(--ac, var(--accent)) 16%, transparent);
+        border-color: color-mix(in srgb, var(--ac, var(--accent)) 48%, transparent);
+      }
+      .step.active .chip {
+        background: var(--ac, var(--accent));
+        border-color: var(--ac, var(--accent));
+        color: #04121f;
+      }
+      .step.active .lbl {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .step.seen .chip {
+        color: var(--ac, var(--accent));
+        border-color: color-mix(in srgb, var(--ac, var(--accent)) 45%, transparent);
+      }
+      .step.dim {
+        opacity: 0.28;
+      }
+      .rail-foot {
+        margin: 18px 8px 6px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+      .rail-foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .rail-foot a:hover {
+        text-decoration: underline;
+      }
+
+      /* ---- stage ----
+     The footer lives OUTSIDE the scroll container so Prev/Next hold the same
+     screen position on every stop, instead of tracking each stop's height. */
+      main.stage {
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) auto;
+        min-height: 0;
+      }
+      .stage-scroll {
+        position: relative;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 32px 40px 26px;
+      }
+      .watermark {
+        position: absolute;
+        top: -14px;
+        right: 26px;
+        font-family: var(--mono);
+        font-weight: 700;
+        font-size: 190px;
+        line-height: 1;
+        color: color-mix(in srgb, var(--ac, var(--accent)) 9%, transparent);
+        pointer-events: none;
+        user-select: none;
+        letter-spacing: -6px;
+      }
+      .stage-grid {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 356px;
+        gap: 34px;
+        max-width: 1120px;
+        align-items: start;
+      }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--ac, var(--accent));
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.05em;
+        margin-bottom: 11px;
+      }
+      .eyebrow .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 22%, transparent);
+      }
+      h2.title {
+        font-size: 29px;
+        line-height: 1.13;
+        margin: 0 0 14px;
+        letter-spacing: -0.3px;
+      }
+
+      /* serves badges */
+      .serves {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex-wrap: wrap;
+        margin: 0 0 16px;
+      }
+      .serves .sl {
+        font-size: 11px;
+        color: var(--muted);
+        font-family: var(--mono);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .vtag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        font: inherit;
+        font-size: 11.5px;
+        background: transparent;
+        color: var(--vc);
+        border: 1px solid color-mix(in srgb, var(--vc) 45%, transparent);
+        border-radius: 999px;
+        padding: 3px 11px 3px 8px;
+        font-family: var(--mono);
+        letter-spacing: 0.03em;
+        transition: background 0.15s;
+      }
+      .vtag:hover {
+        background: color-mix(in srgb, var(--vc) 16%, transparent);
+      }
+      .vtag i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--vc);
+        font-style: normal;
+      }
+
+      .lead {
+        font-size: 18px;
+        line-height: 1.5;
+        color: var(--text);
+        margin: 0 0 20px;
+        padding-left: 16px;
+        border-left: 3px solid color-mix(in srgb, var(--ac, var(--accent)) 60%, transparent);
+      }
+      .lead em {
+        color: var(--ac, var(--accent));
+        font-style: italic;
+      }
+      ul.points {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 10px;
+      }
+      ul.points li {
+        position: relative;
+        padding-left: 26px;
+        font-size: 14.5px;
+        line-height: 1.5;
+        color: var(--text);
+      }
+      ul.points li::before {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 8px;
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        background: var(--ac, var(--accent));
+        transform: rotate(45deg);
+      }
+      ul.points li b {
+        color: #fff;
+        font-weight: 600;
+      }
+      ul.points li .m {
+        color: var(--muted);
+      }
+      .visual {
+        position: sticky;
+        top: 0;
+      }
+      .visual .frame {
+        background: var(--glass);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 20px 50px -30px rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(3px);
+      }
+      .visual svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .visual .cap {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
+        font-family: var(--mono);
+        line-height: 1.5;
+      }
+      .visual .cap b {
+        color: var(--ac, var(--accent));
+        font-weight: 600;
+      }
+      /* No opacity here — it dropped the only instruction for the only control to
+     3.94:1. Plain --muted on --bg is 6.19:1 and passes AA. */
+      .visual .drivehint {
+        margin-top: 9px;
+        text-align: center;
+        font-size: 11px;
+        font-family: var(--mono);
+        color: var(--muted);
+        letter-spacing: 0.04em;
+      }
+      ul.points li a,
+      .rail-foot a,
+      .lead a {
+        color: var(--ac, var(--accent));
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+      ul.points li a:hover {
+        text-decoration-thickness: 2px;
+      }
+
+      /* svg shared bits */
+      .s-stroke {
+        stroke: var(--ac, var(--accent));
+        fill: none;
+        stroke-width: 2;
+      }
+      .s-mut {
+        stroke: var(--muted);
+        fill: none;
+        stroke-width: 1.6;
+      }
+      .s-fill {
+        fill: var(--ac, var(--accent));
+      }
+      .s-mfill {
+        fill: var(--muted);
+      }
+      .s-txt {
+        fill: var(--text);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .s-txtm {
+        fill: var(--muted);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+      .s-good {
+        stroke: var(--good);
+      }
+      .s-danger {
+        stroke: var(--danger);
+      }
+      .dash {
+        stroke-dasharray: 5 5;
+      }
+
+      /* ---- landing ---- */
+      .creed-lead {
+        font-size: 21px;
+        line-height: 1.45;
+        max-width: 820px;
+        margin: 0 0 8px;
+      }
+      .creed-lead b {
+        color: var(--accent);
+      }
+      .sec-h {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin: 30px 0 4px;
+        max-width: 1120px;
+        font-size: 12px;
+        font-family: var(--mono);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      .sec-h .rule {
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+      .sec-sub {
+        color: var(--muted);
+        font-size: 13.5px;
+        margin: 0 0 16px;
+        max-width: 820px;
+        line-height: 1.55;
+      }
+
+      /* matrix */
+      .matrix-wrap {
+        background: var(--glass);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px 20px 14px;
+        max-width: 1120px;
+        backdrop-filter: blur(3px);
+      }
+      .matrix-wrap svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        overflow: visible;
+      }
+      .mcell {
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+      .mrow-lbl {
+        cursor: pointer;
+      }
+      .mrow-lbl:hover text {
+        fill: #fff;
+      }
+      .mcol-lbl {
+        cursor: pointer;
+      }
+      .m-dim {
+        opacity: 0.16;
+      }
+      .matrix-read {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--text);
+        min-height: 42px;
+      }
+      .matrix-read .badge {
+        flex: none;
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        border: 1px solid color-mix(in srgb, var(--rc, var(--accent)) 45%, transparent);
+        color: var(--rc, var(--accent));
+      }
+      .matrix-read .m {
+        color: var(--muted);
+      }
+
+      /* creed */
+      .creed-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(252px, 1fr));
+        gap: 11px;
+        max-width: 1120px;
+      }
+      .creed-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c-l, var(--accent));
+        border-radius: 11px;
+        padding: 12px 14px;
+        font-size: 13.5px;
+        line-height: 1.45;
+        cursor: pointer;
+        transition:
+          transform 0.12s,
+          background 0.15s;
+      }
+      .creed-card:hover {
+        transform: translateY(-2px);
+        background: var(--panel-2);
+      }
+      .creed-card .n {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 4px;
+      }
+      .creed-card b {
+        color: #fff;
+      }
+
+      /* ---- footer nav (pinned) ---- */
+      .stage-foot {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 13px 40px;
+        border-top: 1px solid var(--border);
+        background: linear-gradient(
+          0deg,
+          color-mix(in srgb, var(--panel) 60%, transparent),
+          transparent
+        );
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font: inherit;
+        font-size: 13.5px;
+        background: var(--panel);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 9px 15px;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          opacity 0.15s;
+      }
+      .btn:hover {
+        background: var(--panel-2);
+        border-color: var(--accent);
+      }
+      .btn[disabled] {
+        opacity: 0.35;
+        pointer-events: none;
+      }
+      .btn.primary {
+        background: var(--ac, var(--accent));
+        color: #04121f;
+        border-color: var(--ac, var(--accent));
+        font-weight: 600;
+      }
+      .dots {
+        display: flex;
+        gap: 6px;
+        flex: 1;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .dots button {
+        width: 9px;
+        height: 9px;
+        padding: 0;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        background: var(--border);
+        transition: transform 0.15s;
+      }
+      .dots button:hover {
+        transform: scale(1.4);
+      }
+      .dots button.on {
+        background: var(--dc, var(--accent));
+      }
+      .counter {
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        min-width: 60px;
+        text-align: right;
+      }
+
+      .reveal {
+        animation: rise 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .reveal {
+          animation: none;
+        }
+      }
+
+      @media (max-width: 980px) {
+        .body {
+          grid-template-columns: 1fr;
+        }
+        nav.rail {
+          display: none;
+        }
+        .stage-grid {
+          grid-template-columns: 1fr;
+        }
+        .visual {
+          position: static;
+          order: -1;
+        }
+        .watermark {
+          font-size: 120px;
+          right: 12px;
+        }
+        .stage-scroll {
+          padding: 22px 20px 20px;
+        }
+        .stage-foot {
+          padding: 12px 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <h1>How I Use AI <span class="q">— the working philosophy</span></h1>
+        <div class="spacer"></div>
+        <div class="hint"><kbd>←</kbd> <kbd>→</kbd> move · <kbd>Home</kbd> start</div>
+      </header>
+      <div class="body">
+        <nav class="rail" id="rail"></nav>
+        <main class="stage">
+          <div class="stage-scroll" id="stage"></div>
+          <div class="stage-foot" id="foot"></div>
+        </main>
+      </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

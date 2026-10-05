@@ -1,0 +1,253 @@
+#!/usr/bin/env python3
+"""Auto handoff: at a context threshold, have Claude write a handoff, then /clear and continue.
+
+  auto-handoff stop          Stop hook. Over the threshold: block once so Claude writes the
+                             handoff; on the next stop, launch the injector.
+  auto-handoff idle          From the statusline (payload on stdin). Cache about to expire on a
+                             big idle session: ask for a handoff; the continue prompt is typed
+                             but NOT sent.
+  auto-handoff off|on [--all]  Per herdr pane (default) or global.
+  auto-handoff status
+  auto-handoff inject PANE PATH ENTER   Internal: the detached injector.
+
+Needs herdr (the injector types into the pane); outside herdr every verb is a no-op.
+Never hands off while any background task runs (subagent, workflow or shell), read from the Stop
+hook's `background_tasks`; over the threshold it tells the user what it is waiting on. See README.md.
+"""
+import json, os, re, subprocess, sys, tempfile, time
+from datetime import datetime
+
+THRESHOLD = int(os.environ.get("AUTO_HANDOFF_TOKENS", 250_000))
+IDLE_TOKENS = int(os.environ.get("AUTO_HANDOFF_IDLE_TOKENS", 150_000))
+IDLE_SECONDS = 55 * 60      # the subscription cache TTL is 1h; hand off with ~5 min to spare
+CLEAR_WAIT = 4              # seconds for /clear to settle before typing; raise if text gets eaten
+STATE = os.environ.get("AUTO_HANDOFF_STATE") or os.path.expanduser("~/.agents/state/auto-handoff")
+SKILL = os.path.expanduser("~/.agents/ai-setup/skills/r2-handoff/SKILL.md")
+HERDR = os.environ.get("HERDR_BIN_PATH", "herdr")
+PANE = os.environ.get("HERDR_PANE_ID", "")
+
+
+def state_path(pane):
+    return os.path.join(STATE, pane.replace(":", "_") + ".json")
+
+
+def load(pane):
+    try:
+        return json.load(open(state_path(pane)))
+    except (OSError, ValueError):
+        return {}
+
+
+def save(pane, st):
+    os.makedirs(STATE, exist_ok=True)
+    if st:
+        json.dump(st, open(state_path(pane), "w"))
+    elif os.path.exists(state_path(pane)):
+        os.remove(state_path(pane))
+
+
+def disabled(pane):
+    return (os.environ.get("AUTO_HANDOFF", "").lower() in ("0", "off", "false")
+            or os.path.exists(os.path.join(STATE, "off"))
+            or os.path.exists(state_path(pane) + ".off"))
+
+
+def scan(transcript):
+    """(context tokens, seconds since the last API reply), from the last main-chain API reply."""
+    tokens, last = 0, 0.0
+    for line in open(transcript):
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        u = (d.get("message") or {}).get("usage")
+        if d.get("type") == "assistant" and u and not d.get("isSidechain"):
+            tokens = u.get("input_tokens", 0) + u.get("cache_read_input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
+            last = datetime.fromisoformat(d["timestamp"].replace("Z", "+00:00")).timestamp()
+    return tokens, time.time() - last
+
+
+def running(hook):
+    """What is still running, from Claude Code's own live task list: any type, shells included.
+    The user's rule is that nothing hands off mid-work, even a shell /clear would survive; a shell
+    that never ends blocks it until the user stops that shell. A payload without the list (an older
+    or changed Claude Code) counts as busy: never risk a kill."""
+    tasks = hook.get("background_tasks")
+    if tasks is None:
+        return ["(no background_tasks in the Stop payload)"]
+    return [f"{t.get('type')}: {t.get('description') or t.get('id')}" for t in tasks if t.get("status") == "running"]
+
+
+def log(**entry):
+    os.makedirs(STATE, exist_ok=True)
+    with open(os.path.join(STATE, "log.jsonl"), "a") as f:
+        f.write(json.dumps({"t": datetime.now().isoformat(timespec="seconds"), "pane": PANE, **entry}) + "\n")
+
+
+def instruction(path, why):
+    return (f"AUTO HANDOFF ({why}). Do not start new work. Read {SKILL} and follow its "
+            f"'Auto' section: write the handoff to {path}, then end your turn. "
+            f"The session will be cleared and continued from that file automatically.")
+
+
+def new_path():
+    return os.path.join(tempfile.gettempdir(), f"handoff-auto-{PANE.replace(':', '_')}-{int(time.time())}.md")
+
+
+def stop():
+    hook = json.load(sys.stdin)
+    if not PANE:
+        return
+    if disabled(PANE):
+        save(PANE, {})   # switched off mid-handoff: drop it, or it would fire when switched back on
+        return
+    st = load(PANE)
+    if st.get("phase") == "injecting":
+        return
+    tokens, _ = scan(hook["transcript_path"])
+    busy = running(hook)
+    log(tokens=tokens, phase=st.get("phase"), tasks=hook.get("background_tasks"), waiting=bool(busy))
+    if busy:   # a finishing task's notification starts a turn: re-checked then
+        if st.get("phase") == "writing":
+            # The doc predates the task's result, which would land in the old context and be lost:
+            # drop it, and decide afresh once the task is done.
+            save(PANE, {})
+            if os.path.exists(st["path"]):
+                os.remove(st["path"])
+        if tokens >= THRESHOLD:
+            print(json.dumps({"systemMessage": f"Auto handoff is waiting (context at {tokens // 1000}k) on: "
+                              + "; ".join(busy) + ". Stop any that should not finish; it hands off at the end of the next turn."}))
+        return
+    if st.get("phase") == "writing":
+        if os.path.exists(st["path"]) and os.path.getmtime(st["path"]) >= st["t"]:
+            save(PANE, {**st, "phase": "injecting"})
+            subprocess.Popen([sys.argv[0], "inject", PANE, st["path"], "1" if st["enter"] else "0",
+                              *current(hook["transcript_path"])],
+                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             start_new_session=True)
+            return
+        save(PANE, {})   # asked but not written (interrupted, or Claude declined): start over
+        if hook.get("stop_hook_active"):
+            return
+    if tokens < THRESHOLD:
+        return
+    path = new_path()
+    save(PANE, {"phase": "writing", "path": path, "t": time.time(), "enter": True})
+    print(json.dumps({"decision": "block", "reason": instruction(path, f"context at {tokens // 1000}k")}))
+
+
+def idle():
+    payload = json.load(sys.stdin)
+    if not PANE or disabled(PANE) or load(PANE):
+        return
+    tokens, quiet = scan(payload["transcript_path"])   # no task list here: stop() gates the /clear
+    if tokens < IDLE_TOKENS or not IDLE_SECONDS <= quiet < 3600:
+        return
+    agent = json.loads(subprocess.run([HERDR, "agent", "get", PANE], capture_output=True, text=True).stdout or "{}")
+    if '"idle"' not in json.dumps(agent) and '"done"' not in json.dumps(agent):
+        return
+    path = new_path()
+    save(PANE, {"phase": "writing", "path": path, "t": time.time(), "enter": False})
+    subprocess.run([HERDR, "agent", "prompt", PANE, instruction(path, "idle, prompt cache about to expire")],
+                   capture_output=True)
+
+
+def draft_empty(pane):
+    screen = subprocess.run([HERDR, "agent", "read", pane, "--source", "visible"], capture_output=True, text=True).stdout
+    prompt = [l.replace("\xa0", " ") for l in screen.splitlines() if l.startswith("❯")]  # the placeholder uses a no-break space
+    # An empty box shows "❯" alone, or a dimmed 'Try "..."' placeholder in a fresh session.
+    return bool(prompt) and (prompt[-1].strip() == "❯" or prompt[-1].startswith('❯ Try "'))
+
+
+MODELS = ("haiku", "sonnet", "opus")
+EFFORTS = ("low", "medium", "high", "xhigh", "max")
+# The only (model, effort) a handoff may ask for; r2-handoff offers exactly these. Anything else (opus high, ...) is ignored.
+CHOICES = (("haiku", "high"), ("sonnet", "high"), ("opus", "medium"))
+
+
+def current(transcript):
+    """(model family, effort) of the session's last main-chain API reply: what /clear keeps."""
+    model = effort = None
+    for line in open(transcript):
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        if d.get("type") == "assistant" and not d.get("isSidechain") and (d.get("message") or {}).get("model"):
+            model = next((m for m in MODELS if m in d["message"]["model"]), model)
+            effort = d.get("effort", effort)
+    return model or "", effort or ""
+
+
+def upgrade(new, cur, scale):
+    """`new` only if it ranks above `cur`: a handoff may keep or raise the model and effort, never lower them.
+    An unknown current value counts as the top of the scale, so the switch is skipped rather than risk a downgrade."""
+    rank = lambda v: scale.index(v) if v in scale else len(scale)
+    return new if new and rank(new) > rank(cur) else None
+
+
+def next_session(path):
+    """(model, effort) from the handoff's `Next session: model M, effort E` line; None for anything missing or not one of CHOICES."""
+    m = re.search(r"^Next session: model (\w+), effort (\w+)", open(path).read(), re.M)
+    pair = (m.group(1).lower(), m.group(2).lower()) if m else (None, None)
+    return pair if pair in CHOICES else (None, None)
+
+
+def inject(pane, path, enter, cur_model="", cur_effort=""):
+    try:
+        # The Stop hook that launched us is still returning; wait for the turn to end.
+        subprocess.run([HERDR, "agent", "wait", pane, "--until", "idle", "--until", "done", "--timeout", "300000"],
+                       capture_output=True)
+        time.sleep(1)
+        # Never type into a draft: the user may be mid-message. Wait (up to 30 min) for an empty prompt box.
+        for _ in range(900):
+            if draft_empty(pane):
+                break
+            time.sleep(2)
+        else:
+            return
+        subprocess.run([HERDR, "agent", "prompt", pane, "/clear"], capture_output=True)
+        time.sleep(CLEAR_WAIT)
+        # The cache is gone after /clear, so the handoff's recommended model/effort costs nothing extra.
+        model, effort = next_session(path)
+        model, effort = upgrade(model, cur_model, MODELS), upgrade(effort, cur_effort, EFFORTS)
+        for cmd in (model and f"/model {model}", effort and f"/effort {effort}"):
+            if cmd:
+                subprocess.run([HERDR, "agent", "prompt", pane, cmd], capture_output=True)
+                time.sleep(2)
+        text = f"read {path} and continue"
+        if enter == "1":
+            subprocess.run([HERDR, "agent", "prompt", pane, text], capture_output=True)
+        else:
+            # The user returns to a cleared screen: say what happened and what this session was.
+            topic = next((l[6:].strip() for l in open(path) if l.startswith("Topic:")), "")
+            note = f"(idle handoff saved your cache; you were: {topic}) " if topic else "(idle handoff saved your cache) "
+            subprocess.run([HERDR, "pane", "send-text", pane, note + text], capture_output=True)
+    finally:
+        save(pane, {})
+
+
+def toggle(on):
+    target = os.path.join(STATE, "off") if "--all" in sys.argv else state_path(PANE) + ".off"
+    if not PANE and "--all" not in sys.argv:
+        sys.exit("not in a herdr pane; use --all")
+    os.makedirs(STATE, exist_ok=True)
+    if on:
+        if os.path.exists(target):
+            os.remove(target)
+    else:
+        open(target, "w").close()
+    status()
+
+
+def status():
+    print(f"global: {'off' if os.path.exists(os.path.join(STATE, 'off')) or disabled('') else 'on'}")
+    if PANE:
+        print(f"pane {PANE}: {'off' if disabled(PANE) else 'on'} {load(PANE) or ''}")
+
+
+if __name__ == "__main__":
+    verb = sys.argv[1] if len(sys.argv) > 1 else "status"
+    {"stop": stop, "idle": idle, "status": status,
+     "on": lambda: toggle(True), "off": lambda: toggle(False),
+     "inject": lambda: inject(*sys.argv[2:7])}[verb]()

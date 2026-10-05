@@ -1,0 +1,13 @@
+# herdr-autolabel's sidebar row. Merged into ~/.config/herdr/config.toml by
+# install.ts. Row 1 is the status dot plus the tab name this tool keeps current. Row 2 is two
+# session metrics, reported by tools/statusline/statusline-*.sh into ONE token per metric, so the
+# colour follows those widgets (the unreported ones vanish): context used ("142k", one token per
+# colour band), then the prompt-cache countdown ("42m": gray / orange <=15m / red expired).
+# separator / indent / continuation_indent only exist in the RascalTwo/herdr fork (stock herdr
+# hardcodes " · " and indents 1 / 3, and just warns "unknown config key" about these three).
+[ui.sidebar.agents]
+separator = " "
+indent = 0
+continuation_indent = 0
+rows = [["state_icon", "tab"], [{ token = "$ctx_g", fg = "#87d787" }, { token = "$ctx_y", fg = "#ffff5f" }, { token = "$ctx_o", fg = "#ff8700" }, { token = "$ctx_m", fg = "#ff5fff" }, { token = "$ctx_r", fg = "#ff0000" },
+  { token = "$cache_ok", fg = "#8a8a8a" }, { token = "$cache_warn", fg = "#ffaf00" }, { token = "$cache_exp", fg = "#ff0000" }]]
