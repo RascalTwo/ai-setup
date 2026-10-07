@@ -1,0 +1,1191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>pr-split — a 900-line rename is one idea; a 60-line PR can be two</title>
+    <meta name="viz:uid" content="v-3e45dec09b56" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="pr-split" />
+    <meta
+      name="viz:description"
+      content="Splits a branch along the seams between ideas into one local branch per piece, and refuses to make any unless the pieces sum back to the original exactly."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta
+      name="viz:tests"
+      content="smoke: a teaching figure over nine fixed hunks that mirrors split.ts's gate; its outputs were checked by hand against real split.ts runs of the same cuts"
+    />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* pr-split's palette: a teal accent, and one colour per PIECE. The same four
+         colours mean the same four pieces on the card, in both figures and in the tables. */
+      :root {
+        --s: 1;
+        --accent: #4ec9b0;
+        --p1: #bc8cff; /* tidy */
+        --p2: #4ec9b0; /* core */
+        --p3: #d29922; /* sync */
+        --p4: #58a6ff; /* docs */
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            760px 420px at 100% 0%,
+            color-mix(in srgb, var(--p2) 17%, transparent),
+            transparent 62%
+          ),
+          radial-gradient(
+            620px 420px at 0% 108%,
+            color-mix(in srgb, var(--p1) 14%, transparent),
+            transparent 62%
+          ),
+          linear-gradient(165deg, #0b0f16, #0d1117 62%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 446px;
+        gap: 44px;
+        align-items: center;
+        padding: 54px 70px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 18px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 47px;
+        line-height: 1.07;
+        margin: 0 0 20px;
+        letter-spacing: -1.2px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--p1);
+      }
+      p.sub {
+        font-size: 18px;
+        line-height: 1.46;
+        color: var(--muted);
+        margin: 0 0 18px;
+        max-width: 560px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 14.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 20px;
+        max-width: 540px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 15px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 9px;
+        padding: 10px 15px;
+        color: var(--text);
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the proof slot: one branch, cut along its ideas */
+      .cut {
+        background: color-mix(in srgb, var(--panel) 80%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 16px 14px;
+      }
+      .cut .capn {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 9px;
+      }
+      .cut .capn b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .strip {
+        display: flex;
+        gap: 3px;
+        height: 40px;
+      }
+      .strip i {
+        display: block;
+        min-width: 9px;
+        border-radius: 4px;
+        flex-grow: var(--w);
+        background: color-mix(in srgb, var(--pc) 78%, #0d1117);
+        border: 1px solid var(--pc);
+      }
+      .scis {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 11px 0 9px;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      .scis::before,
+      .scis::after {
+        content: "";
+        flex: 1;
+        border-top: 1.5px dashed var(--faint);
+      }
+      .scis span {
+        white-space: nowrap;
+      }
+      .pc {
+        display: grid;
+        grid-template-columns: 54px 1fr auto;
+        gap: 4px 10px;
+        align-items: baseline;
+        padding: 7px 10px;
+        margin-bottom: 6px;
+        border-radius: 8px;
+        border: 1px solid color-mix(in srgb, var(--pc) 55%, transparent);
+        border-left: 4px solid var(--pc);
+        background: color-mix(in srgb, var(--pc) 9%, transparent);
+        font-size: 13px;
+      }
+      .pc b {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--pc);
+      }
+      .pc span {
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .pc em {
+        font-style: normal;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .pc u {
+        grid-column: 2 / 4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--faint);
+        margin-top: -2px;
+      }
+      .sum {
+        margin-top: 10px;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 9%, transparent);
+        border: 1px solid color-mix(in srgb, var(--good) 38%, transparent);
+        border-radius: 8px;
+        padding: 8px 6px;
+      }
+
+      /* ── the dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      /* each beat's heading carries a small tag in the colour of a piece: the page is cut too */
+      .dive h2 {
+        --bc: var(--accent);
+        font-size: 26px;
+        line-height: 1.2;
+        letter-spacing: -0.4px;
+        color: #fff;
+        margin: 54px 0 14px;
+        padding-left: 16px;
+        border-left: 4px solid var(--bc);
+        font-weight: 700;
+      }
+      .dive h2::before {
+        content: attr(data-beat);
+        display: block;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--bc);
+        margin-bottom: 5px;
+        font-weight: 500;
+      }
+      .dive h2[data-beat="why"] {
+        --bc: var(--p1);
+        margin-top: 18px;
+      }
+      .dive h2[data-beat="using"] {
+        --bc: var(--p2);
+      }
+      .dive h2[data-beat="limits"] {
+        --bc: var(--p3);
+      }
+      .dive h2[data-beat="where"] {
+        --bc: var(--p4);
+      }
+      .dive h2[data-beat="how"] {
+        --bc: var(--accent);
+      }
+      .dive h3 {
+        font-size: 17.5px;
+        color: #fff;
+        margin: 32px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.66;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive a {
+        color: var(--accent);
+      }
+      code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: #cde9e3;
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 15px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      pre .g {
+        color: var(--good);
+      }
+      pre .r {
+        color: var(--danger);
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      table.t {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 14.5px;
+      }
+      table.t th {
+        text-align: left;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        font-weight: 500;
+        padding: 0 10px 8px 0;
+        text-transform: uppercase;
+      }
+      table.t td {
+        border-top: 1px solid var(--border);
+        padding: 9px 10px 9px 0;
+        vertical-align: top;
+        line-height: 1.5;
+      }
+      table.t td:first-child {
+        white-space: nowrap;
+      }
+      table.cuts td:nth-last-child(-n + 2) {
+        white-space: nowrap;
+      }
+      table.t .sw {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 3px;
+        background: var(--pc);
+        margin-right: 7px;
+      }
+      table.where td:first-child {
+        width: 138px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+        white-space: normal;
+      }
+      .tag-r {
+        color: var(--muted);
+      }
+
+      /* ── figures ── */
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 18px;
+        outline: none;
+      }
+      .fig:focus-visible {
+        border-color: var(--accent);
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 14px 14px 8px;
+      }
+      .fig svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .el {
+        opacity: 0.09;
+        transition: opacity 0.35s;
+      }
+      .el.on {
+        opacity: 0.5;
+      }
+      .el.hot {
+        opacity: 1;
+      }
+      .el.stage.hot rect,
+      .el.git.hot rect {
+        stroke: var(--accent);
+      }
+      .el.hot.piece rect {
+        stroke-width: 2;
+      }
+      .vsvg-label.mono {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--text);
+      }
+      .nl {
+        text-align: left;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .nl b {
+        color: var(--accent);
+        font-size: 12px;
+        letter-spacing: 0.04em;
+      }
+      .nl span {
+        color: var(--muted);
+        font-size: 11.5px;
+      }
+      .fig .detail {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 22px;
+        margin-top: 14px;
+      }
+      .fig .detail h4 {
+        margin: 0 0 6px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        font-weight: 500;
+      }
+      .fig .detail h4.mk {
+        color: var(--good);
+      }
+      .fig .detail h4.rf {
+        color: var(--danger);
+      }
+      .fig .detail p,
+      .fig .detail ul {
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .fig .detail li {
+        font-size: 14px;
+        line-height: 1.45;
+        margin: 0 0 5px;
+      }
+      .fig .detail li::before {
+        content: "✗ ";
+        color: var(--danger);
+      }
+      pre.snip {
+        margin: 14px 0 0;
+        font-size: 11.8px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        word-break: break-all;
+        background: #0b0f16;
+      }
+      pre.snip .ln {
+        display: inline-block;
+        width: 3.2ch;
+        margin-right: 1.3ch;
+        color: var(--faint);
+        text-align: right;
+      }
+      .fig .lede {
+        font-size: 15px;
+        line-height: 1.58;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 72px;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      .ctrl button,
+      .presets button {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 12px;
+        cursor: pointer;
+      }
+      .ctrl button:hover,
+      .presets button:hover {
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+
+      /* the break-a-cut figure */
+      .presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-bottom: 8px;
+      }
+      .presets button.sel {
+        border-color: var(--accent);
+        color: #fff;
+        background: color-mix(in srgb, var(--accent) 14%, #0b0f16);
+      }
+      .blurb {
+        font-size: 13.5px;
+        color: var(--muted);
+        margin: 0 0 12px;
+        min-height: 20px;
+      }
+      .board {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        align-items: start;
+      }
+      .col[data-col=""] {
+        grid-column: 1 / -1;
+        min-height: 0;
+      }
+      .col[data-col=""] .chips {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+      .col[data-col=""] .chips:empty::before {
+        content: "every hunk has an owner";
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--faint);
+      }
+      .col {
+        --pc: var(--faint);
+        border: 1px solid var(--border);
+        border-top: 3px solid var(--pc);
+        border-radius: 9px;
+        background: #0b0f16;
+        padding: 8px 7px 8px;
+        min-height: 120px;
+        min-width: 0;
+      }
+      .col[data-col=""] {
+        border-style: dashed;
+        border-top-style: solid;
+      }
+      .col.off {
+        opacity: 0.55;
+        min-height: 0;
+      }
+      .colh {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px 6px;
+        margin-bottom: 8px;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--muted);
+      }
+      .colh i {
+        display: none;
+      }
+      .colh b {
+        color: var(--pc);
+        font-weight: 600;
+        font-size: 10.5px;
+        word-break: break-all;
+        flex: 1 1 100%;
+      }
+      .colh label {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex: 1 1 100%;
+        font-size: 10px;
+      }
+      .colh select {
+        width: 100%;
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--text);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 3px 2px;
+      }
+      .colh .x {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 2px 7px;
+        cursor: pointer;
+      }
+      .colh .x:hover {
+        color: #fff;
+        border-color: var(--danger);
+      }
+      .colh .x.add:hover {
+        border-color: var(--good);
+      }
+      .chips {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .chip {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        gap: 1px;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--text);
+        background: color-mix(in srgb, var(--pc, var(--faint)) 14%, #0d1117);
+        border: 1px solid var(--faint);
+        border-radius: 6px;
+        padding: 5px 6px;
+        cursor: pointer;
+        word-break: break-all;
+      }
+      .col[style] .chip,
+      .col .chip {
+        border-color: var(--pc);
+      }
+      .chip small {
+        font-size: 9.5px;
+        color: var(--muted);
+      }
+      .chip em {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--pc);
+      }
+      .chip:hover {
+        background: color-mix(in srgb, var(--pc, var(--faint)) 28%, #0d1117);
+      }
+      .term {
+        margin: 12px 0 0;
+        background: #0b0f16;
+        font-size: 12.3px;
+        line-height: 1.6;
+        min-height: 150px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .term .ok {
+        color: var(--good);
+      }
+      .term .bad {
+        color: var(--danger);
+      }
+      .term .dim {
+        color: var(--faint);
+      }
+      .term .hd {
+        color: var(--accent);
+      }
+
+      .foot {
+        margin-top: 54px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+      @media (max-width: 760px) {
+        .board {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .fig .detail {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="pr-split"
+        data-viz-id="poster-card"
+        data-label="pr-split poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · PR-SPLIT</div>
+          <h1 class="hook">
+            A 900-line rename<br />is one idea. A 60-line<br />PR can be <em>two.</em>
+          </h1>
+          <p class="sub">
+            <b>pr-split</b> doesn't count lines. It finds the seams where a branch holds more than
+            one idea, proposes a <b>finest</b> and a <b>balanced</b> cut, and on a yes makes one
+            local branch per piece, but only if the pieces <b>sum back to the original exactly.</b>
+          </p>
+          <p class="not">No size threshold. <b>"One PR is right"</b> is a full answer.</p>
+          <div class="trigger"><span>say</span>&nbsp;"split this PR" · "is this too big"</div>
+        </div>
+        <div class="cut" data-viz-id="card-cut" data-label="one branch, cut into four pieces">
+          <div class="capn"><b>retry-backoff</b> · 9 hunks · one branch, four ideas</div>
+          <div
+            class="strip"
+            data-viz-id="card-strip"
+            data-label="the branch's nine hunks, coloured by the piece that owns each"
+          >
+            <i style="--w: 2; --pc: var(--p2)" title="bun.lock#1"></i>
+            <i style="--w: 2; --pc: var(--p4)" title="net.md#1"></i>
+            <i style="--w: 2; --pc: var(--p2)" title="package.json#1"></i>
+            <i style="--w: 4; --pc: var(--p3)" title="sync.ts#1"></i>
+            <i style="--w: 5; --pc: var(--p2)" title="backoff.ts#1"></i>
+            <i style="--w: 8; --pc: var(--p2)" title="client.test.ts#1"></i>
+            <i style="--w: 1; --pc: var(--p2)" title="client.ts#1"></i>
+            <i style="--w: 2; --pc: var(--p1)" title="client.ts#2"></i>
+            <i style="--w: 13; --pc: var(--p2)" title="client.ts#3"></i>
+          </div>
+          <div class="scis"><span>cut along the ideas, not the files</span></div>
+          <div class="pc" style="--pc: var(--p1)">
+            <b>tidy</b><span>Rename timeoutMs</span><em>+1 −1</em>
+          </div>
+          <div class="pc" style="--pc: var(--p2)">
+            <b>core</b><span>Retry with jittered backoff</span><em>+29 −2</em>
+          </div>
+          <div class="pc" style="--pc: var(--p3)">
+            <b>sync</b><span>Retry the sync job's fetch</span><em>+2 −2</em><u>stacks on core</u>
+          </div>
+          <div class="pc" style="--pc: var(--p4)">
+            <b>docs</b><span>Document retries</span><em>+2</em><u>stacks on core</u>
+          </div>
+          <div class="sum">✓ the 4 pieces sum back to retry-backoff exactly</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">One branch, four ideas, one review</h2>
+      <p>
+        You start a retry fix. By Thursday the branch also renames a helper you tripped over, bumps
+        a dependency (and its lockfile), points a second job at the new retry, and corrects a
+        sentence in the docs. Git has no objection. The pull request you open is "one change" only
+        because one branch produced it.
+      </p>
+      <p>
+        The reviewer gets one list of files. Nothing in it says which lines are the idea and which
+        are furniture, so they read the top carefully, skim the middle, and trust the rest. A
+        reviewer takes in one idea at a time, and the branch handed them four.
+      </p>
+      <p>
+        Splitting it afterwards by hand is worse than it sounds. <code>git add -p</code> and a few
+        cherry-picks leave you with branches that nothing ever checks against the one you wrote: a
+        hunk can end up in two pieces, in none, or in a piece that cannot build without another. You
+        find out on piece three's CI, or you don't.
+      </p>
+      <p>
+        <b>pr-split</b> bets that the unit is the <em>idea</em>, not the line count. A 900-line
+        rename is one idea; a 60-line PR that also reformats a file is two. "One PR is right" is a
+        full answer, given in one line. Where it does find a seam, the cut it proposes is checked by
+        a script: the pieces, applied in order, must rebuild the original branch's tree exactly, or
+        no branch is made.
+      </p>
+      <p class="m">
+        The seams come from people who have thought about this:
+        <a href="https://google.github.io/eng-practices/review/developer/small-cls.html"
+          >Google's small-CL guidance</a
+        >
+        (refactorings in their own change),
+        <a href="https://blog.palantir.com/code-review-best-practices-19e02780015f"
+          >Palantir's review practices</a
+        >
+        (interfaces first, implementations second), Beck's <i>Tidy First?</i> (a rename is its own
+        atom). Where the evidence runs out the skill says so: it backs "smaller and focused", not
+        "as many PRs as possible", and whether stacked PRs beat separate ones is contested. So the
+        default is the finest cut, you merge pieces back together, and pieces stack only where one
+        needs another.
+      </p>
+
+      <h2 data-beat="using">Say it, or let r2-pr say it every time</h2>
+      <p>
+        Typed triggers: <code>split this PR</code>, <code>is this too big</code>,
+        <code>break this branch up</code>. The path that actually fires most is the other one:
+        <b>r2-pr step 3</b> runs pr-split on every branch before it opens a PR, "whatever its size",
+        once the readiness checks have passed. "One PR is right" and r2-pr carries on. Pieces, and
+        that r2-pr run ends there; each piece's branch then goes through r2-pr from step 1,
+        readiness check included.
+      </p>
+      <p>
+        What you see is a conversation, then a command. It reads every hunk and the diff itself,
+        names the atoms, and shows two cuts as tables (piece, one-line purpose, files, lines, what
+        it stacks on, any shared file and where it put it) and asks which, and which pieces to merge
+        further. Here is that table for a real run, a nine-hunk branch I built in a scratch repo to
+        check my own reading of the script:
+      </p>
+      <table class="t cuts" data-viz-id="cut-table" data-label="the finest cut of the demo branch">
+        <thead>
+          <tr>
+            <th>Piece (finest)</th>
+            <th>Purpose</th>
+            <th>Files</th>
+            <th>Lines</th>
+            <th>Stacks on</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="--pc: var(--p1)">
+            <td><i class="sw"></i><code>tidy</code></td>
+            <td>Rename <code>timeoutMs</code></td>
+            <td>1</td>
+            <td>+1 −1</td>
+            <td class="tag-r">merge-base</td>
+          </tr>
+          <tr style="--pc: var(--p2)">
+            <td><i class="sw"></i><code>core</code></td>
+            <td>
+              Retry with jittered backoff: the loop, the delay function, its test, the new
+              dependency, <b>and <code>bun.lock</code></b> (shared file: goes with the manifest
+              change that moved it)
+            </td>
+            <td>5</td>
+            <td>+29 −2</td>
+            <td class="tag-r">merge-base</td>
+          </tr>
+          <tr style="--pc: var(--p3)">
+            <td><i class="sw"></i><code>sync</code></td>
+            <td>The sync job adopts the retry</td>
+            <td>1</td>
+            <td>+2 −2</td>
+            <td><code>core</code></td>
+          </tr>
+          <tr style="--pc: var(--p4)">
+            <td><i class="sw"></i><code>docs</code></td>
+            <td>One sentence about it</td>
+            <td>1</td>
+            <td>+2</td>
+            <td><code>core</code></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="m">
+        <b>Balanced</b> would be two PRs: <code>tidy</code>, and <code>retry</code> (core, sync and
+        docs, 7 files, +33 −4), because sync and docs are footnotes a reviewer reads alongside core
+        anyway. The decision is yours; pr-split does not pick for you, it only refuses to cut until
+        you have.
+      </p>
+      <p>The two script calls behind it, on that branch, unedited:</p>
+      <pre><span class="c">$ bun "$SPLIT/scripts/split.ts" hunks &lt;repo&gt; main retry-backoff</span>
+lock   bun.lock
+         bun.lock#1  +2 -0
+docs   docs/net.md
+         docs/net.md#1  +2 -0
+prod   package.json
+         package.json#1  +1 -1
+prod   src/jobs/sync.ts
+         src/jobs/sync.ts#1  +2 -2
+prod   src/net/backoff.ts
+         src/net/backoff.ts#1  +5 -0
+test   src/net/client.test.ts
+         src/net/client.test.ts#1  +8 -0
+prod   src/net/client.ts
+         src/net/client.ts#1  +1 -0
+         src/net/client.ts#2  +1 -1  export function headers(token: string) {
+         src/net/client.ts#3  +12 -1  export function isRetryable(status: number) {</pre>
+      <p class="m">
+        The text after the counts is git's hunk-context line: the nearest declaration
+        <em>above</em> the change, not a description of it. That is why <code>#2</code>, the rename
+        of <code>timeoutMs</code>, reads <code>headers</code>. Read the diff, not the label.
+      </p>
+      <pre><span class="c">$ cat cut.json</span>
+{ "repo": "&lt;repo&gt;", "base": "main", "head": "retry-backoff",
+  "pieces": [
+    { "branch": "retry-backoff-tidy", "title": "Rename timeoutMs to requestTimeoutMs",
+      "hunks": ["src/net/client.ts#2"] },
+    { "branch": "retry-backoff-core", "title": "Retry failed requests with jittered backoff",
+      "files": ["src/net/backoff.ts", "src/net/client.test.ts", "package.json", "bun.lock"],
+      "hunks": ["src/net/client.ts#1", "src/net/client.ts#3"] },
+    { "branch": "retry-backoff-sync", "title": "Retry the sync job's fetch",
+      "after": "retry-backoff-core", "files": ["src/jobs/"] },
+    { "branch": "retry-backoff-docs", "title": "Document retries",
+      "after": "retry-backoff-core", "files": ["docs/"] } ] }
+
+<span class="c">$ bun "$SPLIT/scripts/split.ts" cut cut.json</span>
+<span class="g">✓ the 4 pieces sum back to retry-backoff exactly</span>
+  retry-backoff-tidy: 1 file changed, 1 insertion(+), 1 deletion(-)
+  retry-backoff-core: 5 files changed, 29 insertions(+), 2 deletions(-)
+  retry-backoff-sync (on retry-backoff-core): 1 file changed, 2 insertions(+), 2 deletions(-)
+  retry-backoff-docs (on retry-backoff-core): 1 file changed, 2 insertions(+)</pre>
+
+      <h2 data-beat="limits">It can prove the pieces add up. It cannot prove any piece works.</h2>
+      <div class="callout">
+        <b>I ran this.</b> On the same branch I left <code>"after"</code> off the sync piece, so it
+        would be built straight on the merge-base. The script printed
+        <code>✓ the 4 pieces sum back to retry-backoff exactly</code> and made all four branches.
+        That piece calls <code>retrying()</code>, which exists only in <code>core</code>: on its own
+        branch it does not compile. Sum-back found nothing wrong because nothing was lost. This is
+        the gap SKILL.md step 5 exists for: run each piece's tests and linters in a worktree of its
+        own, and if one fails, delete the branches and cut again.
+      </div>
+      <ul>
+        <li>
+          <b>It cannot cut inside a hunk.</b> Pieces claim whole files or whole hunks by id, and
+          hunks are whatever <code>git diff -U3</code> hands over, so two edits a few lines apart
+          are one hunk. Put an added import two lines from an unrelated rename and git gives you one
+          hunk holding both; there is no half to give each piece. The skill reads that as a finding
+          ("a hunk that touches two atoms' code is a sign they are one atom"), not a bug to work
+          around.
+        </li>
+        <li>
+          <b>It does not decide what an atom is.</b> That is judgement, and judgement is the model's
+          (steps 1 to 3). The script keeps the books. A cut can pass every check and still be a bad
+          cut.
+        </li>
+        <li>
+          <b>It has no size threshold and no quota.</b> A 900-line rename stays one PR. It will not
+          tell you how many pieces is "enough", and it does not claim stacked PRs beat separate
+          ones; stacking is used only where one piece needs another.
+        </li>
+        <li>
+          <b>It does not push, open a PR, or touch your checkout.</b> The original branch and your
+          working tree stay exactly where they were. What you get is local branches; opening them is
+          r2-pr's job, one at a time.
+        </li>
+        <li>
+          <b>It does not carry your commit history.</b> Each piece is one commit titled with the
+          piece's <code>title</code> (l.122). The original commits live on, on the original branch.
+        </li>
+        <li>
+          <b>It diffs from the merge-base</b> (l.51, l.60). Whatever the base branch did after you
+          branched is not part of the picture, and not part of any piece.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="t where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/pr-split/SKILL.md</code> (six steps, each with a "done when") and
+              <code>scripts/split.ts</code>, 140 lines, two subcommands: <code>hunks</code> and
+              <code>cut</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Declared</td>
+            <td>
+              <code>kind: skill</code>, <code>state: false</code>,
+              <code>requires: [git, bun]</code>. No <code>integrates</code> block and no
+              <code>deletion-policy</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>None.</b> It keeps nothing between runs. <code>cut.json</code> lives wherever you
+              write it; the only things a run creates are the piece branches (yours) and throwaway
+              worktrees in the OS temp dir, which it removes itself, even on failure. Deleting the
+              skill leaves nothing behind but those branches, and <code>git branch -D</code> deletes
+              them.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <code>git</code> (worktrees, <code>apply</code>, <code>rev-parse</code>) and
+              <code>bun</code> (it runs the TypeScript). One more that the manifest does not
+              declare: <code>split.ts</code> line 21 imports <code>kindOf</code> from
+              <code>../../pr-viz/scripts/classify.ts</code>, to label each file prod, test, lock,
+              binary or docs. The script only works with pr-viz's folder beside it.
+            </td>
+          </tr>
+          <tr>
+            <td>Called from</td>
+            <td>
+              <b>r2-pr</b>, step 3, on every branch before a PR is opened, and by hand ("split this
+              PR"). Each piece it makes then re-enters r2-pr at step 1. Its sibling
+              <a href="../skill-pr-viz/">pr-viz</a> explains the PR that survives the cut.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">Atoms first, branches second</h2>
+      <p>
+        There are two halves and they never swap jobs. SKILL.md's steps 1 to 3, 5 and 6 are the
+        model's judgement; steps 1 and 4 call <code>split.ts</code>, which makes no judgement at
+        all. The judgement is a set of seams, each one borrowed from a source the skill links:
+      </p>
+      <ul>
+        <li>
+          <b>A separate mechanism or module.</b> Two modules that each gain a feature are two atoms.
+        </li>
+        <li>
+          <b>Interface apart from implementation.</b> The API as interfaces and docs first, the
+          implementations second.
+        </li>
+        <li>
+          <b>Refactor apart from behaviour.</b> A rename, a move or a reformat is an atom; the
+          behaviour that builds on it stacks on top.
+        </li>
+        <li><b>Tests travel with the code they test</b>, inside that code's atom.</li>
+        <li>
+          <b>A shared file belongs to no atom.</b> A lockfile, a shared config, a generated file
+          goes with the <em>first</em> atom that needs it, and every later atom that needs it stacks
+          on that one.
+        </li>
+      </ul>
+      <p>
+        On the demo branch that gives the four pieces in the table above. The rename
+        (<code>client.ts#2</code>) is its own atom and stacks on nothing. The retry loop, the delay
+        function, the test and the dependency are one mechanism, so the lockfile rides with the
+        manifest change inside it. The sync job is a second module adopting the first, so it stacks.
+      </p>
+      <p>
+        An atom is "the smallest set of hunks that stands alone: it builds, its tests pass, and its
+        PR description would be one sentence". Step 2 is done when every hunk is in exactly one atom
+        and every dependency between atoms has a name. That sentence is what the script is built to
+        check the first half of.
+      </p>
+
+      <h2 data-beat="how">Nothing exists until everything checks</h2>
+      <p class="m">
+        What <code>split.ts cut</code> does with <code>cut.json</code>, stage by stage, with the
+        real lines it runs. Left: the stages. Right: the git objects each stage brings into being.
+        None of them is a branch until the last.
+      </p>
+
+      <div
+        class="fig"
+        id="cutfig"
+        tabindex="0"
+        data-viz-id="cut-figure"
+        data-label="stepper: the six stages of split.ts cut"
+      >
+        <div class="stage"><div id="cutsvg"></div></div>
+        <div class="detail">
+          <div>
+            <h4 class="mk">PRODUCES</h4>
+            <p id="makes"></p>
+          </div>
+          <div>
+            <h4 class="rf">REFUSES</h4>
+            <ul id="refuses"></ul>
+          </div>
+        </div>
+        <pre class="snip" id="snip"></pre>
+        <p class="lede" id="cutlede"></p>
+        <div class="ctrl">
+          <button id="cutprev" aria-label="previous stage">‹ back</button>
+          <button id="cutplay">▶ play</button>
+          <button id="cutnext" aria-label="next stage">next ›</button>
+          <span class="pos" id="cutpos"></span>
+          <span class="hint">← → when focused</span>
+        </div>
+      </div>
+
+      <p>
+        Two things in that sequence are easy to miss. First,
+        <b>the sum-back replays diffs, not snapshots</b>: each piece's change against
+        <em>its own parent</em> is applied in turn onto the merge-base, so unstacked pieces
+        (independent, built straight on the base) and stacked ones are treated the same way, and the
+        result must have the same tree as the head. Second,
+        <b>the failure modes are not uniform</b>. Ownership problems are tidy <code>✗</code> lines
+        and exit 1. A stack loop and a patch that will not apply are thrown errors: a stack trace,
+        exit 1. All of them happen before line 131, so all of them leave zero branches. Real output,
+        from the demo branch with the cut deliberately broken:
+      </p>
+      <pre><span class="r">✗ src/net/client.ts#3 is in no piece</span>                        <span class="c"># forgot a hunk</span>
+<span class="r">✗ src/net/client.ts#3 is in both retry-backoff-tidy and retry-backoff-core</span>
+<span class="r">error: pieces stack in a loop: retry-backoff-core → retry-backoff-sync → retry-backoff-core</span></pre>
+
+      <h3>Break a cut yourself</h3>
+      <p class="m">
+        The same gate (lines 63 to 106), run in your browser on the same nine hunks. Click a hunk to
+        move it to the next piece, change what a piece stacks on, drop a piece, or start from one of
+        the presets. Below the script's output is the check the script does <b>not</b> make: step 5,
+        each piece alone, using a hand-written table of which hunk needs which.
+      </p>
+      <div
+        class="fig"
+        id="breaker"
+        data-viz-id="break-figure"
+        data-label="interactive: cut the demo branch, then see which gate refuses it"
+      >
+        <div class="presets" id="presets"></div>
+        <p class="blurb" id="blurb"></p>
+        <div class="board" id="board"></div>
+        <pre class="term" id="term"></pre>
+      </div>
+      <div class="callout">
+        <b>Try "forget to stack".</b> The script says the pieces sum back exactly, and the two
+        pieces that need <code>retrying()</code> and the retry sentence then fail on their own. Two
+        different checks catch two different mistakes, and only one of them is a program.
+      </div>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its
+        own existence.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

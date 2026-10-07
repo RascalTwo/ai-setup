@@ -1,0 +1,1191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>pr-viz — a diff is the evidence; a review needs the case</title>
+    <meta name="viz:uid" content="v-df03b296cdf3" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="pr-viz" />
+    <meta
+      name="viz:description"
+      content="Turns a PR into a narrated review film, a review page with a tick per file, and a one-image poster, all from one plan.json, and refuses to build until every production hunk has been shown."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta
+      name="viz:tests"
+      content="smoke: a teaching figure; the tick demo re-runs pr-viz.ts's fingerprint rule on three fixed files, checked by hand against the template's own code"
+    />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* pr-viz's palette: film. A violet accent, and the amber of the highlight box the film
+         draws round whatever the narration is saying. */
+      :root {
+        --s: 1;
+        --accent: #bc8cff;
+        --hl: #f2c14e;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            700px 400px at 96% -6%,
+            color-mix(in srgb, var(--accent) 19%, transparent),
+            transparent 62%
+          ),
+          radial-gradient(
+            560px 360px at -4% 112%,
+            color-mix(in srgb, var(--hl) 9%, transparent),
+            transparent 62%
+          ),
+          linear-gradient(165deg, #0a0c12, #0d1117 62%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 456px;
+        grid-template-rows: 1fr auto;
+        gap: 0 44px;
+        padding: 46px 70px 38px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .copy {
+        align-self: center;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 45px;
+        line-height: 1.07;
+        margin: 0 0 18px;
+        letter-spacing: -1.2px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--accent);
+      }
+      p.sub {
+        font-size: 17.5px;
+        line-height: 1.46;
+        color: var(--muted);
+        margin: 0 0 16px;
+        max-width: 560px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 14.5px;
+        color: var(--muted);
+        margin: 0 0 18px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+        line-height: 1.5;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 15px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 9px;
+        padding: 10px 15px;
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the proof slot: one frame of the film */
+      .right {
+        align-self: center;
+      }
+      .frame {
+        background: #05070b;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0 0 12px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+      }
+      .frame .fh {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        color: var(--faint);
+        padding: 9px 14px;
+        border-bottom: 1px solid #171c25;
+      }
+      .frame .fh b {
+        color: var(--accent);
+        font-weight: 500;
+      }
+      .frame .code {
+        padding: 12px 0 8px;
+        font-family: var(--mono);
+        font-size: 10.6px;
+        line-height: 1.85;
+      }
+      .frame .l {
+        display: flex;
+        padding: 0 14px 0 0;
+        white-space: pre;
+        color: #c9d1d9;
+      }
+      .frame .l em {
+        font-style: normal;
+        width: 34px;
+        text-align: right;
+        color: var(--faint);
+        padding-right: 8px;
+        flex: none;
+      }
+      .frame .l i {
+        font-style: normal;
+        width: 14px;
+        flex: none;
+        color: var(--muted);
+      }
+      .frame .l.add {
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .frame .l.add i {
+        color: var(--good);
+      }
+      .frame .l.del {
+        background: color-mix(in srgb, var(--danger) 14%, transparent);
+        color: #8b949e;
+      }
+      .frame .l.del i {
+        color: var(--danger);
+      }
+      .frame .l .t {
+        white-space: pre;
+      }
+      .frame .l .t.ind {
+        padding-left: 2ch;
+      }
+      .frame .l u {
+        text-decoration: none;
+        outline: 1.5px solid var(--hl);
+        outline-offset: 1px;
+        border-radius: 3px;
+        background: color-mix(in srgb, var(--hl) 16%, transparent);
+      }
+      .frame .ptr {
+        position: absolute;
+        left: 206px;
+        top: 108px;
+      }
+      .frame .capn {
+        margin: 6px 14px 0;
+        text-align: center;
+        font-size: 14px;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.7);
+        border: 1px solid #1d2430;
+        border-radius: 6px;
+        padding: 7px 10px;
+      }
+      .modes {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+      }
+      .modes span {
+        flex: 1;
+        text-align: center;
+        padding: 8px 4px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        background: color-mix(in srgb, var(--panel) 80%, transparent);
+      }
+      .modes span.on {
+        color: #fff;
+        border-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 16%, var(--panel));
+      }
+      .gate {
+        margin-top: 10px;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 9%, transparent);
+        border: 1px solid color-mix(in srgb, var(--good) 38%, transparent);
+        border-radius: 8px;
+        padding: 7px 4px;
+      }
+      /* the chapter bar, the film's own navigation */
+      .chapters {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+        margin-top: 18px;
+      }
+      .chapters div {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        padding: 8px 8px 7px;
+        color: var(--faint);
+        border-top: 4px solid #1f2530;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .chapters div.done {
+        border-top-color: color-mix(in srgb, var(--accent) 45%, #1f2530);
+        color: var(--muted);
+      }
+      .chapters div.now {
+        color: #fff;
+        border-top: 4px solid transparent;
+        border-image: linear-gradient(90deg, var(--accent) 0 58%, #1f2530 58% 100%) 1;
+      }
+
+      /* ── the dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      /* a heading is a playhead on a five-beat timeline: why · using · limits · where · how */
+      .dive h2 {
+        --p: 20%;
+        display: flex;
+        flex-direction: column;
+        font-size: 26px;
+        line-height: 1.2;
+        letter-spacing: -0.4px;
+        color: #fff;
+        margin: 56px 0 14px;
+        font-weight: 700;
+      }
+      .dive h2::before {
+        order: -1;
+        content: "";
+        height: 4px;
+        border-radius: 3px;
+        margin-bottom: 14px;
+        background: linear-gradient(90deg, var(--accent) 0 var(--p), #20262f var(--p) 100%);
+      }
+      .dive h2::after {
+        order: -2;
+        content: "beat · " attr(data-beat);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 7px;
+        font-weight: 500;
+      }
+      .dive h2[data-beat="why"] {
+        --p: 20%;
+        margin-top: 18px;
+      }
+      .dive h2[data-beat="using"] {
+        --p: 40%;
+      }
+      .dive h2[data-beat="limits"] {
+        --p: 60%;
+      }
+      .dive h2[data-beat="where"] {
+        --p: 80%;
+      }
+      .dive h2[data-beat="how"] {
+        --p: 100%;
+      }
+      .dive h3 {
+        font-size: 17.5px;
+        color: #fff;
+        margin: 32px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.66;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive a {
+        color: var(--accent);
+      }
+      code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: #e0d2fa;
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 15px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      pre .g {
+        color: var(--good);
+      }
+      pre .r {
+        color: var(--danger);
+      }
+      .callout {
+        border-left: 3px solid var(--hl);
+        background: color-mix(in srgb, var(--hl) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--hl);
+      }
+      table.t {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 14.5px;
+      }
+      table.t th {
+        text-align: left;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        font-weight: 500;
+        padding: 0 10px 8px 0;
+        text-transform: uppercase;
+      }
+      table.t td {
+        border-top: 1px solid var(--border);
+        padding: 9px 12px 9px 0;
+        vertical-align: top;
+        line-height: 1.5;
+      }
+      table.modes-t td:first-child {
+        white-space: nowrap;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: #fff;
+      }
+      table.where td:first-child {
+        width: 138px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+
+      /* ── figures ── */
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 18px;
+        outline: none;
+      }
+      .fig:focus-visible {
+        border-color: var(--accent);
+      }
+      .fig .stage {
+        background: #0b0e15;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 14px 14px 8px;
+      }
+      .fig svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .el {
+        opacity: 0.09;
+        transition: opacity 0.35s;
+      }
+      .el.on {
+        opacity: 0.5;
+      }
+      .el.hot {
+        opacity: 1;
+      }
+      .el.hot rect {
+        stroke: var(--accent);
+        stroke-width: 1.6;
+      }
+      .vsvg-label.l {
+        justify-content: flex-start;
+        text-align: left;
+      }
+      .nl {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .nl b {
+        font-family: var(--mono);
+        color: var(--accent);
+        font-size: 11.5px;
+        letter-spacing: 0.02em;
+        font-weight: 600;
+      }
+      .nl span {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.3;
+      }
+      .fig .detail {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 22px;
+        margin-top: 14px;
+      }
+      .fig .detail h4 {
+        margin: 0 0 6px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        font-weight: 500;
+      }
+      .fig .detail h4.mk {
+        color: var(--good);
+      }
+      .fig .detail h4.rf {
+        color: var(--danger);
+      }
+      .fig .detail p,
+      .fig .detail ul {
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .fig .detail li {
+        font-size: 14px;
+        line-height: 1.45;
+        margin: 0 0 5px;
+      }
+      .fig .detail li::before {
+        content: "✗ ";
+        color: var(--danger);
+      }
+      pre.snip {
+        margin: 14px 0 0;
+        font-size: 11.8px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: #0b0e15;
+      }
+      pre.snip .ln {
+        display: inline-block;
+        min-width: 11.5ch;
+        margin-right: 1.3ch;
+        color: var(--faint);
+        text-align: right;
+      }
+      .fig .lede {
+        font-size: 15px;
+        line-height: 1.58;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 96px;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      .ctrl button,
+      .pushes button {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--text);
+        background: #0b0e15;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 12px;
+        cursor: pointer;
+      }
+      .ctrl button:hover,
+      .pushes button:hover {
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+
+      /* the reviewed-tick demo */
+      .pushes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-bottom: 12px;
+      }
+      .tallyrow {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+      .tallyrow b {
+        color: #fff;
+        font-weight: 500;
+      }
+      #tick-list details.file {
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #0b0e15;
+        margin-bottom: 7px;
+      }
+      #tick-list summary {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 10px;
+        padding: 8px 10px;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      #tick-list summary label {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      #tick-list .mut {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      #tick-list .stale {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: #1b1403;
+        background: var(--hl);
+        border-radius: 5px;
+        padding: 2px 7px;
+      }
+      #tick-list .fp {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--faint);
+      }
+      #tick-list .fp b {
+        color: var(--accent);
+        font-weight: 500;
+      }
+      #tick-list pre {
+        margin: 0;
+        border: 0;
+        border-top: 1px solid var(--border);
+        border-radius: 0;
+        background: transparent;
+        font-size: 11.8px;
+        line-height: 1.55;
+        padding: 8px 10px;
+      }
+      #tick-list pre .l {
+        display: block;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      #tick-list pre .l em {
+        display: inline-block;
+        width: 3.4ch;
+        text-align: right;
+        font-style: normal;
+        color: var(--faint);
+        margin-right: 1ch;
+      }
+      #tick-list pre .l i {
+        display: inline-block;
+        width: 2ch;
+        font-style: normal;
+        color: var(--muted);
+      }
+      #tick-list pre .l.add {
+        background: color-mix(in srgb, var(--good) 12%, transparent);
+      }
+      #tick-list pre .l.del {
+        background: color-mix(in srgb, var(--danger) 12%, transparent);
+      }
+      .tick-note {
+        min-height: 46px;
+        margin: 8px 0 0;
+        font-size: 14.5px;
+        line-height: 1.5;
+        color: var(--text);
+      }
+
+      .foot {
+        margin-top: 54px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+      @media (max-width: 760px) {
+        .fig .detail {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="pr-viz"
+        data-viz-id="poster-card"
+        data-label="pr-viz poster card"
+      >
+        <div class="copy">
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · PR-VIZ</div>
+          <h1 class="hook">A diff is the evidence.<br />A review needs<br /><em>the case.</em></h1>
+          <p class="sub">
+            <b>pr-viz</b> does the reviewer's research once, then renders one <b>plan.json</b> three
+            ways: a narrated <b>film</b>, a <b>review page</b> with a tick per file, and a one-image
+            <b>poster</b>. The build <b>refuses</b> until every production hunk has been shown.
+          </p>
+          <p class="not">The film explains. <b>The reviewer approves.</b></p>
+          <div class="trigger"><span>say</span>&nbsp;"pr viz" · "explain this PR"</div>
+        </div>
+        <div class="right">
+          <div
+            class="frame"
+            data-viz-id="card-frame"
+            data-label="one frame of the film: the diff tour, one hunk, one phrase highlighted"
+          >
+            <div class="fh"><b>HOW · DIFF TOUR</b><span>src/jobs/sync.ts · step 2 of 3</span></div>
+            <div class="code">
+              <div class="l">
+                <em>3</em><i> </i><span class="t">export async function sync() {</span>
+              </div>
+              <div class="l del">
+                <em></em><i>−</i><span class="t ind">const items = await getJson("/items");</span>
+              </div>
+              <div class="l add">
+                <em>4</em><i>+</i
+                ><span class="t ind"
+                  >const items = await <u>retrying</u>(() => getJson("/items"), 6);</span
+                >
+              </div>
+              <div class="l"><em>5</em><i> </i><span class="t ind">return items.length;</span></div>
+            </div>
+            <svg class="ptr" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+              <path
+                d="M3 2 L3 17 L7.5 13 L10.5 20 L13 19 L10 12 L16 12 Z"
+                fill="#fff"
+                stroke="#000"
+                stroke-width="1"
+              />
+            </svg>
+            <div class="capn">The sync job now wraps its fetch in retrying.</div>
+          </div>
+          <div class="modes" data-viz-id="card-modes" data-label="the three modes of one plan">
+            <span class="on">FILM</span><span>REVIEW PAGE</span><span>POSTER</span>
+          </div>
+          <div class="gate">✓ diff tour covers 6/6 production hunks</div>
+        </div>
+        <div
+          class="chapters"
+          data-viz-id="card-chapters"
+          data-label="the film's chapter bar, mid-way through How"
+        >
+          <div class="done">Why</div>
+          <div class="done">What</div>
+          <div class="done">Where to look</div>
+          <div class="now">How</div>
+          <div>Proof</div>
+          <div>Risk &amp; rollout</div>
+          <div>Check these</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">The diff is alphabetical. The change is a story.</h2>
+      <p>
+        "Files changed" lists files by path. The change happened in a different order, for a reason,
+        and the reason lives somewhere else: in the description (what the author meant), in a linked
+        issue (why anyone cared), in a review thread from last week (why that line is odd), in a
+        test (what is actually pinned). The diff is the evidence. It was never the case.
+      </p>
+      <p>
+        So a careful reviewer's first hour is not reviewing, it is research: open each file at head,
+        read the whole function and its callers, work out what proves each behaviour. And that
+        research falls on the one person who did not write the code. The tempting alternative is to
+        skim and trust the description, which is a review of the author's summary.
+      </p>
+      <p>
+        <b>pr-viz</b> moves the research to the front. Its research step is to read
+        <em>like the reviewer who has to defend the change</em>, and the answer is written down in
+        the order a person understands a change: Why, What, Where to look, How, Proof, Risk and
+        rollout, Check these. Every changed line of production code appears in the How. Every
+        behaviour the PR promises is traced to what proves it, or marked <code>untested</code> or
+        <code>partial</code> in plain words. The film is self-contained: it covers all seven
+        chapters as if the viewer had read none of the PR body.
+      </p>
+
+      <h2 data-beat="using">Say "pr viz". Get a film, a page, and a picture.</h2>
+      <p>
+        Triggers: <code>explain this PR</code>, <code>demo this PR</code>,
+        <code>turn it into a video</code>, <code>pr viz</code>, <code>review video</code>,
+        <code>PR film</code>. It also fires without being asked: <b>r2-pr step 4</b> runs it through
+        the hand-over on every PR, unless you said to skip it. One plan renders four ways, picked by
+        the URL hash:
+      </p>
+      <table
+        class="t modes-t"
+        data-viz-id="modes-table"
+        data-label="the ways one plan.json is read"
+      >
+        <thead>
+          <tr>
+            <th>Reading</th>
+            <th>What it is</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>film</td>
+            <td>
+              The default. A narrated walkthrough with a chapter bar; How includes a tour of every
+              changed line. <code>viz render</code> makes it an mp4.
+            </td>
+          </tr>
+          <tr>
+            <td>#{"cut":"short"}</td>
+            <td>
+              The short cut: a fifth of the length, for a stranger who will not watch the full one.
+              Why, the headline What, Where to look. Reuses the full film's scenes and clips;
+              nothing new is written or spoken.
+            </td>
+          </tr>
+          <tr>
+            <td>#{"mode":"review"}</td>
+            <td>
+              The same scenes as a page, with the transcript, the full diff, the acceptance criteria
+              and a <b>reviewed box per file</b> in story order. "▶ watch" plays that scene in
+              place.
+            </td>
+          </tr>
+          <tr>
+            <td>#{"mode":"poster"}</td>
+            <td>
+              Only the pictures, every scene finished, the diff tour as the film shows it. One tall
+              image for anyone who will not play the film.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Plus a <b>hero</b>: the one scene, named in <code>plan.json</code>, that alone tells a
+        stranger what the PR does, as a 1080p still. What you are handed at the end: the mp4, the
+        short cut with its <code>.vtt</code>, the hero, the poster, the changes walkthrough as
+        markdown, a chapters list for a video description, and the live URL.
+      </p>
+      <pre><span class="c"># the whole skill, as commands</span>
+viz create pr-&lt;n&gt;-&lt;slug&gt; --from "$PRVIZ/template"
+bun "$PRVIZ/scripts/build.ts" &lt;viz-dir&gt;
+viz verify &lt;viz-id&gt;                  <span class="c"># twice</span>
+viz render start &lt;viz-id&gt; --out ~/Desktop/pr-&lt;n&gt;.mp4
+bun "$PRVIZ/scripts/stills.ts" &lt;viz-dir&gt;
+bun "$PRVIZ/scripts/review-order.ts" &lt;viz-dir&gt;</pre>
+
+      <h2 data-beat="limits">
+        It enforces coverage. It cannot enforce that the narration is true.
+      </h2>
+      <div class="callout">
+        <b>What the gate counts.</b> <code>build.ts</code> compares hunk ids: every production hunk
+        must appear in some tour entry. It cannot read the <code>say</code> line attached to one. A
+        sentence can claim anything about a hunk it covers. What keeps the claims honest is the
+        research step and a person reading every full-size chapter frame, which are habits, not
+        code.
+      </div>
+      <ul>
+        <li>
+          <b>"Every line" means every production line.</b> Files are classed by path
+          (<code>classify.ts</code>): a <code>plan.json</code> override first, then binaries,
+          lockfiles, tests, docs, and everything else is production. Tests, lockfiles, docs and
+          binaries need no tour entry, and a binary's hunks are emptied outright. A manifest bump
+          like <code>package.json</code> is production, and gets narrated.
+        </li>
+        <li>
+          <b>It stops at the hand-over.</b> It makes the files. Putting them on a PR is
+          <code>r2-pr</code>'s job, and uploading the media is another skill's.
+        </li>
+        <li>
+          <b>It is local by default.</b> The template ships <code>viz:posture</code> =
+          <code>local</code>, <code>unlisted</code>, and says why: a review film of someone's PR is
+          not for the open web unless you decide it is.
+        </li>
+        <li>
+          <b>The add-ons are narrow.</b> The call graph is Python only, standard-library
+          <code>ast</code>, resolving calls by name inside a package root: dynamic dispatch,
+          aliasing and <code>getattr</code> are invisible to it. The fixtures add-on reads PDFs. A
+          saved diff has no checkout to walk, so both are skipped there.
+        </li>
+        <li>
+          <b>A tick is yours alone.</b> Reviewed-ticks live in the browser's
+          <code>localStorage</code>, per PR. They are not shared with the next reviewer.
+        </li>
+        <li>
+          <b>It cites only what the audience can see.</b> Tests, CI, real runs, public docs. Never a
+          local skill or an internal review bot: they cannot check it, so it proves nothing.
+        </li>
+        <li>
+          <b>It is not quick.</b> Voice for every line, verify twice, then two renders as background
+          jobs, then stills. 3D is only for a PR where depth means something; 3D views that said
+          what 2D already said were cut.
+        </li>
+        <li>
+          <b>The markdown walkthrough leaves out import-only hunks.</b> They are listed at the end
+          with links. The film still walks them: that is its promise.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">What it leaves behind, and where</h2>
+      <table class="t where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/pr-viz/</code>: <code>SKILL.md</code>;
+              <code>scripts/</code> (<code>build.ts</code>, <code>classify.ts</code>,
+              <code>review-order.ts</code>, <code>stills.ts</code>);
+              <code>template/</code> (<code>index.html</code>, <code>pr-viz.ts</code> at 941 lines,
+              <code>pr-viz.css</code>); <code>reference/</code> (plan, scenes, style, research, 3d);
+              <code>addons/</code> (<code>callgraph.py</code>, <code>python_callgraph.py</code>,
+              <code>pdf_fixtures.py</code>).
+            </td>
+          </tr>
+          <tr>
+            <td>Declared</td>
+            <td>
+              <code>kind: skill</code>, <code>state: true</code>,
+              <code>requires: [viz, bun, ffmpeg]</code>. No <code>integrates</code> block and no
+              <code>deletion-policy</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>Real, but not in a folder of its own:</b> there is no
+              <code>~/.agents/state/pr-viz/</code>. A run leaves (1) a viz in the viz library,
+              <code>~/.agents/state/viz/pr-&lt;n&gt;-&lt;slug&gt;/</code>, holding
+              <code>plan.json</code> beside the files derived from it, plus
+              <code>.verify/</code> and <code>.tts/</code> caches; (2) the outputs on the Desktop
+              (<code>~/Desktop/pr-&lt;n&gt;.mp4</code>, <code>.short.mp4</code>,
+              <code>.hero.png</code>, <code>.poster.png</code>, the default of
+              <code>stills.ts</code>); (3) the reviewer's ticks, in their browser.
+            </td>
+          </tr>
+          <tr>
+            <td>Deleting it</td>
+            <td>
+              The manifest declares no <code>deletion-policy</code>, so this is a reading of the
+              source: <code>hunks.json</code>, <code>narration.json</code>,
+              <code>callgraph.json</code> and <code>fixtures.json</code> regenerate from
+              <code>build.ts</code>, and the mp4s from a render. <code>plan.json</code>, and the
+              research behind it, do not.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <code>viz</code> (the page, its server and kit, <code>verify</code>,
+              <code>render</code>; <code>stills.ts</code> borrows its puppeteer and Chrome lookup),
+              <code>bun</code>, <code>ffmpeg</code> (the hero frame, the stacked poster). Only when
+              a change calls for them: <code>python3</code> for the call graph, <code>uv</code> with
+              pypdf and pillow, and <code>pdftoppm</code>, for PDF fixtures.
+            </td>
+          </tr>
+          <tr>
+            <td>Called from</td>
+            <td>
+              <b>r2-pr</b>, step 4, on every PR. Its sibling
+              <a href="../skill-pr-split/">pr-split</a> imports <code>classify.ts</code> from here
+              to tell production code from tests, lockfiles and docs.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One plan, eight steps, one refusal</h2>
+      <p>
+        Everything on screen, in all three modes, is rendered from <code>plan.json</code>. The
+        page's own source says so: <code>index.html</code> is "never edited", and
+        <code>hunks.json</code> and <code>narration.json</code> are derived, so one edit changes the
+        film, the page and the poster together. The steps below are SKILL.md's, in order, walked
+        over the pipeline they build.
+      </p>
+
+      <div
+        class="fig"
+        id="pipefig"
+        tabindex="0"
+        data-viz-id="pipeline-figure"
+        data-label="stepper: the eight steps of a pr-viz run over its pipeline"
+      >
+        <div class="stage"><div id="pipesvg"></div></div>
+        <div class="detail">
+          <div>
+            <h4 class="mk">PRODUCES</h4>
+            <p id="makes"></p>
+          </div>
+          <div>
+            <h4 class="rf">REFUSES</h4>
+            <ul id="refuses"></ul>
+          </div>
+        </div>
+        <pre class="snip" id="snip"></pre>
+        <p class="lede" id="pipelede"></p>
+        <div class="ctrl">
+          <button id="pipeprev" aria-label="previous step">‹ back</button>
+          <button id="pipeplay">▶ play</button>
+          <button id="pipenext" aria-label="next step">next ›</button>
+          <span class="pos" id="pipepos"></span>
+          <span class="hint">← → when focused</span>
+        </div>
+      </div>
+
+      <h3>The refusal, as printed</h3>
+      <p>
+        Real output, from a three-scene plan against a scratch branch whose diff touches six
+        production hunks (the tour had narrated three of them):
+      </p>
+      <pre><span class="c">$ bun "$PRVIZ/scripts/build.ts" &lt;viz-dir&gt;</span>
+7 files · 6 production hunks
+  lock   +  2 -  0  bun.lock  (1 hunk)
+  docs   +  2 -  0  docs/net.md  (1 hunk)
+  prod   +  1 -  1  package.json  (1 hunk)
+  prod   +  2 -  2  src/jobs/sync.ts  (1 hunk)
+  prod   +  5 -  0  src/net/backoff.ts  (1 hunk)
+  test   +  8 -  0  src/net/client.test.ts  (1 hunk)
+  prod   + 14 -  2  src/net/client.ts  (3 hunks)
+<span class="r">✗ the diff tour misses 3 production hunk(s) — give each a say line in a "tour" scene:</span>
+  package.json#1  +1 -1
+      - { "name": "demo", "dependencies": {} }
+      + { "name": "demo", "dependencies": { "p-retry": "^6.0.0" } }
+  src/net/client.ts#1  +1 -0
+      + import { backoff } from "./backoff.ts";
+  src/net/client.ts#2  +1 -1  export function headers(token: string) {
+      - export function timeoutMs() {
+      + export function requestTimeoutMs() {
+
+<span class="c"># after one more tour entry carrying all three hunk ids:</span>
+<span class="g">✓ 5 beats · 41 words ≈ 0.3 min · diff tour covers 6/6 production hunks</span></pre>
+      <p class="m">
+        The refusal prints each missing hunk's first changed lines, so the fix is to write a
+        sentence about exactly that. Notice what is not in the list: the lockfile, the docs and the
+        test. Their hunks were never required.
+      </p>
+
+      <h3>From a say line to a beat</h3>
+      <p>
+        Every <code>say</code> line is one beat, numbered across the whole film; a tour entry is a
+        beat too. <code>build.ts</code> writes <code>narration.json</code> from them, so there is
+        one copy of the script. What the voice is given strips the markup (l.81 to 86): pointer
+        marks <code>[words](target)</code> keep the words, <code>{{c:id|words}}</code> glossary
+        hovers keep the words, <code>**strong**</code> and backticks lose their marks.
+      </p>
+      <pre><span class="c">say  :</span> "The sync job now wraps its fetch in [retrying](L2)."
+<span class="c">cue  :</span> { "at": "beat:2", "say": "The sync job now wraps its fetch in retrying." }</pre>
+      <p>
+        <code>(L2)</code> is the pointer: from the moment <i>retrying</i> is spoken, line 2 of that
+        tour step is outlined, until the next mark or the end of the line. When it is spoken is
+        known because verify's second pass compiled the voice's word timestamps into
+        <code>.tts/manifest.json</code>. This is also why a render matters to timing: the short cut
+        keeps the full film's beat numbers, so it reuses the full film's compiled clips and records
+        nothing new.
+      </p>
+
+      <h2 data-beat="how">A tick that knows what it was ticked against</h2>
+      <p>
+        On the review page every file has a "reviewed" box, in the order the tour reaches it. The
+        problem a push poses is old: which of the files I already read have changed since? pr-viz
+        stores, with each tick, a SHA-1 of the file's <b>changed lines</b> only: for each hunk, the
+        sign and text of every added or removed line (<code>pr-viz.ts</code> l.870 to 877). Line
+        numbers and context are not in it. A tick holds when that fingerprint is unchanged; when it
+        differs, the tick is gone and the file comes back marked <i>changed since you looked</i>.
+      </p>
+      <p class="m">
+        This is the real rule, running in your browser with <code>crypto.subtle</code>. Tick some
+        files, then push at them.
+      </p>
+
+      <div
+        class="fig"
+        id="ticks"
+        data-viz-id="tick-figure"
+        data-label="interactive: tick files, push changes, see which ticks survive"
+      >
+        <div class="pushes">
+          <button data-push="rebase">rebase onto a newer main</button>
+          <button data-push="edit">change an added line in sync.ts</button>
+          <button data-push="add">a new file joins the PR</button>
+          <button data-push="reset">reset</button>
+        </div>
+        <div class="tallyrow">
+          <span>review page · diff tour order</span><b id="tick-tally"></b>
+        </div>
+        <div id="tick-list"></div>
+        <p class="tick-note" id="tick-note"></p>
+      </div>
+
+      <div class="callout">
+        <b>Which way the rule errs.</b> Anything that changes an added or removed line, or moves a
+        line between hunks, un-ticks the file. A rebase that only shifts numbers does not. A
+        reviewer who ticked a file has said "I read these lines", and the fingerprint is exactly
+        those lines.
+      </div>
+
+      <h2 data-beat="how">Three small hacks around GitHub</h2>
+      <ul>
+        <li>
+          <b>The hero is painted onto the video's first frame.</b> GitHub's player drops a
+          <code>poster</code> attribute but shows a video's first frame as its thumbnail, so
+          <code>stills.ts</code> overlays the hero on frame 0 only with
+          <code>ffmpeg overlay=enable='eq(n,0)'</code>, copying audio, subtitles and chapters
+          untouched (l.55 to 66). A re-render replaces the mp4, so run stills again after.
+        </li>
+        <li>
+          <b>The poster is shot in 4,000-pixel bands and stacked.</b> A Chrome screenshot tops out
+          at 16,384 device pixels and repeats the page past it, so at 2x the page is clipped in
+          bands and joined with <code>vstack</code>. GitHub refuses images over 10 MB, so a poster
+          that big is re-shot at 1.5x (l.75 to 90).
+        </li>
+        <li>
+          <b>Links go to the exact lines in Files changed.</b> <code>review-order.ts</code> builds
+          each block's anchor as <code>#diff-&lt;sha256 of the path&gt;R&lt;line&gt;</code>, which
+          is GitHub's own scheme, and falls back to the compare view before the PR exists so a local
+          draft links correctly. An added-only hunk is fenced in the file's language for syntax
+          colour; anything with a removed line is fenced as <code>diff</code>, because red and green
+          are the point.
+        </li>
+      </ul>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its
+        own existence.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

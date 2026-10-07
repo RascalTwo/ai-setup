@@ -1,0 +1,5 @@
+interface:
+  display_name: "Spawn Herdr Tab"
+  short_description: "Open a herdr tab running a fresh Claude Code or Codex session"
+policy:
+  allow_implicit_invocation: true

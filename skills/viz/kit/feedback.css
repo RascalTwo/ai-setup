@@ -1,0 +1,315 @@
+/* feedback.css — styling for the /viz feedback widget (kit/feedback.js).
+   Injected live-only by the server next to the hot-reload script; absent from
+   frozen/published builds.
+
+   Everything lives inside #viz-feedback, a fixed full-viewport layer that is
+   pointer-events:none so it never eats the viz's own clicks; only the widgets
+   re-enable pointer events. The layer owns its palette and inherits nothing from
+   the host page: a deck defining --panel but no --text once rendered white-on-white.
+   This is tool chrome, like devtools; it looks the same everywhere. */
+
+#viz-feedback {
+  --vf-panel: #161b22;
+  --vf-panel-2: #21262d;
+  --vf-bg: #0d1117;
+  --vf-border: #30363d;
+  --vf-text: #e6edf3;
+  --vf-muted: #8b949e;
+  --vf-accent: #58a6ff;
+  --vf-good: #3fb950;
+  --vf-danger: #f85149;
+
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  font:
+    13px/1.4 -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  color: var(--vf-text);
+}
+#viz-feedback * {
+  box-sizing: border-box;
+}
+
+/* ---- The pill: mic · keep-on · count · Send, bottom-right. ---- */
+.vf-pill {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: var(--vf-panel);
+  border: 1px solid var(--vf-border);
+  border-radius: 20px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+.vf-pill button {
+  all: unset;
+  cursor: pointer;
+  padding: 4px 9px;
+  border-radius: 16px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--vf-text);
+}
+.vf-pill button:hover {
+  background: var(--vf-panel-2);
+}
+.vf-pill .mic.on {
+  background: var(--vf-danger);
+  color: #fff;
+}
+.vf-pill .mic.paused {
+  opacity: 0.6;
+}
+.vf-pill .mic .pct {
+  font-size: 11px;
+  color: var(--vf-muted);
+}
+.vf-pill .mic .spin {
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--vf-muted);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: vf-spin 0.8s linear infinite;
+}
+@keyframes vf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vf-pill .mic .spin {
+    animation-duration: 3s;
+  }
+}
+.vf-pill .keep {
+  opacity: 0.35;
+}
+.vf-pill .keep[aria-pressed="true"] {
+  opacity: 1;
+}
+.vf-pill .send {
+  background: var(--vf-accent);
+  color: #0d1117;
+  font-weight: 650;
+}
+.vf-pill .send:hover {
+  background: var(--vf-accent);
+  filter: brightness(1.1);
+}
+.vf-pill .count {
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* ---- Pins: one per anchored element; a stack when it holds several lines. ---- */
+.vf-pin {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -100%);
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 11px 11px 11px 2px;
+  background: var(--vf-accent);
+  color: #0d1117;
+  border: 2px solid var(--vf-bg);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+/* A stack: two offset cards behind the pin, so "×4" reads as a pile, not pin number 4. */
+.vf-pin.stack {
+  box-shadow:
+    3px -3px 0 -1px var(--vf-bg),
+    3px -3px 0 1px var(--vf-accent),
+    6px -6px 0 -1px var(--vf-bg),
+    6px -6px 0 1px var(--vf-accent),
+    0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.vf-pin.done {
+  background: var(--vf-good);
+}
+.vf-pin.stack.done {
+  box-shadow:
+    3px -3px 0 -1px var(--vf-bg),
+    3px -3px 0 1px var(--vf-good),
+    6px -6px 0 -1px var(--vf-bg),
+    6px -6px 0 1px var(--vf-good),
+    0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.vf-pin.detached {
+  background: var(--vf-muted);
+  opacity: 0.7;
+}
+
+/* ---- While talking: a dot at the cursor; then a caption on the anchor. ---- */
+.vf-dot {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  margin: 14px 0 0 14px;
+  border-radius: 50%;
+  background: var(--vf-danger);
+  box-shadow: 0 0 0 3px rgba(248, 81, 73, 0.3);
+  display: none;
+}
+.vf-dot.on {
+  display: block;
+}
+.vf-caption {
+  position: fixed;
+  transform: translate(-50%, calc(-100% - 8px));
+  max-width: min(60ch, 80vw);
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 13px;
+  transition: opacity 0.4s;
+}
+
+/* ---- Cards: a pin's lines, the full list, and the Alt-click composer. ---- */
+.vf-card,
+.vf-panel,
+.vf-bubble {
+  position: fixed;
+  pointer-events: auto;
+  background: var(--vf-panel);
+  border: 1px solid var(--vf-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+  padding: 10px;
+  width: 300px;
+}
+.vf-panel {
+  right: 14px;
+  bottom: 54px;
+  width: 340px;
+  max-height: 70vh;
+  overflow: auto;
+}
+.vf-panel h3 {
+  margin: 2px 2px 8px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--vf-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.vf-empty {
+  color: var(--vf-muted);
+  font-size: 12px;
+  padding: 4px;
+}
+.vf-group {
+  margin-bottom: 10px;
+}
+.vf-where {
+  font-size: 11px;
+  color: var(--vf-accent);
+  font-family: ui-monospace, monospace;
+  margin: 0 2px 4px;
+  cursor: pointer;
+}
+.vf-line {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 5px 7px;
+  margin-bottom: 4px;
+  background: var(--vf-bg);
+  border-left: 3px solid var(--vf-accent);
+  border-radius: 5px;
+}
+.vf-line.done {
+  border-left-color: var(--vf-good);
+}
+.vf-line .t {
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-word;
+  outline: none;
+  cursor: text;
+}
+.vf-line .t:focus {
+  background: var(--vf-panel-2);
+  border-radius: 3px;
+}
+.vf-line .note {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--vf-good);
+}
+.vf-line button {
+  all: unset;
+  cursor: pointer;
+  opacity: 0.5;
+  font-size: 12px;
+}
+.vf-line button:hover {
+  opacity: 1;
+}
+.vf-bubble textarea {
+  width: 100%;
+  min-height: 64px;
+  resize: vertical;
+  background: var(--vf-bg);
+  color: var(--vf-text);
+  border: 1px solid var(--vf-border);
+  border-radius: 6px;
+  font: inherit;
+  padding: 7px 8px;
+}
+.vf-bubble textarea:focus {
+  outline: none;
+  border-color: var(--vf-accent);
+}
+.vf-hint {
+  margin: 6px 2px 0;
+  font-size: 11px;
+  color: var(--vf-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vf-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}
+.vf-btn {
+  background: var(--vf-panel-2);
+  border: 1px solid var(--vf-border);
+  border-radius: 6px;
+  color: var(--vf-text);
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.vf-btn.primary {
+  background: var(--vf-accent);
+  border-color: var(--vf-accent);
+  color: #0d1117;
+  font-weight: 600;
+}

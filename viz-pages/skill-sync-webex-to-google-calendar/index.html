@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      sync-webex-to-google-calendar — your meetings are on the calendar you aren't looking at
+    </title>
+    <!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:uid" content="v-4e1d7ab9c3f2" />
+    <meta name="viz:title" content="sync-webex-to-google-calendar" />
+    <meta
+      name="viz:description"
+      content="Mirrors meetings from the Webex desktop calendar into Google Calendar by reading the screen through the macOS accessibility API, and only ever deletes events it wrote itself."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* Identity: a two-pane mirror in deep indigo, periwinkle for the source, teal for the copy.
+         Re-themed through the kit's tokens, not forked. */
+      :root {
+        --s: 1;
+        --bg: #0a0d1c;
+        --panel: #121730;
+        --panel-2: #1b2142;
+        --border: #2b3360;
+        --text: #e7eaff;
+        --muted: #8f98c9;
+        --faint: #5d6798;
+        --accent: #9aa8ff;
+        --mirror: #3fd6c4;
+        --good: #3fd6c4;
+        --warn: #f0b95a;
+        --danger: #ff7a90;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(700px 400px at 0% 0%, rgba(154, 168, 255, 0.16), transparent 62%),
+          radial-gradient(700px 420px at 100% 110%, rgba(63, 214, 196, 0.14), transparent 62%),
+          linear-gradient(180deg, #0b0f21, #090c1a);
+        color: var(--text);
+        font-family: var(--sans);
+        padding: 0 64px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 30px;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 14px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px rgba(154, 168, 255, 0.22);
+      }
+      h1.hook {
+        font-size: 50px;
+        line-height: 1.06;
+        margin: 0;
+        letter-spacing: -1.4px;
+        font-weight: 700;
+        max-width: 760px;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--mirror);
+      }
+      .chips {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        align-items: flex-end;
+        padding-top: 30px;
+      }
+      .chip {
+        font-family: var(--mono);
+        font-size: 13px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 9px;
+        padding: 8px 13px;
+        color: var(--text);
+        white-space: nowrap;
+      }
+      .chip span {
+        color: var(--muted);
+      }
+      .chip.m {
+        border-left-color: var(--mirror);
+      }
+      .mirror {
+        margin-top: 26px;
+        display: grid;
+        grid-template-columns: 1fr 190px 1fr;
+        gap: 0;
+        align-items: stretch;
+      }
+      .pane {
+        background: color-mix(in srgb, var(--panel) 86%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px 14px 14px;
+      }
+      .pane.src {
+        border-top: 2px solid var(--accent);
+      }
+      .pane.dst {
+        border-top: 2px solid var(--mirror);
+      }
+      .pane .hd {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.12em;
+        margin-bottom: 8px;
+      }
+      .pane.src .hd {
+        color: var(--accent);
+      }
+      .pane.dst .hd {
+        color: var(--mirror);
+      }
+      .pane .hd i {
+        font-style: normal;
+        color: var(--faint);
+      }
+      .row {
+        height: 40px;
+        margin-bottom: 6px;
+        border-radius: 8px;
+        padding: 0 11px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14.5px;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .row:last-child {
+        margin-bottom: 0;
+      }
+      .row .t {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .row.mir {
+        background: color-mix(in srgb, var(--mirror) 14%, var(--panel));
+        border-color: color-mix(in srgb, var(--mirror) 50%, var(--border));
+      }
+      .row.mir b {
+        color: var(--mirror);
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .row.ghost {
+        background: transparent;
+        border-style: dashed;
+        color: var(--faint);
+      }
+      .row.gone {
+        text-decoration: line-through;
+        text-decoration-color: var(--danger);
+        color: var(--muted);
+      }
+      .axis {
+        display: grid;
+        grid-template-rows: 22px repeat(5, 40px);
+        row-gap: 6px;
+        padding: 12px 0 14px;
+        position: relative;
+      }
+      .axis::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: linear-gradient(var(--accent), var(--mirror));
+        opacity: 0.35;
+      }
+      .act {
+        position: relative;
+        align-self: center;
+        justify-self: center;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.06em;
+        padding: 5px 10px;
+        border-radius: 99px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .act.c {
+        color: var(--mirror);
+        border-color: var(--mirror);
+      }
+      .act.u {
+        color: var(--warn);
+        border-color: var(--warn);
+      }
+      .act.d {
+        color: var(--danger);
+        border-color: var(--danger);
+      }
+
+      /* ── the dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+        counter-reset: sec;
+      }
+      /* the beat tag rides above each heading, straight from its data-beat attribute */
+      .dive h2 {
+        font-size: 26px;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+        color: #fff;
+        margin: 54px 0 14px;
+      }
+      .dive h2::before {
+        content: attr(data-beat);
+        display: block;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--mirror);
+        margin-bottom: 8px;
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 28px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--mirror);
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin: 0 0 18px;
+      }
+      .trio .cell {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px 15px 15px;
+        font-size: 14.5px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+      .trio .cell .k {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.12em;
+        color: var(--danger);
+        margin-bottom: 8px;
+      }
+      .trio .cell b {
+        color: var(--text);
+        display: block;
+        margin-bottom: 6px;
+        font-size: 15.5px;
+        font-weight: 600;
+      }
+      .trio .cell .fix {
+        margin-top: 10px;
+        padding-top: 9px;
+        border-top: 1px dashed var(--border);
+        color: var(--mirror);
+        font-size: 13.5px;
+      }
+      table.where,
+      table.cfg {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td,
+      table.cfg td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child,
+      table.cfg td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+      table.cfg td:first-child {
+        width: 130px;
+        color: var(--mirror);
+      }
+      table.cfg {
+        font-size: 14.5px;
+      }
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #080b18;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 14px 16px;
+      }
+      .fig .stage svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .fig .code {
+        margin: 12px 0 0;
+        padding: 10px 0;
+        background: #080b18;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.55;
+        overflow-x: auto;
+        min-height: 150px;
+      }
+      .fig .code div {
+        display: flex;
+        gap: 14px;
+        padding: 0 14px;
+        white-space: pre;
+        color: var(--text);
+      }
+      .fig .code div i {
+        font-style: normal;
+        color: var(--faint);
+        width: 30px;
+        text-align: right;
+        flex: none;
+      }
+      .fig .code div.cm {
+        color: var(--muted);
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 96px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #080b18;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .cases {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin: 0 0 12px;
+      }
+      .cases button {
+        text-align: left;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 10px 12px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .cases button[aria-pressed="true"] {
+        color: #fff;
+        border-color: var(--accent);
+        background: var(--panel-2);
+      }
+      .cases button .v {
+        font-weight: 700;
+        letter-spacing: 0.08em;
+      }
+      .verdict {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 0 0 8px;
+      }
+      .verdict .side {
+        background: #080b18;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 13px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.55;
+        color: var(--text);
+      }
+      .verdict .side .l {
+        font-size: 10.5px;
+        letter-spacing: 0.14em;
+        color: var(--faint);
+        margin-bottom: 4px;
+      }
+      .why-box {
+        border: 1px solid var(--border);
+        border-left-width: 3px;
+        border-radius: 10px;
+        padding: 12px 15px;
+        font-size: 15px;
+        line-height: 1.55;
+        margin: 0 0 16px;
+        background: var(--panel);
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="sync-webex-to-google-calendar"
+        data-viz-id="poster-card"
+        data-label="sync-webex-to-google-calendar poster card"
+      >
+        <div class="top">
+          <div>
+            <div class="eyebrow">
+              <span class="dot"></span>OWNED SKILL · SYNC-WEBEX-TO-GOOGLE-CALENDAR
+            </div>
+            <h1 class="hook">Your meetings are on the calendar <em>you aren't looking at.</em></h1>
+          </div>
+          <div class="chips">
+            <div class="chip"><span>say</span>&nbsp;"sync Webex to Google Calendar"</div>
+            <div class="chip m"><span>one-way · read-only on</span>&nbsp;Webex</div>
+          </div>
+        </div>
+
+        <div
+          class="mirror"
+          data-viz-id="card-mirror"
+          data-label="Webex rows on the left, the action taken, and the Google rows on the right"
+        >
+          <div class="pane src">
+            <div class="hd">WEBEX DESKTOP <i>read-only</i></div>
+            <div class="row"><span class="t">09:30</span>Design sync</div>
+            <div class="row"><span class="t">11:00</span>Sprint planning</div>
+            <div class="row"><span class="t">13:00</span>1:1 check-in</div>
+            <div class="row"><span class="t">15:30</span>Vendor demo</div>
+            <div class="row ghost"><span class="t">16:00</span>cancelled in Webex</div>
+          </div>
+          <div class="axis">
+            <div></div>
+            <div class="act">= unchanged</div>
+            <div class="act u">↻ update</div>
+            <div class="act">≈ native, skip</div>
+            <div class="act c">+ create</div>
+            <div class="act d">× delete</div>
+          </div>
+          <div class="pane dst">
+            <div class="hd">GOOGLE CALENDAR <i>only [Webex] rows are ours</i></div>
+            <div class="row mir"><b>[Webex]</b>Design sync</div>
+            <div class="row mir"><b>[Webex]</b>Sprint planning</div>
+            <div class="row"><span class="t">13:00</span>1:1 check-in</div>
+            <div class="row ghost">not on your calendar yet</div>
+            <div class="row mir gone"><b>[Webex]</b>Retro</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">Your work day is on the calendar you aren't looking at</h2>
+      <p>
+        Work meetings arrive through Outlook and show up in the Webex desktop app's calendar, the
+        Zoom and Google Meet ones included. The calendar you actually plan your day in is Google.
+        Two calendars means that a free slot on one is a meeting on the other, and the only thing
+        reconciling them is you, squinting.
+      </p>
+      <p>
+        People paper over it by copying events across by hand, which is how the same meeting ends up
+        on both sides under slightly different titles. The skill's config even has an
+        <code>excludeTitles</code> list for events the user copied <em>into</em> Webex from Google,
+        so that a hand-made copy in one direction does not bounce back as a duplicate in the other.
+      </p>
+
+      <div
+        class="trio"
+        data-viz-id="before-trio"
+        data-label="three ways the two calendars disagree, each with its fix"
+      >
+        <div class="cell">
+          <div class="k">BEFORE · 1</div>
+          <b>Double-booked</b>
+          Google says Tuesday at 11 is free. Webex says it is not. Both are right about their own
+          half of your life.
+          <div class="fix">Now: every Webex meeting shows on the calendar you plan in.</div>
+        </div>
+        <div class="cell">
+          <div class="k">BEFORE · 2</div>
+          <b>Copies that rot</b>
+          A hand-copied meeting is correct the day it is copied. After a reschedule it is a stale
+          lie, and after a cancellation it is a ghost.
+          <div class="fix">Now: changed meetings update, cancelled ones are removed.</div>
+        </div>
+        <div class="cell">
+          <div class="k">BEFORE · 3</div>
+          <b>No identifier to sync on</b>
+          Webex hands this skill no event ID, so a normal "match by id and diff" sync has nothing to
+          match on.
+          <div class="fix">Now: identity is the join link plus the start time.</div>
+        </div>
+      </div>
+
+      <h2 data-beat="using">Say it, then keep your hands off the keyboard</h2>
+      <p>
+        Triggers: <code>sync Webex to Google Calendar</code>, <code>mirror my Webex meetings</code>,
+        <code>update my work calendar</code>. The extract takes <b>about 70 to 100 seconds</b> and
+        it takes Webex's focus, so the agent tells you to leave the mouse and keyboard alone. When
+        it finishes it brings back whatever app you were in.
+      </p>
+      <p>
+        It then shows <b>one table</b>: action, title, start, reason. Nothing is written until you
+        approve it. Say "dry run", or just do not approve, and the table is the end of it.
+        Everything is optional config in
+        <code>~/.config/sync-webex-to-google-calendar/config.json</code>:
+      </p>
+      <table
+        class="cfg"
+        data-viz-id="config-table"
+        data-label="the five optional config keys and their defaults"
+      >
+        <tbody>
+          <tr>
+            <td>excludeTitles</td>
+            <td>Exact titles never mirrored. Default: none.</td>
+          </tr>
+          <tr>
+            <td>timeZone</td>
+            <td>IANA zone for reads and writes. Default: the system zone.</td>
+          </tr>
+          <tr>
+            <td>titlePrefix</td>
+            <td>Prefix on every mirror's title. Default: <code>[Webex]</code>.</td>
+          </tr>
+          <tr>
+            <td>colorId</td>
+            <td>Google event colour for mirrors. Default: <code>"6"</code>.</td>
+          </tr>
+          <tr>
+            <td>days</td>
+            <td>Window length. Default 30, because Webex's list reaches about a month ahead.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="limits">One direction, one window, one kind of event it may delete</h2>
+      <ul>
+        <li>
+          <b>Read-only on Webex.</b> It clicks an event row and reads the side panel. No window is
+          opened, nothing is created, nothing is accepted or declined.
+        </li>
+        <li>
+          <b>It touches only what it wrote.</b> On Google, an update or a delete requires the
+          event's description to start with <code>MIRRORED-FROM-WEBEX</code>. Your own events are
+          never modified.
+        </li>
+        <li>
+          <b>It reads a fixed set of fields.</b> Title, times, organizer, rooms, invitee count,
+          link, description. The panel's password, host key, meeting number and dial-in blocks are
+          never selected, and <code>pwd=</code> values inside links are replaced with
+          <code>pwd=REDACTED</code> before the extract is even written.
+        </li>
+        <li>
+          <b>The Webex description does not go to Google.</b> It can hold passwords. A mirror
+          carries the organizer and rooms, and the join link as its location.
+        </li>
+        <li>
+          <b>It emails nobody.</b> No attendees on a mirror, and every write carries
+          <code>notificationLevel: NONE</code>.
+        </li>
+        <li>
+          <b>It will not act on a partial read.</b> Unless the extract has zero errors and at least
+          one event, it stops with no Google writes, because a partial read would delete live
+          mirrors.
+        </li>
+        <li>
+          <b>Absence past the edge of the list is not a cancellation.</b> A mirror dated on or after
+          the list's last day stays, since the list may simply end there.
+        </li>
+        <li><b>Banner rows are skipped.</b> All-day entries are not meetings.</li>
+        <li>
+          <b>macOS only, and it needs Accessibility.</b> The terminal must be trusted for the
+          accessibility API, Webex must be running, and it is not a two-way sync. Ambiguous matches
+          are marked <code>?</code> in the plan for you to decide.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">What it plugs into, and what it leaves lying around</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/sync-webex-to-google-calendar/SKILL.md</code> is the judgement half. The
+              deterministic half is <code>scripts/run.sh</code> and <code>scripts/wx.swift</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Declared</td>
+            <td>
+              <code>kind: skill</code>, <code>state: false</code>, <code>integrates</code> webex and
+              google-calendar, <code>requires: [webex, swiftc, google-calendar-mcp]</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Integrates</td>
+            <td>
+              <b>Webex</b>, read through the macOS accessibility API, and <b>Google Calendar</b>,
+              written through its MCP server.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              The Webex desktop app, <code>swiftc</code> (it compiles <code>wx.swift</code> on first
+              run), and the Google Calendar MCP. Plus a macOS Accessibility grant for the terminal,
+              which lives in System Settings, not in this repo.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>Nothing worth keeping.</b> It leaves scratch under
+              <code>~/.local/share/webex-calendar/</code>: the compiled <code>wx</code> binary and
+              <code>out/week.json</code>, <code>week.ndjson</code>, <code>progress.log</code>. The
+              directory is mode 700 because the extract holds your meeting titles in plain text. The
+              mirrors themselves live on Google, each carrying its own identity in its description.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>
+              Yes, all of it. The binary recompiles from <code>wx.swift</code> and the extract is
+              rebuilt on every run. Deleting a mirror on Google just makes the next run create it
+              again.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">It reads Webex the way a screen reader does</h2>
+      <p>
+        The skill takes the route that needs nothing from Webex, no export and no API: it does what
+        assistive software does, asks macOS for the app's accessibility tree and reads the text of
+        the controls. <code>wx.swift</code>
+        drives the Webex window into its calendar List view, clicks each event row, and reads the
+        side panel that opens. A shell wrapper brings Webex to the front and, no matter how the run
+        ends, puts your previous app back. Then the judgement half takes over: gate the extract,
+        read Google, classify, show a plan, and write on approval.
+      </p>
+      <p class="m">
+        Nine steps from "sync" to written events, with the real lines under each. Swift line numbers
+        are from <code>scripts/wx.swift</code>, shell ones from <code>scripts/run.sh</code>, and
+        <code>§</code> means a numbered section of <code>SKILL.md</code>.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="pipeline-figure"
+        data-label="stepper: from Webex's accessibility tree to Google Calendar events"
+      >
+        <div class="stage">
+          <svg
+            id="flow"
+            viewBox="0 20 810 200"
+            role="img"
+            aria-label="Pipeline from Webex through wx and the extract file to the classifier and Google Calendar"
+          ></svg>
+        </div>
+        <div class="code" id="code"></div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+
+      <h2 data-beat="how">Deletion is the dangerous verb, so every guard is about absence</h2>
+      <p>
+        Creating a wrong event is a nuisance. Deleting a right one is a loss. So most of the
+        classifier's care goes into one question: when may the <em>absence</em> of a Webex event be
+        read as "it was cancelled"? Step through the cases it distinguishes. Each is a row of the
+        table in <code>SKILL.md §3</code> (plus the two gates around it):
+      </p>
+      <div
+        class="cases"
+        id="cases"
+        data-viz-id="case-picker"
+        data-label="pick a classifier case"
+      ></div>
+      <div class="verdict" id="verdict"></div>
+      <div class="why-box" id="whybox"></div>
+
+      <div class="callout">
+        <b>The mirror carries its own key.</b> The first line of a mirror's description is
+        <code>MIRRORED-FROM-WEBEX | &lt;link&gt; | &lt;start ISO&gt;</code>. That one line is both
+        the ownership tag (the only events it may update or delete) and the identity Webex never
+        gave it (<code>link</code> plus <code>start</code>). There is no database of "what I
+        mirrored", so there is nothing to drift out of step with Google. The calendar is the record.
+      </div>
+      <p class="m">
+        Two honest ceilings. The accessibility tree is Webex's UI, not a contract, so a Webex update
+        that renames a button can break the baseline step; it fails loudly with exit code 2 or 3 and
+        an <code>ERROR</code> line rather than guessing. And every row costs a scroll, a click and a
+        wait for the panel to show the right meeting, with fixed sleeps in between, which is why a
+        month takes a minute or two.
+      </p>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its
+        own existence.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

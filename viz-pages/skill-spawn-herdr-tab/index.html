@@ -1,0 +1,902 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>spawn-herdr-tab — not a subagent, a peer in its own tab</title>
+    <!-- posture/listing — public + listed, like the other posters -->
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:uid" content="v-6d7cc37fab28" />
+    <meta name="viz:title" content="spawn-herdr-tab" />
+    <meta
+      name="viz:description"
+      content="Opens a herdr tab and starts a fresh top-level Claude Code or Codex session in it, with an optional model, effort and first prompt. A peer you can watch and talk to, not a subagent."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta
+      name="viz:tests"
+      content="smoke: the builder illustrates spawn.sh lines 16-21 over a handful of fixed choices; a wrong command line would be visible on screen"
+    />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* Poster + dive: .og-card is a fixed 1200×630 clip target, the page scrolls beneath it.
+         Identity: a terminal. Green (--good) for the new tab, teal (--c5) for flags, amber for values,
+         purple (--c4) for the one thing that never gets quoted: the prompt. */
+      :root {
+        --s: 1;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 96% -10%,
+            color-mix(in srgb, var(--good) 14%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 112%,
+            color-mix(in srgb, var(--c5) 12%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 520px;
+        gap: 38px;
+        align-items: center;
+        padding: 52px 64px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--good);
+        margin-bottom: 18px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--good);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--good) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 56px;
+        line-height: 1.04;
+        margin: 0 0 20px;
+        letter-spacing: -1.5px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--good);
+      }
+      p.sub {
+        font-size: 19px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 18px;
+        max-width: 500px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      p.sub code,
+      .not code {
+        font-family: var(--mono);
+        font-size: 0.86em;
+        color: var(--c4);
+      }
+      .not {
+        font-size: 14.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 18px;
+        max-width: 500px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+        font-weight: 400;
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14.5px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--good);
+        border-radius: 9px;
+        padding: 10px 15px;
+        color: var(--text);
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the terminal: a tab strip, the command spawn.sh types, the session that wakes up */
+      .term {
+        background: #0a0e14;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        font-family: var(--mono);
+        box-shadow: 0 18px 50px -20px rgba(0, 0, 0, 0.7);
+      }
+      .tabs {
+        display: flex;
+        gap: 2px;
+        background: color-mix(in srgb, var(--panel) 90%, transparent);
+        border-bottom: 1px solid var(--border);
+        padding: 8px 8px 0;
+      }
+      .tabs .t {
+        font-size: 12.5px;
+        color: var(--faint);
+        padding: 8px 14px;
+        border-radius: 8px 8px 0 0;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .tabs .t i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--faint);
+        display: block;
+      }
+      .tabs .t.new {
+        color: #fff;
+        background: #0a0e14;
+        border: 1px solid var(--border);
+        border-bottom: 1px solid #0a0e14;
+        margin-bottom: -1px;
+      }
+      .tabs .t.new i {
+        background: var(--good);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 25%, transparent);
+      }
+      .tabs .t b {
+        font-weight: 400;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        color: var(--good);
+        border: 1px solid color-mix(in srgb, var(--good) 50%, transparent);
+        border-radius: 4px;
+        padding: 0 4px;
+      }
+      .term .body {
+        padding: 16px 18px 14px;
+        font-size: 13.5px;
+        line-height: 1.72;
+        color: var(--text);
+      }
+      .term .ps {
+        color: var(--faint);
+      }
+      .term .ag {
+        color: #fff;
+      }
+      .term .fl {
+        color: var(--c5);
+      }
+      .term .va {
+        color: var(--warn);
+      }
+      .term .pr {
+        color: var(--c4);
+        background: color-mix(in srgb, var(--c4) 14%, transparent);
+        border-radius: 4px;
+        padding: 0 3px;
+      }
+      .term .ind {
+        padding-left: 20px;
+        display: block;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+        font-size: 11px;
+        color: var(--muted);
+        margin: 10px 0 0;
+      }
+      .legend i {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        margin-right: 5px;
+      }
+      .term .wake {
+        margin-top: 14px;
+        padding: 11px 13px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--panel) 80%, transparent);
+        font-size: 12.5px;
+        line-height: 1.55;
+        color: var(--muted);
+      }
+      .term .wake b {
+        color: var(--c4);
+        font-weight: 400;
+      }
+      .term .wake em {
+        font-style: normal;
+        color: var(--text);
+      }
+      .term .out {
+        margin-top: 10px;
+        font-size: 11.5px;
+        color: var(--faint);
+        border-top: 1px dashed var(--border);
+        padding-top: 9px;
+        word-break: break-all;
+      }
+      .term .out b {
+        color: var(--good);
+        font-weight: 400;
+      }
+
+      /* ── the dive (below the fold) ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--good);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 28px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul,
+      .dive ol {
+        margin: 0 0 14px;
+        padding-left: 22px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c5);
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+      .cap {
+        font-size: 13.5px;
+        color: var(--faint);
+        margin: 0 0 16px;
+      }
+
+      /* figure 1: where the prompt text is, hop by hop */
+      .pipe {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 14px 14px 12px;
+        margin: 0 0 8px;
+      }
+      .pipe svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      /* figure 2: the command builder */
+      .build {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 16px 18px 16px;
+        margin: 0 0 16px;
+      }
+      .build .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 22px;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      .build label.k {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        color: var(--faint);
+        margin-right: 8px;
+      }
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .seg button {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        background: #0b0f16;
+        border: 0;
+        border-right: 1px solid var(--border);
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+      .seg button:last-child {
+        border-right: 0;
+      }
+      .seg button[aria-pressed="true"] {
+        color: #fff;
+        background: color-mix(in srgb, var(--good) 22%, #0b0f16);
+      }
+      .seg button:hover {
+        color: #fff;
+      }
+      .build input,
+      .build select {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 6px 10px;
+        width: 130px;
+      }
+      .build input:focus,
+      .build select:focus {
+        outline: 1px solid var(--good);
+      }
+      .build .quick button {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        background: transparent;
+        border: 1px dashed var(--border);
+        border-radius: 6px;
+        padding: 3px 8px;
+        margin-left: 6px;
+        cursor: pointer;
+      }
+      .build .quick button:hover {
+        color: #fff;
+        border-color: var(--good);
+      }
+      .build .panes {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .build .pane {
+        background: #0a0e14;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 11px 14px;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.7;
+        color: var(--text);
+        overflow-wrap: anywhere;
+      }
+      .build .pane .h {
+        display: block;
+        font-size: 10.5px;
+        letter-spacing: 0.13em;
+        color: var(--faint);
+        margin-bottom: 3px;
+      }
+      .build .pane .fl {
+        color: var(--c5);
+      }
+      .build .pane .va {
+        color: var(--warn);
+      }
+      .build .pane .pr {
+        color: var(--c4);
+        background: color-mix(in srgb, var(--c4) 14%, transparent);
+        border-radius: 4px;
+        padding: 0 3px;
+      }
+      .build .pane .fl,
+      .build .pane .va,
+      .build .pane .pr,
+      .build .pane .ag {
+        white-space: nowrap;
+      }
+      .build .pane .esc {
+        color: var(--danger);
+      }
+      .build .pane .ag {
+        color: #fff;
+      }
+      .build .pane .nl {
+        color: var(--faint);
+      }
+      .build .note {
+        margin: 10px 2px 0;
+        font-size: 13.5px;
+        line-height: 1.55;
+        color: var(--muted);
+        min-height: 42px;
+      }
+      .build .note b {
+        color: #fff;
+      }
+
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="spawn-herdr-tab"
+        data-viz-id="poster-card"
+        data-label="spawn-herdr-tab poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · SPAWN-HERDR-TAB</div>
+          <h1 class="hook">Not a subagent.<br />A <em>peer,</em> in its<br />own tab.</h1>
+          <p class="sub">
+            Opens a herdr tab, starts a <b>fresh top-level Claude Code or Codex session</b> in it,
+            and hands it a first prompt: usually <code>read &lt;handoff&gt; and continue</code>.
+          </p>
+          <p class="not">
+            It passes <b>only the flags you gave</b>, so it never picks a model for you, and the
+            prompt travels as a <b>file, never as an argument</b>.
+          </p>
+          <div class="trigger"><span>say</span>&nbsp;“spawn a herdr tab”</div>
+        </div>
+
+        <div
+          class="term"
+          data-viz-id="spawned-tab"
+          data-label="a herdr tab strip with the new tab, the command spawn.sh typed, and the session that started"
+        >
+          <div class="tabs">
+            <div class="t"><i></i>api-tests</div>
+            <div class="t new"><i></i>docs-sweep<b>NEW</b></div>
+            <div class="t"><i></i>fix-auth</div>
+          </div>
+          <div class="body">
+            <div>
+              <span class="ps">$</span> <span class="ag">claude</span>
+              <span class="fl">--dangerously-skip-permissions</span>
+              <span class="ind"
+                ><span class="fl">--model</span> <span class="va">opus</span>
+                <span class="fl">--effort</span> <span class="va">high</span></span
+              >
+              <span class="ind"><span class="pr">"$(cat /tmp/prompt-docs.md)"</span></span>
+            </div>
+            <div class="legend">
+              <span><i style="background: var(--c5)"></i>flag</span>
+              <span><i style="background: var(--warn)"></i>value you gave</span>
+              <span><i style="background: var(--c4)"></i>the prompt, by reference</span>
+            </div>
+            <div class="wake">
+              <b>first message</b> ← the file, expanded by this tab's own shell<br />
+              <em>read /tmp/handoff-docs.md and continue</em>
+            </div>
+            <div class="out">
+              <b>→</b> {"label":"docs-sweep","tab_id":"…","pane_id":"…","command":"claude …"}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">A handoff document is only half a handoff</h2>
+      <p>
+        The document gets written, to a temp path, and then someone has to <em>use</em> it: open a
+        tab, <code>cd</code> to the right folder, type <code>claude</code> with the right model and
+        effort, and get the first prompt through the shell's quoting without it being eaten. A
+        prompt with a double quote, a newline and a <code>$</code> in it is not a thing you want to
+        escape by hand. When <code>/r2-handoff split</code> fans the work into three parallel
+        streams, you do it three times.
+      </p>
+      <p>
+        The tools the agent already has do not fit. A <b>subagent</b> lives inside this session,
+        answers to it, and is gone when it is. A <b>background agent</b> (<code>claude --bg</code>)
+        has no terminal; you cannot watch it or type to it. What a handoff wants is neither: a
+        top-level session, in a tab you can see, that owns its own context from the first message.
+        <code>spawn-herdr-tab</code> is that, in one command.
+      </p>
+      <p class="m">
+        Once it exists it is a session you opened yourself, so you, or the session that spawned it,
+        can reach it by id. It is a peer, not a worker.
+      </p>
+
+      <h2 data-beat="using">Say it, or let another skill say it</h2>
+      <p>
+        It fires on <em>spawn a herdr tab</em>, <em>new tab</em>, or
+        <em>open a new Claude/Codex for X</em>, and it is meant to be called by other skills: the
+        example the skill itself gives is launching handoff docs. Three steps, with the first one
+        being the only judgement call.
+      </p>
+      <ol>
+        <li>
+          <b>Gather the launch.</b> Agent (<code>claude</code> by default, or <code>codex</code>),
+          model and effort <em>only if you gave them</em>, the first prompt, a short kebab-case
+          label and a working directory (this session's by default). It asks once for what is
+          missing and would change the outcome, then says the full launch in one line before running
+          anything.
+        </li>
+        <li>
+          <b>Spawn.</b> Write the prompt to a file, then run the script. It prints the new tab and
+          pane ids.
+        </li>
+        <li>
+          <b>Verify.</b> After about five seconds read the pane and confirm the agent's UI is
+          showing the prompt, not a shell error. Report each tab as
+          <code>label → pane_id (agent, model, effort)</code>.
+        </li>
+      </ol>
+      <pre>
+bash spawn.sh --label &lt;label&gt; [--cwd &lt;dir&gt;] [--agent claude|codex]
+              [--model &lt;m&gt;] [--effort &lt;e&gt;] [--prompt-file &lt;file&gt;] [--focus]</pre>
+      <p class="m">
+        Several tabs, such as one per stream from a split, are the same two steps repeated. Spawning
+        does not wait on any of them.
+      </p>
+
+      <h2 data-beat="limits">What it does not ask, check, or wait for</h2>
+      <ul>
+        <li>
+          <b>Claude tabs start with permission prompts off.</b> <code>spawn.sh</code> line 17
+          hard-codes <code>--dangerously-skip-permissions</code>, and nothing in the skill lets you
+          turn it off. The spawned session will not stop to ask before acting. Codex gets no
+          equivalent flag. Spawn into folders and with prompts you would run unattended.
+        </li>
+        <li>
+          <b>It does not know the agent started.</b> It creates a tab and types a line into it, then
+          prints ids. Whether <code>claude</code> exists, took the flags, or hit an error is what
+          the five-second verify read is for.
+        </li>
+        <li>
+          <b>A folder-trust prompt is yours to answer.</b> A directory Claude has not seen before
+          stops at a trust question. The skill tells you which tab is waiting; it will not press
+          anything. Prefer a folder already trusted.
+        </li>
+        <li>
+          <b>It picks no model and no effort.</b> Leave them out and the agent's own defaults apply.
+          The skill's rule is to pass only what you said.
+        </li>
+        <li>
+          <b>Only two agents, and the prompt is a file.</b> <code>--agent</code> is
+          <code>claude</code> or <code>codex</code>, anything else exits 2. There is no inline
+          prompt flag; a prompt always travels as a file.
+        </li>
+        <li>
+          <b>It does not take your screen.</b> The tab opens unfocused (<code>--no-focus</code> is
+          the default), so a batch of spawns does not yank you around. <code>--focus</code> opts in.
+        </li>
+        <li>
+          <b>The label is trusted.</b> It is printed back inside JSON without escaping, so keep it
+          kebab-case as the skill asks.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>Integrates with</td>
+            <td>
+              herdr, which it asks to create the tab (<code>herdr tab create</code>) and then to
+              type the launch command into the new pane (<code>herdr pane run</code>). The agent it
+              starts is whichever of Claude Code or Codex you asked for. Other skills, handoff ones
+              especially, are its callers.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              The manifest declares no <code>requires</code> at all, only the herdr integration. In
+              practice that is herdr, <code>bash</code> and <code>jq</code> (it reads the tab and
+              pane ids out of herdr's JSON with it), and <code>claude</code> or
+              <code>codex</code> on the new tab's <code>$PATH</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>None.</b> <code>state: false</code>. It writes no file of its own. The prompt file
+              belongs to the caller, and the tab belongs to herdr, which holds it until you close
+              it.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>
+              Nothing of its to clean up, so there is no deletion policy. The spawned tab and the
+              session in it are herdr's to close; nothing here tidies them.
+            </td>
+          </tr>
+          <tr>
+            <td>In the folder</td>
+            <td>
+              <code>SKILL.md</code>, the 27-line <code>spawn.sh</code>, and
+              <code>agents/openai.yaml</code>, which gives the skill its Codex display name and sets
+              <code>allow_implicit_invocation: true</code>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">The prompt never goes through a quote</h2>
+      <p class="m">
+        The one design decision in <code>spawn.sh</code>: the first prompt crosses five hops, and in
+        three of them it is only a path.
+      </p>
+
+      <div
+        class="pipe"
+        data-viz-id="prompt-pipeline"
+        data-label="the five hops from caller to agent, and what the prompt is at each"
+      >
+        <svg
+          id="pipe"
+          role="img"
+          aria-label="five hops from the calling session to the new agent; the prompt text exists only in the first and last, a path in between"
+        ></svg>
+      </div>
+      <p class="cap">
+        Solid purple is the text itself. Faint purple is a path to it. The shell that expands the
+        path is the new tab's own, not the caller's.
+      </p>
+
+      <h3>What the six steps do, by line</h3>
+      <ol>
+        <li>
+          <b>Parse (lines 5–14).</b> Defaults are <code>agent=claude</code>, <code>cwd=$PWD</code>,
+          <code>focus=--no-focus</code>. An unknown flag exits 2 (line 11), and so does a missing
+          <code>--label</code> (line 14). <code>set -euo pipefail</code> on line 4 means any herdr
+          call that fails stops the script rather than carrying on with an empty variable.
+        </li>
+        <li>
+          <b>Pick the command (lines 16–20).</b> Claude becomes
+          <code>claude --dangerously-skip-permissions [--model m] [--effort e]</code>; Codex becomes
+          <code>codex [-m m] [-c model_reasoning_effort=e]</code>. The
+          <code>${model:+ …}</code> expansion adds a flag only when the variable is set, which is
+          how "pass only what was given" is implemented. Each value goes through
+          <code>q()</code> (line 15), which is <code>printf '%q'</code>.
+        </li>
+        <li>
+          <b>Attach the prompt by reference (line 21).</b> The path is made absolute with
+          <code>cd "$(dirname …)" &amp;&amp; pwd</code>, because the new tab starts in
+          <code>--cwd</code>, not where you ran the script. Then <code>%q</code>-quoted, and wrapped
+          as the literal text <code>"$(cat /abs/path)"</code>, <em>not</em> expanded here.
+        </li>
+        <li>
+          <b>Create the tab (line 22).</b>
+          <code>herdr tab create --label … --cwd … --no-focus</code> returns JSON.
+        </li>
+        <li>
+          <b>Lift the ids and check them (lines 23–25).</b> <code>jq -r</code> pulls
+          <code>.result.root_pane.pane_id</code> and <code>.result.tab.tab_id</code>. A missing key
+          prints the string <code>null</code> rather than failing, so line 25 tests for the empty
+          string <em>and</em> for <code>null</code>, and fails with herdr's raw reply.
+        </li>
+        <li>
+          <b>Type it (line 26).</b> <code>herdr pane run "$pane" "$cmd"</code> sends the finished
+          line into the new pane's shell. Line 27 prints
+          <code>{"label", "tab_id", "pane_id", "command"}</code>, the command built with
+          <code>jq -Rn --arg</code> so its own quotes survive.
+        </li>
+      </ol>
+
+      <h3>Why a file, not an argument</h3>
+      <p>
+        A prompt passed as an argument has to survive being quoted for the caller's shell, then for
+        <code>spawn.sh</code>, then for the line typed into the new pane, and every layer has its
+        own idea of what a quote, a <code>$</code> or a backtick means. Passing a
+        <em>path</em> sidesteps all of it: a path is boring. The only place the text is ever read is
+        the end, where the tab's shell runs <code>"$(cat path)"</code> and hands the result to the
+        agent as a single argument.
+      </p>
+      <div class="callout">
+        <b>The result of a command substitution is not parsed again.</b> A <code>$HOME</code> or a
+        backtick inside the prompt file arrives as those literal characters, not as an expansion.
+        That is what makes the prompt safe to be anything. Try it below.
+      </div>
+
+      <h3>Build one</h3>
+      <p class="m">
+        This runs the same assembly as lines 16–21 in your browser. Change the agent, the values and
+        the prompt, and watch what changes in the line typed into the tab, and what does not.
+      </p>
+      <div
+        class="build"
+        data-viz-id="command-builder"
+        data-label="command builder: assembles the line spawn.sh types into the pane"
+      >
+        <div class="row">
+          <span
+            ><label class="k">AGENT</label>
+            <span class="seg" id="agent">
+              <button data-v="claude" aria-pressed="true">claude</button
+              ><button data-v="codex" aria-pressed="false">codex</button>
+            </span></span
+          >
+          <span
+            ><label class="k" for="model">MODEL</label>
+            <input id="model" value="opus" spellcheck="false" autocomplete="off" />
+          </span>
+          <span
+            ><label class="k" for="effort">EFFORT</label>
+            <select id="effort">
+              <option value="">(none)</option>
+              <option>low</option>
+              <option>medium</option>
+              <option selected>high</option>
+              <option>xhigh</option>
+              <option>max</option>
+            </select></span
+          >
+        </div>
+        <div class="row quick">
+          <span
+            ><label class="k">TRY A MODEL</label><button data-model="">none</button
+            ><button data-model="opus[1m]">opus[1m]</button
+            ><button data-model="my model">my model</button></span
+          >
+        </div>
+        <div class="row">
+          <span
+            ><label class="k">PROMPT FILE</label>
+            <span class="seg" id="prompt">
+              <button data-v="none" aria-pressed="false">none</button
+              ><button data-v="handoff" aria-pressed="true">a handoff pointer</button
+              ><button data-v="gnarly" aria-pressed="false">quotes, $ and newlines</button>
+            </span></span
+          >
+        </div>
+        <div class="panes">
+          <div class="pane" id="p-call"></div>
+          <div class="pane" id="p-typed"></div>
+          <div class="pane" id="p-arrives"></div>
+        </div>
+        <p class="note" id="note"></p>
+      </div>
+      <p class="m">
+        Note the second box with the gnarly prompt selected: it is character for character the same
+        line as with the pointer. Only the third box, the agent's first message, changes.
+      </p>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · twenty-seven lines, and
+        none of them quote your prompt.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

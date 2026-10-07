@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>aws-creds — the token dies, nobody pastes a secret</title>
+    <!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+    <meta name="viz:uid" content="v-77514940bd9c" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="aws-creds" />
+    <meta
+      name="viz:description"
+      content="Gets AWS credentials without a secret ever entering the transcript: your SSO profile first, the IAM Identity Center portal in Chrome as the fallback."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card stays a fixed 1200×630 clip target (viz verify --og shoots a 1200×630
+     viewport => --s resolves to 1 => the OG image is pixel-native). The only change
+     from the stock poster template: the page SCROLLS, so a deep dive lives below.
+
+     The gotcha this solves: transform:scale() does NOT shrink an element's layout
+     box, so a scaled card still reserves 630px of flow and leaves a dead gap.
+     Fix: scale from `top center` and drive #fit's height off the same --s.
+     ──────────────────────────────────────────────────────────────────────────── */
+      :root {
+        --s: 1;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+      #fit {
+      }
+      .og-card {
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            900px 500px at 88% -10%,
+            color-mix(in srgb, var(--danger) 18%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 110%,
+            color-mix(in srgb, var(--accent) 18%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 44px;
+        align-items: center;
+        padding: 60px 70px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 18px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 58px;
+        line-height: 1.04;
+        margin: 0 0 20px;
+        letter-spacing: -1.5px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--accent);
+      }
+      p.sub {
+        font-size: 19px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 26px;
+        max-width: 540px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 15px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 9px;
+        padding: 10px 15px;
+        color: var(--text);
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the panels = the "proof" slot */
+      .meters {
+        display: grid;
+        gap: 16px;
+      }
+      .meter {
+        background: color-mix(in srgb, var(--panel) 78%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 17px 19px;
+      }
+      .meter .lbl {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+      .meter .note {
+        margin-top: 10px;
+        font-size: 12.5px;
+        color: var(--muted);
+        font-family: var(--mono);
+      }
+      /* the errors it auto-fires on */
+      .meter.errs .lbl {
+        color: var(--danger);
+      }
+      .errlist {
+        display: grid;
+        gap: 6px;
+      }
+      .errlist code {
+        font-family: var(--mono);
+        font-size: 13.5px;
+        color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 12%, transparent);
+        border-radius: 5px;
+        padding: 3px 7px;
+      }
+      /* what lands on disk */
+      .meter.out .lbl {
+        color: var(--good);
+      }
+      .meter.out .val {
+        font-family: var(--mono);
+        font-size: 14px;
+        color: var(--good);
+        line-height: 1.5;
+        word-break: break-all;
+      }
+      .bar {
+        height: 11px;
+        border-radius: 99px;
+        background: var(--panel-2);
+        overflow: hidden;
+        margin-top: 11px;
+      }
+      .bar i {
+        display: block;
+        height: 100%;
+        border-radius: 99px;
+        width: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--good),
+          color-mix(in srgb, var(--good) 15%, transparent)
+        );
+      }
+
+      /* ── the dive (below the fold) ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.92em;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      /* ── poster-standard dive additions: h3 under a beat, the where table, the figure ── */
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        border-bottom: none;
+        color: var(--text);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        min-height: 190px;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 46px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--c5);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      /* the two routes on the card */
+      .meter.route .lbl {
+        color: var(--accent);
+      }
+      .meter.route .val {
+        font-family: var(--mono);
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text);
+        word-break: break-all;
+      }
+      .meter.route.out .lbl {
+        color: var(--good);
+      }
+      .meter.route.out .val {
+        color: var(--good);
+      }
+      /* beat-5 route map */
+      .fig svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+      }
+      svg .n {
+        fill: var(--panel-2);
+        stroke: var(--border);
+        stroke-width: 1.2;
+      }
+      svg .n.q {
+        stroke: var(--accent);
+      }
+      svg .n.good {
+        stroke: var(--good);
+        fill: color-mix(in srgb, var(--good) 10%, transparent);
+      }
+      svg .t {
+        fill: var(--text);
+        font-family: var(--mono);
+        font-size: 11.5px;
+      }
+      svg .s {
+        fill: var(--muted);
+        font-family: var(--mono);
+        font-size: 10.5px;
+      }
+      svg .l {
+        fill: var(--muted);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+      svg .e {
+        stroke: var(--muted);
+        stroke-width: 1.4;
+        fill: none;
+      }
+      svg .e.dash {
+        stroke-dasharray: 5 4;
+        stroke: var(--danger);
+      }
+      svg .ahead {
+        fill: var(--muted);
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="aws-creds"
+        data-viz-id="poster-card"
+        data-label="aws-creds poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · AWS-CREDS</div>
+          <h1 class="hook">The token dies.<br />Nobody pastes<br /><em>a secret.</em></h1>
+          <p class="sub">
+            An <b>expired token</b> mid-task is an errand, not a stop sign. <b>aws-creds</b> takes
+            the route that never puts a secret in the transcript: your <b>SSO profile</b> if you
+            have one, the <b>Identity Center portal</b> in Chrome if you don't.
+          </p>
+          <div class="trigger">
+            <span>say</span>&nbsp;"get me AWS creds"&nbsp;&nbsp;<span>· or let a call fail</span>
+          </div>
+        </div>
+        <div class="meters">
+          <div class="meter errs">
+            <div class="lbl">FIRES WHEN AN aws CALL SAYS</div>
+            <div class="errlist">
+              <code>ExpiredToken</code>
+              <code>InvalidClientTokenId</code>
+              <code>Unable to locate credentials</code>
+            </div>
+          </div>
+          <div class="meter route">
+            <div class="lbl">ROUTE 1 · THE PROFILE</div>
+            <div class="val">aws … --profile &lt;name&gt;</div>
+            <div class="note">nothing written · nothing printed</div>
+          </div>
+          <div class="meter route out">
+            <div class="lbl">ROUTE 2 · THE PORTAL</div>
+            <div class="val">
+              ~/.agents/state/aws-creds/<br />&lt;portal&gt;-&lt;account&gt;.env
+            </div>
+            <div class="bar"><i></i></div>
+            <div class="note">mode 600 · valid ~1 hour</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">Three commands deep, and the credential quietly expired</h2>
+      <p>
+        You're mid-task and an <code>aws</code> call comes back <code>ExpiredToken</code>. The work
+        is fine; a short-lived credential ran out. Now the task is on hold while you find a browser
+        tab, sign in to the portal, expand an account tile, click copy and paste. The interruption
+        costs more than the credentials ever did.
+      </p>
+
+      <h2 data-beat="why">Every quick fix leaves the secret somewhere it shouldn't be</h2>
+      <p>
+        Three shortcuts get you unstuck faster: paste the three <code>export</code> lines into the
+        chat, have the agent scrape them off the portal page with JavaScript, or run
+        <code>aws configure export-credentials</code>. Each one works. Each one also leaves live
+        credentials in a transcript, a scrollback or a file you didn't plan for. The skill is shaped
+        around refusing all three, and it says so out loud: the export command is called out by name
+        (<code>SKILL.md</code> line 83) as "the very credentials this path exists to avoid".
+      </p>
+
+      <h2 data-beat="why">One skill, every portal, no one's company in it</h2>
+      <p>
+        A skill that hardcoded one organisation's start URL and account IDs would be wrong for the
+        next account and unpublishable. So <code>aws-creds</code> keeps every portal-specific fact
+        outside <code>SKILL.md</code>: a per-org wrapper skill hands them down, or
+        <code>portals.md</code> holds them. The public copy of <code>portals.md</code> ships as a
+        template with one fake <code>example-org</code>, and the rule is written into both files:
+        never commit a real org to it.
+      </p>
+
+      <h2 data-beat="using">Ask for credentials, or just let the call fail</h2>
+      <p class="m">
+        The skill's own description names two ways in. Either you ask for AWS credentials or access,
+        or an <code>aws</code> call fails with one of:
+      </p>
+      <ul>
+        <li><code>ExpiredToken</code></li>
+        <li><code>InvalidClientTokenId</code></li>
+        <li><code>Unable to locate credentials</code></li>
+      </ul>
+      <p>
+        "Get me AWS creds for dev", "log into AWS", or nothing at all, because the failed call
+        <b>is</b> the invocation. The skill maps whatever you said, an org name, an account name, a
+        bare "dev", onto a portal and an account. If that is ambiguous, or names an account that
+        isn't listed, it <b>asks</b> instead of guessing which account to touch.
+      </p>
+      <p class="m">
+        What comes back depends on the route, and the two are deliberately different. A profile run
+        returns a profile name and a verified account ID; callers use
+        <code>aws --profile &lt;name&gt; …</code> or <code>AWS_PROFILE=&lt;name&gt;</code>. A portal
+        run returns a file path, the account ID, and the expiry, never the secrets. Consuming that
+        file is one line, because the Bash tool doesn't persist env between calls:
+      </p>
+      <pre>
+set -a &amp;&amp; source ~/.agents/state/aws-creds/&lt;portal&gt;-&lt;account&gt;.env &amp;&amp; set +a &amp;&amp; aws sts get-caller-identity</pre>
+
+      <h2 data-beat="limits">What it refuses, and what it can't do</h2>
+      <ul>
+        <li>
+          <b>Never types a password.</b> An IdP redirect is fine to complete; a password prompt
+          means the browser session died, and the user signs in. Same rule on both routes.
+        </li>
+        <li>
+          <b>Never guesses an account.</b> Ambiguous or unlisted means it asks. After the fact it
+          also checks <code>sts get-caller-identity</code> against the expected ID rather than
+          trusting the tile it clicked.
+        </li>
+        <li>
+          <b>Never pastes credentials into chat</b> unless you explicitly ask, prints raw
+          <code>export</code> lines only on request, and never commits the <code>.env</code> files.
+        </li>
+        <li>
+          <b>Read-only by default.</b> These credentials often carry write permissions; it won't run
+          a mutating <code>aws</code> command unless that specific change was the ask.
+        </li>
+        <li>
+          <b>Won't resurrect a dead session.</b> Tab died or the portal shows signed out: restart
+          from step 1. There is no reconnect path.
+        </li>
+        <li>
+          <b>Short-lived by construction.</b> The file is good for about an hour; later
+          <code>ExpiredToken</code> or <code>UnrecognizedClientException</code> just means run it
+          again. The fallback also writes <code>AWS_REGION=us-east-1</code> into every file, and the
+          template warns that a portal's SSO region and your workload region may differ. If yours
+          does, say so.
+        </li>
+        <li>
+          <b>Doesn't set up SSO for you.</b> It reads <code>~/.aws/config</code> to find a profile
+          and never writes to it. No profile means the browser route, not a new profile.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>Integrates</td>
+            <td>
+              <b>AWS IAM Identity Center</b>, as a browser-driven portal, and
+              <b>Chrome</b> automation through the <code>claude-in-chrome</code> tools. The profile
+              route talks to the same portal through the AWS CLI instead.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <code>aws</code> (the profile route and the final identity check),
+              <code>chrome</code> and <code>claude-in-chrome</code> (the portal route and the
+              device-code approval). Nothing is installed or configured on your behalf.
+            </td>
+          </tr>
+          <tr>
+            <td>Portal facts</td>
+            <td>
+              <code>skills/aws-creds/portals.md</code>, a template (start URL, IdP, SSO region,
+              cache prefix, an alias to account-ID table), or a private per-org
+              <code>&lt;org&gt;-aws</code> wrapper skill that pins one portal and hands the facts
+              down. Account IDs are stored so a run can <b>verify</b> where it landed; an
+              unconfirmed one is written <code>?</code>, never a guess.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>Yes, on the portal route only.</b> <code>~/.agents/state/aws-creds/</code>, mode
+              <code>700</code>, holding one <code>&lt;portal&gt;-&lt;account&gt;.env</code> per
+              account at mode <code>600</code>. The profile route writes no file at all.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>
+              <b>Yes: <code>deletion-policy: delete</code>.</b> Every file in there is a credential
+              that expires in about an hour regardless. Deleting the directory costs one re-run; no
+              history, config or cache goes with it.
+            </td>
+          </tr>
+          <tr>
+            <td>Not its state</td>
+            <td>
+              <code>~/.aws/config</code> is read to find a profile, never written. The
+              <code>aws</code> CLI's own login handling belongs to the CLI, not to this skill.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">Two routes, tried in order of how little they leak</h2>
+      <p class="m">
+        <code>aws-creds</code> is one file of instructions (<code>skills/aws-creds/SKILL.md</code>,
+        plus the <code>portals.md</code> template) and no code, so its architecture is the order of
+        its attempts. The profile route comes first because it materializes nothing. The browser
+        route is the fallback and does the heavy lifting, but every step in it is shaped to keep the
+        secret out of the transcript.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="route-map"
+        data-label="diagram: profile route versus portal route"
+      >
+        <svg
+          viewBox="0 0 760 392"
+          role="img"
+          aria-label="Decision flow: profile route first, portal route as fallback"
+        >
+          <defs>
+            <marker
+              id="ah"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M0 0 L10 5 L0 10 z" class="ahead" />
+            </marker>
+          </defs>
+          <rect class="n" x="230" y="8" width="300" height="38" rx="9" />
+          <text class="t" x="380" y="31" text-anchor="middle">
+            aws call fails · or "get me creds"
+          </text>
+          <line class="e" x1="380" y1="46" x2="380" y2="76" marker-end="url(#ah)" />
+          <rect class="n q" x="190" y="76" width="380" height="40" rx="9" />
+          <text class="t" x="380" y="100" text-anchor="middle">
+            SSO profile for this account in ~/.aws/config?
+          </text>
+
+          <line class="e" x1="290" y1="116" x2="200" y2="150" marker-end="url(#ah)" />
+          <text class="l" x="222" y="128" text-anchor="end">yes</text>
+          <line class="e" x1="470" y1="116" x2="580" y2="150" marker-end="url(#ah)" />
+          <text class="l" x="538" y="128">no</text>
+
+          <rect class="n" x="44" y="150" width="316" height="44" rx="9" />
+          <text class="t" x="202" y="169" text-anchor="middle">aws sts get-caller-identity</text>
+          <text class="t" x="202" y="185" text-anchor="middle">
+            --profile &lt;p&gt; --query Account
+          </text>
+          <line class="e" x1="202" y1="194" x2="202" y2="224" marker-end="url(#ah)" />
+          <text class="l" x="212" y="214">SSO token expired</text>
+          <rect class="n" x="44" y="224" width="316" height="56" rx="9" />
+          <text class="t" x="202" y="244" text-anchor="middle">
+            aws sso login --sso-session &lt;s&gt;
+          </text>
+          <text class="t" x="202" y="260" text-anchor="middle">--use-device-code --no-browser</text>
+          <text class="s" x="202" y="274" text-anchor="middle">
+            approve the code in Chrome, then re-test
+          </text>
+          <rect class="n good" x="44" y="316" width="316" height="52" rx="9" />
+          <text class="t" x="202" y="337" text-anchor="middle">returns the profile name</text>
+          <text class="t" x="202" y="355" text-anchor="middle">
+            and the verified account ID · no file
+          </text>
+          <path class="e" d="M 44 172 C 22 172 22 342 44 342" marker-end="url(#ah)" />
+          <text class="l" x="12" y="256" text-anchor="middle" transform="rotate(-90 12 256)">
+            account matches
+          </text>
+
+          <rect class="n" x="420" y="150" width="320" height="44" rx="9" />
+          <text class="t" x="580" y="169" text-anchor="middle">Chrome → portal start URL</text>
+          <text class="t" x="580" y="185" text-anchor="middle">
+            IdP redirect ok · password = stop
+          </text>
+          <line class="e" x1="580" y1="194" x2="580" y2="224" marker-end="url(#ah)" />
+          <rect class="n" x="420" y="224" width="320" height="56" rx="9" />
+          <text class="t" x="580" y="244" text-anchor="middle">verify the modal's account ID</text>
+          <text class="t" x="580" y="260" text-anchor="middle">
+            click copy · clipboard → .env (600)
+          </text>
+          <text class="s" x="580" y="274" text-anchor="middle">
+            tr -d '\r' · bare echo · umask 077
+          </text>
+          <line class="e" x1="580" y1="280" x2="580" y2="316" marker-end="url(#ah)" />
+          <rect class="n good" x="420" y="316" width="320" height="52" rx="9" />
+          <text class="t" x="580" y="337" text-anchor="middle">sts check == expected ID</text>
+          <text class="t" x="580" y="355" text-anchor="middle">
+            returns path · account ID · expiry
+          </text>
+
+          <path class="e dash" d="M 360 252 H 390 V 172 H 420" marker-end="url(#ah)" />
+          <text class="l" x="381" y="212" text-anchor="middle" transform="rotate(-90 381 212)">
+            login fails
+          </text>
+        </svg>
+      </div>
+
+      <div
+        class="fig"
+        data-viz-id="route-figure"
+        data-label="stepper: portal resolution to a verified credential"
+      >
+        <div class="stage" id="stage"></div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+
+      <h3>The profile is tried first because it leaves nothing behind</h3>
+      <p>
+        <code>SKILL.md</code> line 63 is headed "Profile path: try this first". Find an SSO profile
+        in <code>~/.aws/config</code> by its <code>sso_session</code> or
+        <code>sso_start_url</code> plus <code>sso_account_id</code> and <code>sso_role_name</code>,
+        then prove it works with one call:
+      </p>
+      <pre>aws sts get-caller-identity --profile &lt;p&gt; --query Account --output text</pre>
+      <p>
+        If the printed ID matches the expected account, the run is over. The CLI resolves the
+        credentials itself on every later call, so nothing is materialized into a file or the
+        transcript. That is the whole reason the route exists, and why
+        <code>aws configure export-credentials</code> is forbidden on it.
+      </p>
+
+      <h3>Re-login by device code, so the agent never holds a password</h3>
+      <p>
+        When the profile fails with an SSO-token error, it runs
+        <code>aws sso login --sso-session &lt;session&gt; --use-device-code --no-browser</code> in
+        the background with output redirected to a file. The login prints a URL and a code; the
+        skill opens the URL in Chrome and checks that the page's code matches the printed one.
+        Redirecting to a file instead of piping to <code>head</code> is deliberate: a reader that
+        closes early kills the producer with SIGPIPE. It then clicks <b>Confirm and continue</b> and
+        <b>Allow access</b> (the <code>botocore-client-&lt;session&gt;</code> grant) and re-runs the
+        identity test. A password prompt anywhere in that flow stops the run.
+      </p>
+
+      <h3>When there is no profile, the portal is a website and gets driven as one</h3>
+      <p>
+        Step 0 loads six Chrome tools in one batched <code>ToolSearch</code>:
+        <code>tabs_context_mcp</code>, <code>tabs_create_mcp</code>, <code>navigate</code>,
+        <code>javascript_tool</code>, <code>find</code>, <code>computer</code>. Then it navigates to
+        the portal's start URL and takes a screenshot to see where it landed. An IdP page such as
+        <code>login.microsoftonline.com</code> or Okta is an <b>SSO redirect</b>, so completing it
+        is in scope: <code>find</code> the user's account row and click it. A <b>password field</b>
+        is not: the browser session expired, and the skill hands it back.
+      </p>
+
+      <h3>The modal check is a regex, and the regex has a scar</h3>
+      <p>
+        Account rows are collapsed and the expand chevron is a small target, so it clicks the
+        account <b>name</b>, then finds the <code>Access keys</code> link in that row. Before
+        copying anything, <code>javascript_tool</code> walks every <code>[role="dialog"]</code> and
+        reads the account out of the modal's own text (lines 108 to 137):
+      </p>
+      <pre>d.textContent.match(/Create access for the account\s+(.+?)\s*\((\d+)\)/)</pre>
+      <p>
+        <code>(.+?)</code> was once <code>\S+?</code>, a single non-space token. Account names
+        contain spaces, so the old pattern silently failed on every multi-word account and reported
+        <code>NO_CRED_DIALOG</code> against a valid modal. The code comment records this, and so
+        does the rule next to it:
+      </p>
+      <div class="callout">
+        <b
+          ><code>NO_CRED_DIALOG</code> means "no modal found", not "wrong account", and it is never
+          a pass.</b
+        >
+        If it comes back while a credentials modal is plainly open, the selector or regex has
+        drifted from the portal's markup. Confirm the account from a screenshot before copying
+        anything, and fix the snippet. Portals render several modals, so a stale one can still be in
+        the DOM.
+      </div>
+
+      <h3>Copy, don't read</h3>
+      <p>
+        It finds the copy button for <b>Option 1: Set AWS environment variables</b> and clicks it.
+        The three <code>export</code> lines go to the system clipboard and from there straight to
+        disk. Reading the values out with <code>javascript_tool</code> and pasting them into a bash
+        command would route live credentials through chat, which Step 3 forbids.
+      </p>
+
+      <h3>The write carries two scars, both real</h3>
+      <pre><span class="c"># 1. the portal's code block is CRLF; a stray \r corrupts the</span>
+<span class="c">#    Authorization header -&gt; "Invalid header value"</span>
+<span class="c"># 2. the block has NO trailing newline, so AWS_REGION lands on the</span>
+<span class="c">#    end of AWS_SESSION_TOKEN -&gt; InvalidClientTokenId</span>
+mkdir -p ~/.agents/state/aws-creds &amp;&amp; chmod 700 ~/.agents/state/aws-creds
+umask 077
+{ pbpaste | tr -d '\r' | sed -E 's/^export //; s/"//g'; echo; echo "AWS_REGION=us-east-1"; } &gt; "$OUT"
+chmod 600 "$OUT"</pre>
+      <p>
+        The bare <code>echo</code> is the whole fix for bug 2. The <code>sed</code> strips
+        <code>export </code> and the quotes so the file is a plain dotenv that
+        <code>set -a; source</code> turns into environment variables. On Linux,
+        <code>pbpaste</code> becomes <code>xclip -o -selection clipboard</code> or
+        <code>wl-paste</code>.
+      </p>
+
+      <h3>Debug by length, never by value</h3>
+      <pre>awk -F= 'NF{printf "%s len=%d\n", $1, length($0)-length($1)-1}' "$OUT"
+<span class="c"># expect: AWS_ACCESS_KEY_ID len=20, AWS_SECRET_ACCESS_KEY len=40,</span>
+<span class="c">#         AWS_SESSION_TOKEN len~1000, AWS_REGION len=9</span></pre>
+      <p>
+        A session token ending in <code>-east-1</code> means bug 2 bit. The last thing the run does
+        before reporting success is source the file and compare
+        <code>sts get-caller-identity</code> with the account ID from <code>portals.md</code> (or
+        the wrapper skill). A mismatch prints <code>WRONG ACCOUNT</code> and exits 1, because the
+        tile it clicked is a guess and the caller identity is not.
+      </p>
+
+      <h3>The troubleshooting table, as the skill keeps it</h3>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>Invalid header value … \r</td>
+            <td>CRLF in the pasted block. <code>tr -d '\r'</code>.</td>
+          </tr>
+          <tr>
+            <td>InvalidClientTokenId, right after writing</td>
+            <td>Missing trailing newline merged <code>AWS_REGION</code> into the session token.</td>
+          </tr>
+          <tr>
+            <td>ExpiredToken / UnrecognizedClientException, later</td>
+            <td>The roughly one hour lifetime. Re-run the skill.</td>
+          </tr>
+          <tr>
+            <td>Different account from get-caller-identity</td>
+            <td>
+              Wrong tile, or a stale modal still in the DOM. Re-check with the Step 2 snippet.
+            </td>
+          </tr>
+          <tr>
+            <td>Can't find Access keys</td>
+            <td>
+              The portal renamed elements. <code>read_page</code> with
+              <code>filter: "interactive"</code>, look for "access" or "key".
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its
+        own existence.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

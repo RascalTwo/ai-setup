@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>r2-handoff — a fresh agent knows only what you hand it</title>
+    <meta name="viz:uid" content="v-70e088e12239" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="r2-handoff" />
+    <meta
+      name="viz:description"
+      content="Hands a conversation to a fresh agent through a nine-section document, splits it per parallel stream, or rescues an abandoned session from its transcript without ever reopening it."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      :root {
+        --s: 1;
+        --hue: var(--warn);
+        --code: color-mix(in srgb, var(--warn) 78%, #fff);
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            800px 480px at 96% -12%,
+            color-mix(in srgb, var(--warn) 17%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            700px 440px at -8% 112%,
+            color-mix(in srgb, var(--c4) 11%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 480px;
+        gap: 44px;
+        align-items: center;
+        padding: 46px 60px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--warn);
+        margin-bottom: 18px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--warn);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--warn) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 54px;
+        line-height: 1.04;
+        margin: 0 0 20px;
+        letter-spacing: -1.5px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--warn);
+      }
+      p.sub {
+        font-size: 18.5px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 18px;
+        max-width: 500px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 14.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 20px;
+        max-width: 500px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 15px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--warn);
+        border-radius: 9px;
+        padding: 10px 15px;
+        color: var(--text);
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the exam, as bars: length = recall, amber = how much handoff machinery */
+      .exam {
+        background: color-mix(in srgb, var(--panel) 82%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px 20px 16px;
+        font-family: var(--mono);
+      }
+      .exam .cap {
+        font-size: 11px;
+        letter-spacing: 0.13em;
+        color: var(--warn);
+        margin-bottom: 4px;
+      }
+      .exam .capsub {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin-bottom: 16px;
+        line-height: 1.45;
+      }
+      .row {
+        margin-bottom: 14px;
+      }
+      .row .nm {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12.5px;
+        color: var(--text);
+        margin-bottom: 5px;
+      }
+      .row .nm i {
+        font-style: normal;
+        color: var(--faint);
+        font-size: 11px;
+      }
+      .track {
+        position: relative;
+        height: 22px;
+        background: color-mix(in srgb, var(--border) 45%, transparent);
+        border-radius: 5px;
+      }
+      .bar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding-left: 8px;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #0b0f16;
+      }
+      .b0 {
+        width: 17%;
+        background: var(--faint);
+        color: #fff;
+      }
+      .b1 {
+        width: 41%;
+        background: color-mix(in srgb, var(--warn) 38%, #30363d);
+      }
+      .b2 {
+        width: 62%;
+        background: color-mix(in srgb, var(--warn) 70%, #30363d);
+      }
+      .b3 {
+        width: 74%;
+        background: var(--warn);
+      }
+
+      .thin {
+        position: absolute;
+        left: 62%;
+        width: 12%;
+        top: -3px;
+        bottom: -3px;
+        border: 1px dashed var(--danger);
+        border-radius: 4px;
+        pointer-events: none;
+      }
+      .thinlbl {
+        text-align: right;
+        font-size: 10.5px;
+        color: var(--danger);
+        margin: -9px 0 12px;
+        letter-spacing: 0.04em;
+      }
+      .axis {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: var(--faint);
+        border-top: 1px solid var(--border);
+        padding-top: 5px;
+        margin-top: 6px;
+      }
+      .exam .fine {
+        font-size: 10.5px;
+        color: var(--muted);
+        margin-top: 10px;
+        line-height: 1.5;
+      }
+
+      /* ── the dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        line-height: 1.5;
+        color: var(--warn);
+        margin: 42px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.88em;
+        color: var(--code);
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      pre .o {
+        color: var(--code);
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+      table.modes td:first-child {
+        width: 232px;
+        color: var(--code);
+        font-size: 12px;
+        letter-spacing: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 14px;
+      }
+      .fig .stage svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .fig .cap {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        margin: 12px 0 0;
+        line-height: 1.5;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 70px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover,
+      .ctrl button[aria-pressed="true"] {
+        border-color: var(--warn);
+        color: #fff;
+      }
+      .ctrl button[aria-pressed="true"] {
+        background: color-mix(in srgb, var(--warn) 14%, #0b0f16);
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+
+      /* svg labels */
+      .nd {
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        text-align: left;
+        gap: 2px;
+        padding: 0 10px;
+        box-sizing: border-box;
+      }
+      .nd b {
+        color: #fff;
+        font-size: 12.5px;
+      }
+      .nd small {
+        font: 11px/1.4 var(--mono);
+        color: var(--muted);
+      }
+      .nd.inl {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        margin: 0;
+      }
+      .nd.inl span {
+        font: 10.5px var(--mono);
+        color: var(--text);
+      }
+      .lane-label {
+        font: 600 10.5px var(--mono);
+        letter-spacing: 0.14em;
+      }
+      .sec {
+        transition:
+          transform 0.55s ease,
+          opacity 0.45s ease;
+      }
+
+      /* digest stepper stage */
+      .dg {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr;
+        gap: 16px;
+        min-height: 342px;
+      }
+      .dg .hdr {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        color: var(--warn);
+        margin-bottom: 9px;
+      }
+      .ev {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 6px 10px;
+        margin-bottom: 5px;
+        display: grid;
+        grid-template-columns: 78px 1fr;
+        gap: 4px 10px;
+        color: var(--muted);
+        opacity: 0.55;
+        transition:
+          opacity 0.25s,
+          border-color 0.25s,
+          background 0.25s;
+      }
+      .ev.seen {
+        opacity: 0.9;
+      }
+      .ev.now {
+        opacity: 1;
+        border-color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 9%, transparent);
+      }
+      .ev .role {
+        color: var(--faint);
+        letter-spacing: 0.06em;
+      }
+      .ev .txt {
+        color: var(--text);
+        overflow-wrap: anywhere;
+      }
+      .ev .out {
+        grid-column: 2;
+        font-size: 11px;
+      }
+      .ev .out.keep {
+        color: var(--good);
+      }
+      .ev .out.drop {
+        color: var(--danger);
+      }
+      .ev .out.err {
+        color: var(--warn);
+      }
+      .dg .code {
+        background: #0d1117;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 11px 12px;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        line-height: 1.6;
+        color: var(--text);
+        align-self: start;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .dg .code .ln {
+        color: var(--faint);
+      }
+      .dg .code .ok {
+        color: var(--good);
+      }
+      .dg .code .bad {
+        color: var(--danger);
+      }
+      .dg .code .o {
+        color: var(--code);
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+      @media (max-width: 640px) {
+        .dg {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="r2-handoff"
+        data-viz-id="poster-card"
+        data-label="r2-handoff poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · R2-HANDOFF</div>
+          <h1 class="hook">
+            A fresh agent<br />knows <em>only what<br />you hand it.</em>
+          </h1>
+          <p class="sub">
+            A summary keeps what happened. r2-handoff keeps what the next session needs:
+            <b>the dead ends, the retracted claims, the question you asked last.</b>
+          </p>
+          <p class="not">
+            Nine sections, always the same nine.<br />In the measurement, the section list was the
+            main ingredient.
+          </p>
+          <div class="trigger">
+            <span>run</span>&nbsp;/r2-handoff · /r2-handoff rescue &lt;tab&gt;
+          </div>
+        </div>
+
+        <div class="exam" data-viz-id="exam-chart" data-label="successor recall by handoff method">
+          <div class="cap">WHAT THE NEXT SESSION CAN ANSWER</div>
+          <div class="capsub">
+            blind exam of facts that lived only in the conversation · one 173k-token session
+          </div>
+
+          <div class="row" data-viz-id="bar-none" data-label="no handoff: 17 percent">
+            <div class="nm"><span>no handoff</span><i>start cold</i></div>
+            <div class="track"><div class="bar b0">17%</div></div>
+          </div>
+          <div class="row" data-viz-id="bar-upstream" data-label="upstream handoff: 41 percent">
+            <div class="nm"><span>upstream /handoff</span><i>one paragraph of advice</i></div>
+            <div class="track"><div class="bar b1">41%</div></div>
+          </div>
+          <div class="row" data-viz-id="bar-template" data-label="with section list: 62 percent">
+            <div class="nm"><span>+ the section list</span><i>template.md</i></div>
+            <div class="track"><div class="bar b2">62%</div></div>
+          </div>
+          <div class="row" data-viz-id="bar-rescue" data-label="rescue mode: 74 percent">
+            <div class="nm"><span>rescue mode</span><i>digest + subagent</i></div>
+            <div class="track">
+              <div class="bar b3">74%</div>
+              <div
+                class="thin"
+                data-viz-id="thin-gap"
+                data-label="the 12 point gap that is thin"
+              ></div>
+            </div>
+          </div>
+          <div class="thinlbl">12 pts, one run: treat as thin</div>
+          <div class="axis">
+            <span>0</span><span>25</span><span>50</span><span>75</span><span>100%</span>
+          </div>
+          <div class="fine">
+            LLM answerers and grader. On a session fully recorded in git, plans and files, the exam
+            could not tell the arms apart.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">A fresh session inherits the files and none of the argument</h2>
+      <p>
+        Open a new session on the same repo and it can read everything on disk: the code, the plan,
+        the commits. What it cannot read is the conversation. The approach you tried and dropped,
+        and why. The claim the assistant made at two o'clock and retracted at three. How you said
+        you want errors surfaced. The last thing you typed. Those facts live in exactly one place,
+        and it is about to be thrown away.
+      </p>
+      <p>
+        The skill's own provenance file reports the measurement behind that. On a 173k-token
+        session, a blind exam of conversation-only facts scored the successor at
+        <b>17% with no handoff</b>, <b>41%</b> with upstream's <code>/handoff</code>,
+        <b>62%</b> once the same handoff was given the section list in <code>template.md</code>, and
+        <b>74%</b> with rescue mode. The biggest single step was not a cleverer summary. It was a
+        better list of questions for the summary to answer.
+      </p>
+      <p class="m">
+        Two failures sit around that. You walk away from a session and its prompt cache expires with
+        no handoff written; reopening it would rewrite that whole expired cache just to ask it to
+        summarise itself. And work that has fanned out into parallel streams gets crammed into one
+        document, so each fresh agent wades through two other agents' business to find its own.
+      </p>
+
+      <h2 data-beat="using">Four doors into one document</h2>
+      <p>
+        <code>disable-model-invocation: true</code> is in the frontmatter, and
+        <code>agents/openai.yaml</code> sets <code>allow_implicit_invocation: false</code> for
+        Codex. Nothing fires this on its own; you do, or the auto-handoff hook does.
+      </p>
+      <table class="where modes">
+        <tbody>
+          <tr>
+            <td>/r2-handoff [what next]</td>
+            <td>
+              The plain one. This session writes its own handoff into the OS temp directory (not the
+              workspace). Words after the command say what the next session is for, and the document
+              is tailored to it. The final reply is the file's path and nothing else.
+            </td>
+          </tr>
+          <tr>
+            <td>/r2-handoff split [narrow]</td>
+            <td>
+              The remaining work fans out into parallel fresh sessions. It proposes streams, waits
+              for you to merge, split or approve, writes one shared document and one per stream, and
+              replies with a launch line per stream.
+            </td>
+          </tr>
+          <tr>
+            <td>/r2-handoff rescue &lt;tab | pane | session id&gt;</td>
+            <td>
+              For a session you already walked away from. Name it by its herdr tab label, tab or
+              pane id, or session id. Claude Code sessions only.
+            </td>
+          </tr>
+          <tr>
+            <td>AUTO HANDOFF &lt;path&gt;</td>
+            <td>
+              Not typed. The <code>tools/auto-handoff</code> Stop hook asks for it at 250k of
+              context (or when an idle session's prompt cache is about to expire), then types
+              <code>/clear</code> and <code>read &lt;path&gt; and continue</code>. The skill asks
+              nothing and writes to the path it was given.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="limits">It carries conversation. It can't conjure what nobody said.</h2>
+      <ul>
+        <li>
+          <b>It earns its keep only on conversation-only facts.</b> When the session's state was
+          fully recorded in git, plans and files, the exam could not tell the arms apart. So the
+          skill refuses to duplicate those: specs, plans, ADRs, issues, commits and diffs are
+          referenced by path or URL, never restated.
+        </li>
+        <li>
+          <b>The evidence is thin, and says so.</b> One session, one run, LLM answerers and grader.
+          The gap between the section list (62%) and rescue mode (74%) is 12 points of that, so
+          treat it as a lean, not a result.
+        </li>
+        <li>
+          <b>Rescue reads Claude Code transcripts only.</b>
+          <code>resolve.py</code> exits rather than guess when the matched agent is anything else.
+          Codex has the plain handoff and split, not rescue.
+        </li>
+        <li>
+          <b>The digest is lossy on purpose.</b> Tool results and thinking are dropped; a fact that
+          lived only in a command's output is recovered by a targeted lookup in the full transcript,
+          or reported as missing. It is never read whole.
+        </li>
+        <li>
+          <b>It never splits on its own.</b> Auto mode may add one line suggesting
+          <code>/r2-handoff split</code>. A split that finds a single stream writes a plain handoff
+          and stops.
+        </li>
+        <li>
+          <b>Auto mode can raise the next session's model and effort, never lower them.</b> A lower
+          choice is ignored; and there is no Opus high on the menu.
+        </li>
+        <li>
+          <b>Secrets get redacted.</b> The first block, kept word for word from upstream, says to
+          strip API keys, passwords and personal information. Whether a given one slipped through is
+          a reading job.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives, and what it leaves behind</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/r2-handoff/</code>: <code>SKILL.md</code>, <code>template.md</code> (the
+              section list), <code>PROVENANCE.md</code>, <code>scripts/resolve.py</code>,
+              <code>scripts/digest.py</code>, <code>agents/openai.yaml</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Declared</td>
+            <td>
+              <code>kind: skill</code>, <code>state: false</code>. No <code>deletion-policy</code>,
+              because there is nothing to delete.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>None kept.</b> A handoff is a baton, not a record. It is written to the OS temp
+              directory on purpose, and the OS cleans it up. The lineage line is built for that: any
+              breadcrumb whose file is gone is kept in the trail and marked <code>(gone)</code>, so
+              the chain stays countable.
+            </td>
+          </tr>
+          <tr>
+            <td>Integrates</td>
+            <td>
+              <code>herdr</code>, rescue mode only: <code>resolve.py</code> runs
+              <code>herdr tab list</code> and <code>herdr agent list</code> to turn a tab label into
+              a Claude session. Called from <code>tools/auto-handoff</code> for the auto flow.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <code>python3</code>. Both scripts import only the standard library
+              (<code>json</code>, <code>re</code>, <code>glob</code>, <code>os</code>,
+              <code>subprocess</code>, <code>calendar</code>, <code>time</code>, <code>sys</code>).
+            </td>
+          </tr>
+          <tr>
+            <td>Derived from</td>
+            <td>
+              mattpocock/skills' <code>handoff</code>. <code>SKILL.md</code>'s first block is
+              upstream word for word; the section list, split, rescue and auto modes are this
+              repo's.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">Nine sections and a lineage line, whichever door you used</h2>
+      <p>
+        Every mode writes to the same shape. It opens with one lineage line so a successor can find
+        the session it came from:
+        <code
+          >from session &lt;id&gt; · transcript &lt;path&gt; · cwd · date · continued from ·
+          earlier</code
+        >. The <code>earlier</code> list is the breadcrumb trail, oldest first, copied from the
+        handoff you continued from with that handoff's own parent appended. A successor opens only
+        the one it continued from, never the older ones.
+      </p>
+      <p>
+        Then nine sections, in order, each saying <em>none</em> rather than vanishing, with anything
+        inferred marked <code>(inferred)</code> and anything verified on disk just now marked
+        <code>(checked now)</code>. Section 6 is the unusual one: not just what was tried and
+        dropped with the exact symptom, but
+        <b>claims the assistant made that later proved false</b>, so a successor does not trust
+        them. Toggle to see where each section goes when the work splits.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="sections-figure"
+        data-label="the nine sections, plain versus split"
+      >
+        <div class="stage">
+          <svg
+            id="secs"
+            viewBox="0 0 760 356"
+            role="img"
+            aria-label="the same nine sections in one document, or distributed across a shared document and two stream documents"
+          ></svg>
+        </div>
+        <p class="lede" id="seclede"></p>
+        <div class="ctrl">
+          <button id="m-plain" aria-pressed="true">one document</button>
+          <button id="m-split" aria-pressed="false">split into streams</button>
+          <span class="hint">the same ten rows, redistributed</span>
+        </div>
+      </div>
+
+      <p>
+        The partition rule is mechanical, and it is the first thing split does: two steps share a
+        stream when they touch the same file or one needs the other's output. Only steps with no
+        shared file and no dependency become separate streams. It then shows you each stream with a
+        recommended model (Opus for ambiguous design or work that can lose data, Sonnet for the
+        rest, Haiku only for mechanical work) and waits. Every stream document opens by naming the
+        shared one as the first read.
+      </p>
+
+      <h2 data-beat="how">Rescue never reopens the session</h2>
+      <p class="m">
+        The session is idle, its cache has expired and nobody wrote a handoff. Seven stages turn a
+        tab name into a document, and only one of them is a model.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="rescue-figure"
+        data-label="the rescue pipeline from target to handoff file"
+      >
+        <div class="stage">
+          <svg
+            id="rescue"
+            viewBox="0 0 760 462"
+            role="img"
+            aria-label="rescue pipeline: target, resolve.py, transcript, digest.py funnel, digest, subagent, handoff file"
+          ></svg>
+        </div>
+        <p class="cap">
+          The funnel is the whole trick: a transcript of several megabytes goes in, about thirty
+          thousand tokens come out, and no model touched it.
+        </p>
+      </div>
+
+      <h3>resolve.py: one answer or a list of candidates</h3>
+      <p>
+        <code>python3 scripts/resolve.py &lt;target&gt;</code> prints one session as JSON
+        (<code>session_id</code>, <code>transcript</code>, <code>title</code>, <code>tab</code>,
+        <code>bytes</code>, <code>age_minutes</code>) or exits 1. A target that matches the
+        session-id pattern (line 24) skips herdr entirely. Anything else is matched against
+        <code>herdr tab list</code> and <code>herdr agent list</code> by tab id, pane id, tab-label
+        substring or terminal title. A match whose agent is not <code>claude</code> stops with a
+        message saying rescue reads Claude Code transcripts only. Zero or several matches stop with
+        the candidates printed, tab and session id side by side, so the next move is "ask the user
+        which".
+      </p>
+      <p>
+        The transcript is found by glob, <code>~/.claude/projects/*/&lt;id&gt;.jsonl</code>, and
+        <code>age_minutes</code> comes from the last assistant line. The script scans for the
+        literal <code>"type":"assistant"</code> and parses that one line only, rather than parsing
+        every line of a multi-megabyte file.
+      </p>
+
+      <h2 data-beat="how">The digest is deterministic, and it throws away the right things</h2>
+      <p>
+        <code>scripts/digest.py</code> is no LLM. Its docstring says what it is for: an 8.6 MB
+        transcript becomes roughly 30k tokens. Walk one made-up transcript through it, one rule at a
+        time.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="digest-figure"
+        data-label="stepper: what digest.py keeps and drops"
+      >
+        <div class="stage"><div class="dg" id="stage"></div></div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+
+      <h3>The subagent writes it, so this context never holds it</h3>
+      <p>
+        Stage six is one general-purpose subagent with a prompt the skill spells out. It may write
+        <b>one file only</b> and run read-only commands. It reads the digest fully, and uses the
+        full transcript for targeted lookups only: when the digest leaves a fact open (did a command
+        succeed, why was an approach rejected, did the assistant retract something) it greps or
+        <code>jq</code>s for it, and <b>counts the lookups</b>. It follows <code>template.md</code>,
+        checks every path with <code>ls</code>, and replies in under 200 words: the output path, a
+        four-line summary, the lookup count, and where the digest was not enough. The prompt also
+        carries one line you would not think to write, that you dictate by voice, so odd words may
+        be homophones.
+      </p>
+      <p>
+        The calling session relays the path and summary and reads the document back only if you ask.
+        That is why the handoff costs this conversation almost nothing.
+      </p>
+
+      <div class="callout">
+        <b>A fork, so upstream's changes can be patched in.</b> The first block of
+        <code>SKILL.md</code> (five instruction paragraphs, about a fifth of the file by size) is
+        mattpocock/skills' <code>handoff</code>, unchanged and in order. The section list, split,
+        auto and rescue modes, scripts and manifest are additions. Keeping the base verbatim means
+        an upstream edit arrives as a diff against a recorded blob rather than a rewrite, and
+        <code>ai-setup-audit</code>'s freshness check re-offers it the moment upstream changes.
+      </div>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · the baton, and what it
+        has to carry.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Change review</title>
+<!-- Posture stays local: a review film of someone's PR is not for the open web by default. -->
+<meta name="viz:posture" content="local">
+<meta name="viz:listed" content="unlisted">
+<meta name="viz:film">
+<meta name="viz:bundle" content="plan.json hunks.json narration.json scenes/ callgraph.json fixtures.json fixtures/"> <!-- carried inside a single-file export --> <!-- verify and render wait for the timeline (it registers after the highlighter loads) -->
+<meta name="viz:title" content="Change review (pr-viz)">
+<meta name="viz:description" content="A narrated review film and review document, rendered from plan.json by pr-viz.">
+<link rel="stylesheet" href="/_kit/viz-kit.css">
+<link rel="stylesheet" href="pr-viz.css">
+</head>
+<body>
+<!-- Everything is rendered from plan.json (+ hunks.json, narration.json) by pr-viz.ts (served as pr-viz.js).
+     Edit plan.json, run pr-viz's build.ts, then `viz verify` — never this file. -->
+<script type="module" src="pr-viz.js"></script>
+</body>
+</html>
