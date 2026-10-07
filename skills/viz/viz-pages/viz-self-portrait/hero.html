@@ -1,0 +1,260 @@
+<div class="og-card">
+  <style>
+    .og-card {
+      position: relative;
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 70% 55%, rgba(88, 166, 255, 0.12), rgba(88, 166, 255, 0) 52%),
+        #0d1117;
+      color: #e6edf3;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .og-card .mono {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    }
+
+    /* ---------- LEFT: the pitch ---------- */
+    .og-card .left {
+      position: absolute;
+      left: 64px;
+      top: 58px;
+      bottom: 58px;
+      width: 420px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .og-card .brand {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+      font-size: 20px;
+      color: #7d8590;
+    }
+    .og-card .brand b {
+      color: #58a6ff;
+      font-weight: 600;
+    }
+    .og-card h1 {
+      margin: 0;
+      font-size: 60px;
+      line-height: 1.04;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+    .og-card .essence {
+      margin: 24px 0 0;
+      font-size: 22px;
+      line-height: 1.45;
+      color: #adb7c0;
+    }
+    .og-card .essence b {
+      color: #e6edf3;
+      font-weight: 600;
+    }
+    .og-card .cta {
+      font-family: ui-monospace, monospace;
+      font-size: 15px;
+      color: #7d8590;
+    }
+    .og-card .cta b {
+      color: #e6edf3;
+      font-weight: 600;
+    }
+
+    /* ---------- RIGHT: the dashboard, cropped by the card edge ---------- */
+    .og-card .dash {
+      position: absolute;
+      left: 536px;
+      top: 74px;
+      width: 624px;
+      height: 620px;
+      padding: 22px 24px;
+      border: 1px solid #30363d;
+      border-radius: 16px;
+      background: #0d1117;
+      box-shadow:
+        0 0 0 1px rgba(88, 166, 255, 0.08),
+        0 30px 80px rgba(0, 0, 0, 0.55);
+    }
+    .og-card .dash .tabs {
+      display: flex;
+      gap: 26px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #30363d;
+      font-size: 15px;
+      color: #7d8590;
+    }
+    .og-card .dash .tabs .cur {
+      color: #e6edf3;
+      font-weight: 600;
+      box-shadow: 0 13px 0 -11px #58a6ff;
+    }
+    .og-card .dash .filters {
+      display: flex;
+      gap: 8px;
+      margin: 16px 0 12px;
+      font-family: ui-monospace, monospace;
+      font-size: 12.5px;
+      color: #7d8590;
+    }
+    .og-card .dash .filters span {
+      padding: 5px 10px;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      background: #161b22;
+    }
+    .og-card .dash .filters .search {
+      flex: 1;
+      text-align: left;
+    }
+    .og-card .row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 11px 14px;
+      margin-bottom: 8px;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      background: #161b22;
+    }
+    .og-card .row .dot {
+      width: 9px;
+      height: 9px;
+      flex: 0 0 9px;
+      border-radius: 50%;
+    }
+    .og-card .row .name {
+      width: 170px;
+      font-family: ui-monospace, monospace;
+      font-size: 14.5px;
+      font-weight: 600;
+    }
+    .og-card .row .where {
+      flex: 1;
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      color: #7d8590;
+    }
+    .og-card .chip {
+      padding: 2px 9px;
+      border-radius: 999px;
+      border: 1px solid;
+      font-family: ui-monospace, monospace;
+      font-size: 11.5px;
+    }
+    .og-card .chip.ok {
+      color: #3fb950;
+      border-color: rgba(63, 185, 80, 0.45);
+    }
+    .og-card .chip.api {
+      color: #f0883e;
+      border-color: rgba(240, 136, 62, 0.45);
+    }
+    .og-card .chip.priv {
+      color: #7d8590;
+      border-color: #30363d;
+    }
+    .og-card .row.me {
+      border-color: rgba(219, 97, 162, 0.55);
+      background: #1d1722;
+    }
+    .og-card .server {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+      padding: 12px 14px;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      font-family: ui-monospace, monospace;
+      font-size: 14px;
+    }
+    .og-card .server .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #3fb950;
+      box-shadow: 0 0 10px rgba(46, 160, 67, 0.85);
+    }
+    .og-card .commits {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      line-height: 1.9;
+      color: #adb7c0;
+    }
+    .og-card .commits .sha {
+      margin-right: 12px;
+      color: #58a6ff;
+    }
+    .og-card .server .muted {
+      color: #7d8590;
+    }
+  </style>
+
+  <div class="left">
+    <div class="brand"><b>/viz</b> self&#8209;portrait</div>
+    <div>
+      <h1>Every viz you’ve made, on one screen.</h1>
+      <p class="essence">
+        A <b>live dashboard</b> of your whole library, and a guide to the skill — both built by the
+        skill itself.
+      </p>
+    </div>
+    <div class="cta">Run <b>/viz</b>, open the self&#8209;portrait, see yours.</div>
+  </div>
+
+  <div class="dash">
+    <div class="tabs"><span>Guide</span><span class="cur">Dashboard</span><span>Rank</span></div>
+    <div class="filters">
+      <span>sort: modified ↓</span><span>posture: all</span><span>approved: all</span
+      ><span class="search">⌕ search title or path…</span>
+    </div>
+
+    <div class="row me">
+      <i class="dot" style="background: #db61a2"></i>
+      <span class="name">self-portrait</span>
+      <span class="where">~/.viz-pages</span>
+      <span class="chip api">api</span><span class="chip ok">approved</span>
+    </div>
+    <div class="row">
+      <i class="dot" style="background: #3fb950"></i>
+      <span class="name">pr-review-film</span>
+      <span class="where">~/code/ai-setup</span>
+      <span class="chip ok">approved</span>
+    </div>
+    <div class="row">
+      <i class="dot" style="background: #58a6ff"></i>
+      <span class="name">cohort-orientation</span>
+      <span class="where">~/code/hydra</span>
+      <span class="chip api">api</span><span class="chip priv">private</span>
+    </div>
+    <div class="row">
+      <i class="dot" style="background: #f0883e"></i>
+      <span class="name">speaker-confirm</span>
+      <span class="where">~/.viz-pages</span>
+      <span class="chip api">api</span><span class="chip ok">approved</span>
+    </div>
+    <div class="row">
+      <i class="dot" style="background: #3fb950"></i>
+      <span class="name">release-notes</span>
+      <span class="where">~/code/ai-setup</span>
+      <span class="chip priv">private</span>
+    </div>
+
+    <div class="server">
+      <i class="dot"></i><span>server running</span>
+      <span class="muted">127.0.0.1:5180 · 14 vizzes</span>
+    </div>
+    <div class="commits">
+      <div><span class="sha">512c819</span> a verb on a non-viz target is an error</div>
+      <div><span class="sha">2822f36</span> verify is five jobs in the docs</div>
+      <div><span class="sha">f1bbada</span> the skill only says where the plan is</div>
+    </div>
+  </div>
+</div>
