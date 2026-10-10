@@ -1,0 +1,11 @@
+# The Agents list shows only the agents in the Space you're looking at. herdr keeps an Agent view
+# in memory only, so this startup hook sets it again whenever a herdr server starts.
+id = "rascaltwo.space-agents"
+name = "Agents in this Space"
+version = "0.1.0"
+min_herdr_version = "0.9.0"
+description = "Filter the Agents list to the current Space, on every server start"
+platforms = ["macos", "linux"]
+
+[[startup]]
+command = ["python3", "space-view"]

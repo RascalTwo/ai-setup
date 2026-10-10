@@ -1,0 +1,95 @@
+#!/bin/sh
+# Living herdr tab label. After each Claude turn, ask a local model for a short
+# slug describing what the conversation is about NOW, and rename the tab to it.
+# Runs as a Stop hook for Claude Code (no args) or Codex (`codex`). See README.md.
+
+MODEL=${HERDR_AUTOLABEL_MODEL:-qwen2.5-coder:7b}
+LIMIT=12
+STATE_DIR="$HOME/.agents/state/herdr-autolabel"
+
+# Each agent writes its own transcript format.
+case ${1:-claude} in
+  # Codex: typed text only (AGENTS.md and environment context are separate
+  # items); user_message is the older Codex shape.
+  codex) USER_MSGS='select(.type=="event_msg") | .payload
+                    | if .item.type=="UserMessage" then (.item.content[]? | select(.type=="text") | .text)
+                      elif .type=="user_message" then .message else empty end' ;;
+  *)     USER_MSGS='select(.type=="user") | .message.content
+                    | if type=="string" then . else (.[]? | select(.type=="text") | .text) end' ;;
+esac
+
+# Outside herdr there is no tab to rename, so don't even wake ollama.
+[ -n "$HERDR_TAB_ID" ] || exit 0
+command -v herdr >/dev/null 2>&1 || exit 0
+command -v ollama >/dev/null 2>&1 || exit 0
+
+transcript=$(jq -r '.transcript_path // empty' 2>/dev/null)
+[ -f "$transcript" ] || exit 0
+
+# Everything past here is a model call. Detach it: a Stop hook that blocks is a
+# Stop hook you feel on every single turn.
+{
+  mkdir -p "$STATE_DIR"
+  state="$STATE_DIR/$(printf '%s' "$HERDR_TAB_ID" | tr -c 'a-zA-Z0-9' '_')"
+  ours=$(cat "$state" 2>/dev/null)
+
+  label=$(herdr tab list --workspace "$HERDR_WORKSPACE_ID" \
+          | jq -r --arg t "$HERDR_TAB_ID" '.result.tabs[]|select(.tab_id==$t)|.label')
+
+  # An auto-numbered label is fair game, and so is one we set ourselves.
+  # Anything else is a name the human typed — back off, permanently.
+  case "$label" in
+    ''|*[!0-9]*) [ "$label" = "$ours" ] || exit 0 ;;
+  esac
+
+  # User turns only: drop tool results, images, and injected system blocks.
+  msgs=$(jq -r "$USER_MSGS" "$transcript" 2>/dev/null \
+         | grep -vE '^\s*(<|\[Image|Caveat:)' | grep -vE '^\s*$')
+  [ -n "$msgs" ] || exit 0
+
+  prompt="Name a terminal tab for this coding session.
+Reply with ONE slug and nothing else: 1-2 words, lowercase, hyphenated, ${LIMIT} characters max.
+No quotes, no punctuation, no explanation.
+
+Current slug: ${ours:-none}
+If the conversation is still about the same thing as the current slug, reply with exactly the current slug.
+Otherwise name what the conversation is about NOW — the latest messages matter most.
+
+How it started:
+$(printf '%s' "$msgs" | head -1 | cut -c1-300)
+
+Most recent messages:
+$(printf '%s' "$msgs" | tail -3 | cut -c1-300)
+
+Slug:"
+
+  # Small models pad, quote, capitalize, and explain. Keep only what survives.
+  # Stay out of the way of real local-model work: if Ollama holds some other
+  # model and ours is not already resident, skip this turn rather than load a
+  # second one beside it. If ours is already warm, reusing it costs nothing.
+  ollama ps 2>/dev/null | awk -v m="$MODEL" 'NR>1 {if ($1==m) ours=1; else other=1} END {exit !(other && !ours)}' && exit 0
+
+  # Raw API instead of `ollama run`: the prompt is ~300 tokens, so a 2k context
+  # (not the server's 32k default, which cost ~2 GB of KV cache) is plenty.
+  # keep_alive 2m rides out a working burst without reloading every turn.
+  raw=$(jq -n --arg m "$MODEL" --arg p "$prompt" \
+          '{model:$m, prompt:$p, stream:false, think:false, keep_alive:"2m",
+            options:{num_ctx:2048, num_predict:24, temperature:0}}' \
+        | curl -s --max-time 60 "${OLLAMA_HOST_URL:-http://localhost:11434}/api/generate" -d @- \
+        | jq -r '.response // empty' \
+        | head -1 | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' \
+        | sed 's/^-*//; s/-*$//')
+  [ -n "$raw" ] || exit 0
+
+  # Over-long answers are common. Cut to LIMIT, and if that lands mid-word, drop
+  # the partial tail rather than shipping "css-bug-fixi".
+  slug=$(printf '%s' "$raw" | cut -c "1-$LIMIT")
+  if [ "$slug" != "$raw" ] && [ "$(printf '%s' "$raw" | cut -c "$((LIMIT+1))")" != "-" ]; then
+    case "$slug" in *-*) slug=${slug%-*} ;; esac
+  fi
+  [ -n "$slug" ] && [ "$slug" != "$label" ] || exit 0
+
+  herdr tab rename "$HERDR_TAB_ID" "$slug" >/dev/null 2>&1 && printf '%s' "$slug" > "$state"
+} >/dev/null 2>&1 &
+
+exit 0

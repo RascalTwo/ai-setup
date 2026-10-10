@@ -1,0 +1,38 @@
+#!/bin/zsh
+# prefix+a in herdr: a small popup — type the first prompt, pick model and effort, Enter.
+# Opens a new tab running `claude --dangerously-skip-permissions --model … --effort …` with that
+# prompt. Empty prompt = a bare session. Esc/Ctrl-C = cancel.
+# Keys: Tab cycles the model, ↑/↓ change the effort, Enter launches.
+# Default Sonnet 5.5 high: Sonnet matched Opus on every benchmark task at under half the cost.
+# The tab always opens in the "~" workspace at $HOME, whichever workspace has focus; the workspace is recreated if missing.
+models=(sonnet opus haiku); names=('Sonnet 5.5' 'Opus 5.5' 'Haiku 4.5')
+efforts=(low medium high xhigh max)
+mi=1 ei=3
+
+show() { zle -M "${names[mi]} · ${efforts[ei]}     Tab model · ↑↓ effort · Enter launch" }
+next-model()  { mi=$(( mi % $#models + 1 )); show }
+effort-up()   { (( ei < $#efforts )) && (( ei++ )); show }
+effort-down() { (( ei > 1 )) && (( ei-- )); show }
+for w in next-model effort-up effort-down show; do zle -N $w; done
+zle -N zle-line-init show
+bindkey '^I' next-model '^[[A' effort-up '^[OA' effort-up '^[[B' effort-down '^[OB' effort-down
+
+prompt=''
+vared -p '> ' prompt || exit
+
+cmd="claude --dangerously-skip-permissions --model ${models[mi]} --effort ${efforts[ei]}"
+if [[ -n $prompt ]]; then
+  f=$(mktemp "${TMPDIR:-/tmp}/claude-tab.XXXXXX"); print -r -- "$prompt" > $f
+  cmd="$cmd \"\$(cat $f)\""      # the tab's own shell expands the file: quotes and newlines survive
+fi
+# Always the "~" workspace (herdr labels a workspace made at $HOME "~"), never whichever one has
+# focus. Gone (its last pane closed)? Recreate it; its first tab is the session's tab.
+ws=$(herdr workspace list | jq -r 'first(.result.workspaces[] | select(.label == "~")) | .workspace_id // empty')
+if [[ -n $ws ]]; then
+  pane=$(herdr tab create --workspace "$ws" --cwd ~ --focus | jq -r .result.root_pane.pane_id)
+else
+  out=$(herdr workspace create --cwd ~ --focus)
+  ws=$(jq -r .result.workspace.workspace_id <<<$out); pane=$(jq -r .result.root_pane.pane_id <<<$out)
+fi
+herdr workspace focus "$ws" >/dev/null
+exec herdr pane run "$pane" "$cmd"

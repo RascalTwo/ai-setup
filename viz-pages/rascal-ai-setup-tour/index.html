@@ -1,0 +1,2837 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rascal's AI setup tour</title>
+    <!-- Publish posture — the SOLE source of truth for viz publish. Default "local" = stays
+     on this machine, never published. Change to "public" (open web) or "private"
+     (magic-link sealed) ONLY when you intend to share this viz. -->
+    <meta name="viz:uid" content="v-fd6aad0644f1" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="Rascal's AI setup tour" />
+    <meta
+      name="viz:description"
+      content="An onboarding map for Rascal's agent-agnostic AI setup across Claude Code and Codex."
+    />
+    <link rel="icon" href="data:," />
+    <!-- Safe defaults on BOTH axes: local = never published; unlisted = off the index even once
+     published (still reachable by direct URL). When you publish, set posture to public/private,
+     and set listed to "listed" to advertise it on the public index. -->
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <style>
+      :root {
+        --bg0: #08090d;
+        --bg1: #11141c;
+        --panel2: #151923;
+        --ink: #f5f7fb;
+        --muted2: #9aa7bd;
+        --line: rgba(255, 255, 255, 0.15);
+        --amber: #f6bd60;
+        --mint: #84dcc6;
+        --rose: #ff6b6b;
+        --blue: #70a1ff;
+        --violet: #b28dff;
+        --green: #7bd88f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow-x: hidden;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 20% 0%, rgba(246, 189, 96, 0.12), transparent 30%),
+          radial-gradient(circle at 85% 8%, rgba(132, 220, 198, 0.1), transparent 28%),
+          linear-gradient(135deg, var(--bg0), #101116 46%, #141018);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      a {
+        font: inherit;
+      }
+
+      code {
+        padding: 0.08em 0.34em;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.07);
+        color: #eef3ff;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9em;
+      }
+
+      .shell {
+        width: min(1480px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 26px 0 30px;
+      }
+
+      .viz-header {
+        padding: 0 0 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .viz-header h1 {
+        margin: 0;
+        font-size: clamp(2rem, 4vw, 4.8rem);
+        line-height: 0.95;
+        letter-spacing: 0;
+      }
+
+      .viz-header .sub {
+        max-width: 980px;
+        margin-top: 12px;
+        color: var(--muted2);
+        font-size: 1rem;
+        line-height: 1.55;
+      }
+
+      .tour-cta {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 18px;
+      }
+
+      .tour-cta .sub {
+        margin-top: 0;
+      }
+
+      .primary-action,
+      .tour-nav button {
+        min-height: 42px;
+        padding: 0 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: #12151b;
+        background: var(--amber);
+        cursor: pointer;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(760px, 1fr) minmax(360px, 400px);
+        gap: 18px;
+        margin-top: 18px;
+        align-items: start;
+      }
+
+      .layout > *,
+      .sections > * {
+        min-width: 0;
+      }
+
+      .map-panel,
+      .detail-panel,
+      .section {
+        border: 1px solid var(--line);
+        background: rgba(17, 20, 28, 0.84);
+        box-shadow: 0 18px 70px rgba(0, 0, 0, 0.34);
+        backdrop-filter: blur(18px);
+      }
+
+      .map-panel {
+        padding: 16px;
+        min-height: 760px;
+        min-width: 0;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .toolbar h2,
+      .detail-panel h2,
+      .section h2 {
+        margin: 0;
+        font-size: 1rem;
+        letter-spacing: 0.02em;
+      }
+
+      .toolbar .hint {
+        color: var(--muted2);
+        font-size: 0.86rem;
+      }
+
+      .route-key {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        color: var(--muted2);
+        font-size: 0.82rem;
+      }
+
+      .route-key span {
+        padding: 5px 8px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.045);
+      }
+
+      .node-button {
+        border: 0;
+        color: var(--ink);
+        cursor: pointer;
+      }
+
+      .map-wrap {
+        position: relative;
+        min-height: 680px;
+        max-width: 100%;
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          rgba(3, 5, 9, 0.38);
+        background-size: 32px 32px;
+      }
+
+      .map-svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        min-height: 680px;
+      }
+
+      .zone {
+        fill: rgba(255, 255, 255, 0.028);
+        stroke: rgba(255, 255, 255, 0.1);
+      }
+
+      .zone-title {
+        fill: #dfe7f7;
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .zone-note {
+        fill: #94a0b5;
+        font-size: 12px;
+      }
+
+      .node-card {
+        /* Fill the label box rather than restating the node width: labelBox() pads
+       6px a side, so a hardcoded 154px overflows its own <foreignObject> by 12px
+       and every card renders clipped. */
+        width: 100%;
+        min-height: 82px;
+        padding: 10px 11px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-left: 5px solid var(--node-color);
+        border-radius: 8px;
+        background: rgba(15, 18, 26, 0.96);
+        color: var(--ink);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+        transition:
+          border-color 140ms ease,
+          transform 140ms ease,
+          background 140ms ease;
+      }
+
+      .node-card:hover,
+      .node-card.active {
+        transform: translateY(-2px);
+        border-color: var(--node-color);
+        background: rgba(23, 27, 38, 0.98);
+      }
+
+      .node-kicker {
+        color: var(--node-color);
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .node-title {
+        margin-top: 5px;
+        font-size: 0.92rem;
+        font-weight: 800;
+        line-height: 1.14;
+      }
+
+      .node-button {
+        width: 100%;
+        padding: 0;
+        text-align: left;
+        background: transparent;
+      }
+
+      .detail-panel {
+        position: sticky;
+        top: 18px;
+        display: flex;
+        flex-direction: column;
+        min-height: 540px;
+        padding: 18px;
+      }
+
+      .detail-head {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .detail-index {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        border-radius: 8px;
+        background: var(--active-color);
+        color: #101217;
+        font-weight: 900;
+      }
+
+      .detail-title {
+        margin: 0;
+        font-size: 1.45rem;
+        line-height: 1.1;
+      }
+
+      .detail-tag {
+        display: inline-flex;
+        margin-top: 8px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        color: var(--active-color);
+        background: color-mix(in srgb, var(--active-color) 14%, transparent);
+        font-size: 0.76rem;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .detail-copy {
+        color: #d7deed;
+        line-height: 1.58;
+        min-height: 126px;
+        margin: 14px 0;
+      }
+
+      .detail-list {
+        display: grid;
+        gap: 8px;
+        align-content: start;
+        min-height: 150px;
+        margin: 14px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .detail-list li {
+        display: grid;
+        grid-template-columns: 10px 1fr;
+        gap: 10px;
+        align-items: start;
+        color: #c7d2e6;
+        line-height: 1.45;
+        font-size: 0.93rem;
+      }
+
+      .detail-list li::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        margin-top: 7px;
+        border-radius: 2px;
+        background: var(--active-color);
+      }
+
+      .tour-progress {
+        margin-top: auto;
+        color: var(--muted2);
+        font-size: 0.88rem;
+      }
+
+      .tour-nav {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .tour-nav button {
+        flex: 1;
+        color: #dce4f2;
+        background: rgba(255, 255, 255, 0.055);
+      }
+
+      .tour-nav button:hover {
+        border-color: var(--active-color);
+        color: var(--ink);
+      }
+
+      .tour-nav button:disabled {
+        cursor: default;
+        opacity: 0.42;
+        border-color: var(--line);
+        color: var(--muted2);
+      }
+
+      .sections {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        margin-top: 18px;
+      }
+
+      .section {
+        padding: 18px;
+      }
+
+      .section.install-summary {
+        grid-column: 1 / -1;
+      }
+
+      .section h2 {
+        margin-bottom: 12px;
+        font-size: 1.1rem;
+      }
+
+      .flow-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .flow-item {
+        display: grid;
+        gap: 5px;
+        min-height: 94px;
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-left: 4px solid var(--card-color);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .flow-item strong {
+        font-size: 0.96rem;
+      }
+
+      .flow-item span {
+        color: var(--muted2);
+        font-size: 0.86rem;
+        line-height: 1.42;
+      }
+
+      .deep-section {
+        margin-top: 18px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        background: rgba(17, 20, 28, 0.84);
+        box-shadow: 0 18px 70px rgba(0, 0, 0, 0.28);
+      }
+
+      .chapter-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 16px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .chapter-head h2 {
+        margin: 0;
+        font-size: 1.35rem;
+      }
+
+      .chapter-head p {
+        max-width: 760px;
+        margin: 6px 0 0;
+        color: var(--muted2);
+        line-height: 1.5;
+      }
+
+      .chapter-tag {
+        flex: 0 0 auto;
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: #dce5f6;
+        background: rgba(255, 255, 255, 0.045);
+        font-size: 0.82rem;
+      }
+
+      .agents-board {
+        display: grid;
+        grid-template-columns: 1fr 1.25fr 1fr;
+        gap: 16px;
+      }
+
+      .agents-lane {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+        min-height: 460px;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .agents-lane h3,
+      .skill-district h3 {
+        margin: 0 0 2px;
+        color: #f2f5fb;
+        font-size: 1rem;
+      }
+
+      .lane-note,
+      .district-note {
+        margin: 0 0 8px;
+        color: var(--muted2);
+        font-size: 0.84rem;
+        line-height: 1.4;
+      }
+
+      .rule-card {
+        min-height: 92px;
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-left: 4px solid var(--rule-color);
+        border-radius: 8px;
+        background: rgba(8, 10, 14, 0.42);
+      }
+
+      .rule-card strong {
+        display: block;
+        color: #eef3ff;
+        font-size: 0.95rem;
+      }
+
+      .rule-card span {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted2);
+        font-size: 0.84rem;
+        line-height: 1.38;
+      }
+
+      .impact-stack {
+        display: grid;
+        gap: 10px;
+      }
+
+      .impact-card {
+        min-height: 98px;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        background:
+          linear-gradient(
+            90deg,
+            color-mix(in srgb, var(--impact-color) 18%, transparent),
+            transparent
+          ),
+          rgba(255, 255, 255, 0.035);
+      }
+
+      .impact-card strong {
+        display: block;
+        color: var(--impact-color);
+        font-size: 0.92rem;
+        text-transform: uppercase;
+      }
+
+      .impact-card span {
+        display: block;
+        margin-top: 6px;
+        color: #d5deef;
+        line-height: 1.45;
+      }
+
+      .skills-map {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 14px;
+      }
+
+      .skill-district {
+        min-height: 220px;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-top: 4px solid var(--district-color);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .skill-district.core {
+        grid-column: span 4;
+      }
+      .skill-district.media {
+        grid-column: span 4;
+      }
+      .skill-district.delivery {
+        grid-column: span 4;
+      }
+      .skill-district.external {
+        grid-column: span 8;
+      }
+      .skill-district.private {
+        grid-column: span 4;
+      }
+
+      .skill-card-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .skill-card-grid.single {
+        grid-template-columns: 1fr;
+      }
+
+      .skill-card {
+        min-height: 132px;
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-left: 4px solid var(--district-color);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.2);
+      }
+
+      .skill-card strong {
+        display: block;
+        color: #f2f5fb;
+        font-size: 0.95rem;
+      }
+
+      .skill-card span {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted2);
+        font-size: 0.84rem;
+        line-height: 1.42;
+      }
+
+      .skill-card .why {
+        color: #d7deed;
+      }
+
+      .skill-group {
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.18);
+      }
+
+      .skill-group + .skill-group {
+        margin-top: 10px;
+      }
+
+      .skill-group h4 {
+        margin: 0;
+        color: #f2f5fb;
+        font-size: 0.95rem;
+      }
+
+      .skill-group p {
+        margin: 5px 0 10px;
+        color: var(--muted2);
+        font-size: 0.84rem;
+        line-height: 1.42;
+      }
+
+      .skill-chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .skill-chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 5px 8px;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 8px;
+        color: #dfe7f7;
+        background: rgba(0, 0, 0, 0.24);
+        font-size: 0.8rem;
+      }
+
+      .district-flow {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .flow-node {
+        min-height: 74px;
+        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.2);
+      }
+
+      .flow-node strong {
+        display: block;
+        font-size: 0.86rem;
+      }
+
+      .flow-node span {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted2);
+        font-size: 0.78rem;
+        line-height: 1.35;
+      }
+
+      @media (max-width: 1120px) {
+        .layout,
+        .sections,
+        .agents-board,
+        .skills-map {
+          grid-template-columns: 1fr;
+        }
+
+        .skill-district.core,
+        .skill-district.media,
+        .skill-district.delivery,
+        .skill-district.external,
+        .skill-district.private {
+          grid-column: auto;
+        }
+
+        .detail-panel {
+          position: static;
+          min-height: 0;
+        }
+
+        .detail-copy,
+        .detail-list {
+          min-height: 0;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .shell {
+          width: min(100vw - 20px, 1480px);
+          padding-top: 16px;
+        }
+
+        .toolbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .chapter-head {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .map-panel,
+        .detail-panel,
+        .section,
+        .deep-section {
+          padding: 12px;
+        }
+
+        .map-wrap {
+          min-height: 620px;
+          overflow-x: auto;
+        }
+
+        .map-svg {
+          width: 1120px;
+          max-width: none;
+        }
+
+        .district-flow {
+          grid-template-columns: 1fr;
+        }
+
+        .skill-card-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      /* poster links — an atom with its own self-hero card lives one click away */
+      .poster-link {
+        color: inherit;
+        text-decoration: none;
+        border-bottom: 1px dashed
+          color-mix(in srgb, var(--district-color, #58a6ff) 55%, transparent);
+      }
+      .poster-link:hover {
+        border-bottom-style: solid;
+      }
+      /* `.skill-card span` is display:block (it styles the card's description spans),
+     so this pill MUST re-assert inline-block or it becomes a full-width row. */
+      .poster-link .pl-mark {
+        display: inline-block;
+        margin-top: 0;
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        color: var(--district-color, #58a6ff);
+        border: 1px solid color-mix(in srgb, var(--district-color, #58a6ff) 40%, transparent);
+        border-radius: 5px;
+        padding: 1px 5px;
+        margin-left: 7px;
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+      a.skill-chip.has-poster {
+        text-decoration: none;
+        border-color: color-mix(in srgb, var(--district-color, #58a6ff) 45%, transparent);
+      }
+      a.skill-chip.has-poster:hover {
+        background: color-mix(in srgb, var(--district-color, #58a6ff) 16%, transparent);
+      }
+
+      /* ---- front door: stats, doors, chapter nav ---- */
+      :root {
+        --cyan: #5fd3f3;
+      }
+      .stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+      .stat {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted2);
+        font-size: 0.86rem;
+      }
+      .stat b {
+        color: var(--ink);
+        font-size: 1.25rem;
+        font-variant-numeric: tabular-nums;
+      }
+      .doors {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+      .door {
+        display: grid;
+        gap: 4px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-top: 4px solid var(--door-color);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.04);
+        color: inherit;
+        text-decoration: none;
+      }
+      .door:hover {
+        background: color-mix(in srgb, var(--door-color) 12%, transparent);
+      }
+      .door strong {
+        font-size: 0.98rem;
+      }
+      .door span {
+        color: var(--muted2);
+        font-size: 0.84rem;
+        line-height: 1.4;
+      }
+      .chapter-nav {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        gap: 6px;
+        margin-top: 14px;
+        padding: 8px 0;
+        overflow-x: auto;
+        border-bottom: 1px solid var(--line);
+        background: rgba(8, 9, 13, 0.92);
+        backdrop-filter: blur(14px);
+        scrollbar-width: none;
+      }
+      .chapter-nav a {
+        flex: 0 0 auto;
+        padding: 6px 11px;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        color: var(--muted2);
+        font-size: 0.84rem;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .chapter-nav a:hover {
+        color: var(--ink);
+        border-color: var(--line);
+      }
+      .chapter-nav a.on {
+        color: #12151b;
+        background: var(--amber);
+      }
+      h2[id] {
+        scroll-margin-top: 64px;
+      }
+      .node-tag {
+        margin-top: 4px;
+        color: var(--muted2);
+        font-size: 0.74rem;
+        line-height: 1.2;
+      }
+      .detail-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 16px 0 0;
+      }
+      .detail-link {
+        padding: 5px 10px;
+        border: 1px solid color-mix(in srgb, var(--active-color) 50%, transparent);
+        border-radius: 8px;
+        color: var(--ink);
+        font-size: 0.82rem;
+        text-decoration: none;
+      }
+      .detail-link:hover {
+        background: color-mix(in srgb, var(--active-color) 18%, transparent);
+      }
+      .detail-links[hidden] {
+        display: none;
+      }
+
+      /* ---- the index ---- */
+      .idx-tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .idx-tools input {
+        flex: 1 1 260px;
+        min-height: 40px;
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.3);
+        color: var(--ink);
+        font: inherit;
+      }
+      .idx-tools input:focus-visible,
+      .idx-tools button:focus-visible,
+      .idx-card:focus-visible {
+        outline: 2px solid var(--amber);
+        outline-offset: 2px;
+      }
+      .idx-tools button {
+        min-height: 40px;
+        padding: 0 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        color: #dce4f2;
+        cursor: pointer;
+      }
+      .idx-tools button[aria-pressed="true"] {
+        border-color: var(--amber);
+        background: var(--amber);
+        color: #12151b;
+      }
+      .idx-count {
+        color: var(--muted2);
+        font-size: 0.86rem;
+      }
+      .idx-group {
+        margin-top: 16px;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-top: 4px solid var(--g);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .idx-group h3 {
+        margin: 0 0 2px;
+        font-size: 1rem;
+      }
+      .idx-n {
+        margin-left: 6px;
+        padding: 1px 7px;
+        border-radius: 999px;
+        color: var(--g);
+        background: color-mix(in srgb, var(--g) 14%, transparent);
+        font-size: 0.78rem;
+      }
+      .idx-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 10px;
+      }
+      .idx-card {
+        display: grid;
+        gap: 6px;
+        align-content: start;
+        min-height: 92px;
+        padding: 11px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-left: 4px solid var(--g);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.22);
+        color: inherit;
+        text-decoration: none;
+      }
+      .idx-card:hover {
+        background: color-mix(in srgb, var(--g) 12%, rgba(0, 0, 0, 0.22));
+      }
+      .idx-top {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        justify-content: space-between;
+      }
+      .idx-name {
+        color: #f2f5fb;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.86rem;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+      }
+      .idx-kind {
+        flex: 0 0 auto;
+        padding: 0 6px;
+        border: 1px solid color-mix(in srgb, var(--g) 45%, transparent);
+        border-radius: 5px;
+        color: var(--g);
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .idx-blurb {
+        color: var(--muted2);
+        font-size: 0.84rem;
+        line-height: 1.4;
+      }
+      pre.cmd {
+        margin: 0;
+        padding: 12px 14px;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.35);
+        font-size: 0.86rem;
+        line-height: 1.55;
+      }
+      pre.cmd code {
+        padding: 0;
+        border: 0;
+        background: none;
+      }
+      .district-more {
+        display: inline-block;
+        margin-top: 10px;
+        color: var(--muted2);
+        font-size: 0.84rem;
+      }
+      .skill-district.private {
+        min-height: 0;
+      }
+      @media (min-width: 1121px) {
+        #installFlow {
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+      }
+      .ext-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        align-items: start;
+      }
+      .ext-grid > .skill-group + .skill-group {
+        margin-top: 0;
+      }
+      .skill-district.sessions,
+      .skill-district.workplace,
+      .skill-district.cloud {
+        grid-column: span 4;
+      }
+      .skill-district.external,
+      .skill-district.private {
+        grid-column: span 12;
+      }
+
+      @media (max-width: 1120px) {
+        .doors {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .ext-grid {
+          grid-template-columns: 1fr;
+        }
+        .skill-district.sessions,
+        .skill-district.workplace,
+        .skill-district.cloud,
+        .skill-district.private,
+        .skill-district.external {
+          grid-column: auto;
+        }
+      }
+      @media (max-width: 720px) {
+        .doors {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="viz-header">
+        <h1>Rascal's AI setup tour</h1>
+        <div class="sub">
+          The front door to the public <code>ai-setup</code> repo: how the installer wires one
+          source of truth into Claude Code and Codex, what is in it, and where the personal leverage
+          actually lives.
+        </div>
+        <div class="sub" style="margin-top: 8px">
+          This is the <strong>machinery</strong>. For the reasoning behind it, read
+          <a href="../how-i-use-ai/">How I Use AI →</a> — fifteen principles in three arcs.
+        </div>
+        <div class="sub" style="margin-top: 8px">
+          Source:
+          <a href="https://github.com/RascalTwo/ai-setup" target="_blank" rel="noopener"
+            >github.com/RascalTwo/ai-setup</a
+          >
+          · more interactive explainers at
+          <a href="https://rascaltwo.github.io/explorables/" target="_blank" rel="noopener"
+            >rascaltwo.github.io/explorables</a
+          >
+        </div>
+        <div class="stats" aria-label="The setup in numbers">
+          <span class="stat"><b data-count="skill">45</b> owned skills</span>
+          <span class="stat"><b data-count="tool">8</b> owned tools</span>
+          <span class="stat"><b>7</b> reviewer subagents</span>
+          <span class="stat"><b>2</b> runtimes, one repo</span>
+          <span class="stat"><b data-stops>16</b> stops on the tour</span>
+        </div>
+        <div class="doors" aria-label="Where to start">
+          <a class="door" href="#installTitle" style="--door-color: var(--amber)">
+            <strong>I want to install it</strong>
+            <span>Clone, <code>bun install.ts</code>, and what it will not do for you.</span>
+          </a>
+          <a class="door" href="#mapTitle" data-start-tour style="--door-color: var(--mint)">
+            <strong>I want to understand it</strong>
+            <span>Take the tour: sixteen stops from the repo down to the terminal.</span>
+          </a>
+          <a class="door" href="#indexTitle" style="--door-color: var(--violet)">
+            <strong>I want to browse what's in it</strong>
+            <span>Every skill and tool, one line each, filterable, each with a poster.</span>
+          </a>
+          <a class="door" href="#agentsTitle" style="--door-color: var(--rose)">
+            <strong>I want to borrow the rules</strong>
+            <span>What <code>AGENTS.md</code> does and why it opens with homophones.</span>
+          </a>
+        </div>
+        <div class="tour-cta">
+          <button type="button" class="primary-action" data-start-tour>Start the tour</button>
+          <span class="sub"
+            >Follow stops 1-<span data-stops>16</span> with Next, or click any numbered stop on the
+            map.</span
+          >
+        </div>
+      </header>
+
+      <nav class="chapter-nav" aria-label="Chapters">
+        <a href="#mapTitle">The tour</a>
+        <a href="#installTitle">Install</a>
+        <a href="#kindsTitle">Skills vs tools</a>
+        <a href="#indexTitle">What's in here</a>
+        <a href="#voiceTitle">Voice</a>
+        <a href="#manualTitle">Manual steps</a>
+        <a href="#agentsTitle">AGENTS.md</a>
+        <a href="#skillsTitle">Skills map</a>
+        <a href="#pointerTitle">One pointer</a>
+        <a href="#manifestTitle">Manifests</a>
+      </nav>
+
+      <section class="layout" aria-label="AI setup tour map">
+        <div class="map-panel">
+          <div class="toolbar">
+            <div>
+              <h2 id="mapTitle">One route, sixteen stops</h2>
+              <p class="lane-note">
+                This page is the repo's README, in a form worth reading. The
+                <a href="https://github.com/RascalTwo/ai-setup#readme">markdown one</a> carries the
+                same material for agents, which cannot click.
+              </p>
+              <div class="hint">
+                Row one is install and parity. Row two is the secret sauce. Row three is the
+                terminal it all runs in, and the handoffs that let a session outlive its context.
+                Row four is how the thing stays honest — what stays private and what gets published.
+              </div>
+            </div>
+            <div class="route-key" aria-label="Route sections">
+              <span>1-5 install path</span>
+              <span>6-10 secret sauce</span>
+              <span>11-14 terminal layer</span>
+              <span>15-16 provenance</span>
+            </div>
+          </div>
+
+          <div class="map-wrap" id="mapWrap">
+            <svg
+              class="map-svg"
+              viewBox="0 0 1120 1360"
+              role="img"
+              aria-labelledby="mapTitle mapDesc"
+            >
+              <title id="mapTitle">Rascal AI setup onboarding map</title>
+              <desc id="mapDesc">
+                A routed map of the setup repo from source files through installation into Claude
+                Code, Codex, shared skills, memory, local models, and review workflows.
+              </desc>
+              <defs id="markers"></defs>
+              <rect class="zone" x="30" y="50" width="1060" height="245" rx="18"></rect>
+              <text class="zone-title" x="58" y="86">Install path</text>
+              <text class="zone-note" x="58" y="108">
+                Stops 1-5: source repo, installer, agent parity, shared skills, reviewer subagents.
+              </text>
+              <rect class="zone" x="30" y="380" width="1060" height="245" rx="18"></rect>
+              <text class="zone-title" x="58" y="416">Secret sauce</text>
+              <text class="zone-note" x="58" y="438">
+                Stops 6-10: memory, local models, rules, delivery pipeline, operating system.
+              </text>
+              <rect class="zone" x="30" y="710" width="1060" height="245" rx="18"></rect>
+              <text class="zone-title" x="1062" y="746" text-anchor="end">Terminal layer</text>
+              <text class="zone-note" x="1062" y="768" text-anchor="end">
+                Stops 11-14: the emulator, the agent multiplexer, the glue this repo owns, and
+                handoffs.
+              </text>
+              <rect class="zone" x="30" y="1040" width="1060" height="245" rx="18"></rect>
+              <text class="zone-title" x="58" y="1076">Provenance and upkeep</text>
+              <text class="zone-note" x="58" y="1098">
+                Stops 15-16: how private stays private, and how public gets published.
+              </text>
+              <g id="edges"></g>
+              <g id="nodes"></g>
+            </svg>
+          </div>
+        </div>
+
+        <aside class="detail-panel" aria-live="polite">
+          <div class="detail-head">
+            <div>
+              <h2 class="detail-title" id="detailTitle"></h2>
+              <div class="detail-tag" id="detailTag"></div>
+            </div>
+            <div class="detail-index" id="detailIndex"></div>
+          </div>
+          <p class="detail-copy" id="detailCopy"></p>
+          <ul class="detail-list" id="detailList"></ul>
+          <div class="detail-links" id="detailLinks" aria-label="Go deeper" hidden></div>
+          <div class="tour-progress" id="tourProgress"></div>
+          <div class="tour-nav" aria-label="Tour navigation">
+            <button type="button" data-prev-stop>Previous</button>
+            <button type="button" data-next-stop>Next</button>
+          </div>
+        </aside>
+      </section>
+
+      <section class="sections" aria-label="Installation and secret sauce details">
+        <div class="section install-summary">
+          <h2 id="installTitle">How it gets installed</h2>
+          <div class="flow-list" id="installFlow"></div>
+          <p class="lane-note" style="margin: 14px 0 6px">
+            The whole thing, for a first run. It needs
+            <a href="https://bun.sh" target="_blank" rel="noopener">Bun</a> plus Claude Code and/or
+            Codex; everything else is detected and skipped when absent. Re-running is safe — it
+            never overwrites a real file and only manages its own symlinks.
+          </p>
+          <pre class="cmd"><code>git clone https://github.com/RascalTwo/ai-setup
+cd ai-setup
+bun install.ts              # rules, skills, tools, statusline, subagents, MCP
+bun install.ts --list       # every source and its skills, plus orphans
+bun install.ts --externals  # community skills from external-skills.json (network)</code></pre>
+        </div>
+      </section>
+
+      <section class="deep-section" aria-labelledby="kindsTitle">
+        <div class="chapter-head">
+          <div>
+            <h2 id="kindsTitle">Two kinds of thing, and a poster each</h2>
+            <p>
+              There are <span data-count="all">53</span> owned things here and they divide cleanly
+              in two. The split is not filing — it decides what a thing is allowed to do, where it
+              can keep anything, and what its page has to explain.
+            </p>
+          </div>
+          <span class="chapter-tag"
+            ><span data-count="skill">45</span> skills ·
+            <span data-count="tool">8</span> tools</span
+          >
+        </div>
+
+        <div class="agents-board">
+          <div class="agents-lane">
+            <h3>Skills — instructions for the model</h3>
+            <p class="lane-note">
+              <code>skills/&lt;name&gt;/SKILL.md</code>. Loaded into the agent's context when its
+              description matches what you asked for.
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--mint)"
+              data-viz-id="kind-skill"
+              data-label="What a skill is"
+            >
+              <strong>The agent does the work</strong>
+              <span
+                >A skill is prose plus, sometimes, scripts it tells the agent to run. Nothing
+                happens unless a model reads it and acts. <code>steelman</code> is pure method;
+                <code>viz</code> ships a whole CLI. Both are skills, because both are things the
+                model is <em>told</em>.</span
+              >
+            </div>
+          </div>
+
+          <div class="agents-lane">
+            <h3>Tools — programs that run around the agent</h3>
+            <p class="lane-note">
+              <code>tools/&lt;name&gt;/</code>, each with its own README and herdr keybinding.
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--c5)"
+              data-viz-id="kind-tool"
+              data-label="What a tool is"
+            >
+              <strong>No model involved</strong>
+              <span
+                >A tool plugs into a fixed extension point — a hook, a keybinding, a status line
+                widget — and runs whether or not anything is thinking. The image spool fires on
+                every tool call; the tab renamer fires on <code>Stop</code>. The agent never decides
+                to invoke them.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--amber)"
+              data-viz-id="kind-test"
+              data-label="Which is it"
+            >
+              <strong>The test</strong>
+              <span>Would it still happen with no model in the loop? Yes → tool. No → skill.</span>
+            </div>
+          </div>
+
+          <div class="agents-lane">
+            <h3>Both get a poster</h3>
+            <p class="lane-note">And the poster is not freeform. Five beats, in a fixed order.</p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--good)"
+              data-viz-id="kind-poster"
+              data-label="The poster standard"
+            >
+              <strong><a href="../poster-standard/">The poster standard ↗</a></strong>
+              <span
+                >Why it exists · using it · what it doesn't do · where it lives ·
+                <b>how it actually works</b>. The last one is the point: mechanism used to be
+                scattered across asides, so nobody could trace an input end to end.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--amber)"
+              data-viz-id="kind-checked"
+              data-label="Checked, not hoped"
+            >
+              <strong>Checked, not hoped for</strong>
+              <span
+                ><code>bun scripts/check-posters.ts</code> fails on a missing poster, a missing or
+                out-of-order beat, a <code>how</code> beat with no diagram, or a
+                <code>where</code> beat that disagrees with the frontmatter.</span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="deep-section" aria-labelledby="indexTitle">
+        <div class="chapter-head">
+          <div>
+            <h2 id="indexTitle">What's in here</h2>
+            <p>
+              Every skill and tool this repo owns, grouped by what it is for. Each card opens that
+              thing's poster: why it exists, how to use it, what it does not do, where it lives, and
+              how it actually works. Community skills installed by reference are in the
+              <a href="#skillsTitle">skills ecosystem map</a> instead.
+            </p>
+          </div>
+          <span class="chapter-tag"
+            ><span data-count="all">53</span> posters · skills and tools</span
+          >
+        </div>
+
+        <div class="idx-tools">
+          <input
+            id="indexSearch"
+            type="search"
+            placeholder="Filter by name or what it does: handoff, screenshot, PR, credentials…"
+            aria-label="Filter skills and tools"
+            autocomplete="off"
+          />
+          <button type="button" data-kind-filter="all" aria-pressed="true">All</button>
+          <button type="button" data-kind-filter="skill" aria-pressed="false">Skills</button>
+          <button type="button" data-kind-filter="tool" aria-pressed="false">Tools</button>
+          <span class="idx-count" id="indexCount" aria-live="polite"></span>
+        </div>
+        <div id="indexGroups"></div>
+      </section>
+
+      <section class="deep-section" aria-labelledby="voiceTitle">
+        <div class="chapter-head">
+          <div>
+            <h2 id="voiceTitle">Talking to it</h2>
+            <p>
+              Most of what reaches these agents is spoken, not typed. That is upstream of everything
+              else here — it is why the rules file opens with homophone guardrails, and why an
+              interrupt key was worth building.
+            </p>
+          </div>
+          <span class="chapter-tag">two halves: in and out</span>
+        </div>
+
+        <div class="agents-board">
+          <div class="agents-lane">
+            <h3>Voice in</h3>
+            <p class="lane-note">
+              Local speech-to-text, so nothing leaves the machine to become a prompt.
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--mint)"
+              data-viz-id="voice-handy"
+              data-label="Handy fork"
+            >
+              <strong
+                ><a href="https://github.com/RascalTwo/Handy">My fork of handy.computer</a></strong
+              >
+              <span
+                >Adds a third shortcut that types each word into the focused app
+                <em>as the model commits it</em>, rather than pasting the whole transcription on
+                release. What that changes is that you can see it going wrong while you are still
+                talking.
+                <a href="https://github.com/RascalTwo/Handy">That repo explains itself</a> — it is
+                not this repo's job.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--amber)"
+              data-viz-id="voice-rules"
+              data-label="Why AGENTS.md leads with it"
+            >
+              <strong>Why the rules open with homophones</strong>
+              <span
+                >Dictation produces plausible wrong words, not obvious garbage — "mark as red" for
+                "mark as read". So §1 of <code>AGENTS.md</code> is: assume homophones may be wrong,
+                and say which reading you took.</span
+              >
+            </div>
+          </div>
+
+          <div class="agents-lane">
+            <h3>Voice out</h3>
+            <p class="lane-note">
+              The agent speaks back, which creates a problem typing never had: it is mid-sentence
+              and wrong, and interrupting means losing the turn.
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--green)"
+              data-viz-id="voice-hold"
+              data-label="voicemode-hold"
+            >
+              <strong><a href="../tool-voicemode-hold/">voicemode-hold ↗</a></strong>
+              <span
+                >A pane that highlights each word as it is actually played, and
+                <code>prefix+j</code> to <em>hold</em> an utterance mid-word so you can say
+                something into the gap and let it carry on. <code>prefix+m</code> ends the turn;
+                this does not.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--amber)"
+              data-viz-id="voice-runup"
+              data-label="The run-up"
+            >
+              <strong>Interjections carry a run-up</strong>
+              <span
+                >The last 18 words actually spoken travel back with whatever you said. Without that,
+                "no, that's wrong" has no referent — the agent generated the text but never heard
+                it.</span
+              >
+            </div>
+          </div>
+
+          <div class="agents-lane">
+            <h3>What it costs</h3>
+            <p class="lane-note">Worth stating plainly rather than selling it.</p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--red)"
+              data-viz-id="voice-ceiling"
+              data-label="The committed-text ceiling"
+            >
+              <strong>You cannot un-say the sentence</strong>
+              <span
+                >The agent's speech is already-generated text by the time you hear it, so
+                interrupting changes what comes <em>after</em>, never the rest of the current
+                utterance. Accepted, not solved.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--amber)"
+              data-viz-id="voice-ambiguity"
+              data-label="Ambiguity cost"
+            >
+              <strong>Ambiguity is the tax</strong>
+              <span
+                >Speech is faster to produce and lossier to consume. The whole
+                evidence-and-confirmation posture in the rules file is paying that tax down.</span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="deep-section" aria-labelledby="manualTitle">
+        <div class="chapter-head">
+          <div>
+            <h2 id="manualTitle">What the installer can't do</h2>
+            <p>
+              <code>bun install.ts</code> gets you the rules, the skills, the tools, the statusline
+              and the subagents. Four capabilities it cannot touch, because they are OAuth flows and
+              per-app toggles behind somebody else's UI.
+            </p>
+          </div>
+          <span class="chapter-tag">click-through, not config</span>
+        </div>
+
+        <div class="agents-board">
+          <div class="agents-lane">
+            <h3>Behind a connector UI</h3>
+            <p class="lane-note">
+              Enabled in claude.ai or ChatGPT settings. Nothing local to edit.
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--mint)"
+              data-viz-id="manual-browser"
+              data-label="Browser control"
+            >
+              <strong>Browser control</strong>
+              <span
+                >Claude-in-Chrome extension · Codex's <code>chrome</code> /
+                <code>browser</code> plugins.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--mint)"
+              data-viz-id="manual-connectors"
+              data-label="Google and Atlassian"
+            >
+              <strong>Google · Atlassian</strong>
+              <span
+                >claude.ai connectors · ChatGPT connectors. Same accounts, two click-throughs.</span
+              >
+            </div>
+          </div>
+
+          <div class="agents-lane">
+            <h3>The one that bites</h3>
+            <p class="lane-note">
+              Desktop control on Claude Code is not a connector toggle, and the part people miss is
+              the last word.
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--red)"
+              data-viz-id="manual-computer-use"
+              data-label="computer-use is per project"
+            >
+              <strong>computer-use, <em>per project</em></strong>
+              <span
+                >Run <code>/mcp</code> in an interactive session, enable <code>computer-use</code>,
+                then grant macOS <strong>Accessibility</strong> and
+                <strong>Screen Recording</strong> when prompted. The enable is remembered per
+                project, so it is repeated in every repo where you want GUI control. Needs macOS, a
+                Pro/Max plan, and an interactive session — not <code>-p</code>.</span
+              >
+            </div>
+          </div>
+
+          <div class="agents-lane">
+            <h3>Pull once, shared by both</h3>
+            <p class="lane-note">
+              Agent-agnostic: the same daemon and the same store serve Claude Code and Codex.
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--green)"
+              data-viz-id="manual-ollama"
+              data-label="Local models"
+            >
+              <strong>Ollama</strong>
+              <span
+                ><code>gemma4:e4b</code> (escalating to <code>gemma4:12b</code>) behind
+                read-image-locally, and <code>qwen2.5-coder:7b</code> behind the herdr tab
+                labeler.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--green)"
+              data-viz-id="manual-memory"
+              data-label="basic-memory"
+            >
+              <strong>basic-memory</strong>
+              <span
+                >An MCP server over <code>uvx</code>; the installer registers it, and
+                <code>voicemode</code>, with both agents, and they share one note store.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--amber)"
+              data-viz-id="manual-optional"
+              data-label="Optional pieces"
+            >
+              <strong>Optional: herdr, chafa</strong>
+              <span
+                >Without them the keybindings and panes are simply absent, the
+                <code>SessionStart</code> hook exits 0, and ttyimgspool keeps its inline thumbnails
+                (in a kitty-graphics terminal) but loses the <code>prefix+i</code> gallery and the
+                Ctrl+click full-pane view.</span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="deep-section" aria-labelledby="agentsTitle">
+        <div class="chapter-head">
+          <div>
+            <h2 id="agentsTitle">What AGENTS.md does</h2>
+            <p>
+              Rascal's rules file is less a style guide and more an operating contract: protect
+              voice-driven input, force evidence before claims, route work through the right tools,
+              and make every deliverable prove itself before "done."
+            </p>
+          </div>
+          <span class="chapter-tag">agent behavior control room</span>
+        </div>
+
+        <div class="agents-board">
+          <div class="agents-lane">
+            <h3>Inputs get cleaned up</h3>
+            <p class="lane-note">
+              Before the agent acts, the rules reduce ambiguity and force the right evidence source.
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--amber)"
+              data-viz-id="agents-voice"
+              data-label="Voice and homophones"
+            >
+              <strong>Voice-safe commands</strong>
+              <span
+                >Assume homophones may be wrong, confirm weird commands, and prefer the
+                interpretation that fits current context.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--mint)"
+              data-viz-id="agents-evidence"
+              data-label="Evidence ladder"
+            >
+              <strong>Evidence ladder</strong>
+              <span
+                >Use basic-memory first, then domain tools, then web/docs, and only then model
+                recall for consequential claims.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--green)"
+              data-viz-id="agents-memory"
+              data-label="Persistent memory"
+            >
+              <strong>Memory-first context</strong>
+              <span
+                >Search persistent notes at session start and before setup/debugging work, so prior
+                decisions are not rediscovered badly.</span
+              >
+            </div>
+          </div>
+
+          <div class="agents-lane">
+            <h3>Work gets routed</h3>
+            <p class="lane-note">
+              The middle of the contract decides whether to plan, delegate, invoke skills, use MCP
+              tools, or inspect a UI.
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--blue)"
+              data-viz-id="agents-plan"
+              data-label="Plan and verify"
+            >
+              <strong>Plan plus verification</strong>
+              <span
+                >Every change has a proportional Given/When/Then check; failures either get fixed or
+                escalated if the scope changed.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--violet)"
+              data-viz-id="agents-skills-first"
+              data-label="Skills and MCP first"
+            >
+              <strong>Skills and MCP first</strong>
+              <span
+                >Before ad-hoc scripts against services, check owning skills and loaded tools so
+                repeatable workflows stay encoded.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--rose)"
+              data-viz-id="agents-tool-hierarchy"
+              data-label="Tool hierarchy"
+            >
+              <strong>Tool hierarchy</strong>
+              <span
+                >CLI first, browser automation for browser work, desktop control for non-browser UI,
+                then fallback only when needed.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--amber)"
+              data-viz-id="agents-delegation"
+              data-label="Subagent delegation"
+            >
+              <strong>Delegation threshold</strong>
+              <span
+                >Delegate broad independent research or long output, but keep targeted facts inline
+                when they directly feed the next edit.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--blue)"
+              data-viz-id="agents-routing"
+              data-label="Delegation routing"
+            >
+              <strong>Four mechanisms, named literally</strong>
+              <span
+                >Route by who holds the plan. A side task nobody will re-read is a
+                <em>subagent</em>. A fixed plan over many similar items is a
+                <em>dynamic workflow</em>, where a script holds the loop. An evolving plan whose
+                workers must challenge each other is an <em>agent team</em>. A session you opened
+                yourself is <em>cross-session messaging</em>.</span
+              >
+              <span
+                >A workflow takes no mid-run input; a team does — that is the whole difference. Work
+                needing a ruling partway through is a team, or several small workflows with the gate
+                between them.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--violet)"
+              data-viz-id="agents-routing-parity"
+              data-label="Routing parity"
+            >
+              <strong>Where the parity actually breaks</strong>
+              <span
+                >Claude Code has all four mechanisms. Codex has subagents only, defined in
+                <code>~/.codex/agents/*.toml</code> — so on that side everything else routes back to
+                a subagent or stays inline. This is the one place the two-runtime story is not
+                symmetric.</span
+              >
+              <span
+                >Three shape rules hold either way: only fan out genuinely independent items,
+                partition by file, and never assume taste fans out — a convention with no test
+                behind it needs a review pass over the finished diff.</span
+              >
+            </div>
+          </div>
+
+          <div class="agents-lane">
+            <h3>Outputs get safer</h3>
+            <p class="lane-note">
+              The last layer constrains risky behavior and makes repeated shortcuts intentional.
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--green)"
+              data-viz-id="agents-local-vision"
+              data-label="Local vision first"
+            >
+              <strong>Local vision first</strong>
+              <span
+                >Structured screenshot extraction goes to local Ollama models before expensive
+                native vision reads.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--rose)"
+              data-viz-id="agents-gotchas"
+              data-label="Hard-won gotchas"
+            >
+              <strong>Hard-won gotchas</strong>
+              <span
+                ><code>find</code> in the agent shell is a wrapper that reports an error and still
+                exits 0 — use <code>/usr/bin/find</code>. Don't pipe long-running commands through
+                <code>head</code>. Check <code>gh auth</code> before believing a repo is
+                missing.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--amber)"
+              data-viz-id="agents-ponytail"
+              data-label="Ponytail"
+            >
+              <strong>Ponytail default</strong>
+              <span
+                >For coding work, prefer the laziest correct solution: reuse local patterns, native
+                features, and the smallest diff that works.</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="impact-stack" style="margin-top: 16px">
+          <div
+            class="impact-card"
+            style="--impact-color: var(--mint)"
+            data-viz-id="agents-impact-reliability"
+            data-label="Reliability impact"
+          >
+            <strong>Impact: fewer confident wrong turns</strong>
+            <span
+              >Voice ambiguity, memory search, evidence tiers, and skill-first routing all attack
+              the same failure mode: an agent acting fast from stale or guessed context.</span
+            >
+          </div>
+          <div
+            class="impact-card"
+            style="--impact-color: var(--amber)"
+            data-viz-id="agents-impact-speed"
+            data-label="Speed impact"
+          >
+            <strong>Impact: faster repeat work</strong>
+            <span
+              >The rules bias the agent toward installed capability, local CLIs, repo conventions,
+              and prebuilt skills instead of re-solving common tasks in one-off shell.</span
+            >
+          </div>
+          <div
+            class="impact-card"
+            style="--impact-color: var(--rose)"
+            data-viz-id="agents-impact-safety"
+            data-label="Safety impact"
+          >
+            <strong>Impact: safer autonomy</strong>
+            <span
+              >Falsifiable checks, rival hypotheses before testing, a human gate on anything hard to
+              reverse, and explicit escalation when scope changes — the agent keeps moving without
+              silently widening blast radius.</span
+            >
+          </div>
+        </div>
+      </section>
+
+      <section class="deep-section" aria-labelledby="skillsTitle">
+        <div class="chapter-head">
+          <div>
+            <h2 id="skillsTitle">Skills ecosystem map</h2>
+            <p>
+              The setup has two kinds of rides: homegrown skills that encode Rascal's repeated work,
+              and community skill packs installed by reference. The installer links owned skills,
+              layers private overlays, and reproduces third-party packs from
+              <code>external-skills.json</code>. The highlights are here; every owned skill, with
+              its poster, is in <a href="#indexTitle">what's in here</a>.
+            </p>
+          </div>
+          <span class="chapter-tag"
+            ><span data-count="skill">45</span> owned skills + 72 community skills</span
+          >
+        </div>
+
+        <div class="skills-map">
+          <div
+            class="skill-district core"
+            style="--district-color: var(--mint)"
+            data-viz-id="skills-owned-core"
+            data-label="Owned core skills"
+          >
+            <h3>Think, plan and see</h3>
+            <p class="district-note">
+              Skills that pressure-test a decision, keep the task plan, hand work to another model,
+              audit the setup itself, and turn explanations into pages.
+            </p>
+            <div class="skill-card-grid single">
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-viz/"
+                    >viz <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Builds live HTML/CSS/JS visualizations, diagrams and decks with a local server, a
+                  <code>verify</code> that audits layout and runs types, tests, lint and format, a
+                  feedback widget for spoken or typed notes pinned to page elements, and publishing
+                  to a static host. This tour is one.</span
+                >
+                <span class="why"
+                  >Why it matters: turns architecture and process explanations into browsable
+                  artifacts instead of README walls.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-grill-me-viz/"
+                    >grill-me-viz <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Runs a grilling session on a live viz page — prototypes to react to, options side
+                  by side, answers picked or spoken through the feedback widget — when a question
+                  can't be grilled in words.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-timeline-studio-tasks/"
+                    >timeline-studio-tasks <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Captures every task the user mentions, and the agent's own unfinished work, into
+                  one Timeline Studio plan with real dependencies, so nothing dies with the
+                  session.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-delegate-to-codex/"
+                    >delegate-to-codex <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Hands a scoped task to the OpenAI Codex CLI headless, so the work bills to the
+                  ChatGPT subscription instead of spending Claude tokens.</span
+                >
+                <span class="why"
+                  >Why it matters: the agnostic setup's escape hatch — fan work out cheaply, and
+                  stay ready for the day the free lunch ends.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-ai-setup-audit/"
+                    >ai-setup-audit <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Runs the recurring health check for this whole setup: symlinks, skills, MCP
+                  servers, settings, subagents, and usage.</span
+                >
+                <span class="why"
+                  >Why it matters: keeps the public core and private overlays from silently
+                  drifting.</span
+                >
+              </div>
+            </div>
+            <div class="skill-chips" style="margin-top: 10px">
+              <a class="skill-chip has-poster" href="../skill-steelman/">steelman ↗</a>
+              <a class="skill-chip has-poster" href="../skill-plus-ultra/">plus-ultra ↗</a>
+              <a class="skill-chip has-poster" href="../skill-tldraw-canvas/">tldraw-canvas ↗</a>
+              <a class="skill-chip has-poster" href="../skill-documandments/">documandments ↗</a>
+            </div>
+            <a class="district-more" href="#indexTitle"
+              >All of them, with posters → what's in here</a
+            >
+          </div>
+
+          <div
+            class="skill-district media"
+            style="--district-color: var(--green)"
+            data-viz-id="skills-media-local"
+            data-label="Media and local AI skills"
+          >
+            <h3>Media and local AI</h3>
+            <p class="district-note">
+              Local-first tools for images (reading them and showing them inline), speech-to-text,
+              narrated video, subtitles, browser capture, and Drive recordings.
+            </p>
+            <div class="skill-card-grid single">
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-read-image-locally/"
+                    >read-image-locally <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Uses local Ollama vision models for structured screenshot extraction before
+                  spending native vision tokens.</span
+                >
+                <span class="why"
+                  >Best for HUD values, tables, error screenshots, and labeled fields.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-render-image-in-terminal/"
+                    >render-image-in-terminal <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >"Show me …" puts an image — a file, a URL, the clipboard, or a chart Claude just
+                  rendered — inline in the Claude Code transcript, by running ttyimgspool's
+                  <code>show-image</code>; Ctrl+click opens it full-pane.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-read-video-locally/"
+                    >read-video-locally <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Turns any local video — narrated or silent — into text, so screen recordings and
+                  product demos can be read without repeated vision reads. Picks its own frame
+                  sampler; delegates transcription to transcribe-media.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-transcribe-media/"
+                    >transcribe-media <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Speech-to-text for any local audio or video file: NVIDIA Parakeet v3 first
+                  (parakeet-mlx on the Mac), Whisper large-v3-turbo as the fallback.</span
+                >
+                <span class="why"
+                  >Why it matters: the one speech-to-text engine — the subtitle, Drive, and
+                  narrated-video skills all route through it instead of re-deriving the
+                  command.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-browser-capture/"
+                    >browser-capture <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Records the user's own Chrome — real session, real SSO, Retina DPR — to
+                  screenshots, GIFs, or smooth 30fps video on disk. Headless is the fallback, not
+                  the default.</span
+                >
+                <span class="why"
+                  >Why it matters: the obvious paths silently write no file — this carries the route
+                  that actually works.</span
+                >
+              </div>
+            </div>
+            <div class="skill-chips" style="margin-top: 10px">
+              <a class="skill-chip has-poster" href="../skill-extract-video-subtitles/"
+                >extract-video-subtitles ↗</a
+              >
+              <a class="skill-chip has-poster" href="../skill-extract-gdrive-transcript/"
+                >extract-gdrive-transcript ↗</a
+              >
+              <a class="skill-chip has-poster" href="../skill-ui-narration/">ui-narration ↗</a>
+            </div>
+            <a class="district-more" href="#indexTitle"
+              >All of them, with posters → what's in here</a
+            >
+          </div>
+
+          <div
+            class="skill-district delivery"
+            style="--district-color: var(--rose)"
+            data-viz-id="skills-cloud-delivery"
+            data-label="Delivery and review skills"
+          >
+            <h3>Delivery and review</h3>
+            <p class="district-note">
+              From a rough story to a reviewed PR, and the CI/CD routines around it, grouped by
+              workflow instead of pretending they belong to one parent skill.
+            </p>
+            <div class="skill-card-grid single">
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-r2-sdlc/"
+                    >r2-sdlc <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Rascal's story-to-PR pipeline: understand, design, implement with TDD, simplify,
+                  and run layered review.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-r2-gauntlet/"
+                    >r2-gauntlet <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >One-command mega-review that aggregates the review/audit panel into a single
+                  ranked report.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-r2-pr/"
+                    >r2-pr <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Opens or updates a PR the house way: a local draft you approve, the repo's own
+                  template kept, a pr-viz walkthrough on top, and only its own sections refreshed on
+                  later pushes.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-pr-viz/"
+                    >pr-viz <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Turns a PR or local diff into a narrated review film (mp4) plus an interactive
+                  review page, detailed enough to approve from.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-pr-split/"
+                    >pr-split <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Splits a branch into smaller PRs a reviewer can take one at a time: proposes a
+                  finest and a balanced cut, then cuts one local branch per piece that sums back to
+                  the original.</span
+                >
+              </div>
+            </div>
+            <div class="skill-chips" style="margin-top: 10px">
+              <a class="skill-chip has-poster" href="../skill-github-attach-media/"
+                >github-attach-media ↗</a
+              >
+              <a class="skill-chip has-poster" href="../skill-r2-testing-paradigm/"
+                >r2-testing-paradigm ↗</a
+              >
+              <a class="skill-chip has-poster" href="../skill-r2-sdlc-documentation-philosophy/"
+                >r2-sdlc-documentation-philosophy ↗</a
+              >
+              <a class="skill-chip has-poster" href="../skill-trigger-github-deploy/"
+                >trigger-github-deploy ↗</a
+              >
+              <a class="skill-chip has-poster" href="../skill-wait-for-github-workflow/"
+                >wait-for-github-workflow ↗</a
+              >
+              <a class="skill-chip has-poster" href="../skill-analyze-github-workflow-failure/"
+                >analyze-github-workflow-failure ↗</a
+              >
+              <a class="skill-chip has-poster" href="../skill-diagnose-azure-container-app/"
+                >diagnose-azure-container-app ↗</a
+              >
+              <a class="skill-chip has-poster" href="../skill-diagnose-terraform-unknown-error/"
+                >diagnose-terraform-unknown-error ↗</a
+              >
+              <a
+                class="skill-chip has-poster"
+                href="../skill-reorder-github-project-board-by-depth/"
+                >reorder-github-project-board-by-depth ↗</a
+              >
+            </div>
+            <a class="district-more" href="#indexTitle"
+              >All of them, with posters → what's in here</a
+            >
+          </div>
+
+          <div
+            class="skill-district sessions"
+            style="--district-color: var(--blue)"
+            data-viz-id="skills-sessions"
+            data-label="Sessions and handoffs"
+          >
+            <h3>Sessions and handoffs</h3>
+            <p class="district-note">
+              A session is a unit that ends: these hand its state to the next one, open sibling
+              sessions, and close the pane when told to. Stop 14 on the tour.
+            </p>
+            <div class="skill-card-grid single">
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-r2-handoff/"
+                    >r2-handoff <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Writes a handoff document so a fresh agent can continue. <code>split</code> makes
+                  one per parallel work stream; <code>rescue</code> recovers an abandoned session
+                  from its transcript.</span
+                >
+                <span class="why"
+                  >Why it matters: continuing from a document in a fresh session avoids rewriting an
+                  expired prompt cache.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../tool-auto-handoff/"
+                    >auto-handoff <span class="pl-mark">tool poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Auto-compact, but with a handoff instead of a summary: at 250k context it asks
+                  for one, clears, and continues from it. A tool, not a skill — no model decides to
+                  run it.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-spawn-herdr-tab/"
+                    >spawn-herdr-tab <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Opens a new herdr tab running a fresh Claude Code or Codex session, with model,
+                  effort and first prompt — a peer you can message, not a subagent.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-end-session/"
+                    >end-session <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Closes this session's herdr pane on a direct command, after naming anything
+                  unfinished. A finished task or a "thanks" leaves it open.</span
+                >
+              </div>
+            </div>
+            <a class="district-more" href="#indexTitle"
+              >All of them, with posters → what's in here</a
+            >
+          </div>
+
+          <div
+            class="skill-district workplace"
+            style="--district-color: var(--cyan)"
+            data-viz-id="skills-workplace"
+            data-label="Browser and workplace skills"
+          >
+            <h3>Browser and workplace</h3>
+            <p class="district-note">
+              The signed-in browser as an interface: read, edit and mirror the places work lives,
+              without a connector.
+            </p>
+            <div class="skill-card-grid single">
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-slack-in-browser/"
+                    >slack-in-browser <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Reads and reacts in Slack by calling its web API from inside your signed-in tab —
+                  two checkable fetch calls instead of clicking through screenshots.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-confluence-editor/"
+                    >confluence-editor <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Surgical edits to an existing Confluence page in Chrome, always left as an
+                  unpublished draft for a human to review.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-publish-markdown-to-confluence/"
+                    >publish-markdown-to-confluence <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Converts local Markdown to Atlassian document format and replaces a page's body
+                  while preserving page extensions.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-sync-webex-to-google-calendar/"
+                    >sync-webex-to-google-calendar <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Mirrors meetings from the Webex desktop app into Google Calendar, one way,
+                  touching only the events it created.</span
+                >
+              </div>
+            </div>
+            <a class="district-more" href="#indexTitle"
+              >All of them, with posters → what's in here</a
+            >
+          </div>
+
+          <div
+            class="skill-district cloud"
+            style="--district-color: var(--amber)"
+            data-viz-id="skills-cloud-api"
+            data-label="Cloud, API and port skills"
+          >
+            <h3>Cloud, APIs and ports</h3>
+            <p class="district-note">
+              Credentials, identity-provider APIs, and ports of Terraform providers to other tool
+              chains.
+            </p>
+            <div class="skill-card-grid single">
+              <div class="skill-card">
+                <strong
+                  ><a class="poster-link" href="../skill-aws-creds/"
+                    >aws-creds <span class="pl-mark">poster ↗</span></a
+                  ></strong
+                >
+                <span
+                  >Short-lived credentials from any AWS IAM Identity Center portal, usable from the
+                  shell. Portal-agnostic: org-specific facts live in a private wrapper, never in
+                  this public skill.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong>identity-provider APIs</strong>
+                <span
+                  ><a class="poster-link" href="../skill-okta-api/">okta-api</a> and
+                  <a class="poster-link" href="../skill-ping-api/">ping-api</a> package the Okta and
+                  PingOne management APIs as named operations.</span
+                >
+              </div>
+              <div class="skill-card">
+                <strong>provider porting</strong>
+                <span
+                  >Ports a Terraform provider's whole resource surface to an Ansible collection, a
+                  Kubernetes operator, or a PowerShell DSC module — with parity that's measured
+                  against the provider, not assumed.</span
+                >
+              </div>
+            </div>
+            <div class="skill-chips" style="margin-top: 10px">
+              <a class="skill-chip has-poster" href="../skill-port-terraform-provider-to-ansible/"
+                >port-terraform-provider-to-ansible ↗</a
+              >
+              <a
+                class="skill-chip has-poster"
+                href="../skill-port-terraform-provider-to-k8s-operator/"
+                >port-terraform-provider-to-k8s-operator ↗</a
+              >
+              <a
+                class="skill-chip has-poster"
+                href="../skill-port-terraform-provider-to-powershell-dsc/"
+                >port-terraform-provider-to-powershell-dsc ↗</a
+              >
+              <a class="skill-chip has-poster" href="../skill-omnissa-horizon-vdi/"
+                >omnissa-horizon-vdi ↗</a
+              >
+            </div>
+            <a class="district-more" href="#indexTitle"
+              >All of them, with posters → what's in here</a
+            >
+          </div>
+
+          <div
+            class="skill-district external"
+            style="--district-color: var(--violet)"
+            data-viz-id="skills-external"
+            data-label="External skill packs"
+          >
+            <h3>External community packs</h3>
+            <p class="district-note">
+              Installed by reference with <code>bun install.ts --externals</code>: nine repos, 72
+              skills, none vendored. Many are demoted in the tracked <code>settings.json</code>
+              (<code>skillOverrides</code>) so they stay installed without being offered to the
+              model by default.
+            </p>
+            <div class="ext-grid">
+              <div class="skill-group">
+                <h4>Matt Pocock pipeline skills</h4>
+                <p>
+                  The standouts are the planning/conversation tools: grilling and wayfinder. The
+                  rest are available when a repo needs a more formal SDLC path. (The owned
+                  <code>r2-handoff</code> grew out of his handoff skill.)
+                </p>
+                <div class="skill-card-grid">
+                  <div class="skill-card">
+                    <strong>grilling</strong>
+                    <span
+                      >Stress-tests a plan or design through relentless questions; grill-me-viz is
+                      its visual counterpart.</span
+                    >
+                  </div>
+                  <div class="skill-card">
+                    <strong>wayfinder</strong>
+                    <span
+                      >Maps work too large for one session into investigation tickets and dependency
+                      structure.</span
+                    >
+                  </div>
+                </div>
+                <div class="skill-chips" style="margin-top: 10px">
+                  <span class="skill-chip">ask-matt</span>
+                  <span class="skill-chip">code-review</span>
+                  <span class="skill-chip">codebase-design</span>
+                  <span class="skill-chip">diagnosing-bugs</span>
+                  <span class="skill-chip">domain-modeling</span>
+                  <span class="skill-chip">implement</span>
+                  <span class="skill-chip">implement-spec</span>
+                  <span class="skill-chip">improve-codebase-architecture</span>
+                  <span class="skill-chip">research</span>
+                  <span class="skill-chip">resolving-merge-conflicts</span>
+                  <span class="skill-chip">setup-matt-pocock-skills</span>
+                  <span class="skill-chip">teach</span>
+                  <span class="skill-chip">to-questionnaire</span>
+                  <span class="skill-chip">to-spec</span>
+                  <span class="skill-chip">to-tickets</span>
+                  <span class="skill-chip">triage</span>
+                  <span class="skill-chip">wait-what</span>
+                  <span class="skill-chip">wizard</span>
+                  <span class="skill-chip">writing-for-agents</span>
+                  <span class="skill-chip">writing-beats</span>
+                  <span class="skill-chip">writing-fragments</span>
+                  <span class="skill-chip">writing-shape</span>
+                </div>
+              </div>
+              <div class="skill-group">
+                <h4>Ponytail</h4>
+                <p>
+                  The always-on coding bias: simplest working solution, native tools first, no
+                  speculative abstractions.
+                </p>
+                <div class="skill-chips">
+                  <span class="skill-chip">ponytail</span>
+                  <span class="skill-chip">ponytail-audit</span>
+                  <span class="skill-chip">ponytail-debt</span>
+                  <span class="skill-chip">ponytail-gain</span>
+                  <span class="skill-chip">ponytail-help</span>
+                  <span class="skill-chip">ponytail-review</span>
+                </div>
+              </div>
+              <div class="skill-group">
+                <h4>Discovery, documents and writing</h4>
+                <p>Standalone utilities that are not members of another family.</p>
+                <div class="skill-card-grid">
+                  <div class="skill-card">
+                    <strong>find-skills</strong>
+                    <span
+                      >Finds and installs capability before the agent invents a one-off
+                      workflow.</span
+                    >
+                  </div>
+                </div>
+                <div class="skill-chips" style="margin-top: 10px">
+                  <span class="skill-chip">skill-creator</span>
+                  <span class="skill-chip">frontend-design</span>
+                  <span class="skill-chip">docx</span>
+                  <span class="skill-chip">pdf</span>
+                  <span class="skill-chip">pptx</span>
+                  <span class="skill-chip">xlsx</span>
+                  <span class="skill-chip">stride-threat-modelling</span>
+                  <span class="skill-chip">unslop</span>
+                  <span class="skill-chip">design-doc-mermaid</span>
+                  <a class="skill-chip has-poster" href="../skill-anidoodle/">anidoodle ↗</a>
+                </div>
+              </div>
+              <div class="skill-group">
+                <h4>LN auditors</h4>
+                <p>
+                  Background review lenses: 31 skills across planning, implementation, audit and
+                  release. Rascal does not usually invoke these directly; the audit ones matter
+                  because larger review workflows (r2-gauntlet) can pull them in. Most of the rest
+                  are user-invocable only.
+                </p>
+                <div class="skill-chips">
+                  <span class="skill-chip">ln-33-plan-reviewer</span>
+                  <span class="skill-chip">ln-52-delivery-reviewer</span>
+                  <span class="skill-chip">ln-53-documentation-auditor</span>
+                  <span class="skill-chip">ln-54-codebase-auditor</span>
+                  <span class="skill-chip">ln-55-test-suite-auditor</span>
+                  <span class="skill-chip">ln-56-architecture-auditor</span>
+                  <span class="skill-chip">ln-57-persistence-auditor</span>
+                  <span class="skill-chip">+ 24 more</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="skill-district private"
+            style="--district-color: var(--amber)"
+            data-viz-id="skills-how-they-connect"
+            data-label="How skills connect"
+          >
+            <h3>How the districts connect</h3>
+            <p class="district-note">
+              The important bit is not the count. It is that recurring work becomes named, installed
+              capability.
+            </p>
+            <div class="district-flow">
+              <div class="flow-node">
+                <strong>Rules choose</strong>
+                <span>AGENTS.md tells the agent to check skills before ad-hoc work.</span>
+              </div>
+              <div class="flow-node">
+                <strong>Installer links</strong>
+                <span>Owned skills become live in both Claude Code and Codex paths.</span>
+              </div>
+              <div class="flow-node">
+                <strong>Manifest imports</strong>
+                <span>External packs are reproducible without copying their source.</span>
+              </div>
+              <div class="flow-node">
+                <strong>Overlays extend</strong>
+                <span>Private/company skills layer on top without entering the public repo.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="deep-section" aria-labelledby="pointerTitle">
+        <div class="chapter-head">
+          <div>
+            <h2 id="pointerTitle">One pointer, and an empty <code>~/.claude</code></h2>
+            <p>
+              This repo is public, so its <code>settings.json</code> cannot name anybody's home
+              directory layout. Everything installed resolves through a single symlink instead —
+              which is also why <code>~/.claude</code> ends up containing nothing we chose to put
+              there.
+            </p>
+          </div>
+          <span class="chapter-tag">one pointer · three names</span>
+        </div>
+
+        <div class="agents-board">
+          <div class="agents-lane">
+            <h3>The one machine-local fact</h3>
+            <p class="lane-note">Where the repo is cloned is recorded in exactly one place.</p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--mint)"
+              data-viz-id="pointer-what"
+              data-label="The pointer"
+            >
+              <strong>~/.agents/ai-setup → the repo</strong>
+              <span
+                >Everything installed is addressed as
+                <code>$HOME/.agents/ai-setup/&lt;tool&gt;/…</code>. <code>$HOME</code> expands in
+                the hook's shell, so a <em>public</em> settings file names a real path without
+                publishing anyone's directory layout.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--green)"
+              data-viz-id="pointer-sibling"
+              data-label="Beside overlays.json"
+            >
+              <strong>Beside overlays.json</strong>
+              <span
+                >That file solved the same problem first — a list of local absolute paths that must
+                not go in the repo. The pointer is its sibling, not a new idea.</span
+              >
+            </div>
+          </div>
+
+          <div class="agents-lane">
+            <h3>Why a symlink, not an env var</h3>
+            <p class="lane-note">
+              The closer call, and the one that got argued properly before being decided.
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--amber)"
+              data-viz-id="pointer-env"
+              data-label="Why not an env var"
+            >
+              <strong>launchd reads no shell profile</strong>
+              <span
+                >Hooks inherit the environment of whatever launched the agent. A nightly
+                <code>claude -p</code> under launchd would find the variable unset — exactly where
+                nobody is watching. Settings <code>env:</code> values are literal too: no
+                <code>~</code>, no <code>$HOME</code> expansion, so the path could only be hardcoded
+                into the public file.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--green)"
+              data-viz-id="pointer-visible"
+              data-label="Visible failure"
+            >
+              <strong>Broken is visible</strong>
+              <span
+                >A dangling symlink is red in <code>ls</code> and the installer self-heals it. An
+                unset variable is visible to nobody until something quietly stops running.</span
+              >
+            </div>
+          </div>
+
+          <div class="agents-lane">
+            <h3>What is left in <code>~/.claude</code></h3>
+            <p class="lane-note">
+              Three entries, and every one is there because Claude Code looks it up by name.
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--mint)"
+              data-viz-id="pointer-claude"
+              data-label="The four forced names"
+            >
+              <strong>CLAUDE.md · settings.json · skills/</strong>
+              <span
+                >Each a single symlink; <code>skills/</code> points at
+                <code>~/.agents/skills</code>, the one flat catalog both agents read. No
+                <code>bin/</code>, no <code>hooks/</code> of ours, no loose scripts — those were
+                invented, and <code>~/.claude/bin</code> was never even on <code>PATH</code>. There
+                is no <code>agents/</code> link either: listed subagents cost context in every
+                session, so the reviewers are read by path instead.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--red)"
+              data-viz-id="pointer-merge"
+              data-label="The merge exceptions"
+            >
+              <strong>Two files get merged, not linked</strong>
+              <span
+                >Everything else is a symlink <em>into</em> the repo — edit a live file and you have
+                edited the repo, and <code>git status</code> shows the drift. No build step, no
+                copy-back. The exceptions are Codex and herdr, which rewrite their own
+                <code>config.toml</code>: a symlink there gets replaced by a real file on the next
+                write and silently detaches, so the installer merges guarded blocks in
+                instead.</span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="deep-section" aria-labelledby="manifestTitle">
+        <div class="chapter-head">
+          <div>
+            <h2 id="manifestTitle">How a tool or skill declares itself</h2>
+            <p>
+              Fifty-three things live in this repo and every one of them answers the same five
+              questions in its own frontmatter. The point is not paperwork — it is that "where does
+              this keep its data" stops being something you rediscover with <code>grep</code> at the
+              moment you need it.
+            </p>
+          </div>
+          <span class="chapter-tag">53 manifests · 13 state owners</span>
+        </div>
+
+        <div class="agents-board">
+          <div class="agents-lane">
+            <h3>The block</h3>
+            <p class="lane-note">
+              In <code>README.md</code> for a tool, <code>SKILL.md</code> for a skill, under one
+              namespaced key so it never collides as those formats grow.
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--mint)"
+              data-viz-id="manifest-block"
+              data-label="The manifest block"
+            >
+              <strong>rascaltwo-ai-setup:</strong>
+              <span
+                ><code>kind</code> tool or skill · <code>state</code> does it keep anything ·
+                <code>deletion-policy</code> retain or delete · <code>integrates</code> what it
+                plugs into · <code>requires</code> what it needs to run.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--amber)"
+              data-viz-id="manifest-verbs"
+              data-label="Borrowed verbs"
+            >
+              <strong>Borrowed, not invented</strong>
+              <span
+                ><code>retain</code> and <code>delete</code> are CloudFormation's
+                <code>DeletionPolicy</code> values, meaning exactly what they mean there: what
+                happens to the data when the thing goes away.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--green)"
+              data-viz-id="manifest-requires"
+              data-label="What requires means"
+            >
+              <strong>requires is typed, and drives the Install strip</strong>
+              <span
+                ><code>skills</code> and <code>tools</code> it uses, <code>commands</code> on the
+                <code>PATH</code>, and <code>manual</code> for what a person sets up by hand. Each
+                lists only its own direct needs: anything one of its steps loads or runs. Every
+                poster's Install strip follows them all the way down, and
+                <code>check-posters</code> fails on a name that doesn't resolve.</span
+              >
+            </div>
+          </div>
+
+          <div class="agents-lane">
+            <h3>State has one address</h3>
+            <p class="lane-note">
+              <code>state</code> is a boolean, never a path — the path is a convention, and writing
+              it down twice is how it drifts out of step with reality.
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--mint)"
+              data-viz-id="state-address"
+              data-label="The state address"
+            >
+              <strong>~/.agents/state/&lt;name&gt;/</strong>
+              <span
+                >One directory per thing that owns state, named for the thing. Thirteen owners, from
+                an image spool that runs to gigabytes down to tens of KB of statusline
+                counters.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--amber)"
+              data-viz-id="state-owner"
+              data-label="Shared stores"
+            >
+              <strong>state-owner, for sharing</strong>
+              <span
+                ><code>r2-gauntlet</code> reads and writes <code>r2-sdlc</code>'s pipeline tree on
+                purpose, so it names the owner instead of claiming a directory or pretending it is
+                stateless.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--green)"
+              data-viz-id="state-invariant"
+              data-label="The invariant"
+            >
+              <strong>Checkable, not aspirational</strong>
+              <span
+                >Every directory under <code>state/</code> has an owner, and every owner has a
+                directory. Both directions hold, which is the only reason the convention is worth
+                anything.</span
+              >
+            </div>
+          </div>
+
+          <div class="agents-lane">
+            <h3>Whose directory is it</h3>
+            <p class="lane-note">
+              The rule that took two mistakes in one day to learn. The test is not "does this thing
+              touch it".
+            </p>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--green)"
+              data-viz-id="own-ours"
+              data-label="Locations we invented"
+            >
+              <strong>We invented it → we place it</strong>
+              <span
+                >The image spool, the karaoke pane's transcript, the pipeline runs, the viz library.
+                Nothing of ours sits in <code>~/.claude</code> — that belongs to Claude Code.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--amber)"
+              data-viz-id="own-theirs"
+              data-label="Locations others own"
+            >
+              <strong>It already has one → leave it</strong>
+              <span
+                ><code>~/.voicemode</code>, <code>~/.crv/memory.db</code>,
+                <code>~/.okta/okta.yaml</code>, ollama's models, herdr's config. We read them and
+                write to them. We do not move them.</span
+              >
+            </div>
+            <div
+              class="rule-card"
+              style="--rule-color: var(--red)"
+              data-viz-id="own-trap"
+              data-label="The mixed directory trap"
+            >
+              <strong>Mixed directories are the trap</strong>
+              <span
+                ><code>~/.ping/</code> held their config and our spec cache; only the second moved.
+                Relocating another tool's data fails <em>silently</em> — the owner keeps reading its
+                own default and finds an empty store.</span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

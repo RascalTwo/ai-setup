@@ -1,0 +1,1032 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>r2-pr — nobody reads the whole PR, so write for the first minute</title>
+    <meta name="viz:uid" content="v-8546b9cc109e" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="r2-pr" />
+    <meta
+      name="viz:description"
+      content="Opens and updates a GitHub PR the house way: a draft that stays on your machine until you say yes, a body split at the one-minute line, and refreshes that touch only the sections r2-pr wrote."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      :root {
+        --s: 1;
+        --own: var(--c5); /* what r2-pr wrote and may refresh */
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 94% -10%,
+            color-mix(in srgb, var(--accent) 17%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            700px 440px at -8% 112%,
+            color-mix(in srgb, var(--own) 12%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 472px;
+        gap: 42px;
+        align-items: center;
+        padding: 46px 60px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 18px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 54px;
+        line-height: 1.04;
+        margin: 0 0 20px;
+        letter-spacing: -1.5px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--own);
+      }
+      p.sub {
+        font-size: 18.5px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 18px;
+        max-width: 500px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 14.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 20px;
+        max-width: 500px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 15px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 9px;
+        padding: 10px 15px;
+        color: var(--text);
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the PR body, as a column: colour = who owns the words, position = how soon a reviewer reads them */
+      .body-col {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .draftbar {
+        display: flex;
+        justify-content: space-between;
+        border: 1px dashed color-mix(in srgb, var(--warn) 65%, transparent);
+        background: color-mix(in srgb, var(--warn) 9%, transparent);
+        color: var(--warn);
+        border-radius: 9px;
+        padding: 7px 12px;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        margin-bottom: 9px;
+      }
+      .draftbar span:last-child {
+        color: var(--muted);
+        letter-spacing: 0.04em;
+      }
+      .minute {
+        position: relative;
+        border-left: 3px solid var(--accent);
+        padding-left: 11px;
+        margin-left: 2px;
+      }
+      .minute .tag {
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        color: var(--accent);
+        margin-bottom: 5px;
+      }
+      .blk {
+        background: color-mix(in srgb, var(--panel) 85%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 11px;
+        margin-bottom: 6px;
+        color: var(--text);
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .blk i {
+        font-style: normal;
+        color: var(--faint);
+        white-space: nowrap;
+      }
+      .blk.own {
+        border-color: color-mix(in srgb, var(--own) 70%, transparent);
+        background: color-mix(in srgb, var(--own) 13%, transparent);
+      }
+      .blk.own i {
+        color: var(--own);
+      }
+      .blk.tall {
+        padding: 9px 11px 10px;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .blk.tall small {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.45;
+      }
+      .divider {
+        text-align: center;
+        font-size: 10.5px;
+        letter-spacing: 0.22em;
+        color: var(--muted);
+        margin: 11px 0 9px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .divider::before,
+      .divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+      .keyrow {
+        display: flex;
+        gap: 16px;
+        margin-top: 8px;
+        font-size: 10.5px;
+        color: var(--muted);
+      }
+      .keyrow b {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+        margin-right: 6px;
+        vertical-align: -1px;
+      }
+      .keyrow .o b {
+        background: color-mix(in srgb, var(--own) 55%, transparent);
+        border: 1px solid var(--own);
+      }
+      .keyrow .p b {
+        background: var(--panel);
+        border: 1px solid var(--border);
+      }
+
+      /* ── the dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        line-height: 1.5;
+        color: var(--accent);
+        margin: 42px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.88em;
+        color: var(--own);
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      pre .o {
+        color: var(--own);
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 14px;
+      }
+      .fig .stage svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .fig .cap {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        margin: 12px 0 0;
+        line-height: 1.5;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 70px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--own);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+
+      /* svg node labels */
+      .nd {
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        text-align: left;
+        gap: 3px;
+        padding: 0 9px;
+        box-sizing: border-box;
+      }
+      .nd b {
+        color: #fff;
+        font-size: 12.5px;
+      }
+      .nd small {
+        font: 10.5px/1.3 var(--mono);
+        color: var(--muted);
+      }
+      .nd.gate b {
+        color: var(--warn);
+      }
+      .lane-label {
+        font: 600 10.5px var(--mono);
+        letter-spacing: 0.16em;
+      }
+
+      /* sync stepper stage */
+      .sync {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        gap: 16px;
+        min-height: 322px;
+      }
+      .sync .hdr {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        color: var(--own);
+        margin-bottom: 9px;
+      }
+      .sync .sb {
+        font-family: var(--mono);
+        font-size: 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 11px;
+        margin-bottom: 6px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        color: var(--text);
+        transition:
+          background 0.25s,
+          border-color 0.25s;
+      }
+      .sync .sb i {
+        font-style: normal;
+        color: var(--faint);
+        white-space: nowrap;
+      }
+      .sync .sb.owned {
+        border-color: color-mix(in srgb, var(--own) 60%, transparent);
+        background: color-mix(in srgb, var(--own) 10%, transparent);
+      }
+      .sync .sb.owned i {
+        color: var(--own);
+      }
+      .sync .sb.swapped {
+        border-color: var(--own);
+        background: color-mix(in srgb, var(--own) 28%, transparent);
+      }
+      .sync .sb.swapped i {
+        color: #fff;
+      }
+      .sync .sb.kept i {
+        color: var(--good);
+      }
+      .sync .sb.missing {
+        border: 1px dashed var(--danger);
+        color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 8%, transparent);
+      }
+      .sync .sb.missing i {
+        color: var(--danger);
+      }
+      .sync .code {
+        background: #0d1117;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 11px 12px;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        line-height: 1.6;
+        color: var(--text);
+        align-self: start;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .sync .code .ln {
+        color: var(--faint);
+      }
+      .sync .code .ok {
+        color: var(--good);
+      }
+      .sync .code .bad {
+        color: var(--danger);
+      }
+      .sync .code .o {
+        color: var(--own);
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+      @media (max-width: 640px) {
+        .sync {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="r2-pr"
+        data-viz-id="poster-card"
+        data-label="r2-pr poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · R2-PR</div>
+          <h1 class="hook">
+            Nobody reads<br />the whole PR.<br /><em>Write for the<br />first minute.</em>
+          </h1>
+          <p class="sub">
+            r2-pr drafts the body <b>on your machine</b>, splits it at the one-minute line, and on
+            every later push rewrites <b>only the sections it marked</b>.
+          </p>
+          <p class="not">
+            Nothing reaches GitHub until you say yes.<br />Opens as a <b>draft</b>. You mark it
+            ready.
+          </p>
+          <div class="trigger"><span>say</span>&nbsp;"open a PR" · "update the PR"</div>
+        </div>
+
+        <div class="body-col" data-viz-id="body-column" data-label="a PR body, top to bottom">
+          <div class="draftbar" data-viz-id="draft-gate" data-label="the local-only draft gate">
+            <span>DRAFT · pr.md · LOCAL</span><span>nothing sent until yes</span>
+          </div>
+
+          <div class="minute" data-viz-id="minute-zone" data-label="the part read in one minute">
+            <div class="tag">≈ ONE MINUTE</div>
+            <div class="blk" data-viz-id="blk-links" data-label="section links and issue line">
+              <span>links · Closes #n</span><i>written</i>
+            </div>
+            <div class="blk" data-viz-id="blk-why" data-label="Why section">
+              <span>Why</span><i>written</i>
+            </div>
+            <div
+              class="blk own tall"
+              data-viz-id="blk-look"
+              data-label="Where to look, r2-pr marker"
+            >
+              <span style="display: flex; justify-content: space-between"
+                ><span>Where to look</span><i>r2-pr:look</i></span
+              >
+              <small>start here · skim or skip · not sure about · size line</small>
+            </div>
+            <div class="blk" data-viz-id="blk-proven" data-label="Proven line">
+              <span>Proven: before → after</span><i>written</i>
+            </div>
+          </div>
+
+          <div class="divider">IN DEPTH</div>
+
+          <div class="blk own tall" data-viz-id="blk-walk" data-label="walkthrough, r2-pr marker">
+            <span style="display: flex; justify-content: space-between"
+              ><span>Walkthrough</span><i>r2-pr:walkthrough</i></span
+            >
+            <small>video · image · changes in review order</small>
+          </div>
+          <div
+            class="blk"
+            data-viz-id="blk-how"
+            data-label="How, Evidence, Rollout, Not in this PR"
+          >
+            <span>How · Evidence · Rollout</span><i>written</i>
+          </div>
+          <div class="blk" data-viz-id="blk-not" data-label="Not in this PR">
+            <span>Not in this PR</span><i>written</i>
+          </div>
+
+          <div class="keyrow">
+            <span class="o"><b></b>r2-pr refreshes on every push</span>
+            <span class="p"><b></b>yours once posted</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install r2-pr">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <pre><span class="l"><span class="c">npx</span> skills add <span class="r">RascalTwo/ai-setup</span> <span class="f">-g</span> <span class="f">-s</span> r2-pr <span class="f">-s</span> pr-split <span class="f">-s</span> pr-viz <span class="f">-s</span> viz <span class="f">-s</span> github-attach-media</span>
+<span class="l"><span class="c">npx</span> skills add <span class="r">cursor/plugins</span> <span class="f">-g</span> <span class="f">-s</span> unslop</span>
+<span class="l"><span class="c">npx</span> skills add <span class="r">spillwavesolutions/design-doc-mermaid</span> <span class="f">-g</span> <span class="f">-s</span> design-doc-mermaid</span></pre>
+      <p class="needs">
+        needs <code>gh</code> <code>git</code> <code>bun</code> <code>ffmpeg</code>
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle">Chrome</a>
+      </p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">The description is written last, by the person who needs it least</h2>
+      <p>
+        By the time a branch is ready you have lived in it for days. The PR body gets written from
+        memory of the diff, for the one reader who doesn't need it. Then a reviewer spends their
+        first minute on it to decide how to read everything else, and gets one of two things:
+        <b>"Fixes the thing"</b>, or four screens of fluent prose that restates the diff.
+      </p>
+      <p>
+        Agents made it worse in a particular way. They write the body fast, and they
+        <b>post it</b>. The first human to read it is a reviewer, notified, on a public thread. Then
+        every new push either leaves the body stale, or an agent rewrites the whole description and
+        takes with it the sentence you tightened and the Evidence section a reviewer asked for.
+      </p>
+      <p class="m">
+        And one more, upstream of both: the PR that describes a change that isn't ready. It claims a
+        behavior no test pins, and the body reads confidently anyway. r2-pr's job is the
+        description. It won't write one for something it can't back.
+      </p>
+
+      <h2 data-beat="using">Say "open a PR", then read what it hands you</h2>
+      <p>
+        There is no slash command. The skill fires when you ask to <b>open</b>, <b>draft</b> or
+        <b>update</b> a PR or its description. Its first step looks for an existing PR on the branch
+        (<code>gh pr view &lt;branch&gt;</code>) and that alone decides which of the two flows you
+        are in. The skill asks you for exactly four things:
+      </p>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>A ruling</td>
+            <td>
+              If the readiness check finds a gap, it stops and lists it with what would fix each.
+              You fix it, ask r2-pr to, or say <em>go ahead as it is</em>. That last answer puts the
+              gap in the body.
+            </td>
+          </tr>
+          <tr>
+            <td>The yes</td>
+            <td>
+              It hands you the draft's path, a rendered preview and the title. Your approval of
+              <em>that draft</em> is the one gate.
+            </td>
+          </tr>
+          <tr>
+            <td>A force-push</td>
+            <td>Asked every time. A plain push is not.</td>
+          </tr>
+          <tr>
+            <td>Ready</td>
+            <td>The PR goes up as a draft. You flip it, unless you said otherwise up front.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="limits">It describes. It does not fix, watch or merge.</h2>
+      <ul>
+        <li>
+          <b>It fixes nothing in your branch.</b> Step 3 pushes back ("no test pins that clients
+          without gzip get plain JSON: add one?") and waits. A go-ahead is allowed, but then the gap
+          goes into the body under <em>Not proven yet</em>, in public.
+        </li>
+        <li>
+          <b>It does not watch CI, answer reviews or merge.</b> Its remit is the body, its layout,
+          getting it onto GitHub, and refreshing it after new commits.
+        </li>
+        <li>
+          <b>Once posted, written sections are people's.</b> When one is stale after a push, it says
+          so and proposes the edit; it applies it only on a yes. Only its two marked sections are
+          refreshed unattended.
+        </li>
+        <li>
+          <b>It cannot add a marker to an old PR.</b> <code>sync</code> throws when the live body
+          lacks a section it was asked to refresh. A PR opened before <code>r2-pr:look</code>
+          existed gets it added by hand, once, under Why, with a yes from you.
+        </li>
+        <li>
+          <b>The local preview is not GitHub.</b> It is Bun's markdown renderer plus two shims
+          (alert boxes and <code>#123</code> links). <code>--github</code> renders exactly, but
+          sends your draft to GitHub, so it only runs when you ask. Even the local page loads three
+          open-source libraries from a CDN (stylesheet, highlighter, mermaid); none of the draft
+          leaves the machine.
+        </li>
+        <li>
+          <b>It cannot see the video play.</b> Its final check opens the PR page, and Chrome won't
+          load video in a background tab. The skill says so, and calls that not GitHub's fault.
+        </li>
+        <li>
+          <b>The repo's own PR template wins.</b> Its headings are the written sections, in its
+          order. r2-pr's layout fills in around it.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives, and what it leaves behind</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/r2-pr/SKILL.md</code> (eight steps), <code>reference/body.md</code> (the
+              body's layout and the GitHub facts behind it), <code>scripts/body.ts</code> (104
+              lines, the mechanical parts).
+            </td>
+          </tr>
+          <tr>
+            <td>Declared</td>
+            <td>
+              <code>kind: skill</code>, <code>state: true</code>,
+              <code>deletion-policy: retain</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <code>~/.agents/state/r2-pr/&lt;owner&gt;-&lt;repo&gt;/&lt;branch&gt;/</code>: the
+              draft <code>pr.md</code> and its rendered preview <code>pr.html</code> beside it.
+              <b>Retain.</b> The update path rebuilds <em>from</em> <code>pr.md</code>, so this is
+              the PR's working copy, not scratch to sweep.
+            </td>
+          </tr>
+          <tr>
+            <td>Integrates</td>
+            <td>
+              GitHub through <code>gh</code>: push, <code>pr create</code>/<code>pr edit</code>, and
+              GitHub's markdown renderer (<code>gh api markdown</code>, the opt-in
+              <code>--github</code> path).
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <code>gh</code>, <code>git</code>, <code>bun</code>, and the skills it runs:
+              <code>pr-split</code>, <code>pr-viz</code>, <code>github-attach-media</code> for
+              images, and <code>unslop</code> and <code>design-doc-mermaid</code> while writing the
+              body. Bun is load-bearing: the local preview calls
+              <code>Bun.markdown.html</code> directly.
+            </td>
+          </tr>
+          <tr>
+            <td>Borrows from</td>
+            <td>
+              <code>pr-split</code> (is it one change?), <code>pr-viz</code> (the walkthrough and
+              the Where-to-look lines), <code>github-attach-media</code> (hosting the video and
+              image), <code>unslop</code> on every sentence it writes, and <code>r2-sdlc</code>'s
+              <code>understood.md</code> when that ran on the branch.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">Eight steps, and one border they cross</h2>
+      <p class="m">
+        Everything left of the yes happens on your disk. Step 7 is the only place bytes leave it,
+        and step 8 is the same trip again with a smaller payload.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="pipeline-figure"
+        data-label="the eight steps across the local/GitHub border"
+      >
+        <div class="stage">
+          <svg
+            id="pipe"
+            viewBox="0 0 760 400"
+            role="img"
+            aria-label="r2-pr's eight steps: six on your machine, ending at the approval gate, then publish or update on GitHub"
+          ></svg>
+        </div>
+        <p class="cap">
+          Amber is the gate. The dashed edge is the other entrance: step 1 finds a PR already there
+          and goes straight to update.
+        </p>
+      </div>
+
+      <p>
+        Two of those steps are verdicts rather than work. <b>Step 3</b> compares the branch with
+        what the PR is about to claim (every claimed behavior has a test, touched tests pass,
+        nothing uncommitted, merges cleanly, no doc left stale), then runs <code>pr-split</code> on
+        <em>every</em> PR whatever its size. If the answer is "pieces", this run ends there and each
+        piece's branch re-enters at step 1. <b>Step 6</b> is the only approval, and an edit sends
+        you back through redraft and re-preview.
+      </p>
+
+      <h2 data-beat="how">The only code moves words. It never writes them.</h2>
+      <p>
+        <code>scripts/body.ts</code> opens with its own rule:
+        <em>"The words are the agent's; this only moves them."</em> Three verbs, each a branch of
+        one <code>if</code> chain:
+      </p>
+      <pre>
+<span class="c"># 1. render the draft here, open pr.html beside pr.md (body.ts:41)</span>
+bun "$R2PR/scripts/body.ts" preview pr.md <span class="o">&lt;owner/repo&gt;</span>
+
+<span class="c"># 2. swap local media paths for uploaded URLs (body.ts:79), body to stdout</span>
+bun "$R2PR/scripts/body.ts" finalize pr.md video=<span class="o">&lt;url&gt;</span> image=<span class="o">&lt;url&gt;</span> &gt; final.md
+
+<span class="c"># 3. replace ONLY r2-pr's marked sections on a live PR (body.ts:88)</span>
+bun "$R2PR/scripts/body.ts" sync final.md <span class="o">&lt;owner/repo&gt;</span> <span class="o">&lt;number&gt;</span></pre>
+      <p>
+        The draft names its media by local path, one per line:
+        <code>r2-pr:video &lt;path&gt;</code> and <code>r2-pr:image &lt;path&gt;</code>. One regex
+        (<code>MEDIA</code>, line 19) finds them, and each verb reads them differently.
+        <b>preview</b> (rendered by <code>Bun.markdown.html</code>, line 50) parks each as a marker
+        the markdown renderer passes through, then drops in a local <code>&lt;video&gt;</code> or
+        <code>&lt;img&gt;</code> (and prints <em>missing video: path</em> in bold if the file isn't
+        there). <b>finalize</b> turns the video into a bare attachment URL on its own line, which is
+        how GitHub embeds a player, and the image into an <code>&lt;img width="1400"&gt;</code>. It
+        throws if you forgot a URL.
+      </p>
+
+      <h2 data-beat="how">A regex decides who owns a sentence</h2>
+      <p>
+        Every section r2-pr is allowed to refresh sits between
+        <code>&lt;!-- r2-pr:&lt;name&gt; --&gt;</code> and its closing twin. That is the whole
+        ownership model, and it is one regular expression (line 20):
+      </p>
+      <pre>
+const SECTION = /&lt;!-- r2-pr:([\w-]+) --&gt;[\s\S]*?&lt;!-- \/r2-pr:\1 --&gt;/g;
+<span class="c">//                    name captured here ^^^^^^^^^        ^^ and required to match here</span></pre>
+      <p>
+        The <code>\1</code> back-reference makes an opener pair only with its own closer, so
+        <code>look</code> cannot swallow <code>walkthrough</code>. Step through one
+        <code>sync</code> on a PR whose Why a person has tightened since it was posted:
+      </p>
+
+      <div class="fig" data-viz-id="sync-figure" data-label="stepper: body.ts sync on one live PR">
+        <div class="stage"><div class="sync" id="stage"></div></div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+
+      <div class="callout">
+        <b>A rebase doesn't even reach sync.</b> The body names no commit anywhere a reader sees it,
+        because a commit ID is stale on the next push for nothing. So step 8 compares
+        <code>git diff &lt;old-range&gt;</code> with <code>git diff &lt;new-range&gt;</code>. Same
+        patch means a rebase: it re-pins pr-viz's plan to the new head and stops. Nothing a reader
+        sees has changed, so nothing is rewritten.
+      </div>
+
+      <h2 data-beat="how">The body has a minute line</h2>
+      <p>
+        The layout in <code>reference/body.md</code> is two altitudes. Above the divider is what a
+        reviewer reads before choosing <em>how</em> to review; below it is everything else, opened
+        by the film.
+      </p>
+      <pre>
+<span class="c">section links, then:</span>
+[Why] · [Where to look] · [In depth] · [How] · [Evidence] · [Rollout] · [Not in this PR]
+
+## Why              <span class="c">two or three sentences, from the reader's side</span>
+<span class="o">&lt;!-- r2-pr:look --&gt;</span>
+## Where to look    <span class="c">start here · skim or skip · not sure about · feedback wanted</span>
+Size: 22 files, 515 lines to read (132 code, 383 tests)   <span class="c">← classify.ts, verbatim</span>
+<span class="o">&lt;!-- /r2-pr:look --&gt;</span>
+**Proven**: before → after, one line, then each acceptance criterion and what proves it
+
+---  <b>In depth</b>
+<span class="o">&lt;!-- r2-pr:walkthrough --&gt;</span> video · note · image · changes <span class="o">&lt;!-- /r2-pr:walkthrough --&gt;</span>
+## How · ## Evidence · ## Rollout · ## Not in this PR</pre>
+      <p>
+        Where to look is not prose r2-pr invents each time. Its four lines are pr-viz's
+        <code>plan.json</code> <code>lookHere</code>, word for word, and the size line is
+        <code>classify.ts</code>'s output verbatim: a computed fact with no verdict attached.
+        <b>Evidence</b> carries the strictest rule in the skill: every item is re-runnable, with its
+        exact input, command and printed output under a collapsed <em>Re-run</em>, and the command
+        was run by r2-pr before it went in. Anything that would need a throwaway test to prove is
+        really a missing test, and gets caught back at step 3.
+      </p>
+
+      <h3>Why the body is shaped around GitHub's quirks</h3>
+      <p>
+        Each of these is in <code>reference/body.md</code> as a checked fact, and each explains a
+        layout choice that would otherwise look strange:
+      </p>
+      <ul>
+        <li>
+          PR-body headings get no anchors, so <code>#why</code> goes nowhere. An explicit
+          <code>&lt;a id="why"&gt;</code> survives as <code>user-content-why</code>, and the section
+          links point there.
+        </li>
+        <li>
+          A link can't open a collapsed <code>&lt;details&gt;</code>, so the section links skip the
+          walkthrough; it sits right below them anyway.
+        </li>
+        <li>
+          GitHub strips a video's <code>poster</code> attribute but shows its first frame, so pr-viz
+          paints the hero onto frame one.
+        </li>
+        <li>
+          A code fence has one language: syntax colours or diff colours, never both. So the changes
+          walkthrough shows added-only hunks in their language and changed hunks as
+          <code>diff</code>.
+        </li>
+      </ul>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · a PR body, written for
+        the first minute.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
