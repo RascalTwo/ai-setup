@@ -1,0 +1,286 @@
+// lib/publish/tree.ts — Building one container's publishable tree.
+//
+// Extracted from the since-deleted build.ts, which was 1993 lines.
+
+// ---- Build one container's publishable tree (shared by `publish` and `preview`) ----
+// Builds NATIVE vizzes (per their viz:posture), copies MIRRORED-IN artifacts verbatim,
+// and regenerates the lobby index — into `outRoot`. This is the build-and-STOP core:
+// it writes ONLY inside outRoot. It does NOT push mirrors (an OUTBOUND write into other
+// containers) and does NOT deploy — those are layered on top by `publish` alone, so
+// `preview` can reuse this to produce an identical tree with zero outside side effects.
+import { MIRROR_SIDECAR, PLACEHOLDER_HOST } from "./constants.ts";
+import { writeLobby } from "./lobby-write.ts";
+import { readLobby } from "./lobby.ts";
+import { readListed, readPosture } from "./meta.ts";
+import { approvalOf, cardPublicOf } from "./approval.ts";
+import { composeCards, readSidecar } from "./mirrors.ts";
+import { OG_NAMES, OG_VIDEO, ogTagsFor, shimDoc } from "./og.ts";
+import { publishOne, vizzesIn } from "./publish-one.ts";
+import { magicLink, seal } from "./seal.ts";
+import { die } from "../../cli.ts";
+// oxlint-disable-next-line import/max-dependencies -- the build orchestrator legitimately composes every publish module
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+// oxlint-disable-next-line complexity -- one linear build pipeline (posture, approval gate, build, shares, mirrors, lobby); splitting is a rewrite
+export async function buildPublishableTree(
+  container: string,
+  outRoot: string,
+  shareHost: string,
+  opts: {
+    noIndex?: boolean;
+    indexTitle?: string;
+    indexDescription?: string;
+    gateApproval?: boolean;
+    noOg?: boolean;
+  } = {},
+): Promise<{
+  built: number;
+  anyPrivate: boolean;
+  mirroredIn: number;
+  empty: boolean;
+  shares: number;
+}> {
+  const children = vizzesIn(container);
+  const mirroredInDirs = children.filter((d) => existsSync(path.join(d, MIRROR_SIDECAR)));
+  const natives = children.filter((d) => !existsSync(path.join(d, MIRROR_SIDECAR)));
+  // A PRIVATE lobby (_private-lobby marker) seals every public-tier page + the lobby page
+  // itself behind one key; `lobby` here is that key (null when the lobby is public).
+  const lobby = await readLobby(container);
+
+  // Resolve each native's posture — public/private build, local is skipped, undeclared
+  // refuses the whole run (nothing is published, nor withheld, on a guess).
+  const resolved: { vizDir: string; slug: string; private: boolean; listed: boolean }[] = [];
+  const undeclared: string[] = [];
+  const skippedLocal: string[] = [];
+  for (const vizDir of natives) {
+    const posture = readPosture(vizDir);
+    if (posture === "local") skippedLocal.push(path.basename(vizDir));
+    else if (!posture) undeclared.push(path.basename(vizDir));
+    else
+      resolved.push({
+        vizDir,
+        slug: path.basename(vizDir),
+        private: posture === "private",
+        listed: readListed(vizDir),
+      });
+  }
+  if (undeclared.length > 0) {
+    die(
+      `ERROR: no posture declared for: ${undeclared.join(", ")}\n` +
+        `Add <meta name="viz:posture" content="public"> (or "private", or "local" to keep it\n` +
+        `off the host) to each viz's index.html. There is no default — nothing is published,\n` +
+        `nor withheld, on a guess.`,
+      2,
+    );
+  }
+  // /share/ belongs to the card-public share pages (ADR 0018); a viz there would collide.
+  if (
+    [...resolved.map((r) => r.slug), ...mirroredInDirs.map((d) => path.basename(d))].includes(
+      "share",
+    )
+  )
+    die(
+      `ERROR: a viz slug is "share", which collides with the card-public share pages at /share/<slug>/ — rename it (viz move).`,
+      2,
+    );
+  // ADR 0013 + 0015: nothing reaches a site without a human approving THIS VERSION of it.
+  // Only vizzes that would actually deploy are gated — `local` ones were skipped above, so
+  // a deliberately-local viz never nags and the worklist can reach zero.
+  //
+  // `stale` and `never` are reported separately because they need different words: one
+  // says "you approved a different version of this", the other "you have not looked".
+  const stale: string[] = [],
+    never: string[] = [];
+  for (const r of resolved) {
+    const a = approvalOf(r.vizDir);
+    if (a.state === "stale") stale.push(r.slug);
+    else if (a.state === "never") never.push(r.slug);
+  }
+  //
+  // PREVIEW IS NOT GATED (opts.gateApproval === false). The gate's guarantee is about what
+  // reaches a SITE, and preview reaches no site — it builds into a temp dir and serves it on
+  // localhost. Gating it inverted the workflow: looking at a viz is how you decide whether to
+  // approve it, so refusing to show you the thing until you have approved it left you nothing
+  // to approve against. It also broke preview for a whole container whenever any one viz in it
+  // was mid-edit, which after ADR 0015 made approval perishable is most of the time.
+  // Preview still REPORTS the counts below, so the worklist stays visible where it is useful.
+  if (stale.length > 0 || never.length > 0) {
+    if (opts.gateApproval === false) {
+      console.log(
+        `Unapproved (previewing anyway — nothing here reaches a site):` +
+          (never.length > 0 ? ` ${never.length} never approved;` : "") +
+          (stale.length > 0 ? ` ${stale.length} changed since approval;` : "") +
+          ` publish will refuse until re-approved.`,
+      );
+    } else if (process.env.VIZ_ALLOW_UNAPPROVED !== "1") {
+      die(
+        `ERROR: ${stale.length + never.length} viz(es) would deploy without an approval of their current content:\n` +
+          (never.length > 0
+            ? `\n  never approved (${never.length}):\n    ${never.join(", ")}\n`
+            : "") +
+          (stale.length > 0
+            ? `\n  CHANGED since approval (${stale.length}):\n    ${stale.join(", ")}\n`
+            : "") +
+          `\nApproval records a hash of the viz's content, so an edit revokes it. Re-approve:\n` +
+          `  viz update <viz-folder> --approved true\n\n` +
+          `Override for an emergency (it will still deploy unapproved): VIZ_ALLOW_UNAPPROVED=1`,
+        2,
+      );
+    }
+  }
+  if (skippedLocal.length > 0) {
+    console.log(
+      `Skipping ${skippedLocal.length} local viz(es) — viz:posture=local, never published: ${skippedLocal.join(", ")}`,
+    );
+  }
+  if (resolved.length === 0 && mirroredInDirs.length === 0) {
+    return { built: 0, anyPrivate: false, mirroredIn: 0, empty: true, shares: 0 };
+  }
+
+  mkdirSync(outRoot, { recursive: true });
+  if (resolved.length > 0) {
+    const split = resolved
+      .map((t) => `${t.slug} → ${t.private ? "PRIVATE" : "PUBLIC"}${t.listed ? "" : " (unlisted)"}`)
+      .join("   ·   ");
+    console.log(`Building ${resolved.length} viz(es) → ${outRoot}`);
+    console.log(`Postures:  ${split}\n`);
+  }
+
+  let anyPrivate = false;
+  for (const t of resolved) {
+    // oxlint-disable-next-line no-await-in-loop -- sequential: per-viz console output order and shared outRoot writes
+    const r = await publishOne(t.vizDir, outRoot, t.private, shareHost, {
+      ...(lobby ? { lobby } : {}),
+      ...(opts.noOg !== undefined ? { noOg: opts.noOg } : {}),
+    });
+    const tier = t.private ? "private (sealed)" : lobby ? "public (lobby-sealed)" : "public";
+    console.log(`• ${r.slug} — ${tier}${t.listed ? "" : ", unlisted (hidden from index)"}`);
+    for (const w of r.warnings) console.log(`    ⚠️  ${w}`);
+    if (r.link) console.log(`    🔗 ${r.link}`);
+    if (t.private) anyPrivate = true;
+  }
+
+  let shares = 0;
+  // Card-public share pages (ADR 0018): a tiny PUBLIC page per public viz whose card is
+  // currently marked public, so a host-gated site (SSO) still unfurls. Needs absolute URLs,
+  // so nothing without --base-url. Private and lobby-sealed vizzes already have their own
+  // shims. _public-paths.txt lists exactly the files the host must exempt from its gate,
+  // written even when empty so a deployer can tell "no shares" from "an older build".
+  if (shareHost !== PLACEHOLDER_HOST) {
+    const base = shareHost.replace(/\/$/u, "");
+    const prefix = new URL(base).pathname.replace(/\/$/u, "");
+    const shareRoot = path.join(outRoot, "share");
+    rmSync(shareRoot, { recursive: true, force: true }); // a withdrawn card must not linger
+    const paths: string[] = [];
+    for (const t of resolved) {
+      if (t.private || lobby) continue;
+      const card = cardPublicOf(t.vizDir);
+      if (card.state !== "public") continue;
+      const dir = path.join(shareRoot, t.slug);
+      mkdirSync(dir, { recursive: true });
+      const url = `${base}/share/${t.slug}/`;
+      const target = `${base}/${t.slug}/`; // fixed at build, never from the query: no open redirect
+      const html = readFileSync(path.join(t.vizDir, "index.html"), "utf8");
+      // JS-only redirect, like the private shim: a crawler that followed a meta refresh would
+      // land on the host's SSO 302 and lose the card. Humans run JS.
+      const tags =
+        `<meta name="robots" content="noindex">\n` +
+        ogTagsFor(t.vizDir, dir, true, url, url, html, []);
+      writeFileSync(path.join(dir, "index.html"), shimDoc(tags, target));
+      paths.push(
+        `${prefix}/share/${t.slug}/index.html`,
+        `${prefix}/share/${t.slug}/${path.basename(card.image)}`,
+      );
+      console.log(`🔗 share: ${url}`);
+      shares++;
+    }
+    writeFileSync(path.join(outRoot, "_public-paths.txt"), paths.map((p) => p + "\n").join(""));
+  }
+
+  // Mirrored-in artifacts: copy verbatim (never rebuild a possibly-sealed file); the
+  // index composes their card from the sidecar (the only local card-truth when sealed).
+  for (const dir of mirroredInDirs) {
+    const slug = path.basename(dir);
+    const dest = path.join(outRoot, slug);
+    mkdirSync(dest, { recursive: true });
+    cpSync(path.join(dir, "index.html"), path.join(dest, "index.html"));
+    cpSync(path.join(dir, MIRROR_SIDECAR), path.join(dest, MIRROR_SIDECAR));
+    const side = readSidecar(dir);
+    // Carry a PUBLIC mirror's hero.html + preview image too (native vizzes get these via
+    // publishOne) so its card shows a real thumbnail and its hero page is viewable. A private
+    // mirror stays sealed/verbatim — never emit its plaintext hero at a guessable path.
+    if (!side?.card.private) {
+      for (const f of ["hero.html", ...OG_NAMES, OG_VIDEO]) {
+        if (existsSync(path.join(dir, f))) cpSync(path.join(dir, f), path.join(dest, f));
+      }
+    }
+    // A lobby also seals PUBLIC mirrored-in artifacts (a private one is already sealed
+    // with its origin's key — leave it verbatim, it keeps its own password).
+    if (lobby && side && !side.card.private) {
+      const stageDir = path.join(os.tmpdir(), "viz-lobby-mirror-stage", slug);
+      mkdirSync(stageDir, { recursive: true });
+      cpSync(path.join(dir, "index.html"), path.join(stageDir, "index.html"));
+      // oxlint-disable-next-line no-await-in-loop -- sequential: console output order
+      const ok = await seal(stageDir, "index.html", dest, lobby);
+      console.log(
+        `• ${slug} — mirrored-in, ${ok ? "lobby-sealed" : "SEAL FAILED (left verbatim)"}${side ? `, origin ${side.origin}` : ""}`,
+      );
+    } else if (side) {
+      console.log(`• ${slug} — mirrored-in (copied verbatim, origin ${side.origin})`);
+    } else {
+      console.log(`• ${slug} — mirrored-in (copied verbatim)`);
+      console.log(
+        `    ⚠️  ${MIRROR_SIDECAR} is malformed — this viz will be MISSING from the lobby index`,
+      );
+    }
+  }
+
+  // The lobby (index.html) — one writer-agnostic rule (ADR 0006): native dirs card-from-source-
+  // head, mirrored-in dirs card-from-sidecar; both filtered by `listed`.
+  if (!opts.noIndex) {
+    const { cards, unlisted } = composeCards(container);
+    await writeLobby(outRoot, cards, opts.indexTitle ?? "Visualizations", container, shareHost, {
+      sealed: !!lobby, // a private lobby's index is sealed after this — no plaintext OG head
+      ...(opts.indexDescription !== undefined ? { description: opts.indexDescription } : {}),
+    });
+    const pub = cards.filter((c) => !c.private).length;
+    const prv = cards.length - pub;
+    const mi = cards.filter((c) => existsSync(path.join(container, c.slug, MIRROR_SIDECAR))).length;
+    const hidden = unlisted ? `; ${unlisted} unlisted (built, hidden from the lobby)` : "";
+    console.log(
+      `\nLobby → ${path.join(outRoot, "index.html")}  ` +
+        `(${cards.length} listed: ${pub} public, ${prv} private${mi ? `, ${mi} mirrored-in` : ""}${hidden})`,
+    );
+
+    // Private lobby: seal the lobby page itself with the lobby key, then print the one
+    // password + magic link that opens the whole site. The link carries #staticrypt_pwd
+    // (host-independent hash) plus &remember_me, so opening it stores the credential and
+    // every same-key page (public-tier vizzes) auto-decrypts — enter once, browse freely.
+    if (lobby) {
+      const stageDir = path.join(os.tmpdir(), "viz-lobby-index-stage", path.basename(outRoot));
+      mkdirSync(stageDir, { recursive: true });
+      cpSync(path.join(outRoot, "index.html"), path.join(stageDir, "index.html"));
+      const ok = await seal(stageDir, "index.html", outRoot, lobby);
+      const link =
+        (await magicLink(stageDir, "index.html", lobby, shareHost.replace(/\/$/u, "") + "/")) +
+        "&remember_me";
+      console.log(
+        `\n🔒 Lobby — whole site sealed behind ONE password (enter once, browse freely):`,
+      );
+      console.log(`   index seal: ${ok ? "ok" : "FAILED — index left in plaintext!"}`);
+      console.log(`   passphrase: ${lobby.passphrase}`);
+      console.log(`   link:       ${link}`);
+      console.log(`   (already-private vizzes keep their own separate links)`);
+    }
+  }
+
+  return {
+    built: resolved.length,
+    anyPrivate,
+    mirroredIn: mirroredInDirs.length,
+    empty: false,
+    shares,
+  };
+}

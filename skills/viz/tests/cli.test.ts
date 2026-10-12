@@ -1,0 +1,1172 @@
+// tests/cli.test.ts — black-box characterization of the viz CLI surface.
+//
+// WHY: the toolchain had no tests, and it is about to be refactored (one shared flag
+// parser, --json everywhere, a `viz <verb>` front door). These tests pin what the
+// commands do TODAY, from the outside, by spawning them exactly as a user would. If a
+// refactor changes an observable behaviour, a test here fails and the change becomes a
+// decision instead of an accident.
+//
+// Some of these assert on behaviour that is arguably WRONG — verify.ts accepting only
+// `--flag=value`, server.ts swallowing unknown flags. Those are marked QUIRK. They are
+// pinned deliberately: the point of a characterization test is to notice the change,
+// and each one gets updated in the same commit that fixes it.
+//
+// ISOLATION: every test points VIZ_PAGES_DIR at a throwaway dir, so nothing here can
+// see or touch the real library.
+
+import { describe, expect, test, beforeAll, afterAll } from "bun:test";
+import { mkdtempSync, rmSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import path from "node:path";
+import { parseJson } from "./json.ts";
+
+const SKILL = path.dirname(import.meta.dir);
+
+let SANDBOX: string;
+let LIB: string;
+
+beforeAll(() => {
+  // A viz's identity is its path relative to $HOME, so the toolchain refuses to work
+  // outside it — the sandbox has to live under home, not in /tmp.
+  SANDBOX = mkdtempSync(path.join(homedir(), ".viz-cli-test-"));
+  // The toolchain only accepts a viz whose parent dir is named viz-pages/.viz-pages,
+  // so the sandbox library has to be named like a real container too.
+  LIB = path.join(SANDBOX, ".viz-pages");
+  mkdirSync(LIB, { recursive: true });
+});
+
+afterAll(() => rmSync(SANDBOX, { recursive: true, force: true }));
+
+/** The default `sort()` order (UTF-16 code units), spelled out as the comparator the lint rule wants. */
+const byCodeUnit = (a: string, b: string) => (a < b ? -1 : Number(a > b));
+
+type Run = { code: number; stdout: string; stderr: string; all: string };
+
+/** Spawn a CLI the way a user does: `bun <script> …`, with the library redirected. */
+async function cli(script: string, args: string[] = []): Promise<Run> {
+  const proc = Bun.spawn(["bun", path.join(SKILL, script), ...args], {
+    cwd: SANDBOX,
+    // Tests create ~20 vizzes; without this every run opened ~20 browser tabs.
+    // VIZ_SCAN_ROOT keeps `viz templates`' discovery scan inside the sandbox instead of $HOME.
+    env: { ...process.env, VIZ_PAGES_DIR: LIB, VIZ_NO_OPEN: "1", VIZ_SCAN_ROOT: SANDBOX },
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [stdout, stderr] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+  ]);
+  const code = await proc.exited;
+  return { code, stdout, stderr, all: stdout + stderr };
+}
+
+// The per-script entry points (bootstrap.ts, manage.ts, verify.ts, build.ts) were deleted once
+// everything routed through `viz`; their characterizations below now pin the same
+// behaviour through the verb that replaced each one.
+describe("usage: every entry point tells you how to use it", () => {
+  test("Given no slug, when create runs, then it exits 2 naming the missing <slug>", async () => {
+    const r = await cli("viz.ts", ["create"]);
+    expect(r.code).toBe(2);
+    expect(r.all).toContain("slug");
+  });
+
+  test("Given no verb, when viz runs, then it exits 2 with the verb list", async () => {
+    const r = await cli("viz.ts");
+    expect(r.code).toBe(2);
+    for (const verb of ["ls", "search", "move", "delete", "update", "history", "rollback"]) {
+      expect(r.all).toContain(verb);
+    }
+  });
+
+  test("Given no target, when verify runs, then it exits 2 naming the missing <target>", async () => {
+    const r = await cli("viz.ts", ["verify"]);
+    expect(r.code).toBe(2);
+    expect(r.all).toContain("target");
+  });
+
+  test("Given no container, when publish runs, then it exits 2 naming the missing <container>", async () => {
+    const r = await cli("viz.ts", ["publish"]);
+    expect(r.code).toBe(2);
+    expect(r.all).toContain("container");
+  });
+
+  // FIXED (was QUIRK): server.ts read process.argv.includes() with no usage and no
+  // rejection, so `--frozn` came up silently in LIVE mode — serving real data to
+  // something that asked for a frozen tape.
+  test("Given --help, when server runs, then it prints usage and exits 0", async () => {
+    const r = await cli("server.ts", ["--help"]);
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain("usage: bun server.ts");
+  });
+
+  test("Given a typo'd mode flag, when server runs, then it exits 2 instead of serving live", async () => {
+    const r = await cli("server.ts", ["--frozn"]);
+    expect(r.code).toBe(2);
+    expect(r.all).toContain("unknown flag --frozn");
+  });
+});
+
+describe("flag syntax is not consistent across scripts", () => {
+  test("Given --posture=x and --posture x, when ls runs, then both are accepted", async () => {
+    const eq = await cli("viz.ts", ["ls", "--posture=public"]);
+    const sp = await cli("viz.ts", ["ls", "--posture", "public"]);
+    expect(eq.code).toBe(0);
+    expect(sp.code).toBe(0);
+  });
+
+  // FIXED (was QUIRK): verify.ts used a closure that split only on "=", so
+  // `--size 800x600` was silently dropped. It shares the parser now. Value-form parity
+  // itself is asserted in cli-parser.test.ts; what is observable from outside is that
+  // verify now rejects malformed flags instead of ignoring them.
+  test("Given a flag with no value, when verify runs, then it exits 2 saying so", async () => {
+    const r = await cli("viz.ts", ["verify", "http://127.0.0.1:5199/nope/", "--size"]);
+    expect(r.code).toBe(2);
+    expect(r.all).toContain("--size");
+    expect(r.all).toContain("argument missing");
+  });
+
+  test("Given an unknown flag, when verify runs, then it exits 2 naming it", async () => {
+    const r = await cli("viz.ts", ["verify", "http://127.0.0.1:5199/nope/", "--nonsense"]);
+    expect(r.code).toBe(2);
+    expect(r.all).toContain("unknown option '--nonsense'");
+  });
+});
+
+describe("machine-readable output — every command an agent calls", () => {
+  test("Given --json, when ls runs, then stdout parses as JSON", async () => {
+    const r = await cli("viz.ts", ["ls", "--json"]);
+    expect(r.code).toBe(0);
+    expect(() => parseJson(r.stdout)).not.toThrow();
+    expect(Array.isArray(parseJson(r.stdout))).toBe(true);
+  });
+
+  test("Given --json, when search runs, then stdout parses as JSON", async () => {
+    const r = await cli("viz.ts", ["search", "nothing-matches-this", "--json"]);
+    expect(r.code).toBe(0);
+    expect(() => parseJson(r.stdout)).not.toThrow();
+  });
+
+  // FIXED (was QUIRK): bootstrap is the command an agent most needs to parse and it
+  // emitted only prose. --json now short-circuits the starter dump and the ambition
+  // banner too, so stdout is parseable rather than JSON with a essay stapled to it.
+  test("Given --json, when create runs, then stdout is nothing but the viz record", async () => {
+    const r = await cli("viz.ts", ["create", "json-probe-viz", "--json"]);
+    expect(r.code).toBe(0);
+    const rec = parseJson<{ slug: string; url: string; dir: string }>(r.stdout);
+    expect(rec.slug).toBe("json-probe-viz");
+    expect(rec.url).toContain("json-probe-viz");
+    expect(rec.dir).toContain("json-probe-viz");
+  });
+
+  test("Given --json, when verify runs, then stdout is a parseable verdict", async () => {
+    const r = await cli("viz.ts", [
+      "verify",
+      "http://127.0.0.1:5199/definitely-not-there/",
+      "--json",
+    ]);
+    // It may fail to reach the page; what matters is that it never mixes prose into stdout.
+    if (r.stdout.trim()) expect(() => parseJson(r.stdout)).not.toThrow();
+  });
+
+  test("Given --json, when server status runs, then stdout is a parseable status", async () => {
+    const r = await cli("viz.ts", ["server", "status", "--json"]);
+    expect(r.code).toBe(0);
+    const s = parseJson<{ running: boolean; port: number }>(r.stdout);
+    expect(typeof s.running).toBe("boolean");
+    expect(typeof s.port).toBe("number");
+  });
+});
+
+describe("creating and managing a viz", () => {
+  test("Given a fresh library, when create mints a slug, then the viz exists on disk", async () => {
+    const r = await cli("viz.ts", ["create", "char-test-viz", "--no-print"]);
+    expect(r.code).toBe(0);
+    expect(existsSync(path.join(LIB, "char-test-viz", "index.html"))).toBe(true);
+    // A viz is written in TypeScript: the page loads ./app.js, which the server strips from app.ts.
+    expect(existsSync(path.join(LIB, "char-test-viz", "app.ts"))).toBe(true);
+    expect(await Bun.file(path.join(LIB, "char-test-viz", "index.html")).text()).toContain(
+      '<script type="module" src="./app.js">',
+    );
+  });
+
+  test("Given work another session staged in the library, when create commits, then the commit holds only the new viz", async () => {
+    // A bare `git commit` once swept a conversion's staged renames into an unrelated create commit.
+    await cli("viz.ts", ["create", "pathspec-first", "--no-print"]); // the library's git repo exists from here
+    mkdirSync(path.join(LIB, "someone-elses"), { recursive: true });
+    writeFileSync(path.join(LIB, "someone-elses", "index.html"), "<p>staged elsewhere</p>");
+    Bun.spawnSync(["git", "add", "someone-elses"], { cwd: LIB });
+    expect((await cli("viz.ts", ["create", "pathspec-viz", "--no-print"])).code).toBe(0);
+    const files = Bun.spawnSync(["git", "show", "--name-only", "--format=", "HEAD"], { cwd: LIB })
+      .stdout.toString()
+      .trim()
+      .split("\n");
+    expect(files.every((f) => f.startsWith("pathspec-viz/"))).toBe(true);
+    expect(
+      Bun.spawnSync(["git", "diff", "--cached", "--name-only"], { cwd: LIB }).stdout.toString(),
+    ).toContain("someone-elses/index.html");
+    // Leave the shared library as the later tests expect it: no half-made page in it.
+    Bun.spawnSync(["git", "rm", "-rq", "--cached", "someone-elses"], { cwd: LIB });
+    rmSync(path.join(LIB, "someone-elses"), { recursive: true, force: true });
+  });
+
+  test("Given a slug that already exists, when create reruns, then it refuses", async () => {
+    const r = await cli("viz.ts", ["create", "char-test-viz", "--no-print"]);
+    expect(r.code).not.toBe(0);
+    expect(r.all.toLowerCase()).toContain("already exists");
+  });
+
+  test("Given an existing viz, when ls runs, then the viz is listed", async () => {
+    const r = await cli("viz.ts", ["ls"]);
+    expect(r.stdout).toContain("char-test-viz");
+  });
+
+  test("Given a viz, when update sets a title, then ls reflects it", async () => {
+    const dir = path.join(LIB, "char-test-viz");
+    const up = await cli("viz.ts", ["update", dir, "--title", "Characterized", "--no-commit"]);
+    expect(up.code).toBe(0);
+    const ls = await cli("viz.ts", ["ls"]);
+    expect(ls.stdout).toContain("Characterized");
+  });
+
+  test("Given a viz in a git repo, when history runs, then it reports the repo and path", async () => {
+    const r = await cli("viz.ts", ["history", path.join(LIB, "char-test-viz")]);
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain("repo:");
+    expect(r.stdout).toContain("path:");
+  });
+
+  test("Given a missing commit hash, when rollback runs, then it exits 2 explaining why", async () => {
+    const r = await cli("viz.ts", ["rollback", path.join(LIB, "char-test-viz")]);
+    expect(r.code).toBe(2);
+    expect(r.all).toContain("commit-hash");
+  });
+
+  test("Given a directory that is not a viz, when update resolves it, then it refuses", async () => {
+    const notViz = path.join(SANDBOX, "not-a-viz");
+    mkdirSync(notViz, { recursive: true });
+    const r = await cli("viz.ts", ["update", notViz, "--title", "x"]);
+    expect(r.code).toBe(2);
+    expect(r.all).toContain("ERROR");
+  });
+
+  test("Given a viz, when delete runs, then it is gone from disk", async () => {
+    const dir = path.join(LIB, "char-test-viz");
+    const r = await cli("viz.ts", ["delete", dir, "--no-commit"]);
+    expect(r.code).toBe(0);
+    expect(existsSync(dir)).toBe(false);
+  });
+});
+
+describe("templates replace scaffolds", () => {
+  // A template is an ordinary viz carrying <meta name="viz:template" content="<kind>">.
+  // The four built-ins ship in the skill's bundled viz-pages/, and a copy is made with
+  // `create --from <template-name>` — there is no per-kind flag and no per-kind code.
+  const BUILT_IN = ["deck", "poster", "poster-dive", "exchange"] as const;
+  const templates = async (args: string[] = []) =>
+    parseJson<{ name: string; kind: string; dir: string; duplicate: boolean }[]>(
+      (await cli("viz.ts", ["templates", ...args, "--json"])).stdout,
+    );
+  const head = async (slug: string) => {
+    const html = await Bun.file(path.join(LIB, slug, "index.html")).text();
+    return html;
+  };
+
+  test("Given the bundled templates, when `viz templates` runs, then every built-in is listed under its kind", async () => {
+    const rows = await templates();
+    for (const k of BUILT_IN) expect(rows.find((r) => r.name === k)?.kind).toBe(k);
+  });
+
+  test("Given a kind, when `viz templates <kind>` runs, then only templates of that kind are listed", async () => {
+    const rows = await templates(["deck"]);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.kind === "deck")).toBe(true);
+  });
+
+  for (const k of BUILT_IN) {
+    test(`Given --from ${k}, when create runs, then the copy is a viz:page-kind=${k} page and not a template`, async () => {
+      const slug = `from-${k}`;
+      const r = await cli("viz.ts", ["create", slug, "--from", k, "--no-print"]);
+      expect(r.code).toBe(0);
+      const html = await head(slug);
+      expect(html).toContain(`<meta name="viz:page-kind" content="${k}" />`);
+      expect(html).not.toContain("viz:template");
+      expect(html).not.toContain("viz:scaffold");
+    });
+  }
+
+  test("Given --from exchange, when create runs, then the copy has content.ts and not the generated content.js", () => {
+    // The generated .js is for fallback mode; a copy that kept it would be served instead of the .ts the author edits.
+    expect(existsSync(path.join(LIB, "from-exchange", "content.ts"))).toBe(true);
+    expect(existsSync(path.join(LIB, "from-exchange", "content.js"))).toBe(false);
+  });
+
+  test("Given --from with --json, when create runs, then stdout is only the JSON", async () => {
+    const r = await cli("viz.ts", ["create", "from-json", "--from", "poster", "--json"]);
+    expect(r.code).toBe(0);
+    expect(parseJson<{ slug: string }>(r.stdout).slug).toBe("from-json");
+  });
+
+  // A copy of the deck template carries page-kind=deck; re-marking it as a template of a
+  // NEW kind must make its copies that new kind, not the kind it was born as.
+  test("Given a copy re-marked as a template of another kind, when copied, then the copy takes the template's kind", async () => {
+    const idx = path.join(LIB, "from-deck", "index.html");
+    await Bun.write(
+      idx,
+      (await Bun.file(idx).text()).replace(
+        "</head>",
+        '<meta name="viz:template" content="brand-deck">\n</head>',
+      ),
+    );
+    const r = await cli("viz.ts", [
+      "create",
+      "from-brand",
+      "--from",
+      path.join(LIB, "from-deck"),
+      "--no-print",
+    ]);
+    expect(r.code).toBe(0);
+    expect(await head("from-brand")).toContain(
+      '<meta name="viz:page-kind" content="brand-deck" />',
+    );
+  });
+
+  test("Given --hero on a page that is its own card, with --json, then stdout is still only the JSON", async () => {
+    const r = await cli("viz.ts", [
+      "create",
+      "hero-poster",
+      "--from",
+      "poster",
+      "--hero",
+      "--json",
+    ]);
+    expect(r.code).toBe(0);
+    expect(parseJson<{ slug: string }>(r.stdout).slug).toBe("hero-poster");
+    expect(existsSync(path.join(LIB, "hero-poster", "hero.html"))).toBe(false);
+  });
+
+  test("Given a copy of a template, then its <title> and viz:title are the new slug", async () => {
+    const html = await head("from-poster");
+    expect(html).toContain("<title>from-poster</title>");
+    expect(html).toContain('<meta name="viz:title" content="from-poster" />');
+  });
+
+  test("Given a path to a template, when create --from runs, then paths still work", async () => {
+    const r = await cli("viz.ts", [
+      "create",
+      "from-path",
+      "--from",
+      path.join(SKILL, "viz-pages", "deck"),
+      "--no-print",
+    ]);
+    expect(r.code).toBe(0);
+    expect(await head("from-path")).toContain('<meta name="viz:page-kind" content="deck" />');
+  });
+
+  test("Given a name no template has, when create --from runs, then it fails pointing at `viz templates`", async () => {
+    const r = await cli("viz.ts", [
+      "create",
+      "from-nothing",
+      "--from",
+      "no-such-template",
+      "--no-print",
+    ]);
+    expect(r.code).not.toBe(0);
+    expect(r.all).toContain("viz templates");
+  });
+
+  test("Given a removed scaffold flag, when create runs, then it is rejected as unknown", async () => {
+    const r = await cli("viz.ts", ["create", "deck-flag-probe", "--deck", "--no-print"]);
+    expect(r.code).not.toBe(0);
+    expect(existsSync(path.join(LIB, "deck-flag-probe"))).toBe(false);
+  });
+
+  test("Given a blank starter, when create runs, then no kind or template meta is stamped", async () => {
+    const r = await cli("viz.ts", ["create", "plain-probe", "--no-print"]);
+    expect(r.code).toBe(0);
+    const html = await head("plain-probe");
+    expect(html).not.toContain("viz:page-kind");
+    expect(html).not.toContain("viz:template");
+  });
+
+  // A freshly cloned repo's viz-pages/ is not in the registry until something scans. Without
+  // the scan, a template there is silently missing — the agent never learns to ask about it.
+  const plantTemplate = (repo: string, name: string) => {
+    const dir = path.join(SANDBOX, repo, "viz-pages", name);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      path.join(dir, "index.html"),
+      '<html><head><title>t</title><meta name="viz:template" content="scan-kind"></head></html>',
+    );
+  };
+
+  test("Given a template in a repo nobody has scanned yet, when `viz templates` runs, then it is listed", async () => {
+    plantTemplate("cloned-repo", "scan-probe");
+    expect((await templates(["scan-kind"])).map((t) => t.name)).toContain("scan-probe");
+  });
+
+  test("Given an unscanned template, when create --from names it, then it is found without a separate rescan", async () => {
+    plantTemplate("another-clone", "scan-probe-2");
+    const r = await cli("viz.ts", [
+      "create",
+      "from-unscanned",
+      "--from",
+      "scan-probe-2",
+      "--no-print",
+    ]);
+    expect(r.code).toBe(0);
+    expect(await head("from-unscanned")).toContain(
+      '<meta name="viz:page-kind" content="scan-kind" />',
+    );
+  });
+
+  // Names may repeat across containers (ADR 0008), so a name is only ever resolved when
+  // it is unambiguous. Runs last in this block: it plants a second "deck".
+  test("Given two templates with the same name, when listed and copied by name, then it is flagged and refused", async () => {
+    mkdirSync(path.join(LIB, "deck"));
+    writeFileSync(
+      path.join(LIB, "deck", "index.html"),
+      '<html><head><meta name="viz:template" content="deck"></head></html>',
+    );
+    try {
+      const dupes = (await templates()).filter((r) => r.name === "deck");
+      expect(dupes.length).toBe(2);
+      expect(dupes.every((r) => r.duplicate)).toBe(true);
+      const r = await cli("viz.ts", ["create", "from-dupe", "--from", "deck", "--no-print"]);
+      expect(r.code).not.toBe(0);
+      for (const d of dupes) expect(r.all).toContain(d.dir);
+    } finally {
+      rmSync(path.join(LIB, "deck"), { recursive: true, force: true });
+    }
+  });
+});
+
+describe("listing reads the metas pages actually write", () => {
+  test("Given a viz with repeated viz:tag metas, when ls --json runs, then its tags are listed", async () => {
+    const dir = path.join(LIB, "plain-probe");
+    await cli("viz.ts", ["update", dir, "--tags", "alpha,beta", "--no-commit"]);
+    const rows = parseJson<{ id: string; tags: string }[]>(
+      (await cli("viz.ts", ["ls", "--json"])).stdout,
+    );
+    const row = rows.find((r) => r.id.endsWith("/plain-probe"))!;
+    expect(row.tags).toContain("alpha");
+    expect(row.tags).toContain("beta");
+  });
+});
+
+describe("safe defaults", () => {
+  test("Given a new viz, when bootstrap scaffolds it, then it is local and unlisted", async () => {
+    const html = await Bun.file(path.join(LIB, "plain-probe", "index.html")).text();
+    expect(html).toContain("viz:posture");
+    expect(html).toContain("local");
+    expect(html).toContain("unlisted");
+  });
+
+  test("Given a fork, when create --from copies a viz, then posture resets to local", async () => {
+    await cli("viz.ts", [
+      "update",
+      path.join(LIB, "plain-probe"),
+      "--posture",
+      "public",
+      "--no-commit",
+    ]);
+    const r = await cli("viz.ts", [
+      "create",
+      "fork-probe",
+      "--from",
+      path.join(LIB, "plain-probe"),
+      "--no-print",
+    ]);
+    expect(r.code).toBe(0);
+    const html = await Bun.file(path.join(LIB, "fork-probe", "index.html")).text();
+    expect(html).toContain("local");
+    expect(html).not.toContain('content="public"');
+  });
+});
+
+describe("libraries must not parse their importer's argv", () => {
+  // build.ts used to be imported as a library and parsed process.argv at module scope, so
+  // importing it meant its parser ran on the IMPORTER's flags — fatal the moment flag
+  // rejection was added. Nothing imports it now; pinned through viz so it cannot come back.
+  test("Given update flags that publish does not know, when update runs, then it still works", async () => {
+    const dir = path.join(LIB, "importer-probe");
+    await cli("viz.ts", ["create", "importer-probe", "--no-print"]);
+    const r = await cli("viz.ts", ["update", dir, "--title", "Not A Build Flag", "--no-commit"]);
+    expect(r.code).toBe(0);
+    expect(r.all).not.toContain("unknown flag");
+  });
+});
+
+describe("viz — the single CLI", () => {
+  test("Given no args, when viz runs, then it prints help and exits 2", async () => {
+    const r = await cli("viz.ts");
+    expect(r.code).toBe(2);
+    expect(r.all).toContain("Usage: viz");
+  });
+
+  test("Given --help, when viz runs, then every command group is listed and it exits 0", async () => {
+    const r = await cli("viz.ts", ["--help"]);
+    expect(r.code).toBe(0);
+    for (const v of [
+      "create",
+      "verify",
+      "check",
+      "ls",
+      "search",
+      "update",
+      "history",
+      "server",
+      "publish",
+      "export",
+    ]) {
+      expect(r.stdout).toContain(v);
+    }
+  });
+
+  // The reason this CLI has a framework at all: help is generated from the same
+  // declaration the parser uses, so SKILL.md can point at `--help` instead of
+  // restating the flag surface and slowly going out of date.
+  test("Given create --help, then every flag is documented from the definition", async () => {
+    const r = await cli("viz.ts", ["create", "--help"]);
+    expect(r.code).toBe(0);
+    for (const flag of ["--local", "--hero", "--from", "--quick", "--json"]) {
+      expect(r.stdout).toContain(flag);
+    }
+    for (const gone of ["--deck", "--poster", "--exchange"]) expect(r.stdout).not.toContain(gone);
+  });
+
+  test("Given verify --help, then its flags are documented too", async () => {
+    const r = await cli("viz.ts", ["verify", "--help"]);
+    expect(r.code).toBe(0);
+    for (const flag of ["--wait", "--full", "--size", "--og", "--commit", "--json"]) {
+      expect(r.stdout).toContain(flag);
+    }
+  });
+
+  test("Given a nested group, when help is asked for, then subcommands are listed", async () => {
+    const r = await cli("viz.ts", ["server", "--help"]);
+    expect(r.code).toBe(0);
+    for (const sub of ["start", "stop", "status", "rescan"]) expect(r.stdout).toContain(sub);
+  });
+
+  // Usage errors are exit 2 everywhere in this toolchain. Commander defaults to 1 and
+  // does not inherit exitOverride into subcommands, so this is pinned at three depths.
+  test("Given usage errors at any depth, when viz runs, then all exit 2", async () => {
+    for (const argv of [["frobnicate"], ["rollback", "/nope"], ["server", "reboot"], ["create"]]) {
+      // oxlint-disable-next-line no-await-in-loop -- each CLI run spawns a Bun process against one shared sandbox library, so they run in order
+      const r = await cli("viz.ts", argv);
+      expect(r.code).toBe(2);
+    }
+  });
+
+  test("Given viz ls --json, then it routes through and stays parseable", async () => {
+    const r = await cli("viz.ts", ["ls", "--json"]);
+    expect(r.code).toBe(0);
+    expect(Array.isArray(parseJson(r.stdout))).toBe(true);
+  });
+
+  test("Given viz server status --json, then the extracted lib path returns a status", async () => {
+    const r = await cli("viz.ts", ["server", "status", "--json"]);
+    expect(r.code).toBe(0);
+    expect(typeof parseJson<{ running: boolean }>(r.stdout).running).toBe("boolean");
+  });
+});
+
+describe("publish — the extracted pipeline", () => {
+  test("Given a public viz, when publish runs, then it builds a lobby and the page", async () => {
+    const slug = "publish-probe";
+    await cli("viz.ts", ["create", slug, "--no-print"]);
+    await cli("viz.ts", [
+      "update",
+      path.join(LIB, slug),
+      "--posture",
+      "public",
+      "--listed",
+      "listed",
+      "--no-commit",
+    ]);
+    const out = path.join(SANDBOX, "dist");
+    const r = await cli("viz.ts", ["publish", LIB, "--out", out, "--no-og"]);
+    expect(r.code).toBe(0);
+    expect(existsSync(path.join(out, "index.html"))).toBe(true);
+    expect(existsSync(path.join(out, slug, "index.html"))).toBe(true);
+  });
+
+  test("Given a local-posture viz, when publish runs, then it is not published", async () => {
+    const slug = "stays-local";
+    await cli("viz.ts", ["create", slug, "--no-print"]);
+    const out = path.join(SANDBOX, "dist2");
+    await cli("viz.ts", ["publish", LIB, "--out", out, "--no-og"]);
+    expect(existsSync(path.join(out, slug))).toBe(false);
+  });
+
+  test("Given --json, when export runs, then stdout is only the record", async () => {
+    const r = await cli("viz.ts", [
+      "export",
+      path.join(LIB, "publish-probe"),
+      "--out",
+      path.join(SANDBOX, "exp"),
+      "--json",
+      "--no-og",
+    ]);
+    expect(r.code).toBe(0);
+    expect(parseJson<{ mode: string }>(r.stdout).mode).toBe("export");
+  });
+});
+
+describe("the vendored runtime must actually resolve", () => {
+  // This is the test that did not exist. server.ts grew imports of cli.ts and
+  // server-control.ts, then of lib/server/*, while RUNTIME_FILES still listed four flat
+  // files — so every runtime stamped in between would have died on a missing module the
+  // first time someone cloned the repo and ran it. Nothing caught it because nothing
+  // ever loaded a vendored copy.
+  test("Given --runtime, when a viz is created, then the vendored server resolves every import", async () => {
+    const repo = path.join(SANDBOX, "hostrepo");
+    mkdirSync(repo, { recursive: true });
+    Bun.spawnSync(["git", "init", "-q"], { cwd: repo });
+    Bun.spawnSync(["git", "commit", "-q", "--allow-empty", "-m", "init"], { cwd: repo });
+
+    const r = await cli("viz.ts", [
+      "create",
+      "vendored-probe",
+      "--local",
+      repo,
+      "--runtime",
+      "--no-print",
+    ]);
+    expect(r.code).toBe(0);
+
+    const vendored = path.join(repo, "viz-pages", ".runtime", "server.ts");
+    expect(existsSync(vendored)).toBe(true);
+
+    // Bundling resolves the whole import graph without starting a server or taking a
+    // port. A missing module is a build error; that is exactly the failure we missed.
+    const build = Bun.spawnSync(["bun", "build", vendored, "--target=bun", "--outfile=/dev/null"]);
+    const err = build.stderr.toString();
+    expect(err).not.toContain("Could not resolve");
+    expect(build.exitCode).toBe(0);
+  });
+});
+
+describe("MCP surface is derived from the CLI, not restated", () => {
+  // The regression this exists for: mcp.ts used to hand-type its tool list and enum.
+  // Within hours of the CLI changing, the enum still said `vendor-rm` after the verb
+  // became `vendor rm`, and six commands were unreachable because nobody remembered to
+  // add them. These assert the two surfaces cannot diverge again.
+  test("Given the command tree, when tools are generated, then every leaf is classified", async () => {
+    const { buildProgram } = await import("../program.ts");
+    const { walk, resolveMeta } = await import("../lib/cli-meta.ts");
+    const leaves = walk(buildProgram());
+    const untagged = leaves.filter((l) => !resolveMeta(l.cmd)).map((l) => l.path.join(" "));
+    expect(untagged).toEqual([]);
+    expect(leaves.length).toBeGreaterThan(25);
+  });
+
+  test("Given a hidden command, then it states WHY, so a decision is not a forgotten one", async () => {
+    const { buildProgram } = await import("../program.ts");
+    const { walk, resolveMeta } = await import("../lib/cli-meta.ts");
+    for (const { cmd } of walk(buildProgram())) {
+      const m = resolveMeta(cmd)!;
+      if (m.mcp.kind === "hidden") expect(m.mcp.why.length).toBeGreaterThan(10);
+    }
+  });
+
+  test("Given every non-hidden leaf, then it is reachable through some MCP tool", async () => {
+    const { buildProgram } = await import("../program.ts");
+    const { walk, resolveMeta } = await import("../lib/cli-meta.ts");
+    const { generateTools } = await import("../lib/mcp-tools.ts");
+    const program = buildProgram();
+    const tools = generateTools(program);
+
+    const reachable = new Set<string>();
+    for (const t of tools) {
+      const action = t.inputSchema.action;
+      if (action && "options" in action && Array.isArray(action.options)) {
+        for (const a of action.options) if (typeof a === "string") reachable.add(a);
+      } else {
+        reachable.add(t.title.replace(/^viz /u, ""));
+      }
+    }
+    const expected = walk(program)
+      .filter(({ cmd }) => resolveMeta(cmd)!.mcp.kind !== "hidden")
+      .map(({ path: cmdPath }) => cmdPath.join(" "));
+    const missing = expected.filter((e) => !reachable.has(e));
+    expect(missing).toEqual([]);
+  });
+
+  test("Given tool argv translation, then flags round-trip as the CLI expects", async () => {
+    const { buildProgram } = await import("../program.ts");
+    const { generateTools } = await import("../lib/mcp-tools.ts");
+    const tools = Object.fromEntries(generateTools(buildProgram()).map((t) => [t.name, t]));
+    // Negated flags, optional-value flags and nested group verbs are the three shapes
+    // a hand-written mapping got wrong before.
+    expect(tools.viz_create!.toArgv({ slug: "x", print: false })).toEqual([
+      "create",
+      "x",
+      "--no-print",
+    ]);
+    expect(tools.viz_create!.toArgv({ slug: "x", local: "/repo" })).toEqual([
+      "create",
+      "x",
+      "--local",
+      "/repo",
+    ]);
+    expect(tools.viz_manage!.toArgv({ action: "vendor rm", args: ["/d", "--to", "/s"] })).toEqual([
+      "vendor",
+      "rm",
+      "/d",
+      "--to",
+      "/s",
+    ]);
+  });
+});
+
+describe("version has one source, and the bundle is self-contained", () => {
+  test("Given package.json, then the CLI and MCP server report the same version", async () => {
+    const pkg = parseJson<{ version: string }>(
+      await Bun.file(path.join(SKILL, "package.json")).text(),
+    );
+    expect(pkg.version).toMatch(/^\d+\.\d+\.\d+/u);
+    const ran = await cli_("viz.ts", ["--version"]);
+    expect(ran.stdout.trim()).toBe(pkg.version);
+    const { manifest } = await import("../maintainer/build-mcpb.ts");
+    expect(manifest("darwin").version).toBe(pkg.version);
+  });
+
+  test("Given a hardcoded version anywhere else, then it is a drift and this fails", async () => {
+    // The exact drift this guards: program.ts and mcp.ts each hardcoded "1.0.0" while
+    // package.json had no version at all, and the .mcpb manifest was about to be a third.
+    for (const f of ["program.ts", "mcp.ts", "maintainer/build-mcpb.ts"]) {
+      // oxlint-disable-next-line no-await-in-loop -- each CLI run spawns a Bun process against one shared sandbox library, so they run in order
+      const src = await Bun.file(path.join(SKILL, f)).text();
+      const hardcoded = src.match(/version[^\n]*["']\d+\.\d+\.\d+["']/gu) ?? [];
+      expect(hardcoded).toEqual([]);
+    }
+  });
+
+  test("Given the manifest, then it declares exactly one platform and a binary entry point", async () => {
+    const { manifest } = await import("../maintainer/build-mcpb.ts");
+    for (const p of ["darwin", "win32", "linux"] as const) {
+      const m = manifest(p);
+      // The format distinguishes OS, not architecture — one bundle per OS is the
+      // granularity it offers, which is why macOS ships a universal binary instead.
+      expect(m.compatibility.platforms).toEqual([p]);
+      expect(m.server.type).toBe("binary");
+      expect(m.server.mcp_config.command).toContain("${__dirname}");
+    }
+  });
+});
+
+// The suite's own cli() helper is scoped to the sandbox; version checks want the real dir.
+async function cli_(script: string, args: string[]) {
+  const proc = Bun.spawn(["bun", path.join(SKILL, script), ...args], {
+    env: { ...process.env, VIZ_NO_OPEN: "1" },
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const stdout = await new Response(proc.stdout).text();
+  await proc.exited;
+  return { stdout };
+}
+
+describe("release guard lives in maintainer/, not in the shipped skill", () => {
+  test("Given the CLI, then it has no release verb — build tooling does not ship", async () => {
+    const { buildProgram } = await import("../program.ts");
+    const { walk } = await import("../lib/cli-meta.ts");
+    const verbs = walk(buildProgram()).map((l) => l.path.join(" "));
+    expect(verbs).not.toContain("release");
+  });
+
+  test("Given the bundle file list, then maintainer/ is excluded", async () => {
+    const { MCP_DIRS } = await import("../maintainer/build-mcpb.ts");
+    expect(MCP_DIRS).not.toContain("maintainer");
+  });
+
+  test('Given lint and verify ask tsc for `types: ["bun"]`, then @types/bun is a production dependency (the bundle installs only those)', async () => {
+    const { default: pkg } = await import("../package.json", { with: { type: "json" } });
+    expect(Object.keys(pkg.dependencies)).toContain("@types/bun"); // as a devDependency, every bundled `viz lint` died with "Invalid tsconfig"
+    expect(Object.keys(pkg.devDependencies)).not.toContain("@types/bun");
+  });
+
+  test("Given the bundle file list, then the bundled viz-pages (templates + self-portrait) ship", async () => {
+    const { MCP_DIRS } = await import("../maintainer/build-mcpb.ts");
+    expect(MCP_DIRS).toContain("viz-pages");
+  });
+
+  test("Given no release tag yet, then the guard passes with a reason", async () => {
+    const { checkVersionBumped } = await import("../maintainer/version-guard.ts");
+    const g = checkVersionBumped();
+    expect(typeof g.ok).toBe("boolean");
+    expect(g.reason.length).toBeGreaterThan(5);
+  });
+});
+
+describe("download picker", () => {
+  test("Given the install figure, then it offers exactly the three built platforms", async () => {
+    const src = await Bun.file(path.join(SKILL, "viz-pages/viz-self-portrait/fig-run.ts")).text();
+    // The href is built from a template (`viz-${p.id}.mcpb`), so assert on the platform
+    // list that feeds it rather than on a literal filename that never appears in source.
+    const ids = [...src.matchAll(/\{ id: ["'](\w+)["'], label:/gu)].map((m) => m[1]!);
+    expect(ids.toSorted(byCodeUnit)).toEqual(["darwin", "linux", "win32"]);
+    // /latest/ redirects to the newest release, so a stale published page still hands
+    // out a current bundle. A pinned version would rot the moment a release is cut.
+    expect(src).toContain("releases/latest/download/viz-");
+  });
+
+  test("Given the platforms offered, then the builder can produce each one", async () => {
+    const src = await Bun.file(path.join(SKILL, "viz-pages/viz-self-portrait/fig-run.ts")).text();
+    const ids = [...src.matchAll(/\{ id: ["'](\w+)["'], label:/gu)].map((m) => m[1]!);
+    const { manifest } = await import("../maintainer/build-mcpb.ts");
+    for (const id of ids) {
+      const p = (["darwin", "win32", "linux"] as const).find((known) => known === id);
+      expect(p).toBeDefined();
+      expect(manifest(p!).compatibility.platforms).toEqual([p!]);
+    }
+  });
+});
+
+describe("creating a viz must not hijack the author's browser", () => {
+  // This regressed on a real person for an entire working session: every full test run
+  // created ~20 vizzes and opened ~20 dead browser tabs, which they closed by hand each
+  // time before saying something. A test suite that degrades the machine it runs on is
+  // a broken test suite.
+  test("Given VIZ_NO_OPEN, when a viz is created, then no browser is launched", async () => {
+    const src = await Bun.file(path.join(SKILL, "lib/create/create.ts")).text();
+    expect(src).toContain('process.env.VIZ_NO_OPEN !== "1"');
+  });
+
+  test("Given --json, when a viz is created, then no browser is launched either", async () => {
+    // A program reading structured output did not ask for a tab.
+    const src = await Bun.file(path.join(SKILL, "lib/create/create.ts")).text();
+    expect(src).toMatch(/if \(!jsonMode && process\.env\.VIZ_NO_OPEN/u);
+  });
+
+  test("Given the test harness, then every spawn sets VIZ_NO_OPEN", async () => {
+    const src = await Bun.file(path.join(SKILL, "tests/cli.test.ts")).text();
+    const spawns = (src.match(/Bun\.spawn\(\["bun", path\.join\(SKILL/gu) ?? []).length;
+    const guarded = (src.match(/VIZ_NO_OPEN: "1"/gu) ?? []).length;
+    expect(guarded).toBeGreaterThanOrEqual(spawns);
+  });
+});
+
+describe("linked vizzes refuse to break their URL (ADR 0016)", () => {
+  const dir = () => path.join(LIB, "linked-probe");
+  const entries = async () => {
+    const rows = parseJson<{ dir: string; linkedFrom: string[] }[]>(
+      (await cli("viz.ts", ["ls", "--json"])).stdout,
+    );
+    return rows.find((r) => r.dir === dir())!.linkedFrom;
+  };
+
+  test("Given a viz, when --linked-from is repeated, then each entry is added verbatim (commas kept)", async () => {
+    await cli("viz.ts", ["create", "linked-probe", "--no-print"]);
+    const r = await cli("viz.ts", [
+      "update",
+      dir(),
+      "--linked-from",
+      "QR Codes, Confluence page",
+      "--linked-from",
+      "https://x.slack.com/a?b=1&c=2",
+      "--no-commit",
+    ]);
+    expect(r.code).toBe(0);
+    expect((await entries()).toSorted(byCodeUnit)).toEqual(
+      ["QR Codes, Confluence page", "https://x.slack.com/a?b=1&c=2"].toSorted(byCodeUnit),
+    );
+  });
+
+  // A link records who points at THIS viz's URL. A copy has a new URL nobody links to,
+  // so inheriting the entries would make move/delete/posture refuse on it for nothing.
+  test("Given a linked viz, when it is copied with --from, then the copy is not linked", async () => {
+    const r = await cli("viz.ts", ["create", "linked-copy", "--from", dir(), "--no-print"]);
+    expect(r.code).toBe(0);
+    expect(await Bun.file(path.join(LIB, "linked-copy", "index.html")).text()).not.toContain(
+      "viz:linked-from",
+    );
+  });
+
+  test("Given an existing entry, when it is added again, then nothing changes", async () => {
+    const r = await cli("viz.ts", [
+      "update",
+      dir(),
+      "--linked-from",
+      "QR Codes, Confluence page",
+      "--no-commit",
+    ]);
+    expect(r.code).toBe(0);
+    expect(await entries()).toHaveLength(2);
+  });
+
+  test("Given no exact match, when --unlinked-from runs, then it exits 2 and lists the entries", async () => {
+    const r = await cli("viz.ts", ["update", dir(), "--unlinked-from", "QR Codes", "--no-commit"]);
+    expect(r.code).toBe(2);
+    expect(r.stderr).toContain("QR Codes, Confluence page");
+  });
+
+  test("Given an approved viz, when a link is recorded, then it stays approved", async () => {
+    const { approvalOf } = await import("../lib/publish/approval.ts");
+    await cli("viz.ts", ["update", dir(), "--approved", "true", "--no-commit"]);
+    await cli("viz.ts", ["update", dir(), "--linked-from", "temp", "--no-commit"]);
+    expect(approvalOf(dir()).state).toBe("approved");
+    await cli("viz.ts", ["update", dir(), "--unlinked-from", "temp", "--no-commit"]);
+  });
+
+  const guarded: [string, () => string[]][] = [
+    ["move", () => ["move", dir(), path.join(LIB, "linked-moved"), "--no-commit"]],
+    ["delete", () => ["delete", dir(), "--no-commit"]],
+    ["rotate", () => ["rotate", dir()]],
+    ["rotate --lobby", () => ["rotate", LIB, "--lobby"]],
+    ["posture change", () => ["update", dir(), "--posture", "public", "--no-commit"]],
+  ];
+  for (const [name, argv] of guarded) {
+    test(`Given a linked viz, when ${name} runs without --break-links, then it refuses and names the links`, async () => {
+      const r = await cli("viz.ts", argv());
+      expect(r.code).toBe(2);
+      expect(r.stderr).toContain("--break-links");
+      expect(r.stderr).toContain("QR Codes, Confluence page");
+      expect(existsSync(dir())).toBe(true);
+    });
+  }
+
+  test("Given an entry added then removed, when update runs twice, then both land", async () => {
+    expect(
+      (await cli("viz.ts", ["update", dir(), "--linked-from", "via update", "--no-commit"])).code,
+    ).toBe(0);
+    expect(await entries()).toContain("via update");
+    expect(
+      (await cli("viz.ts", ["update", dir(), "--unlinked-from", "via update", "--no-commit"])).code,
+    ).toBe(0);
+    expect(await entries()).not.toContain("via update");
+  });
+
+  test("Given a linked viz, when title/tags/listed change, then nothing is guarded", async () => {
+    const r = await cli("viz.ts", [
+      "update",
+      dir(),
+      "--title",
+      "T",
+      "--tags",
+      "a",
+      "--listed",
+      "listed",
+      "--no-commit",
+    ]);
+    expect(r.code).toBe(0);
+  });
+
+  test("Given --break-links, when each guarded operation runs, then it goes ahead", async () => {
+    for (const argv of [
+      ["update", dir(), "--posture", "public", "--break-links", "--no-commit"],
+      ["rotate", dir(), "--break-links"],
+      ["rotate", LIB, "--lobby", "--break-links"],
+      ["move", dir(), path.join(LIB, "linked-moved"), "--break-links", "--no-commit"],
+      ["delete", path.join(LIB, "linked-moved"), "--break-links", "--no-commit"],
+    ]) {
+      // oxlint-disable-next-line no-await-in-loop -- each CLI run spawns a Bun process against one shared sandbox library, so they run in order
+      const r = await cli("viz.ts", argv);
+      expect({ argv, code: r.code, err: typeof r.stderr }).toEqual({
+        argv,
+        code: 0,
+        err: "string",
+      });
+    }
+    expect(existsSync(path.join(LIB, "linked-moved"))).toBe(false);
+  });
+
+  test("Given the last entry removed, when the viz moves, then it is no longer guarded", async () => {
+    await cli("viz.ts", ["create", "linked-probe", "--no-print"]);
+    await cli("viz.ts", ["update", dir(), "--linked-from", "only", "--no-commit"]);
+    expect(
+      (await cli("viz.ts", ["update", dir(), "--unlinked-from", "only", "--no-commit"])).code,
+    ).toBe(0);
+    expect(await entries()).toEqual([]);
+    expect((await cli("viz.ts", ["delete", dir(), "--no-commit"])).code).toBe(0);
+  });
+});
+
+describe("card-public share pages (ADR 0018)", () => {
+  // Its own container, so a build sees only these vizzes and the paths file is exact.
+  const site = () => path.join(SANDBOX, "card-site", "viz-pages");
+  const dir = (slug: string) =>
+    path.join(slug.startsWith("lib:") ? LIB : site(), slug.replace("lib:", ""));
+  const PNG = Buffer.from("fake-png-bytes");
+  // A public, approved viz written straight to disk; `files` adds og images / a hero.
+  const mk = (slug: string, files: Record<string, string | Buffer> = {}) => {
+    mkdirSync(dir(slug), { recursive: true });
+    writeFileSync(
+      path.join(dir(slug), "index.html"),
+      `<!DOCTYPE html><html><head>\n<meta name="viz:posture" content="public">\n<meta name="viz:title" content="${slug} title">\n` +
+        `<meta name="viz:description" content="${slug} blurb">\n<title>${slug}</title></head><body>${slug}</body></html>\n`,
+    );
+    for (const [f, b] of Object.entries(files)) writeFileSync(path.join(dir(slug), f), b);
+  };
+  const update = async (slug: string, ...args: string[]) => {
+    const r = await cli("viz.ts", ["update", dir(slug), ...args, "--no-commit"]);
+    return r;
+  };
+  const stored = async (slug: string) =>
+    (await Bun.file(path.join(dir(slug), "index.html")).text()).match(
+      /viz:card-public" content="([^"]*)"/u,
+    )?.[1];
+  // ls only sees the library, so the site's vizzes are read through the same function it uses.
+  const state = async (slug: string) =>
+    (await import("../lib/publish/approval.ts")).cardPublicOf(dir(slug)).state;
+
+  test("Given no hero image, when --card-public true runs, then it refuses with exit 2", async () => {
+    mk("card-none");
+    const r = await update("card-none", "--card-public", "true");
+    expect(r.code).toBe(2);
+    expect(r.stderr).toContain("designed hero");
+    expect(await stored("card-none")).toBeUndefined();
+  });
+
+  test("Given only a page-screenshot og.auto.png, when --card-public true runs, then it refuses", async () => {
+    mk("card-shot", { "og.auto.png": PNG });
+    const r = await update("card-shot", "--card-public", "true");
+    expect(r.code).toBe(2);
+    expect(r.stderr).toContain("screenshot");
+  });
+
+  test("Given og.auto.png rendered from a hero.html, when --card-public true runs, then it is accepted", async () => {
+    mk("card-hero", { "hero.html": "<p>hero</p>" });
+    writeFileSync(path.join(dir("card-hero"), "og.auto.png"), PNG); // written after hero.html → fresh
+    expect((await update("card-hero", "--card-public", "true")).code).toBe(0);
+    expect(await state("card-hero")).toBe("public");
+  });
+
+  test("Given an og.png, when --card-public true runs, then it stores a card hash and ls says public", async () => {
+    mk("card-ok", { "og.png": PNG });
+    expect(await state("card-ok")).toBe("unreviewed");
+    expect((await update("card-ok", "--card-public", "true")).code).toBe(0);
+    expect(await stored("card-ok")).toMatch(/^c-[0-9a-f]{12}$/u);
+    expect(await state("card-ok")).toBe("public");
+  });
+
+  test("Given a card marked public in the library, when ls runs, then it shows the card state until an edit stales it", async () => {
+    mk("lib:card-ls", { "og.png": PNG });
+    await update("lib:card-ls", "--card-public", "true");
+    const row = async () =>
+      parseJson<{ dir: string; cardPublic: string; cardWas: string }[]>(
+        (await cli("viz.ts", ["ls", "--json"])).stdout,
+      ).find((r) => r.dir === dir("lib:card-ls"));
+    expect((await row())!.cardPublic).toBe("public");
+    expect((await cli("viz.ts", ["ls"])).stdout).toContain("🪪 card public");
+    await update("lib:card-ls", "--title", "renamed");
+    expect((await row())!.cardPublic).toBe("stale");
+    expect((await row())!.cardWas).toBe("public");
+    expect((await cli("viz.ts", ["ls"])).stdout).toContain("🪪 card stale (was public, re-review)");
+  });
+
+  test("Given an approved viz, when its card is marked public, then approval and card both hold", async () => {
+    const { approvalOf } = await import("../lib/publish/approval.ts");
+    await update("card-ok", "--approved", "true");
+    await update("card-ok", "--card-public", "true");
+    expect(approvalOf(dir("card-ok")).state).toBe("approved");
+    expect(await state("card-ok")).toBe("public");
+  });
+
+  test("Given no hero at all, when --card-public false runs, then it records 'not public' against this card", async () => {
+    const r = await update("card-none", "--card-public", "false");
+    expect(r.code).toBe(0);
+    expect(await stored("card-none")).toMatch(/^n-[0-9a-f]{12}$/u);
+    expect(await state("card-none")).toBe("not-public");
+  });
+
+  test("Given a card reviewed as not public, when its title changes, then it is stale and says what it was", async () => {
+    const { cardPublicOf } = await import("../lib/publish/approval.ts");
+    mk("card-no", { "og.png": PNG });
+    await update("card-no", "--card-public", "false");
+    await update("card-no", "--title", "retitled");
+    expect(cardPublicOf(dir("card-no"))).toMatchObject({ state: "stale", was: "not-public" });
+  });
+
+  test("Given the legacy bare 'false', when the card is read, then it is unreviewed", async () => {
+    mk("card-legacy");
+    const f = path.join(dir("card-legacy"), "index.html");
+    writeFileSync(
+      f,
+      (await Bun.file(f).text()).replace(
+        "<head>",
+        `<head>\n<meta name="viz:card-public" content="false">`,
+      ),
+    );
+    expect(await state("card-legacy")).toBe("unreviewed");
+  });
+
+  for (const field of ["title", "description"]) {
+    test(`Given a public card, when its ${field} changes, then it goes stale until re-marked`, async () => {
+      mk(`card-${field}`, { "og.png": PNG });
+      await update(`card-${field}`, "--card-public", "true");
+      await update(`card-${field}`, `--${field}`, "something new");
+      expect(await state(`card-${field}`)).toBe("stale");
+    });
+  }
+
+  test("Given --base-url with a path prefix, when the site builds, then only current public cards get share pages", async () => {
+    for (const s of [
+      "card-none",
+      "card-shot",
+      "card-hero",
+      "card-title",
+      "card-description",
+      "card-no",
+      "card-legacy",
+    ])
+      // oxlint-disable-next-line no-await-in-loop -- each CLI run spawns a Bun process against one shared sandbox library, so they run in order
+      await update(s, "--approved", "true");
+    const out = path.join(SANDBOX, "card-dist");
+    const r = await cli("viz.ts", [
+      "publish",
+      site(),
+      "--out",
+      out,
+      "--base-url",
+      "https://host.example/pre",
+      "--no-og",
+    ]);
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain("🔗 share: https://host.example/pre/share/card-ok/");
+    expect(r.stdout).toContain("anyone can see their card");
+    expect(r.stdout).not.toContain("auto-decrypt"); // no sealed links in this build
+    expect(
+      (await Bun.file(path.join(out, "_public-paths.txt")).text())
+        .split("\n")
+        .filter(Boolean)
+        .toSorted(byCodeUnit),
+    ).toEqual([
+      "/pre/share/card-hero/index.html",
+      "/pre/share/card-hero/og.auto.png",
+      "/pre/share/card-ok/index.html",
+      "/pre/share/card-ok/og.png",
+    ]);
+    const page = await Bun.file(path.join(out, "share", "card-ok", "index.html")).text();
+    expect(page).toContain(`<meta name="robots" content="noindex">`);
+    expect(page).toContain(`og:url" content="https://host.example/pre/share/card-ok/"`);
+    expect(page).toContain(`og:image" content="https://host.example/pre/share/card-ok/og.png"`);
+    expect(page).not.toContain("http-equiv"); // JS-only: a crawler must stay and read the card
+    expect(page).toContain(`location.replace("https://host.example/pre/card-ok/")`);
+    expect(existsSync(path.join(out, "share", "card-ok", "og.png"))).toBe(true);
+    // Stale cards get nothing.
+    expect(existsSync(path.join(out, "share", "card-title"))).toBe(false);
+  });
+
+  test("Given no --base-url, when the site builds, then no share pages and no paths file", async () => {
+    const out = path.join(SANDBOX, "card-dist-nohost");
+    expect((await cli("viz.ts", ["publish", site(), "--out", out, "--no-og"])).code).toBe(0);
+    expect(existsSync(path.join(out, "share"))).toBe(false);
+    expect(existsSync(path.join(out, "_public-paths.txt"))).toBe(false);
+  });
+
+  test("Given a viz slugged 'share', when the site builds, then it refuses", async () => {
+    mk("share");
+    await update("share", "--approved", "true");
+    const r = await cli("viz.ts", [
+      "publish",
+      site(),
+      "--out",
+      path.join(SANDBOX, "card-dist-share"),
+      "--no-og",
+    ]);
+    expect(r.code).toBe(2);
+    expect(r.stderr).toContain('"share"');
+  });
+});

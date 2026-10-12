@@ -1,0 +1,6 @@
+#!/bin/sh
+# Every check the staged files touch, from the one table in scripts/check.ts.
+# git runs this because install.ts sets core.hooksPath to .githooks.
+# Deliberate override: git commit --no-verify
+BUN="$(command -v bun || echo "$HOME/.bun/bin/bun")" # GUI git clients run hooks without a login PATH, where ~/.bun/bin is absent.
+exec "$BUN" "$(git rev-parse --show-toplevel)/scripts/check.ts" --staged

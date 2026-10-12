@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "changes": [],
+  "task": {
+    "project": "",
+    "id": "",
+    "title": "Task title",
+    "folder": ""
+  },
+  "ask": "One or two sentences, in your words, specific enough to be wrong.",
+  "hero": {
+    "done": [
+      "The first outcome that matters",
+      "The second",
+      "The third"
+    ],
+    "scope": "What it is, then what it isn't, in one plain sentence.",
+    "slot": "<svg viewBox=\"0 0 600 260\" role=\"img\" aria-label=\"Placeholder: replace with a picture of the result\"><rect x=\"20\" y=\"20\" width=\"560\" height=\"220\" rx=\"10\" fill=\"none\" stroke=\"#556\" stroke-dasharray=\"6 5\"/><text x=\"300\" y=\"135\" text-anchor=\"middle\" class=\"dim\">Replace with a picture of the result (a mock, or a map)</text></svg>"
+  },
+  "assumptions": [
+    {
+      "id": "A1",
+      "text": "Something you decided without being told.",
+      "visual": "Replace with a picture of this case (inline SVG or HTML), or delete this field if it is not visual."
+    }
+  ],
+  "examples": [
+    {
+      "id": "E1",
+      "kind": "should",
+      "text": "A concrete case: a real input and the exact result.",
+      "visual": "Replace with a picture of this case (inline SVG or HTML), or delete this field if it is not visual."
+    },
+    {
+      "id": "E2",
+      "kind": "should",
+      "text": "Another concrete case.",
+      "visual": "Replace with a picture of this case (inline SVG or HTML), or delete this field if it is not visual."
+    },
+    {
+      "id": "E3",
+      "kind": "should",
+      "text": "A third.",
+      "visual": "Replace with a picture of this case (inline SVG or HTML), or delete this field if it is not visual."
+    },
+    {
+      "id": "E4",
+      "kind": "shouldnt",
+      "text": "The misreading a sensible person might make.",
+      "visual": "Replace with a picture of this case (inline SVG or HTML), or delete this field if it is not visual."
+    },
+    {
+      "id": "E5",
+      "kind": "shouldnt",
+      "text": "Another thing that must not happen.",
+      "visual": "Replace with a picture of this case (inline SVG or HTML), or delete this field if it is not visual."
+    }
+  ],
+  "visuals": [],
+  "plan": [
+    {
+      "id": "P1",
+      "step": "The first step you expect to take"
+    }
+  ],
+  "signedOffAt": null
+}
