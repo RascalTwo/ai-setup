@@ -1,0 +1,22 @@
+#!/bin/bash
+# show-image <path | url | clipboard> — put an image in front of the user.
+# Normalises the source to a PNG and prints "show-image: <path>"; the ttyimgspool
+# hook sees that line and draws the image inline in Claude Code.
+src=${1:?usage: show-image <path|url|clipboard>}
+out=${TMPDIR:-/tmp}/$(date +%s)-$$
+case $src in
+  http://*|https://*)
+    curl -fsSL "$src" -o "$out.dl" || { echo "show-image: download failed: $src" >&2; exit 1; }
+    src=$out.dl ;;
+  clipboard)
+    # An image on the clipboard wins; otherwise treat clipboard text as the source.
+    if osascript -e "set f to open for access POSIX file \"$out.clip\" with write permission" \
+                 -e 'write (the clipboard as «class PNGf») to f' -e 'close access f' 2>/dev/null; then
+      src=$out.clip
+    else
+      exec "$0" "$(pbpaste)"
+    fi ;;
+esac
+[ -f "$src" ] || { echo "show-image: no such file: $src" >&2; exit 1; }
+sips -s format png "$src" --out "$out.png" >/dev/null 2>&1 || { echo "show-image: not an image: $src" >&2; exit 1; }
+echo "show-image: $out.png"

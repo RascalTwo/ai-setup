@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI tidemark — are you using your AI limits?</title>
+    <!-- Publish posture — the SOLE source of truth for viz publish. "local" = never
+     published. Online, api/data does not exist, so the page shows generated demo data. -->
+    <meta name="viz:uid" content="v-e8e562fcef00" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <!-- Published copies have no api/data; this is what they show instead. -->
+    <meta name="viz:asset" content="fixtures/demo.json" />
+    <meta name="viz:title" content="AI tidemark" />
+    <meta
+      name="viz:description"
+      content="How much of each Claude Code and Codex rate-limit window you actually used: 5-hour and weekly utilisation against even pace, zoomable across all history, per-window headroom, the 5h→weekly exchange rate, and when you burn."
+    />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <style>
+      :root {
+        --src-claude: var(--c4);
+        --src-codex: var(--c5);
+      }
+      body {
+        margin: 0;
+        padding: 24px 28px 60px;
+        max-width: 1320px;
+        margin-inline: auto;
+      }
+      .banner {
+        background: color-mix(in srgb, var(--c4) 14%, var(--panel));
+        border: 1px solid var(--c4);
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin: 14px 0 0;
+        font-size: 14px;
+      }
+      .kpis {
+        display: grid;
+        grid-template-columns: 110px repeat(5, minmax(0, 1fr));
+        gap: 10px;
+        margin: 14px 0 0;
+        align-items: stretch;
+      }
+      .kpis .src {
+        align-self: center;
+        font-weight: 600;
+      }
+      .kpi {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+      .kpi .n {
+        font: 600 26px/1.1 var(--sans);
+        font-variant-numeric: tabular-nums;
+      }
+      .kpi .l {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .kpi .d {
+        color: var(--faint);
+        font-size: 12px;
+        margin-top: 4px;
+      }
+      .kpi .n.good {
+        color: var(--good);
+      }
+      .kpi .n.warn {
+        color: var(--warn);
+      }
+      .kpi .n.danger {
+        color: var(--danger);
+      }
+      @media (max-width: 1000px) {
+        .kpis {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .kpis .src {
+          grid-column: 1 / -1;
+        }
+      }
+      section.panel {
+        margin-top: 16px;
+        padding: 16px 18px;
+      }
+      section h2 {
+        margin: 0 0 2px;
+        font-size: 16px;
+      }
+      section .cap {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 10px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 900px) {
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
+      .row > section {
+        margin-top: 16px;
+      }
+      .ctl {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .ctl button {
+        background: var(--panel-2);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 4px 10px;
+        font: 12px var(--sans);
+        cursor: pointer;
+      }
+      .ctl button.on {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .ctl label {
+        color: var(--muted);
+        font-size: 12px;
+        margin-left: 8px;
+        cursor: pointer;
+      }
+      .ctl .hint {
+        color: var(--faint);
+        font-size: 12px;
+        margin-left: auto;
+      }
+      svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        overflow: visible;
+      }
+      svg text {
+        fill: var(--faint);
+        font: 11px var(--sans);
+      }
+      svg .lbl {
+        fill: var(--muted);
+        font-size: 12px;
+      }
+      svg .src-lbl {
+        fill: var(--text);
+        font-size: 13px;
+        font-weight: 600;
+      }
+      svg .grid {
+        stroke: var(--border);
+        stroke-width: 1;
+      }
+      .brush .selection {
+        fill: var(--accent);
+        fill-opacity: 0.15;
+        stroke: var(--accent);
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 6px;
+      }
+      #tip {
+        position: fixed;
+        pointer-events: none;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 12px;
+        line-height: 1.5;
+        z-index: 9;
+        display: none;
+        max-width: 300px;
+        box-shadow: 0 6px 20px #0008;
+      }
+      #tip b {
+        color: var(--text);
+      }
+      #tip .m {
+        color: var(--muted);
+      }
+      pre.err {
+        background: var(--panel-2);
+        padding: 8px 10px;
+        border-radius: 6px;
+        font: 11px/1.5 var(--mono);
+        color: var(--muted);
+        white-space: pre-wrap;
+      }
+      table {
+        border-collapse: collapse;
+        font-size: 12px;
+        width: 100%;
+      }
+      td,
+      th {
+        padding: 3px 8px;
+        border-bottom: 1px solid var(--border);
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      th:first-child,
+      td:first-child,
+      th:nth-child(2),
+      td:nth-child(2) {
+        text-align: left;
+      }
+      [data-viz-id] {
+        cursor: pointer;
+      }
+      .hit {
+        fill: transparent;
+        cursor: crosshair;
+      }
+      .sub-src {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 10px 0 2px;
+        font-weight: 600;
+      }
+      .empty {
+        color: var(--muted);
+        padding: 30px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="viz-header">
+      <h1>AI tidemark: are you using your AI limits?</h1>
+      <div class="sub">
+        How much of each rate-limit window you actually used: 5-hour (filled shapes) and weekly
+        (lines) utilisation, one colour per source, against the even-pace line that lands exactly on
+        100% at reset. Space above the lines is capacity that expired unused. “pts” = percentage
+        points of a limit. <span id="stamp"></span>
+      </div>
+    </div>
+    <div id="banner"></div>
+    <div id="kpis"></div>
+
+    <section class="panel" id="tlPanel">
+      <h2>Every window, zoomable</h2>
+      <div class="cap">
+        Scroll to zoom, drag to pan, or drag a range on the strip below. Hover for readings. The
+        bars and exchange-rate panels follow what's in view.
+      </div>
+      <div class="ctl" id="tlCtl"></div>
+      <svg id="tl"></svg>
+      <svg id="ov"></svg>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <div class="row">
+      <section class="panel">
+        <h2>5-hour windows in view: used vs. expired</h2>
+        <div class="cap">
+          Bar = peak before reset; grey track = what expired unused. The dashed line is where the
+          next tier down would have cut you off. Click a bar to zoom to it.
+        </div>
+        <div id="bars"></div>
+      </section>
+      <section class="panel">
+        <h2>Exchange rate: 5-hour % → weekly %</h2>
+        <div class="cap">
+          Each dot is a window in view: how far it got (x) vs. how much weekly limit it burned (y).
+          A steep slope means the weekly limit binds first.
+        </div>
+        <div id="xr"></div>
+      </section>
+    </div>
+
+    <div class="row">
+      <section class="panel">
+        <h2>When you burn</h2>
+        <div class="cap">
+          Weekly-limit points consumed, by local day × hour, summed over all history. Darker = more.
+        </div>
+        <div class="ctl" id="heatSrc"></div>
+        <svg id="heat" viewBox="0 0 720 230"></svg>
+      </section>
+      <section class="panel">
+        <h2>Every weekly window</h2>
+        <div class="cap">Where each week closed. The last bar is the week in progress.</div>
+        <div id="weeks"></div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <details>
+        <summary class="m">All 5-hour windows as a table</summary>
+        <div id="tbl"></div>
+      </details>
+      <details style="margin-top: 6px">
+        <summary class="m">Poller error log (tail)</summary>
+        <pre class="err" id="errs"></pre>
+      </details>
+    </section>
+
+    <div id="tip"></div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

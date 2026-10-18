@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>genui-viz — the agent asks with a card, you answer with a click</title>
+    <meta name="viz:uid" content="v-3c91d07a5e24" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="genui-viz" />
+    <meta
+      name="viz:description"
+      content="An agent puts a small card on your terminal and gets your answer back as data. Try every component, live."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <!-- The gallery draws with the real panel.ts and styles itself from panel.css; vendor/ holds symlinks into skills/genui-viz/page/. -->
+    <meta name="viz:bundle" content="vendor/panel.css" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      :root {
+        --s: 1;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -8%,
+            color-mix(in srgb, var(--c4) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 110%,
+            color-mix(in srgb, var(--c5) 13%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 496px;
+        gap: 36px;
+        align-items: center;
+        padding: 50px 58px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--c4);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c4);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c4) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 50px;
+        line-height: 1.05;
+        margin: 0 0 18px;
+        letter-spacing: -1.4px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c5);
+      }
+      p.sub {
+        font-size: 18px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 16px;
+        max-width: 470px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 14.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 18px;
+        max-width: 470px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 14px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c4);
+        border-radius: 9px;
+        padding: 9px 14px;
+        color: var(--text);
+      }
+      /* dive */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c4);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c5);
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        min-height: 190px;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 46px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--c5);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+
+      /* card art: a terminal with a card floating at its corner */
+      .term {
+        position: relative;
+        height: 470px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: #090c12;
+        padding: 16px 18px;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.7;
+        color: var(--muted);
+        overflow: hidden;
+      }
+      .term .p {
+        color: var(--c4);
+      }
+      .term .ok {
+        color: var(--good);
+      }
+      .mock {
+        position: absolute;
+        right: 14px;
+        top: 118px;
+        width: 290px;
+        background: #1a1a19;
+        border-radius: 12px;
+        padding: 16px 16px 14px;
+        box-shadow:
+          0 18px 40px rgba(0, 0, 0, 0.55),
+          0 0 0 1px #2c2c2a;
+        font-family: -apple-system, system-ui, sans-serif;
+        color: #f0efec;
+      }
+      .mock .grip {
+        width: 34px;
+        height: 4px;
+        border-radius: 2px;
+        background: #3a3a37;
+        margin: -6px auto 10px;
+      }
+      .mock h4 {
+        margin: 0 0 8px;
+        font-size: 15px;
+        font-weight: 600;
+        color: #c3c2b7;
+      }
+      .mock p {
+        margin: 0 0 12px;
+        font-size: 13px;
+        line-height: 1.45;
+        color: #c3c2b7;
+      }
+      .mock .row {
+        display: flex;
+        gap: 8px;
+      }
+      .mock .y,
+      .mock .n {
+        border-radius: 8px;
+        padding: 6px 14px;
+        font: 600 13px system-ui;
+        color: #fff;
+        background: #c64a3f;
+      }
+      .mock .n {
+        background: #262624;
+        color: #c3c2b7;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 4px;
+      }
+      .chips span {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        padding: 4px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        color: var(--text);
+        background: var(--panel);
+      }
+
+      /* gallery */
+      .gallery {
+        margin: 0 -110px 18px;
+      }
+      @media (max-width: 1060px) {
+        .gallery {
+          margin: 0 0 18px;
+        }
+      }
+      #tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+      #tabs button {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+      #tabs button.on {
+        color: #fff;
+        border-color: var(--c4);
+        background: color-mix(in srgb, var(--c4) 18%, var(--panel));
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+        gap: 14px;
+        align-items: start;
+      }
+      @media (max-width: 760px) {
+        .pair {
+          grid-template-columns: 1fr;
+        }
+      }
+      .cap {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        color: var(--c4);
+        margin: 0 0 6px;
+      }
+      #spec {
+        margin: 0;
+        max-height: 420px;
+        overflow: auto;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      #live {
+        display: block;
+      }
+      #note {
+        font-size: 13.5px !important;
+        color: var(--muted) !important;
+        margin: 10px 0 0 !important;
+      }
+      .wire {
+        margin-top: 10px;
+        font-family: var(--mono);
+        font-size: 13px;
+        padding: 10px 12px;
+        border: 1px dashed var(--border);
+        border-radius: 9px;
+        color: var(--muted);
+      }
+      .wire .d {
+        color: var(--warn);
+      }
+      .wire .k {
+        color: var(--text);
+      }
+      .wire.got {
+        border-style: solid;
+        border-color: var(--good);
+        color: var(--good);
+      }
+      .wire.got .k {
+        color: var(--good);
+      }
+      #raw {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+        margin: 6px 0 0 !important;
+        word-break: break-all;
+      }
+      #reset {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 3px 10px;
+        cursor: pointer;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="genui-viz"
+        data-viz-id="poster-card"
+        data-label="the genui-viz card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>SKILL · GENUI-VIZ</div>
+          <h1 class="hook">
+            The agent asks<br />with a card.<br /><em>You answer with a click.</em>
+          </h1>
+          <p class="sub">
+            A small panel glued to your <b>Ghostty</b> window. The answer comes back to the agent as
+            <b>data</b>, not as chat.
+          </p>
+          <p class="not">
+            Before: <b>"approve this diff?"</b> was a wall of terminal text and a typed <b>y</b>.
+          </p>
+          <div class="chips">
+            <span>confirm</span><span>diff</span><span>form</span><span>choice</span
+            ><span>notice</span><span>table</span><span>code</span><span>html</span>
+          </div>
+        </div>
+
+        <div
+          class="term"
+          data-viz-id="card-art"
+          data-label="a terminal with a card floating in its corner"
+        >
+          <div><span class="p">$</span> bun genui.ts show spec.json</div>
+          <div class="ok">✓ c-k3f2a9: Delete</div>
+          <div>&nbsp;</div>
+          <div><span class="p">agent</span> build/ is gone. Moving on.</div>
+          <div class="mock">
+            <div class="grip"></div>
+            <h4>Delete build/?</h4>
+            <p>212 MB, <b>untracked</b>.</p>
+            <div class="row"><span class="y">Delete</span><span class="n">Keep</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install genui-viz">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <pre><span class="l"><span class="c">npx</span> skills add <span class="r">RascalTwo/ai-setup</span> <span class="f">-g</span> <span class="f">-s</span> genui-viz <span class="f">-s</span> viz</span></pre>
+      <p class="needs">
+        needs <code>bun</code>
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle"
+          >macOS + Xcode command line tools to build the floating panel (helper/build); elsewhere,
+          cards open in a browser tab</a
+        >
+      </p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">A decision does not belong in a wall of text</h2>
+      <p>
+        An agent mid-task needs a human for four kinds of thing: approve a risky step, review a
+        diff, fill in a few fields, pick some rows. In a terminal each of those is a paragraph and a
+        typed reply: a diff scrolls past, a table is mangled by wrapping, and "reply y to delete 212
+        MB" is one slipped keystroke from a mistake.
+      </p>
+      <p class="m">
+        <b>genui-viz</b> puts that question on a card instead, and returns what you pressed as data.
+        The agent writes about 300 bytes of JSON; it never writes UI.
+      </p>
+
+      <h2 data-beat="using">Write JSON, get an answer</h2>
+      <p>
+        The agent runs <code>bun genui.ts show spec.json</code> (or an inline <code>'{...}'</code>,
+        or <code>-</code> for stdin). It waits for you, up to 600 s by default, and prints one line:
+        <code>✓ c-&lt;id&gt;: &lt;what you sent&gt;</code>. It fires when the SKILL.md says a card
+        beats text, or when you say "genui", "show me a card" or "ask me with a panel".
+      </p>
+      <p>
+        A card is built from one or more <b>components</b>. Every one below is the real thing: the
+        same <code>panel.ts</code> the panel uses, drawing the spec on the left. Press the buttons;
+        the line underneath is the receipt the agent gets.
+      </p>
+    </div>
+
+    <div class="dive" style="padding-top: 0; padding-bottom: 0">
+      <div
+        class="gallery"
+        data-viz-id="gallery"
+        data-label="live gallery of every genui-viz component"
+      >
+        <div id="tabs"></div>
+        <div class="pair">
+          <div>
+            <p class="cap">THE SPEC THE AGENT WRITES</p>
+            <pre id="spec"></pre>
+          </div>
+          <div>
+            <p class="cap">THE CARD YOU SEE (LIVE)</p>
+            <div id="live"></div>
+            <div class="wire" id="wire"></div>
+            <p id="raw"></p>
+            <p id="note"></p>
+            <button id="reset">↺ reset this card</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dive" style="padding-top: 0">
+      <p class="m">
+        Stack components under <code>components: [...]</code> (the last tab). The button you press
+        answers for the whole card, as <code>{form: {...}, confirm: {decision: "yes"}}</code>. A
+        form that shares a card with a confirm or diff loses its own Send and rides along, and an
+        invalid form blocks the send.
+      </p>
+
+      <h2 data-beat="limits">What a card will not do</h2>
+      <ul>
+        <li>
+          <b>macOS only for the floating panel.</b> Elsewhere the card opens in a browser tab, which
+          ignores the close after an answer.
+        </li>
+        <li>
+          <b>It hides itself.</b> The panel shows only while Ghostty is frontmost <i>and</i> the
+          card's herdr pane is focused. A card for a pane you are not looking at waits, hidden.
+        </li>
+        <li>
+          <b>Highlighting and markdown need a CDN</b> on first use; offline, you get plain text.
+          Highlighting is per line, so multi-line strings and comments lose their colour.
+        </li>
+        <li>
+          <b>html cards do not redraw.</b> Improving a component redraws every old card; an
+          <code>html</code> card stays as it was written. Prefer a component when one fits.
+        </li>
+        <li>
+          <b>Free-text questions stay in chat.</b> A card is for a decision, a shape the terminal
+          mangles, or a result worth a glance.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/genui-viz/</code>: <code>SKILL.md</code>, <code>genui.ts</code> (CLI),
+              <code>lib.ts</code>, <code>page/</code> (<code>panel.ts</code>,
+              <code>panel.css</code>, <code>index.html</code>), <code>helper/Panel.swift</code>,
+              <code>reference/research.md</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Integrates</td>
+            <td>
+              <b>viz:</b> cards and answers live in the central library's <code>genui</code> viz.
+              <b>herdr:</b> the panel follows its pane, hidden while another pane is focused.
+              <b>ghostty:</b> the panel sits at the terminal window's corner.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <code>~/.agents/state/genui-viz.json</code> caches the page directory and URL (safe to
+              delete: the next show rebuilds it). The cards and answers themselves are the look-back
+              log in the <code>genui</code> viz; <code>deletion-policy: retain</code>, so it is
+              kept. The drag offset is in macOS <code>UserDefaults</code> under
+              <code>genui-panel</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              The <code>viz</code> skill and <code>bun</code>. For the floating panel, macOS plus
+              the Xcode command line tools to run <code>helper/build</code> once.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One card, end to end</h2>
+      <p class="m">From JSON on stdout-bound command to a receipt in your terminal.</p>
+
+      <div
+        class="fig"
+        data-viz-id="card-figure"
+        data-label="stepper: one card from spec to receipt"
+      >
+        <div class="stage" id="stage"></div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+
+      <h3>The card is data, the drawing is shared</h3>
+      <p>
+        A card is a line of <code>_log/cards</code> and an answer is a line of
+        <code>_log/answers</code>, both served by the viz's page-data route. Everything that draws
+        lives in <code>page/panel.ts</code>, and <code>ensurePage()</code> copies it into the page
+        on every show. That is why this poster's gallery is not a screenshot: it imports the same
+        file through a symlink and calls <code>cardBox(card, answer, live, post)</code> with a
+        <code>post</code> that prints the receipt instead of POSTing.
+      </p>
+      <h3>Names are borrowed</h3>
+      <p>
+        Inputs follow MCP elicitation's <code>requestedSchema</code>; display blocks follow Adaptive
+        Cards (facts, table, body). The reasoning is in <code>reference/research.md</code>.
+      </p>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · built on the
+        <a href="../skill-viz/">viz</a> skill.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

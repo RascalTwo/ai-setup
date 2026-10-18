@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Generative UI cards</title>
+    <meta name="viz:posture" content="local" />
+    <meta name="viz:listed" content="unlisted" />
+    <meta name="viz:title" content="Generative UI cards" />
+    <meta
+      name="viz:description"
+      content="Every card an agent put in front of you, and what you answered. The genui-viz skill adds to it."
+    />
+    <!-- Nothing to edit here: cards are lines of _log/cards, drawn by panel.ts, which genui-viz copies
+     in from its page/ on every show. Change a component there and every card, old or new, redraws with it. -->
+    <link rel="stylesheet" href="panel.css" />
+  </head>
+  <body>
+    <script type="module">
+      import { mountPanels } from "./panel.js";
+      void mountPanels();
+    </script>
+  </body>
+</html>

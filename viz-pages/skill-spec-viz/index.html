@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>spec-viz — agree what is being built, before it is built</title>
+    <!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+    <meta name="viz:posture" content="local" />
+    <meta name="viz:listed" content="unlisted" />
+    <meta name="viz:uid" content="v-3c08e14a0108" />
+    <meta name="viz:title" content="spec-viz" />
+    <meta
+      name="viz:description"
+      content="A page you judge example by example before a task is built. Sign-off unlocks only when every one is agreed."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <!-- Card ANATOMY, shared with heroes and plain posters. Use these classes rather
+     than re-deriving them: .frame/.left/.eyebrow/.title/.essence/.sub/.chips/
+     .right/.panel/.foot/.stat -->
+    <link rel="stylesheet" href="/_kit/viz-og.css" />
+    <!-- MECHANICS (scale-to-fit + the dive layout-box fix). Shared, so a fix reaches
+     every poster instead of only the next one someone copies. -->
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* Mechanics live in /_kit/poster.css now — this block is YOURS. The card
+     anatomy is /_kit/viz-og.css. Add only what differs. */
+      /* overflow-x lives on BODY only. On <html> it makes overflow-y compute to
+     `auto` (CSS overflow §3: one axis hidden forces the other off `visible`),
+     which — combined with the kit's html{height:100%} — turns <html> into its
+     own viewport-height scroll container and stops scroll propagating to the
+     viewport. Wheel scrolling still works, so it looks fine, but window.scrollTo,
+     scrollIntoView, anchor links and viz verify --full all silently no-op. */
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        padding: 18px 0 0;
+      }
+
+      /* The dive. Its measure is deliberately narrower than the card — prose wants
+     ~65-75 characters a line, the card wants 1200px. */
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin: 34px 0 10px;
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .og-card {
+        padding: 54px 60px;
+        gap: 44px;
+        align-items: center;
+        box-sizing: border-box;
+      }
+      .card-l {
+        flex: 1.15;
+      }
+      .mini {
+        flex: 1;
+      }
+      .chips {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .chips span {
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 5px 14px;
+        font-size: 15px;
+        color: var(--muted);
+      }
+      .card-l {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 16px;
+      }
+      .hook {
+        font-size: 64px;
+        line-height: 1.04;
+        margin: 0;
+        letter-spacing: -0.02em;
+      }
+      .hook em {
+        color: var(--accent);
+        font-style: normal;
+      }
+      .mini {
+        background: #0d1320;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px 20px;
+        display: grid;
+        gap: 12px;
+      }
+      .mini .a {
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.15;
+      }
+      .mini .a small {
+        display: block;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 4px;
+      }
+      .mini .pic svg {
+        display: block;
+      }
+      .mini .pic {
+        height: 92px;
+        border: 1px dashed var(--accent);
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+      }
+      .mini .ticks {
+        display: flex;
+        gap: 12px;
+        font-size: 14px;
+        flex-wrap: wrap;
+      }
+      .mini .ticks span::before {
+        content: "✓ ";
+        color: var(--good);
+        font-weight: 800;
+      }
+      .jr {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        font-size: 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 6px 10px;
+      }
+      .jr.ok {
+        border-color: var(--good);
+        background: color-mix(in srgb, var(--good) 10%, transparent);
+      }
+      .jr.fix {
+        border-color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 10%, transparent);
+      }
+      .gauge {
+        height: 10px;
+        border-radius: 5px;
+        background: var(--border);
+        overflow: hidden;
+      }
+      .gauge b {
+        display: block;
+        height: 100%;
+        width: 71%;
+        background: var(--good);
+      }
+      .gl {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .dive .fig {
+        margin: 18px 0 8px;
+      }
+      .dive svg {
+        width: 100%;
+        height: auto;
+        background: #0e1117;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+      }
+      .dive svg text {
+        font: 13px system-ui;
+        fill: var(--text);
+      }
+      .dive svg .dim {
+        fill: var(--muted);
+        font-size: 12px;
+      }
+      .dive svg .lane {
+        fill: none;
+        stroke: #2a3547;
+        stroke-dasharray: 4 4;
+      }
+      .dive svg .box {
+        fill: #18233a;
+        stroke: #5b8def;
+      }
+      .dive svg .gate {
+        fill: #2a2412;
+        stroke: #e3b341;
+      }
+      .dive svg .arrow {
+        stroke: #8aa;
+        stroke-width: 1.6;
+        fill: none;
+      }
+      .dive code,
+      .dive pre {
+        font-family: var(--mono);
+        font-size: 14px;
+      }
+      .dive pre {
+        background: #0e1117;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        overflow-x: auto;
+      }
+    </style>
+    <meta name="viz:page-kind" content="poster-dive" />
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="spec-viz"
+        data-viz-id="poster-card"
+        data-label="spec-viz poster card"
+      >
+        <div class="card-l">
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · SPEC-VIZ</div>
+          <h1 class="hook">Sign-off should mean <em>we agree,</em> not “I clicked.”</h1>
+          <p class="sub">
+            Before a task is built, <b>spec-viz</b> makes one page: a hero, examples to judge, a
+            plan. <b>Sign off</b> stays locked until every example is ✓.
+          </p>
+          <div class="chips">
+            <span>hero · examples · plan</span><span>gated sign-off</span><span>feeds pr-viz</span>
+          </div>
+        </div>
+        <div class="mini" data-viz-id="mini-card" data-label="a spec page in miniature">
+          <div class="a">
+            <small>Asked</small>Drag and resize promised stretches in the calendar
+          </div>
+          <div class="pic" data-viz-id="mini-pic" data-label="Picture of the result">
+            <svg viewBox="0 0 300 92" width="100%" height="100%">
+              <rect
+                x="20"
+                y="14"
+                width="64"
+                height="56"
+                rx="6"
+                fill="none"
+                stroke="#fff"
+                stroke-dasharray="4 3"
+              />
+              <path d="M86 42L186 50" stroke="#fff" stroke-width="2" />
+              <rect x="188" y="26" width="64" height="56" rx="6" fill="#5b8def" />
+            </svg>
+          </div>
+          <div class="ticks">
+            <span>drag moves it</span><span>edges resize it</span><span>undo restores it</span>
+          </div>
+          <div class="jr ok" data-viz-id="mini-ex-1" data-label="Example judged ✓">
+            <span>Drag Tuesday’s 2h block to Thursday: it keeps 2h</span><b>✓</b>
+          </div>
+          <div class="jr fix" data-viz-id="mini-ex-2" data-label="Example judged ✗">
+            <span>Dropping on an overlap overwrites it</span><b>✗</b>
+          </div>
+          <div class="gauge"><b></b></div>
+          <div class="gl">5 of 7 agreed · 1 to resolve · 🔒 sign-off locked</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install spec-viz">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <pre><span class="l"><span class="c">npx</span> skills add <span class="r">RascalTwo/ai-setup</span> <span class="f">-g</span> <span class="f">-s</span> spec-viz <span class="f">-s</span> grill-me-viz <span class="f">-s</span> viz</span>
+<span class="l"><span class="c">npx</span> skills add <span class="r">mattpocock/skills</span> <span class="f">-g</span> <span class="f">-s</span> grilling</span></pre>
+      <p class="needs">needs <code>bun</code></p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓ scroll</div>
+
+    <article class="dive">
+      <h2 data-beat="why">Sign-off proved you were willing, not that we agreed</h2>
+      <p>
+        A Kelpie refine run used to hand you a text description and some questions. You read it, it
+        sounded right, you signed it off, and an agent built it. The misreads showed up at review,
+        after the build, when they were expensive. Clicking sign-off only ever proved you were
+        <i>willing to</i>.
+      </p>
+      <p>
+        <b>spec-viz</b> makes the agreement something you can look at. One page per task: a
+        <b>hero</b> you can glance at and think “oh, that’s the feature”, then concrete
+        <b>examples</b> and non-examples you judge ✓ or ✗. A wrong concrete case is caught at a
+        glance; an abstract sentence gets nodded through.
+      </p>
+
+      <h2 data-beat="using">You judge, you say why, you sign off</h2>
+      <ul>
+        <li>A refine run builds it and opens it for you. Or say “spec this” on any task.</li>
+        <li>
+          Click ✓ or ✗ on each example and assumption. A ✗ means: say what’s wrong in the 🎙 💬 pill,
+          press <b>Send corrections</b>, and the agent revises the page.
+        </li>
+        <li>
+          <b>Sign off</b> unlocks only when every one is ✓. It then records your judgments on the
+          task, sets Refined in Timeline Studio, and the build starts on the next tick.
+        </li>
+        <li>
+          <code>#{"mode":"film"}</code> on the URL plays a one-minute narrated version in the page.
+        </li>
+      </ul>
+
+      <h2 data-beat="limits">What it doesn’t do, yet</h2>
+      <ul>
+        <li>
+          <b>It proves you judged what the agent wrote, not that the agent understood.</b> A good
+          spec depends on the agent writing good cases.
+        </li>
+        <li>One size for every task. A lighter spec for a tiny task is parked.</li>
+        <li>This Mac only. Reading and signing from a phone is next.</li>
+        <li>The film is played in the page, one voice (Kokoro), never rendered to an mp4.</li>
+        <li>
+          Re-opening a spec on a task that is already building has no button: sign-off is
+          refine-only, so you confirm in the build agent’s pane.
+        </li>
+        <li>Not tested end to end on a live task when this was written.</li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <p>
+        Skill <code>skills/spec-viz/</code> (a viz template, <code>scripts/build.ts</code>, the
+        instructions). It integrates with <b>kelpie</b> (the button runs its <code>signoff</code>;
+        the spec’s folder is the task’s run folder), <b>pr-viz</b> (reads <code>spec.json</code>;
+        see <code>pr-viz/reference/spec.md</code>) and <b>grill-me-viz</b> (a pointer to it). It
+        requires the <b>viz</b> skill and <code>bun</code>. It keeps no state of its own: each spec
+        is a viz in the viz library, with a copy of the signed <code>spec.json</code> in the task’s
+        run folder, so deleting one only loses that spec.
+      </p>
+
+      <h2 data-beat="how">One sign-off, end to end</h2>
+      <p>
+        The agent writes one <code>spec.json</code>, checked by <code>spec.schema.ts</code> on both
+        sides. <code>entry.ts</code> picks the spec page (<code>spec.ts</code>) or the film
+        (<code>film.ts</code>) from the URL’s hash. Each click logs a <code>judge</code> line
+        through the viz feedback widget, so a reload restores them. Sign-off is the page’s one
+        action:
+      </p>
+      <div class="fig">
+        <svg
+          viewBox="0 0 800 330"
+          role="img"
+          aria-label="Sign-off from the spec page, through the viz backend and Kelpie, to Timeline Studio"
+          data-viz-id="signoff-flow"
+          data-label="Sign-off sequence"
+        >
+          <g class="lane" data-viz-id="lanes" data-label="Four lanes">
+            <rect x="10" y="10" width="185" height="310" rx="8" />
+            <rect x="205" y="10" width="185" height="310" rx="8" />
+            <rect x="400" y="10" width="185" height="310" rx="8" />
+            <rect x="595" y="10" width="195" height="310" rx="8" />
+          </g>
+          <text x="102" y="32" text-anchor="middle" class="dim">spec page</text>
+          <text x="297" y="32" text-anchor="middle" class="dim">api.ts /signoff</text>
+          <text x="492" y="32" text-anchor="middle" class="dim">kelpie signoff</text>
+          <text x="692" y="32" text-anchor="middle" class="dim">Timeline Studio</text>
+          <rect
+            class="gate"
+            x="25"
+            y="50"
+            width="155"
+            height="48"
+            rx="8"
+            data-viz-id="gate"
+            data-label="The gate: every example agreed"
+          />
+          <text x="102" y="72" text-anchor="middle">all ✓?</text>
+          <text x="102" y="89" text-anchor="middle" class="dim">button unlocks</text>
+          <rect
+            class="box"
+            x="25"
+            y="130"
+            width="155"
+            height="48"
+            rx="8"
+            data-viz-id="click"
+            data-label="Click: POST /signoff"
+          />
+          <text x="102" y="152" text-anchor="middle">click Sign off</text>
+          <text x="102" y="169" text-anchor="middle" class="dim">words + verdicts</text>
+          <rect
+            class="gate"
+            x="220"
+            y="130"
+            width="155"
+            height="48"
+            rx="8"
+            data-viz-id="recheck"
+            data-label="Server re-checks the gate"
+          />
+          <text x="297" y="152" text-anchor="middle">POST only,</text>
+          <text x="297" y="169" text-anchor="middle" class="dim">every verdict “ok”</text>
+          <rect
+            class="box"
+            x="415"
+            y="130"
+            width="155"
+            height="48"
+            rx="8"
+            data-viz-id="spawn"
+            data-label="Spawn kelpie signoff in the run folder"
+          />
+          <text x="492" y="152" text-anchor="middle">cwd = task folder</text>
+          <text x="492" y="169" text-anchor="middle" class="dim">finds .task.json</text>
+          <rect
+            class="box"
+            x="610"
+            y="130"
+            width="165"
+            height="48"
+            rx="8"
+            data-viz-id="refined"
+            data-label="Comment quoted, Refined set"
+          />
+          <text x="692" y="152" text-anchor="middle">words quoted,</text>
+          <text x="692" y="169" text-anchor="middle" class="dim">Refined = now</text>
+          <rect
+            class="box"
+            x="220"
+            y="240"
+            width="155"
+            height="48"
+            rx="8"
+            data-viz-id="save"
+            data-label="Save the signed spec"
+          />
+          <text x="297" y="262" text-anchor="middle">save spec.json</text>
+          <text x="297" y="279" text-anchor="middle" class="dim">+ copy in run folder</text>
+          <rect
+            class="box"
+            x="25"
+            y="240"
+            width="155"
+            height="48"
+            rx="8"
+            data-viz-id="reload"
+            data-label="Page reloads signed"
+          />
+          <text x="102" y="262" text-anchor="middle">reload: signed</text>
+          <text x="102" y="279" text-anchor="middle" class="dim">lock; no more edits</text>
+          <rect
+            class="box"
+            x="610"
+            y="240"
+            width="165"
+            height="48"
+            rx="8"
+            data-viz-id="build"
+            data-label="Build starts on the next tick"
+          />
+          <text x="692" y="262" text-anchor="middle">build starts</text>
+          <text x="692" y="279" text-anchor="middle" class="dim">reads spec.json</text>
+          <path
+            class="arrow"
+            d="M102 98V130M180 154H220M375 154H415M570 154H610M692 178V240M297 178V240M220 264H180"
+          />
+        </svg>
+      </div>
+      <p>
+        The backend refuses unless it is a real <code>POST</code> with every verdict “ok” (a
+        <code>viz verify</code> load can’t act), and the spec is saved only after Kelpie accepts.
+        Kelpie’s <code>signoff</code> writes the quoted judgments as a
+        <code>[dispatch] signoff</code> comment, then sets <code>refinedAt</code>; the refine run
+        ends and the tick starts the build, whose briefing reads the signed <code>spec.json</code>.
+        Later, pr-viz seeds its acceptance criteria from the ✓ examples word for word.
+      </p>
+      <p>
+        The film comes from the same words: <code>script.ts</code> turns the spec into scenes,
+        <code>scripts/build.ts</code> writes <code>narration.json</code> from them, and
+        <code>viz verify</code> compiles the voice clips and times each beat to them.
+      </p>
+    </article>
+
+    <script type="module" src="/_kit/poster.js"></script>
+  </body>
+</html>

@@ -1,0 +1,28 @@
+# Ctrl+click an inline image (or its caption) in Claude Code → that image, full-pane.
+# The hook makes every inline image an OSC 8 link to its spooled file; herdr sends
+# Ctrl+clicks on matching links here. A PLAIN click never arrives: Claude Code
+# takes it and only allowlists a few schemes (file:// = Finder reveal).
+id = "rascaltwo.ttyimgspool"
+name = "ttyimgspool viewer"
+version = "0.1.0"
+min_herdr_version = "0.9.0"
+description = "Open a clicked inline image full-pane"
+platforms = ["macos", "linux"]
+
+[[actions]]
+id = "open"
+title = "Open clicked image full-pane"
+contexts = ["workspace"]
+command = ["python3", "view", "open"]
+
+[[panes]]
+id = "viewer"
+title = "Image"
+placement = "overlay"
+command = ["python3", "view"]
+
+[[link_handlers]]
+id = "image"
+title = "Open image full-pane"
+pattern = "^(file://|[a-z][a-z0-9.+-]*://ttyimg/).*\\.(png|jpe?g|gif|webp|bmp)$"
+action = "open"

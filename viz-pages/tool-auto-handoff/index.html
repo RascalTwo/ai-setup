@@ -1,0 +1,1001 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>auto-handoff — you only notice the context dropped</title>
+    <!-- posture/listing — public + listed, like the other posters -->
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:uid" content="v-e2ab5c2c8e3f" />
+    <meta name="viz:title" content="auto-handoff" />
+    <meta
+      name="viz:description"
+      content="At 250k tokens a Claude Code session writes its own handoff document, gets /clear'd, and is told to read it and continue. Auto-compact, with a handoff instead of a summary."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* Poster + dive: .og-card is a fixed 1200×630 clip target, the page scrolls beneath it.
+         Identity: amber (--warn) for the threshold and the drop, purple (--c4) for the handoff. */
+      :root {
+        --s: 1;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 96% -10%,
+            color-mix(in srgb, var(--warn) 15%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 112%,
+            color-mix(in srgb, var(--c4) 14%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 520px;
+        gap: 38px;
+        align-items: center;
+        padding: 52px 64px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--warn);
+        margin-bottom: 18px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--warn);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--warn) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 56px;
+        line-height: 1.04;
+        margin: 0 0 20px;
+        letter-spacing: -1.5px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--warn);
+      }
+      p.sub {
+        font-size: 19px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 18px;
+        max-width: 500px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      p.sub code,
+      .not code {
+        font-family: var(--mono);
+        font-size: 0.86em;
+        color: var(--c4);
+      }
+      .not {
+        font-size: 14.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 18px;
+        max-width: 500px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+        font-weight: 400;
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14.5px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--warn);
+        border-radius: 9px;
+        padding: 10px 15px;
+        color: var(--text);
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the sawtooth: context per turn, and the turn it stops climbing */
+      .gauge {
+        background: color-mix(in srgb, var(--panel) 84%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px 14px 12px;
+        font-family: var(--mono);
+      }
+      .gauge .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        letter-spacing: 0.13em;
+        color: var(--warn);
+        margin: 0 4px 6px;
+      }
+      .gauge .cap span:last-child {
+        color: var(--faint);
+      }
+      .gauge svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .gauge .foot3 {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+        align-items: baseline;
+        margin: 10px 4px 0;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+        font-size: 11.5px;
+        line-height: 1.45;
+        color: var(--muted);
+      }
+      .gauge .foot3 b {
+        color: var(--warn);
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      /* ── the dive (below the fold) ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--warn);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 28px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c4);
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      pre b {
+        color: var(--warn);
+        font-weight: 400;
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+      table.keys {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.keys td {
+        border-top: 1px solid var(--border);
+        padding: 8px 12px 8px 0;
+        vertical-align: top;
+        line-height: 1.5;
+      }
+      table.keys td:first-child {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--c4);
+        white-space: nowrap;
+        padding-right: 18px;
+      }
+      .cap {
+        font-size: 13.5px;
+        color: var(--faint);
+        margin: 0 0 16px;
+      }
+
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 12px 10px 10px;
+      }
+      .fig .stage svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .fig .files {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin: 8px 6px 2px;
+        padding-top: 9px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: baseline;
+      }
+      .fig .files b {
+        color: var(--warn);
+        font-weight: 400;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 72px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .fig .lede code {
+        color: var(--c4);
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--warn);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .band {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 14px 16px 10px;
+        margin: 0 0 16px;
+      }
+      .band svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="auto-handoff"
+        data-viz-id="poster-card"
+        data-label="auto-handoff poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED TOOL · AUTO-HANDOFF</div>
+          <h1 class="hook">You only notice the context <em>dropped.</em></h1>
+          <p class="sub">
+            At <b>250k tokens</b> the session writes its own handoff, gets <b>/clear</b>ed, and is
+            told <code>read &lt;handoff&gt; and continue</code>. Auto-compact, with a handoff
+            instead of a summary.
+          </p>
+          <p class="not">
+            It <b>never fires while a subagent, workflow or shell is running</b>, and never types
+            into a draft you are halfway through.
+          </p>
+          <div class="trigger"><span>Stop hook</span>&nbsp;→&nbsp;herdr types /clear</div>
+        </div>
+
+        <div
+          class="gauge"
+          data-viz-id="context-sawtooth"
+          data-label="context per turn: climbs to 250k, handoff, drops to a fresh baseline"
+        >
+          <div class="cap"><span>CONTEXT PER TURN</span><span>ILLUSTRATIVE</span></div>
+          <svg
+            viewBox="0 0 520 372"
+            role="img"
+            aria-label="context tokens climb turn by turn to the 250k threshold, then drop to about 46k after a handoff"
+          >
+            <!-- plot: x 46..510, y(k) = 340 - k, k in thousands of tokens -->
+            <g stroke="var(--border)" stroke-width="1">
+              <line x1="46" y1="340" x2="510" y2="340" />
+              <line x1="46" y1="240" x2="510" y2="240" opacity="0.55" />
+              <line x1="46" y1="140" x2="510" y2="140" opacity="0.55" />
+              <line x1="46" y1="40" x2="510" y2="40" opacity="0.55" />
+            </g>
+            <g font-family="var(--mono)" font-size="11" fill="var(--faint)" text-anchor="end">
+              <text x="40" y="344">0</text>
+              <text x="40" y="244">100k</text>
+              <text x="40" y="144">200k</text>
+              <text x="40" y="44">300k</text>
+            </g>
+
+            <!-- the two gates -->
+            <line
+              x1="46"
+              y1="90"
+              x2="510"
+              y2="90"
+              stroke="var(--warn)"
+              stroke-width="1.5"
+              stroke-dasharray="7 5"
+            />
+            <text x="52" y="82" font-family="var(--mono)" font-size="11.5" fill="var(--warn)">
+              250k · block once
+            </text>
+            <line
+              x1="46"
+              y1="190"
+              x2="510"
+              y2="190"
+              stroke="var(--faint)"
+              stroke-width="1"
+              stroke-dasharray="2 5"
+            />
+            <text x="52" y="183" font-family="var(--mono)" font-size="11" fill="var(--faint)">
+              150k · idle gate
+            </text>
+
+            <!-- what would have happened: it keeps climbing and every turn re-reads all of it -->
+            <path
+              d="M 272 78 L 326 36"
+              fill="none"
+              stroke="var(--faint)"
+              stroke-width="2"
+              stroke-dasharray="3 5"
+            />
+            <text x="334" y="36" font-family="var(--mono)" font-size="11" fill="var(--faint)">
+              …keeps climbing
+            </text>
+
+            <!-- cycle 1 -->
+            <polyline
+              points="50,299 84,274 118,248 152,214 186,177 220,136 254,88 272,78"
+              fill="none"
+              stroke="var(--text)"
+              stroke-width="2.6"
+              stroke-linejoin="round"
+              stroke-linecap="round"
+            />
+            <!-- the drop -->
+            <line
+              x1="272"
+              y1="78"
+              x2="284"
+              y2="294"
+              stroke="var(--warn)"
+              stroke-width="2.6"
+              stroke-linecap="round"
+            />
+            <!-- cycle 2 -->
+            <polyline
+              points="284,294 318,270 352,244 386,212 420,178 454,142 488,104"
+              fill="none"
+              stroke="var(--c4)"
+              stroke-width="2.6"
+              stroke-linejoin="round"
+              stroke-linecap="round"
+            />
+            <g fill="var(--text)">
+              <circle cx="254" cy="88" r="4.5" />
+            </g>
+            <g fill="var(--c4)">
+              <circle cx="284" cy="294" r="4.5" />
+            </g>
+            <text x="296" y="320" font-family="var(--mono)" font-size="11" fill="var(--c4)">
+              ≈46k: 41k baseline + the doc
+            </text>
+            <text
+              x="262"
+              y="150"
+              font-family="var(--mono)"
+              font-size="11"
+              fill="var(--warn)"
+              text-anchor="end"
+            >
+              /clear
+            </text>
+            <text
+              x="510"
+              y="362"
+              font-family="var(--mono)"
+              font-size="11"
+              fill="var(--faint)"
+              text-anchor="end"
+            >
+              turns →
+            </text>
+          </svg>
+          <div class="foot3">
+            <b>−15.4%</b>
+            <span>main-chain cost at 250k, replaying 237 real sessions under every threshold</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install auto-handoff">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <p class="why">
+        the full setup, run in a clone of
+        <a href="https://github.com/RascalTwo/ai-setup">RascalTwo/ai-setup</a>
+      </p>
+      <pre><span class="l"><span class="c">bun</span> install.ts</span></pre>
+      <p class="needs">needs <code>herdr</code> <code>python3</code></p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">Every turn pays rent on the whole pile</h2>
+      <p>
+        A Claude Code session at 250k tokens sends all 250k with every request. Mostly that goes
+        through the prompt cache at the cheap read rate, which is what makes long sessions bearable,
+        and it is also why they get slowly more expensive:
+        <b>each turn re-reads everything that came before it</b>, including the forty files you read
+        two hours ago and have not needed since.
+      </p>
+      <p>
+        Then you go to lunch. The cache lives an hour. Come back after it and the entire context is
+        <em>rewritten</em>, not read, at the write price. In the pricing table this tool's replay
+        script uses, that is <b>40 cache reads' worth on Opus and 20 on Sonnet</b>, paid in one
+        request for a session that had mostly stopped being useful.
+      </p>
+      <p class="m">
+        The two usual exits both cost something. Let the harness compact and you get a summary of
+        the session. Or notice it yourself, run <code>/r2-handoff</code> by hand,
+        <code>/clear</code>, paste the path in — which works exactly as long as you are watching.
+        This tool is the second exit with you taken out of the loop: same handoff document, same
+        fresh start, nobody has to remember.
+      </p>
+      <p class="m">
+        It is not magic, and the page below does not pretend it is. The measured saving is about 15%
+        of main-chain cost, from a replay of real sessions rather than a promise, and the weakest
+        input to that number is named under the limits.
+      </p>
+
+      <h2 data-beat="using">Nothing to press, one thing to turn off</h2>
+      <p>
+        It is a <code>Stop</code> hook plus a line in the statusline, so it watches every turn of
+        every Claude Code session inside herdr and acts when one crosses a line. What you see is the
+        context meter drop. If something is holding it back, you get a message telling you what.
+      </p>
+      <table class="keys">
+        <tbody>
+          <tr>
+            <td>auto-handoff off</td>
+            <td>
+              This herdr pane only. Run it with a leading <code>!</code> from inside Claude so the
+              shell, not the model, runs it. <code>on</code> undoes it.
+            </td>
+          </tr>
+          <tr>
+            <td>auto-handoff off --all</td>
+            <td>Everywhere. <code>on --all</code> undoes it.</td>
+          </tr>
+          <tr>
+            <td>auto-handoff status</td>
+            <td>Global and per-pane state, plus a phase if a handoff is in flight.</td>
+          </tr>
+          <tr>
+            <td>AUTO_HANDOFF=0 claude</td>
+            <td>This launch only. Also <code>off</code> or <code>false</code>.</td>
+          </tr>
+          <tr>
+            <td>AUTO_HANDOFF_TOKENS</td>
+            <td>The trigger. Default 250000.</td>
+          </tr>
+          <tr>
+            <td>AUTO_HANDOFF_IDLE_TOKENS</td>
+            <td>The idle gate, 150000. The statusline reads it too.</td>
+          </tr>
+          <tr>
+            <td>AUTO_HANDOFF_STATE</td>
+            <td>
+              Where state lives. Point a test session somewhere else so the global off switch does
+              not apply to it.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="m">
+        Two ways it fires. At the end of a turn at or past 250k it hands off and sends the continue
+        prompt for you. If you have <em>walked away</em> from a 150k+ session and 55 minutes have
+        passed with no reply, it hands off then, while the cache is still warm, and types the
+        continue prompt <b>without sending it</b>, prefixed with a note naming what the session was.
+        You come back to a cleared screen that says what happened.
+      </p>
+
+      <h2 data-beat="limits">What it will wait forever rather than do</h2>
+      <ul>
+        <li>
+          <b>It will not hand off while anything runs.</b> A subagent, a workflow,
+          <em>or a shell</em>. A dev server or a watcher that never ends blocks auto handoff until
+          you stop it. Over the threshold, every stop shows you a <code>systemMessage</code> naming
+          what it is waiting on. Shells are on the list although <code>/clear</code> would keep them
+          (tested 2026-10-03), because a shell a subagent left behind is still unfinished work.
+        </li>
+        <li>
+          <b>It will not type over you.</b> If the prompt box has anything in it, the injector polls
+          every two seconds, for up to 30 minutes, then gives up without clearing anything.
+        </li>
+        <li>
+          <b>It only works inside herdr.</b> Only herdr can type into a live session. Outside it
+          every verb is a no-op.
+        </li>
+        <li>
+          <b>It trusts an undocumented field.</b> The task list it gates on,
+          <code>background_tasks</code>, is in real Stop payloads but not in the hooks docs. A
+          payload without it counts as busy, so a Claude Code change makes this tool stop, not kill
+          an agent.
+        </li>
+        <li>
+          <b>The next model is a short menu.</b> The handoff may ask for exactly three pairs (haiku
+          high, sonnet high, opus medium) and may only <em>raise</em> the model and effort the
+          session already had. There is no Opus high, and no way to downshift.
+        </li>
+        <li>
+          <b>The key input is the weakest one.</b> The 250k figure leans on an assumed 30k of files
+          re-read in each new session. The README's own next step is to measure it after a week of
+          real handoffs and rerun.
+        </li>
+      </ul>
+      <div class="callout">
+        <b>Subagents and workflows do not survive <code>/clear</code>.</b> That is why it waits for
+        them rather than listing them in the doc. Background Bash, monitors and scheduled tasks do
+        survive, so the handoff is told to list each one with its ID, purpose and output path.
+      </div>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>Integrates with</td>
+            <td>
+              Claude Code twice: as a <code>Stop</code> hook (<code>auto-handoff stop</code>,
+              timeout 10, registered in <code>settings/claude-code/settings.json</code>) and from
+              the statusline, where <code>statusline-context.sh</code> calls
+              <code>auto-handoff idle</code> every refresh once context passes the idle gate. herdr
+              is the other half: it types <code>/clear</code>, the model switch and the continue
+              prompt into the pane. The handoff itself is written by the
+              <a href="../skill-r2-handoff/" style="color: var(--accent)"
+                ><code>r2-handoff</code></a
+              >
+              skill's <code>Auto</code> section.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              herdr and python3, and the <code>r2-handoff</code> skill, which writes the document.
+              The script is one file of standard library.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <code>~/.agents/state/auto-handoff/</code>, one small file per herdr pane:
+              <code>&lt;pane&gt;.json</code> holds the phase of a handoff in flight, an empty
+              <code>&lt;pane&gt;.json.off</code> is that pane's off switch, an empty
+              <code>off</code> is the global one, and <code>log.jsonl</code> gets a line for every
+              Stop that gets as far as counting tokens.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>
+              <b>Yes</b>, <code>deletion-policy: delete</code>. Nothing here is a record worth
+              keeping. Know what you are deleting, though: <b>the off switches too</b>. A pane you
+              had switched off will start handing off again, and a handoff mid-flight is forgotten.
+            </td>
+          </tr>
+          <tr>
+            <td>Not its state</td>
+            <td>
+              The handoff documents go to the OS temp directory as
+              <code>handoff-auto-&lt;pane&gt;-&lt;epoch&gt;.md</code>, so they are cleaned up by the
+              OS and are not under state. The transcript belongs to Claude Code, which this reads
+              and never writes.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">From 250k to a clean prompt</h2>
+      <p class="m">
+        One automatic handoff, across the five things that take part. Step through it: the arrows
+        for the current step light up, and the strip under the diagram shows what is on disk at that
+        moment. Line numbers refer to <code>tools/auto-handoff/auto-handoff</code>.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="handoff-sequence"
+        data-label="stepper: a swimlane of one automatic handoff"
+      >
+        <div class="stage" id="stage"></div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+
+      <h3>The Stop hook is a two-visit state machine</h3>
+      <p>
+        <code>stop()</code> (line 97) is called twice per handoff and tells the visits apart by one
+        field in <code>&lt;pane&gt;.json</code>. On the first visit there is no file and the hook
+        decides. On the second the phase is <code>writing</code> and it only has to check that the
+        document arrived. A third phase, <code>injecting</code>, is the injector's claim on the
+        pane: any stop that sees it returns immediately, so a Stop firing during the injection
+        cannot start a second one.
+      </p>
+      <pre>{"phase": "writing",
+ "path":  "…/handoff-auto-&lt;pane&gt;-&lt;epoch&gt;.md",
+ "t":     1791095291.7,    <span class="c">← the doc's mtime must be ≥ this</span>
+ "enter": true}           <span class="c">← false on the idle path: typed, not sent</span></pre>
+      <p>
+        The "must be newer than <code>t</code>" test on line 122 is what stops a leftover file at
+        the same path from passing for a fresh one. And if the phase is <code>writing</code> but the
+        file never showed up (interrupted, or the model declined), line 129 wipes the state and
+        starts over, unless <code>stop_hook_active</code> says this stop is itself the product of a
+        block, in which case it just stops, rather than block-looping.
+      </p>
+
+      <h3>Busy is checked before the doc, and again after</h3>
+      <p>
+        <code>running(hook)</code> (line 70) reads <code>background_tasks</code> from the Stop
+        payload and keeps the entries whose <code>status</code> is <code>running</code>. It is
+        consulted at line 108, <em>before</em> either visit does anything, so a busy session never
+        gets as far as asking for a doc. The case it has to survive is subtler: a task still running
+        <em>after</em> the doc was written.
+      </p>
+      <div class="callout">
+        <b>A doc that predates a task's result would lose that result.</b> The result lands in the
+        old context, which is about to be cleared, so line 114 deletes the half-made doc, wipes the
+        phase, and waits. When the task finishes its notification starts a turn, that turn's Stop
+        re-runs the check, and the handoff is asked for afresh, <em>with</em> the result in context.
+      </div>
+      <p>
+        An absent <code>background_tasks</code> key returns a single made-up entry, so
+        <code>busy</code> is truthy. The default for "I cannot tell" is to do nothing.
+      </p>
+
+      <h3>It never types into a draft</h3>
+      <p>
+        The injector is launched with <code>start_new_session=True</code> (line 126), which makes it
+        its own process group, so it outlives the hook that spawned it. It first runs
+        <code>herdr agent wait --until idle --until done</code> (line 199), because the Stop that
+        launched it is still returning, then sleeps one second. Then
+        <code>draft_empty()</code> (line 155) reads the visible screen through
+        <code>herdr agent read --source visible</code>, finds the last line starting with
+        <code>❯</code>, and accepts it only if the box is bare or is the dimmed
+        <code>Try "…"</code> placeholder of a fresh session. The prompt glyph is followed by a
+        no-break space in that placeholder, which is why line 157 normalises
+        <code>\xa0</code> first. 900 checks, two seconds apart, and the
+        <code>for … else: return</code> on lines 203–208 means a timeout leaves your session
+        untouched.
+      </p>
+
+      <h3>What the handoff asks for, and what the injector reads back</h3>
+      <p>
+        The block reason (<code>instruction()</code>, line 87) tells Claude to read the r2-handoff
+        skill and follow its <code>Auto</code> section, write to the exact path given, and end the
+        turn. That section adds two lines after the lineage line in the document, and the injector
+        reads both back, one with a regex and one (on the idle path only) with a prefix test:
+      </p>
+      <pre>Topic: refactoring the retry layer; remaining: the two failing integration tests
+Next session: model sonnet, effort high
+<span class="c">^ next_session() (line 189) matches ^Next session: model (\w+), effort (\w+)
+  and accepts only a pair in CHOICES: haiku/high, sonnet/high, opus/medium</span></pre>
+      <p>
+        <code>/model</code> and <code>/effort</code> are typed <em>after</em>
+        <code>/clear</code> (lines 212–217), when the cache is already gone, so a switch costs
+        nothing. The value is passed through <code>upgrade()</code> (line 182), which returns it
+        only if it ranks above the session's current one. The current one was read before the
+        handoff by <code>current()</code> (line 168) from the last main-chain reply, and an unknown
+        one is treated as the top of the scale, so the switch is skipped rather than risk a
+        downgrade.
+      </p>
+
+      <h3>The idle path asks, and the same Stop hook decides</h3>
+      <p>
+        <code>idle()</code> (line 139) is called with the statusline's payload every 30 seconds
+        while the session is above 150k. It needs the quiet gap to fall in
+        <code>[55 min, 60 min)</code>, because after an hour the cache is already gone and there is
+        nothing left to save. It also needs <code>herdr agent get</code> to report idle or done, and
+        no file for the pane already. Then it saves the phase with <code>enter: false</code> and
+        sends the instruction itself via <code>herdr agent prompt</code>.
+      </p>
+      <p class="m">
+        Notice what idle does <em>not</em> do: check for background tasks. The statusline payload
+        has no task list. It does not need one. The instruction starts a turn, that turn ends in a
+        Stop, and that Stop goes through the busy check on line 108 like any other. The one place
+        the check lives is the one place that can see the data.
+      </p>
+
+      <h3>Why 250k</h3>
+      <p>
+        <code>sweep.py</code> replays every main-chain request since 2026-09-22 (237 sessions) as if
+        the session had handed off at each threshold from 100k to 700k, charging a handoff its real
+        costs: the doc-writing turn at full context, then a new session whose 41k measured baseline,
+        the doc and the files it re-reads are written to the 1h cache. Each bar is the band within
+        1% of the best threshold; the dot is the best.
+      </p>
+      <div
+        class="band"
+        data-viz-id="threshold-bands"
+        data-label="range of thresholds within 1% of best, per replay"
+      >
+        <svg
+          id="bands"
+          viewBox="0 0 800 292"
+          role="img"
+          aria-label="bands of near-optimal handoff thresholds for five replays; 250k sits in all of them"
+        ></svg>
+      </div>
+      <p class="cap">
+        Run on 2026-10-03 at the central assumptions: 30k re-read, cache reads at 0.35× on the
+        subscription meter. The last column is the saving at 250k.
+      </p>
+      <p>
+        The row to look at is the third. Sonnet and Haiku prices pull the best threshold down to
+        210k, since a Sonnet cache rebuild costs 20 reads against Opus's 40, and 250k only costs
+        Sonnet 0.3 points. One number stays within 1% of the best everywhere, so there is one knob.
+        The assumptions matter more than the model: moving the re-read from 0 to 30k to 60k moves
+        the Opus optimum from 180k to 250k to 270k.
+      </p>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · a session that clears
+        itself, politely.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

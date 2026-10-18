@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>speedbump — a speed bump, not a wall</title>
+    <meta name="viz:uid" content="v-5b2e7c90a4d1" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="speedbump" />
+    <meta
+      name="viz:description"
+      content="speedbump is a Claude Code PreToolUse hook: when the Mac is strained it stops a session's Bash command once, names the busiest processes, and lets the retry through."
+    />
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* Card + dive. transform:scale() does not shrink the layout box, so poster.css
+     collapses #fit's height off the same --s. */
+      :root {
+        --s: 1;
+        --gone: #5a6474;
+        --kept: var(--c5);
+        --ask: var(--c4);
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -12%,
+            color-mix(in srgb, var(--c5) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 112%,
+            color-mix(in srgb, var(--c4) 13%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 560px;
+        gap: 32px;
+        align-items: center;
+        padding: 46px 48px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        letter-spacing: 0.14em;
+        color: var(--c5);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c5);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c5) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 46px;
+        line-height: 1.06;
+        margin: 0 0 16px;
+        letter-spacing: -1.3px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      p.sub {
+        font-size: 17px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 14px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 16px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c5);
+        border-radius: 9px;
+        padding: 9px 13px;
+        color: var(--text);
+      }
+
+      /* ── the proof slot: a week's tank, and the part nobody can account for ── */
+      .rig {
+        background: color-mix(in srgb, var(--panel) 88%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px 17px;
+        font-family: var(--mono);
+      }
+      .rig .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10.5px;
+        letter-spacing: 0.13em;
+        color: var(--c5);
+        margin-bottom: 13px;
+      }
+      .rig .cap span:last-child {
+        color: var(--faint);
+      }
+
+      /* ── dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c5);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul,
+      .dive ol {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c4);
+      }
+      .dive table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0 0 16px;
+      }
+      .dive table td {
+        border-top: 1px solid var(--border);
+        padding: 11px 0;
+        font-size: 15px;
+        line-height: 1.55;
+        vertical-align: top;
+        color: var(--text);
+      }
+      .dive table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.05em;
+        padding-right: 16px;
+      }
+      .fig {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        margin: 0 0 18px;
+      }
+      .fig figcaption {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+        letter-spacing: 0.06em;
+        margin-top: 12px;
+        line-height: 1.5;
+      }
+      .pre {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 12px 14px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--muted);
+        overflow-x: auto;
+        margin: 0 0 16px;
+      }
+      .pre b {
+        color: var(--c5);
+        font-weight: 400;
+      }
+      .pre em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 14px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 19px;
+      }
+      .step .k {
+        flex: 0 0 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+      }
+      .step.you .k {
+        background: var(--c4);
+        color: #0d1117;
+      }
+      .step.bot .k {
+        background: var(--accent);
+        color: #0d1117;
+      }
+      .step .v b {
+        color: var(--text);
+      }
+      .step .v {
+        color: var(--muted);
+      }
+      .say {
+        font-family: var(--mono, monospace);
+        color: var(--c5);
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="speedbump"
+        data-viz-id="poster-card"
+        data-label="speedbump poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED TOOL · CLAUDE CODE HOOK</div>
+          <h1 class="hook">
+            Slow down.<br /><em>Look who else<br />is running.</em>
+          </h1>
+          <p class="sub">
+            When the Mac is strained, the <b>first</b> Bash command of a session bounces with a list
+            of the busiest processes. Run it again and it goes through.
+          </p>
+          <p class="not">
+            Not a wall. Silent when the machine is fine, and one retry always gets past.
+          </p>
+          <div class="chip">PreToolUse:Bash → speedbump.sh → exit 2 once</div>
+        </div>
+        <div class="rig" data-viz-id="the-loop" data-label="one command through speedbump">
+          <div class="cap"><span>ONE COMMAND</span><span>WHAT HAPPENS</span></div>
+          <div class="steps">
+            <div class="step bot">
+              <span class="k">1</span
+              ><span class="v"><b>Agent</b> runs <span class="say">bun test</span></span>
+            </div>
+            <div class="step you">
+              <span class="k">!</span><span class="v"><b>Blocked</b>: load 20 on 12 cores</span>
+            </div>
+            <div class="step bot">
+              <span class="k">2</span><span class="v"><b>Agent</b> reads the list, retries</span>
+            </div>
+            <div class="step you">
+              <span class="k">✓</span><span class="v"><b>Allowed</b> for the next 10 minutes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install speedbump">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <p class="why">
+        the full setup, run in a clone of
+        <a href="https://github.com/RascalTwo/ai-setup">RascalTwo/ai-setup</a>
+      </p>
+      <pre><span class="l"><span class="c">bun</span> install.ts</span></pre>
+      <p class="needs">needs <code>sh</code> <code>jq</code></p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓ scroll</div>
+
+    <article class="dive">
+      <h2 data-beat="why">Every session thought it had the whole machine</h2>
+      <p>
+        Sessions can't see each other, so each sizes its work as if it were alone. On 2026-10-16 two
+        sessions ran the same <code>viz verify</code> side by side, each with a headless Chrome at
+        12x concurrency, and the Mac crawled. A per-tool lock only covers tools already known to be
+        heavy.
+      </p>
+      <p class="m">
+        speedbump checks the machine itself before every Bash call, so it covers anything, and tells
+        the agent who is already hogging it.
+      </p>
+
+      <h2 data-beat="using">You don't invoke it</h2>
+      <ul>
+        <li>
+          <b>It is always on</b> once <code>install.ts</code> has merged the hook into your Claude
+          Code settings. Nothing to type.
+        </li>
+        <li>
+          <b>When it fires</b> the agent sees "Speed bump, not a wall", the reason, the three
+          busiest processes and the instruction to run the exact same command again.
+        </li>
+        <li>
+          <b>To tune it</b> read <code>~/.agents/state/speedbump/log</code>: blocks while the Mac
+          felt fine mean the thresholds are too low.
+        </li>
+        <li>
+          <b>To turn it off</b> remove the entry from
+          <code>settings/claude-code/settings.json</code>. Test:
+          <code>sh tools/speedbump/speedbump.test.sh</code>.
+        </li>
+      </ul>
+
+      <h2 data-beat="limits">What it won't do</h2>
+      <ul>
+        <li>
+          <b>It never blocks twice.</b> Once a session has been warned, every command it runs for
+          the next 10 minutes passes, whatever the command.
+        </li>
+        <li><b>It doesn't stop or throttle anything.</b> It only advises; the agent decides.</li>
+        <li>
+          <b>Memory warning is ignored</b>, only critical counts. Swap used, disk I/O and thermal
+          state are left out on purpose.
+        </li>
+        <li><b>macOS only.</b> It reads <code>kern.memorystatus_vm_pressure_level</code>.</li>
+        <li>
+          <b>A failed disk reading counts as fine</b>, so a broken <code>df</code> never blocks
+          every command.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>Integrates with</td>
+            <td>
+              <b>Claude Code hooks</b>: a <code>PreToolUse</code> hook on <code>Bash</code>, entry
+              in <code>settings/claude-code/settings.json</code>, timeout 5 s, run after
+              <code>rtk hook claude</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td><code>sh</code> and <code>jq</code>. Platform: macOS.</td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <code>~/.agents/state/speedbump/</code>:
+              <code>sessions/&lt;session_id&gt;</code> (mtime is the "warned" mark; files older than
+              60 minutes are pruned) and <code>log</code> (one line per block).
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>
+              <b>No</b>, <code>deletion-policy: retain</code>: the log is your tuning record.
+              Deleting the session marks only means each session is warned once more.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One Bash command, end to end</h2>
+      <p class="m">
+        Claude Code is about to run <code>bun test</code>. It pipes
+        <code>{"session_id", "tool_input":{"command"}}</code> to
+        <code>tools/speedbump/speedbump.sh</code> on stdin. Exit 0 lets the command run; exit 2
+        blocks it and feeds stderr to the agent.
+      </p>
+      <figure class="fig">
+        <svg
+          viewBox="0 0 760 260"
+          width="100%"
+          role="img"
+          aria-label="speedbump decision flow for one Bash command"
+        >
+          <defs>
+            <marker
+              id="ah"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="#58a6ff" />
+            </marker>
+          </defs>
+          <g data-viz-id="n-hook" data-label="PreToolUse hook">
+            <rect
+              x="10"
+              y="90"
+              width="150"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="85" y="122" text-anchor="middle" fill="#e6edf3" font-size="14">
+              PreToolUse:Bash
+            </text>
+            <text x="85" y="142" text-anchor="middle" fill="#8b949e" font-size="12">
+              speedbump.sh
+            </text>
+          </g>
+          <g data-viz-id="n-read" data-label="read signals">
+            <rect
+              x="215"
+              y="90"
+              width="150"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="290" y="118" text-anchor="middle" fill="#e6edf3" font-size="14">
+              sysctl + df
+            </text>
+            <text x="290" y="138" text-anchor="middle" fill="#8b949e" font-size="12">
+              strained? else exit 0
+            </text>
+          </g>
+          <g data-viz-id="n-mark" data-label="session mark">
+            <rect
+              x="420"
+              y="90"
+              width="150"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="495" y="118" text-anchor="middle" fill="#e6edf3" font-size="14">
+              sessions/&lt;id&gt;
+            </text>
+            <text x="495" y="138" text-anchor="middle" fill="#8b949e" font-size="12">
+              &lt;10 min old? exit 0
+            </text>
+          </g>
+          <g data-viz-id="n-block" data-label="block">
+            <rect
+              x="600"
+              y="90"
+              width="150"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#f85149"
+              stroke-width="2"
+            />
+            <text x="675" y="118" text-anchor="middle" fill="#e6edf3" font-size="14">
+              touch + log
+            </text>
+            <text x="675" y="138" text-anchor="middle" fill="#8b949e" font-size="12">
+              ps top 3 · exit 2
+            </text>
+          </g>
+          <path
+            d="M160 125 L215 125"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M365 125 L420 125"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M570 125 L600 125"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <text x="380" y="60" fill="#8b949e" font-size="12">
+            fine, or warned already: command runs
+          </text>
+          <path
+            d="M290 90 L290 70 L495 70 L495 90"
+            stroke="#3fb950"
+            stroke-width="1.5"
+            fill="none"
+            stroke-dasharray="4 3"
+          />
+          <text x="300" y="215" fill="#8b949e" font-size="12">
+            retry: mark is fresh, so exit 0 and the same command runs
+          </text>
+        </svg>
+        <figcaption>
+          Two silent exits, one block. The block is what writes the mark, which is what makes the
+          retry pass.
+        </figcaption>
+      </figure>
+      <ol>
+        <li>
+          <b>Read the machine.</b>
+          <code>sysctl -n hw.ncpu kern.memorystatus_vm_pressure_level vm.loadavg</code> plus
+          <code>df -k "$HOME"</code> free KB. <code>SPEEDBUMP_SIGNALS</code> fakes this in tests.
+        </li>
+        <li>
+          <b>Decide.</b> An <code>awk</code> pass flags: pressure level &gt;= 4 (critical); 1-minute
+          load &gt; 1.5 x cores while the 5-minute load &gt; cores; free disk &lt; 10485760 KB (10
+          GB). None true: print nothing, <code>exit 0</code>.
+        </li>
+        <li>
+          <b>Check the mark.</b> <code>jq</code> pulls <code>session_id</code>; if
+          <code>~/.agents/state/speedbump/sessions/&lt;id&gt;</code> was touched in the last 10
+          minutes (<code>find -mmin -10</code>), <code>exit 0</code>.
+        </li>
+        <li>
+          <b>Otherwise bump.</b> <code>touch</code> the mark, prune marks older than 60 minutes,
+          append <code>date session cores pressure load free-kb cmd</code> (command cut to 120
+          chars) to <code>log</code>.
+        </li>
+        <li>
+          <b>Name the culprits.</b> Disk-only trouble gets a short "free up space" message.
+          Otherwise <code>ps -Ao</code> is sorted by RSS (memory) or CPU, top 3 each walked up its
+          parent chain to a <code>claude</code> process and tagged "(this session)" or "(another
+          Claude session, pid N)".
+        </li>
+        <li>
+          <b>Exit 2.</b> The message on stderr says to run the exact same command again. The agent
+          does; step 3 now finds a fresh mark and the command runs.
+        </li>
+      </ol>
+    </article>
+    <script type="module" src="/_kit/poster.js"></script>
+  </body>
+</html>

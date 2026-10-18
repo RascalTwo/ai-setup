@@ -1,0 +1,5 @@
+[test]
+# The skill's own suite only. A viz's tests (viz-pages/*/tests) run inside viz verify, which
+# gives them the viz global; picked up here they fail on its absence.
+root = "./tests"
+preload = ["./tests/bun-setup.ts"]

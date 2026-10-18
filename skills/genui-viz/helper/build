@@ -1,0 +1,6 @@
+#!/bin/sh
+# Builds the floating panel `genui show` opens. macOS only; needs the Xcode command line tools.
+set -e
+cd "$(dirname "$0")"
+swiftc -O Panel.swift -o genui-panel
+echo "built $(pwd)/genui-panel"
