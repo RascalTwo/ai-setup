@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>spec-viz-test</title>
+    <!-- Posture stays local: a spec for someone's task is not for the open web by default. -->
+    <meta name="viz:posture" content="local" />
+    <meta name="viz:listed" content="unlisted" />
+    <meta
+      name="viz:tests"
+      content="smoke: a spec page; its only inputs are the ✓/kinda/✗ picks and the sign-off button"
+    />
+    <meta name="viz:bundle" content="spec.json narration.json" />
+    <meta name="viz:title" content="spec-viz-test" />
+    <meta name="viz:description" content="" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="grill.css" />
+    <link rel="stylesheet" href="spec.css" />
+  </head>
+  <body data-grill-late>
+    <!-- Everything is rendered from spec.json by spec.ts (served as spec.js). Edit spec.json, never this file. -->
+    <main id="app"></main>
+    <script type="module" src="entry.js"></script>
+    <script src="grill.js"></script>
+    <script src="grill-expand.js"></script>
+  </body>
+</html>

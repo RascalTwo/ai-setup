@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>omnissa-horizon-vdi — drive the VDI through a picture of a desktop</title>
+    <meta name="viz:uid" content="v-087073ad4e11" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="omnissa-horizon-vdi" />
+    <meta
+      name="viz:description"
+      content="Operate a remote desktop through Omnissa Horizon Client on macOS from Claude Code or Codex: probe first, paste instead of type, read APIs instead of pages, and load only the notes for this runtime, guest OS and task."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      :root {
+        --s: 1;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            840px 500px at 95% -10%,
+            color-mix(in srgb, var(--c4) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            780px 470px at -6% 112%,
+            color-mix(in srgb, var(--good) 11%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 500px;
+        gap: 36px;
+        align-items: center;
+        padding: 46px 58px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--c4);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c4);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c4) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 48px;
+        line-height: 1.05;
+        margin: 0 0 16px;
+        letter-spacing: -1.4px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--good);
+      }
+      p.sub {
+        font-size: 17.5px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 15px;
+        max-width: 460px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 16px;
+        max-width: 460px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .not i {
+        color: var(--danger);
+        font-style: normal;
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--good);
+        border-radius: 9px;
+        padding: 9px 14px;
+        color: var(--text);
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the proof slot: NESTING is the argument. Each box is physically inside the one
+     above it, and the colour of its left rail says whether input lands there. */
+      .stack {
+        background: color-mix(in srgb, var(--panel) 80%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 15px 16px 14px;
+        font-family: var(--mono);
+      }
+      .stack .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        letter-spacing: 0.13em;
+        color: var(--c4);
+        margin-bottom: 12px;
+      }
+      .stack .cap span:last-child {
+        color: var(--faint);
+      }
+      .lyr {
+        border: 1px solid var(--border);
+        border-left-width: 3px;
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 7px;
+      }
+      .lyr .h {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+        font-size: 12.5px;
+        color: var(--text);
+      }
+      .lyr .h .tag {
+        font-size: 10.5px;
+        letter-spacing: 0.09em;
+        white-space: nowrap;
+      }
+      .lyr .n {
+        font-size: 11px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .lyr.mac {
+        border-left-color: var(--faint);
+      }
+      .lyr.mac .tag {
+        color: var(--faint);
+      }
+      .lyr.dp {
+        border-left-color: var(--c4);
+        background: color-mix(in srgb, var(--c4) 6%, transparent);
+      }
+      .lyr.dp .tag {
+        color: var(--c4);
+      }
+      .lyr.hz {
+        border-left-color: var(--good);
+        background: color-mix(in srgb, var(--good) 9%, transparent);
+        margin-left: 15px;
+      }
+      .lyr.hz .tag {
+        color: var(--good);
+        font-weight: 700;
+      }
+      .lyr.win {
+        border-left-color: var(--good);
+        margin-left: 30px;
+      }
+      .lyr.win .tag {
+        color: var(--good);
+      }
+      .lyr.bad {
+        border-left-color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 7%, transparent);
+        margin-left: 15px;
+      }
+      .lyr.bad .tag {
+        color: var(--danger);
+        font-weight: 700;
+      }
+      .stack .pfoot {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+        font-size: 11px;
+        letter-spacing: 0.09em;
+        color: var(--faint);
+        line-height: 1.5;
+      }
+      .stack .pfoot b {
+        color: var(--good);
+      }
+
+      /* ── the dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c4);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul,
+      .dive ol {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c4);
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      .callout.stop {
+        border-left-color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 8%, transparent);
+      }
+      .callout.stop b {
+        color: var(--danger);
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        min-height: 190px;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 46px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--c4);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="omnissa-horizon-vdi"
+        data-viz-id="poster-card"
+        data-label="omnissa-horizon-vdi poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · OMNISSA-HORIZON-VDI</div>
+          <h1 class="hook">Drive the VDI<br />through a picture<br /><em>of a desktop.</em></h1>
+          <p class="sub">
+            A remote desktop inside Omnissa Horizon Client, operated from
+            <b>Claude Code</b> or <b>Codex</b>, and from there into any machine the user hops to.
+          </p>
+          <p class="not">
+            Horizon's accessibility tree exposes <i>only the Mac wrapper</i>.<br />So: click,
+            screenshot, re-derive. Text goes in <b>by paste</b>.
+          </p>
+          <div class="trigger"><span>probe first</span>&nbsp;then paste, never type</div>
+        </div>
+
+        <div
+          class="stack"
+          data-viz-id="surface-stack"
+          data-label="nested surfaces from the Mac down to a hopped-to machine"
+        >
+          <div class="cap">
+            <span>WHERE THE INPUT HAS TO GO</span><span>NESTING = CONTAINMENT</span>
+          </div>
+
+          <div class="lyr mac">
+            <div class="h">
+              <span>the user's terminal</span><span class="tag">HAND BACK HERE</span>
+            </div>
+            <div class="n">
+              Where the agent runs, and where focus returns when the work is done.
+            </div>
+          </div>
+
+          <div class="lyr hz">
+            <div class="h">
+              <span>Omnissa Horizon Client</span><span class="tag">✓ FRONT, EVERY BATCH</span>
+            </div>
+            <div class="n">
+              Every key and paste checks the frontmost app. Bring Horizon forward before each batch.
+            </div>
+          </div>
+
+          <div class="lyr win">
+            <div class="h">
+              <span>the remote desktop</span><span class="tag">✓ CLICK WELL INSIDE</span>
+            </div>
+            <div class="n">
+              The guest OS decides the chords and the habits. Pixels only: no element tree.
+            </div>
+          </div>
+
+          <div class="lyr dp">
+            <div class="h">
+              <span>a machine hopped to from it</span><span class="tag">READ BY DEFAULT</span>
+            </div>
+            <div class="n">
+              Its own window and connection bar. Name it from the title before acting.
+            </div>
+          </div>
+
+          <div class="lyr bad">
+            <div class="h">
+              <span>typing keystrokes into Horizon</span><span class="tag">✗ GARBLES</span>
+            </div>
+            <div class="n">
+              Text arrived as one repeated letter.
+              <b style="color: var(--good)">Clipboard paste</b>, then read it back.
+            </div>
+          </div>
+
+          <div class="pfoot">
+            THIS WORKFLOW IS EMPIRICAL. ROUTING DEPENDS ON FOCUS<br />AND WHICH SURFACE TOOK THE
+            FIRST CLICK.<br /><b>PROBE, THEN WORK.</b>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section
+      class="install"
+      data-viz-id="install-strip"
+      data-label="how to install omnissa-horizon-vdi"
+    >
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <pre><span class="l"><span class="c">npx</span> skills add <span class="r">RascalTwo/ai-setup</span> <span class="f">-g</span> <span class="f">-s</span> omnissa-horizon-vdi <span class="f">-s</span> read-image-locally</span></pre>
+      <p class="needs">
+        needs <code>ollama</code>
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle">Omnissa Horizon Client</a>
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle">computer-use</a>
+      </p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">Everything inside is pixels</h2>
+      <p>
+        Horizon Client is a macOS window containing a <em>picture</em> of a remote desktop, so the
+        accessibility tree stops at the wrapper: no buttons to query, no labels to match, no element
+        tree to walk. Every click is a coordinate, and every check is a screenshot.
+      </p>
+      <p>
+        Worse, input does not arrive the way it leaves. Focus decides whether a keystroke lands at
+        all, typed text can arrive garbled, and the screen keeps changing under you: toast
+        notifications, snap popups, a lock screen. An agent that drives it like a normal app burns
+        its effort on clicks that silently did nothing.
+      </p>
+      <p class="m">
+        This skill is the operating discipline that makes it efficient: probe before working, keep
+        batches small, paste instead of type, read data through APIs instead of UIs, and load only
+        the notes that apply to this runtime, this guest OS and this task.
+      </p>
+
+      <h2 data-beat="using">Fires on any VDI ask</h2>
+      <p>
+        It is model-invoked: the agent reaches for it on its own whenever the user asks it to work
+        in their VDI, Horizon or Omnissa, a remote or virtual desktop, or a machine reached by
+        hopping from one. Type <code>/omnissa-horizon-vdi</code> to force it.
+      </p>
+      <p>
+        <code>SKILL.md</code> opens with a <b>Load what applies</b> list. The agent reads exactly
+        one runtime file, the guest-OS file that matches the first screenshot, and a task file only
+        when the task needs it. Everything else stays out of context.
+      </p>
+
+      <h2 data-beat="limits">What it will not do</h2>
+      <p>
+        <b>Reading is allowed when the user asks. Acting needs a go-ahead per action.</b> Sending
+        messages, joining meetings, submitting forms, changing tickets, deleting data, re-running
+        jobs, restarting services or transmitting sensitive data each wait for an explicit yes.
+      </p>
+      <div class="callout stop">
+        <b>Stop and ask at any login, MFA, lock screen or password prompt.</b> Those need the human;
+        the skill never enters credentials.
+      </div>
+      <ul>
+        <li>
+          <b>It cannot read the remote UI structurally.</b> Only pixels, and only from a fresh
+          screenshot or zoom.
+        </li>
+        <li>
+          <b>It won't trust a stale coordinate.</b> Every batch re-derives from the latest frame.
+        </li>
+        <li>
+          <b>It leaves no litter.</b> Probes are task-shaped; files open "Just once"; dialogs close
+          with Cancel or Don't Save.
+        </li>
+        <li>
+          <b>It keeps notes generic.</b> No hostnames, projects, people or client details go into
+          the skill or into memory.
+        </li>
+        <li>
+          <b>macOS host only.</b> The client, the runtimes and the clipboard sync are all Mac-side.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/omnissa-horizon-vdi/</code>, prose only. <code>SKILL.md</code> holds the
+              shared discipline and the <b>Load what applies</b> router; one file per branch beside
+              it.
+            </td>
+          </tr>
+          <tr>
+            <td>Branch files</td>
+            <td>
+              Runtime: <code>claude-code.md</code>, <code>codex.md</code>. Guest OS:
+              <code>guest-windows.md</code>. Task: <code>web-app-apis.md</code> (with GitLab
+              endpoints), <code>deployed-builds.md</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Integrates</td>
+            <td>
+              <b>Omnissa Horizon Client</b> for remote desktop control, and <b>DeskPad</b> as a
+              virtual display on the Codex runtime. Both are Mac apps, driven as apps.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <code>Omnissa Horizon Client</code> and <code>computer-use</code> (the computer-use
+              MCP on Claude Code, <code>node_repl</code>'s runtime on Codex). Screenshots are read
+              with the <code>read-image-locally</code> skill.
+            </td>
+          </tr>
+          <tr>
+            <td>Calls</td>
+            <td>
+              <a href="../skill-read-image-locally/">read-image-locally</a> first for structured
+              screenshot extraction, falling back to a native read for dense text or layout.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>None.</b> The manifest says <code>state: false</code>: no session file, no saved
+              coordinates, nothing under <code>~/.agents/</code>. It re-derives everything each run.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete</td>
+            <td>Nothing local to delete.</td>
+          </tr>
+          <tr>
+            <td>Where lessons go</td>
+            <td>
+              <b>Into the branch file they belong to</b>: shared behaviour in <code>SKILL.md</code>,
+              agent mechanics in the runtime file, OS habits in the guest-OS file, recipes in a task
+              file. A new OS or task gets its own file and a router line.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One task, from a cold start to verified data</h2>
+      <p class="m">The sequence an agent runs, with the branch file each step comes from.</p>
+
+      <div
+        class="fig"
+        data-viz-id="vdi-figure"
+        data-label="stepper: from a cold start to verified data read out of the remote desktop"
+      >
+        <div class="stage" id="stage"></div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+
+      <h3>Load only the branches that apply</h3>
+      <p>
+        The router is the architecture. A Claude Code run on a Windows guest reading a web app loads
+        <code>claude-code.md</code>, <code>guest-windows.md</code> and <code>web-app-apis.md</code>,
+        and nothing about DeskPad, <code>sky</code> or deployed builds. Adding a Linux guest or a
+        new recipe is one new file and one router line; no existing branch grows.
+      </p>
+
+      <h3>Paste, never type</h3>
+      <p>
+        On Claude Code, typed text into Horizon arrived as one repeated letter, so every string goes
+        through the clipboard:
+      </p>
+      <pre>open_application("Omnissa Horizon Client Next")   <span class="c">// write_clipboard refuses while the terminal is in front</span>
+write_clipboard("https://…")
+wait 1s                                          <span class="c">// Horizon syncs the Mac clipboard into the guest</span>
+click field → ctrl+a → ctrl+v                    <span class="c">// the guest's chords</span>
+zoom on the field                                <span class="c">// read back; a lagged sync pastes the old text</span>
+key Return</pre>
+      <p class="m">
+        The read-back is the part that matters: a paste that landed the previous clipboard looks
+        exactly like success until something else breaks.
+      </p>
+
+      <h3>Read the API, not the page</h3>
+      <p>
+        When the data lives in a web app, the guest's browser is already signed in, so the app's
+        JSON API is one pasted URL away. It gives exact timestamps where the UI says "2 weeks ago",
+        and text dense enough to zoom-read in strips. <code>web-app-apis.md</code> keeps GitLab's
+        endpoints for commits, diffs, raw files, code search, deployments and pipelines.
+      </p>
+
+      <h3>Hop carefully</h3>
+      <p>
+        A remote desktop can be a jumping-off point to further machines, each in its own window with
+        a connection bar. The agent names the machine from that title before acting, reports which
+        one it was on, and treats every hop as read-by-default.
+        <code>deployed-builds.md</code> covers the common question on the far side: which build is
+        running, read from the startup log and from the config inside a copied artifact.
+      </p>
+
+      <h3>When input stops landing</h3>
+      <ol>
+        <li>Re-query state with a screenshot.</li>
+        <li>Click well inside the remote content.</li>
+        <li>Rerun the probe: a task control, or the guest file's fallback probe.</li>
+        <li>Then the runtime's own fix: on Codex, restore the window size on DeskPad.</li>
+      </ol>
+      <p class="m">
+        On a Windows guest, the snap-layout popup near a maximize button and toast notifications
+        both swallow clicks. The fix is the same first move: click well inside the content, then
+        retry.
+      </p>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its
+        own existence.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

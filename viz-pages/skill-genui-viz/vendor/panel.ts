@@ -1,0 +1,1 @@
+../../../skills/genui-viz/page/panel.ts

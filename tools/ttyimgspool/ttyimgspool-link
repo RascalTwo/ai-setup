@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+"""Make a PLAIN click on an inline image open it full-pane, by borrowing a link scheme.
+
+    ttyimgspool-link <scheme>   borrow <scheme>, one Claude Code allows (see below); remembered
+    ttyimgspool-link off        back to file:// links (Ctrl+click only)
+    ttyimgspool-link status     which scheme, if any
+
+Why borrow one: Claude Code opens a plain-clicked link only for a hard-coded allowlist
+of schemes (https, vscode, cursor, windsurf, zed, figma, ...); file:// becomes a
+Finder reveal and anything else is dropped. So the hook links each image as
+<scheme>://ttyimg/<path>, and a tiny helper app registered for <scheme> opens the
+viewer. Links WITHOUT the ttyimg marker are forwarded to whatever other app claims
+the scheme, so installing the real Windsurf later still works.
+
+macOS only (LaunchServices). `handle <url>` is the helper app's entry point.
+"""
+import os, shutil, subprocess, sys, urllib.parse
+
+STATE = os.environ.get("TTYIMGSPOOL_DIR", os.path.expanduser("~/.agents/state/ttyimgspool"))
+CHOICE = os.path.join(STATE, ".link-scheme")
+APP = os.path.expanduser("~/Applications/TtyImgLink.app")
+BUNDLE = "com.rascaltwo.ttyimgspool.link"
+LSREGISTER = ("/System/Library/Frameworks/CoreServices.framework/Frameworks/"
+              "LaunchServices.framework/Support/lsregister")
+# The schemes Claude Code 2.1.283 opens on a plain click (hard-coded, see README).
+CLAUDE_CODE_OPENS = {"vscode", "vscode-insiders", "cursor", "windsurf", "zed", "jetbrains",
+                     "idea", "slack", "linear", "notion", "figma"}
+
+
+def swift(code):
+    return subprocess.run(["swift", "-e", code], capture_output=True, text=True).stdout.strip()
+
+
+def build(scheme):
+    """osacompile an app whose only job is to hand URLs back to `handle`."""
+    src = f'on open location u\n\tdo shell script quoted form of "{os.path.realpath(__file__)}" & " handle " & quoted form of u & " >/dev/null 2>&1 &"\nend open location\n'
+    tmp = f"/tmp/ttyimgspool-link-{os.getpid()}.applescript"
+    open(tmp, "w").write(src)
+    shutil.rmtree(APP, ignore_errors=True)
+    os.makedirs(os.path.dirname(APP), exist_ok=True)
+    subprocess.run(["osacompile", "-o", APP, tmp], check=True, capture_output=True)
+    os.unlink(tmp)
+    plist = os.path.join(APP, "Contents", "Info.plist")
+    pb = lambda *cmds: subprocess.run(["/usr/libexec/PlistBuddy", *sum((["-c", c] for c in cmds), []), plist],
+                                      capture_output=True)
+    pb(f"Set :CFBundleIdentifier {BUNDLE}")
+    pb(f"Add :CFBundleIdentifier string {BUNDLE}")
+    pb("Add :LSUIElement bool true")
+    pb("Add :CFBundleURLTypes array", "Add :CFBundleURLTypes:0 dict",
+       f"Add :CFBundleURLTypes:0:CFBundleURLName string ttyimgspool-{scheme}",
+       "Add :CFBundleURLTypes:0:CFBundleURLSchemes array",
+       f"Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string {scheme}")
+    # Editing Info.plist breaks osacompile's signature; unsigned, LaunchServices ignores the app.
+    subprocess.run(["codesign", "--force", "-s", "-", APP], check=True, capture_output=True)
+    subprocess.run([LSREGISTER, "-f", APP], check=True)
+    # Be the default even if the real app is installed: we forward what isn't ours.
+    swift(f'import CoreServices; LSSetDefaultHandlerForURLScheme("{scheme}" as CFString, "{BUNDLE}" as CFString)')
+
+
+def handle(url):
+    scheme, _, rest = url.partition("://")
+    if rest.startswith("ttyimg/"):
+        path = urllib.parse.unquote(rest[len("ttyimg"):])
+        with open(os.path.join(STATE, ".clicked"), "w") as f:
+            f.write(path)
+        herdr = shutil.which("herdr") or "/opt/homebrew/bin/herdr"
+        subprocess.run([herdr, "plugin", "pane", "open", "--plugin", "rascaltwo.ttyimgspool",
+                        "--entrypoint", "viewer"], capture_output=True)
+        return
+    # Not ours: pass it to the scheme's real owner, if one is installed.
+    apps = swift(f'import AppKit; for u in NSWorkspace.shared.urlsForApplications(toOpen: URL(string: "{scheme}://x")!) {{ print(u.path) }}')
+    for app in apps.splitlines():
+        if not app.endswith("TtyImgLink.app"):
+            subprocess.run(["open", "-a", app, url])
+            return
+
+
+def main():
+    if len(sys.argv) < 2:
+        sys.exit("usage: ttyimgspool-link <scheme> | off | status\n"
+                 f"schemes Claude Code opens on a plain click: {', '.join(sorted(CLAUDE_CODE_OPENS))}")
+    cmd = sys.argv[1]
+    if cmd == "handle":
+        return handle(sys.argv[2])
+    if cmd == "status":
+        print(open(CHOICE).read().strip() if os.path.exists(CHOICE) else "off (file:// links, Ctrl+click only)")
+        return
+    if cmd == "off":
+        if os.path.exists(APP):
+            subprocess.run([LSREGISTER, "-u", APP], capture_output=True)
+            shutil.rmtree(APP)
+        if os.path.exists(CHOICE):
+            os.unlink(CHOICE)
+        print("off: inline images link as file:// again (Ctrl+click still opens them)")
+        return
+    scheme = cmd.lower()
+    if not scheme.replace("-", "").isalnum():
+        sys.exit(f"not a scheme name: {cmd}")
+    if scheme not in CLAUDE_CODE_OPENS:
+        sys.exit(f"Claude Code won't open {scheme}:// on a plain click; "
+                 f"pick one of: {', '.join(sorted(CLAUDE_CODE_OPENS))}")
+    build(scheme)
+    os.makedirs(STATE, exist_ok=True)
+    with open(CHOICE, "w") as f:
+        f.write(scheme + "\n")
+    print(f"{scheme}: plain-clicking an inline image now opens it full-pane "
+          f"(new images only; other {scheme}:// links pass through to the real app)")
+
+
+if __name__ == "__main__":
+    main()
