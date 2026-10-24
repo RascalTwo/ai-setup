@@ -1,0 +1,78 @@
+<!doctype html>
+<!-- The `progress` view: host.ts sends the task's state as the tool input, again on every update. -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>progress</title>
+  <style>
+    body { margin: 0; padding: 10px 14px 12px; }
+    .bar { display: flex; gap: 2px; }
+    .seg { flex: 1; min-width: 0; }
+    /* One bar cut into segments: only its two ends are rounded. */
+    .track { height: 8px; background: color-mix(in srgb, CanvasText 15%, transparent); overflow: hidden; }
+    .seg:first-child .track { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+    .seg:last-child .track { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+    .fill { height: 100%; width: 0; background: #3b82f6; transition: width 1s linear; }
+    .unknown .fill { width: 30%; animation: slide 1.4s ease-in-out infinite alternate; }
+    @keyframes slide { to { margin-left: 70%; } }
+    .done .fill, .seg.past .fill { background: #22c55e; }
+    .late .fill { background: #eab308; }
+    .failed .fill { background: #ef4444; }
+    .name { font-size: 11px; margin-top: 4px; text-align: center; opacity: .55; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .seg.now .name { opacity: 1; font-weight: 600; }
+    .meta { display: flex; justify-content: space-between; gap: 12px; opacity: .75; margin-top: 6px; }
+    pre { white-space: pre-wrap; font: 11px ui-monospace, monospace; opacity: .8; margin: 8px 0 0; }
+    pre:empty { display: none; }
+  </style>
+</head>
+<body>
+  <div id="bar" class="bar"></div>
+  <div class="meta"><span id="what"></span><span id="when"></span></div>
+  <pre id="note"></pre>
+  <script>
+    let s, folded = false, best = { at: -1, part: 0 };
+    addEventListener("message", (e) => {
+      if (e.source === parent && e.data?.method === "ui/notifications/tool-input") (s = e.data.params.arguments), draw();
+    });
+    const $ = (id) => document.getElementById(id);
+    const span = (ms) => { const m = Math.round(ms / 60000); return ms < 60000 ? `${Math.max(1, Math.round(ms / 1000))}s` : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${m % 60}m`; };
+
+    function draw() {
+      if (!s) return;
+      const now = Date.now(), running = s.status === "running", names = s.stages?.length ? s.stages : [""];
+      const at = Math.max(0, names.indexOf(s.stage ?? ""));
+      // The current stage fills by its count, else toward its own estimate, holding at 90% until the next stage starts.
+      let part = s.total ? s.done / s.total : s.due ? Math.min(0.9, (now - s.stageStarted) / (s.due - s.stageStarted)) : null;
+      if (part !== null) part = best.at === at ? Math.max(best.part, part) : part; // a revised estimate never moves the bar back
+      best = { at, part: part ?? 0 };
+      // Built once per list of stages, then only updated, so each fill animates smoothly.
+      if ($("bar").dataset.names !== names.join("\n")) {
+        $("bar").dataset.names = names.join("\n");
+        $("bar").innerHTML = names.map(() => '<div class="seg"><div class="track"><div class="fill"></div></div><div class="name"></div></div>').join("");
+      }
+      // Each segment as wide as its estimate; a stage without one gets the average of the others.
+      const est = s.estimates ?? [], known = est.filter((n) => n > 0), avg = known.length ? known.reduce((a, b) => a + b) / known.length : 1;
+      [...$("bar").children].forEach((seg, i) => {
+        seg.style.flex = `${est[i] > 0 ? est[i] : avg} 1 0`;
+        const past = s.status === "done" || i < at, cur = i === at, [track, label] = seg.children;
+        seg.className = `seg ${past ? "past" : cur ? "now" : ""}`;
+        track.className = `track ${s.status === "done" ? "done" : s.status === "failed" && cur ? "failed" : running && cur && part === null ? "unknown" : running && cur && !s.total && s.due < now ? "late" : ""}`;
+        track.firstChild.style.width = past || (!running && cur) ? "100%" : cur && part !== null ? `${Math.round(part * 100)}%` : cur ? "" : "0";
+        label.textContent = names[i];
+        label.hidden = !names[i];
+      });
+      const later = est.slice(at + 1).reduce((a, n) => a + (n > 0 ? n * 1000 : 0), 0); // the planned stages still to come
+      const count = s.total ? `${s.done ?? 0} of ${s.total}` : "";
+      // The bar says which stage and how it ended; the words carry only the count and the time.
+      $("what").textContent = running ? count : "";
+      // Seconds to go, negative once the stage is past its estimate; when it ends, how long it took.
+      $("when").textContent = !running ? span(s.updated - s.started) : !s.due ? "" : s.due > now ? span(s.due - now + later) : `-${span(now - s.due)}`;
+      $("note").textContent = s.note ?? "";
+      // Fold the panel a few seconds after the task succeeds, but not when it is reopened from the list later.
+      if (s.status === "done" && !folded && now - s.updated < 10000)
+        (folded = true), setTimeout(() => parent.postMessage({ jsonrpc: "2.0", method: "ui/notifications/request-teardown", params: {} }, "*"), 5000);
+    }
+    setInterval(draw, 1000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1166 @@
+{
+  "_comment": "Upstream skills already looked at and not installed. The ai-setup-audit freshness check hides an entry while every current upstream SKILL.md hash for that skill is in `shas`, and re-offers it as CHANGED the moment upstream edits it. verdict: passed (seen, no interest) | declined (considered, said no) | stole (ideas taken into an owned skill). Installed skills live in external-skills.json, not here.",
+  "reviewed": {
+    "anthropics/skills/academy-guide": {
+      "shas": [
+        "cefeaeb20cc29a803af0335d7c7155b066d8770f"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "anthropics/skills/algorithmic-art": {
+      "shas": [
+        "634f6fa42e4e697fa6afd293acd7fb8246574876"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "anthropics/skills/brand-guidelines": {
+      "shas": [
+        "47c72c607bdb5dd81bdea5de2b5e4f3992a5fd59"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "anthropics/skills/canvas-design": {
+      "shas": [
+        "9f63fee82de84cd4230e1d0e322247b61eb4c94c"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "anthropics/skills/claude-api": {
+      "shas": [
+        "fe7e28a55c713933ff98e017112e53c61d8f5537"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "anthropics/skills/discernment-nudge": {
+      "shas": [
+        "49ebbcad692ffdf70e518087468609a5c4ab9e22"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "anthropics/skills/doc-coauthoring": {
+      "shas": [
+        "a5a69839ef4a161131d80b6daef10037a9686f4a"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "anthropics/skills/internal-comms": {
+      "shas": [
+        "56ea935b74f371bfeb4c7d3c19d5139df866e73b"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "anthropics/skills/mcp-builder": {
+      "shas": [
+        "8a1a77a47d141967b246adb4da4f91037578ff7d"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "anthropics/skills/slack-gif-creator": {
+      "shas": [
+        "16660d8ceb77af47986bba1c9176c2ff3f287a91"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "anthropics/skills/template": {
+      "shas": [
+        "50a4f9b104357d96361e257adb70454604cd15c0"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "anthropics/skills/theme-factory": {
+      "shas": [
+        "90dfceaf2ecdc191a4dcfb0069768a9560638998"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "anthropics/skills/web-artifacts-builder": {
+      "shas": [
+        "8b39b19f259b4216ecb07574741dd8eaa9863a07"
+      ],
+      "verdict": "stole",
+      "date": "2026-09-27",
+      "why": "inline dependencies on export: viz task; React/shadcn/Vite conflict with viz"
+    },
+    "anthropics/skills/webapp-testing": {
+      "shas": [
+        "4726215301db64a0cc4d41fc3219c61f37a30f4a"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "viz verify + run skill cover it"
+    },
+    "cursor/plugins/add-dictation": {
+      "shas": [
+        "b651704d1ba11eef2c11aefae7b318e84233a9b6"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/add-read-aloud": {
+      "shas": [
+        "1fdb96d9eb9fc86e651528e3ece24673df81298d"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/add-voice": {
+      "shas": [
+        "aee71871b86a8d85d3fb8e2b6fdd1f18bf4b5e70"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/advisor": {
+      "shas": [
+        "85c2021b47874c699b9fe8a99a42f65eadfff8b1"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/architect": {
+      "shas": [
+        "0cd5921d4848396c93a0bb5f9db451cf9cb2cb35",
+        "88e23ca105b89e67f4085d0e676c40d4b170a623"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/arena": {
+      "shas": [
+        "1aa77e452cb5fc4ce53901c41788f939601f5830",
+        "b198b9e425c6b3e6ff01ca789b97ca5b4abb7ce2"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "not wanted; also hard-wired to Cursor models; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/automate-me": {
+      "shas": [
+        "50971b894688b1e1923458996b89f2a9961feeb3",
+        "a76caabc75163c883caf3415b591f464a9949fa4"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/blast-radius": {
+      "shas": [
+        "b296cce0d746260a53c16e3671cb05bacfe82daf"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "user-invoked only; would rarely be invoked; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/bro": {
+      "shas": [
+        "b1701b778639c08bfc306291d70170c525c66a68"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "wait-what does this"
+    },
+    "cursor/plugins/build-figma": {
+      "shas": [
+        "15da8e04b1d0b3fc1102405b47ca853f704e6752"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "Cursor-only Figma pipeline"
+    },
+    "cursor/plugins/cancel-ralph": {
+      "shas": [
+        "1e75c5b0ba50de8cd0d8d6baa0f58a9db63c904e"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/check-agent-compatibility": {
+      "shas": [
+        "6d88d4a5f9e5a053f45c0321916e08460b3ce089"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/check-compiler-errors": {
+      "shas": [
+        "585f4bb67ce55ee04a9a8f8e1b1e86d51b6fdb4b"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/cli-for-agents": {
+      "shas": [
+        "3c560387748ffb1d9960787ff2cfe93b8b086f20"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "Cursor-only"
+    },
+    "cursor/plugins/continual-learning": {
+      "shas": [
+        "f1beb5c7e4665c5c281a9245cbd5dcceccdd2fa7"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "dream covers it"
+    },
+    "cursor/plugins/control-cli": {
+      "shas": [
+        "69289ac517e8a28380c8eca5c6692e8a601fa62c"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/control-ui": {
+      "shas": [
+        "68484fd5418cc893a6bf40e0db45b3001dcf5947"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/correct": {
+      "shas": [
+        "c45e06f48a0982ae19f92c6e83a8cd05988097a3"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "not wanted"
+    },
+    "cursor/plugins/create-formal-verification-skill": {
+      "shas": [
+        "37d73f9044b6bcc0132a0e703f70d13be5ded7c3",
+        "a37e735e8e948f855ee32add2f4a31dfd22ffd9d"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-24",
+      "why": "Cursor-only"
+    },
+    "cursor/plugins/create-learning-path": {
+      "shas": [
+        "1744f1ab457eff46126fcf9de2a60ad6aff7009f"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "mattpocock teach covers it"
+    },
+    "cursor/plugins/create-plugin-scaffold": {
+      "shas": [
+        "f3986e8fbd650f15f31211d04c1695dcbefd0ea5"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/create-verification-skill": {
+      "shas": [
+        "140d033a001e8d27acd14b06004506c43053b199",
+        "553e53efb3fdbe813e9b39c8c5fe29a3a681b69a"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/cursor-sdk": {
+      "shas": [
+        "bb070b338da14aa5d0847e793f6f364f25a751c3"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/debug-voice": {
+      "shas": [
+        "c7ee7570e4edfb73439c464d1092873b2d3a7fc5"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/deslop": {
+      "shas": [
+        "1b3827c7f991182149a7abda696af43ff8f17a12"
+      ],
+      "verdict": "stole",
+      "date": "2026-09-27",
+      "why": "its two missing checks went into the code-reviewer subagent; unslop covers prose"
+    },
+    "cursor/plugins/docs-canvas": {
+      "shas": [
+        "f4336aaacf0a9652fea6158aa49a449c55f03479"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/dyl-mode": {
+      "shas": [
+        "a761181b77322e23d784fb651ee2aafe5aaf7fcd"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "Cursor-only"
+    },
+    "cursor/plugins/dyl-ready-pr": {
+      "shas": [
+        "a4a51582bd47530c3aaaad8e369757f8284ed6c2"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "Cursor-only"
+    },
+    "cursor/plugins/dyl-review": {
+      "shas": [
+        "bc2c34309ac0897cd33988e21336e61b1c3a7326"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "Cursor-only"
+    },
+    "cursor/plugins/figure-it-out": {
+      "shas": [
+        "0d04c2e69b75b22ff1a9a1d8ab339580a5fbbfed",
+        "d628d482b7fe86dcb3bc1ce4f50189c50cc45768"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/fix-ci": {
+      "shas": [
+        "60adbdde5b63ee95cea8180df8080498680e338d"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/fix-merge-conflicts": {
+      "shas": [
+        "2940fe4c7f2ada9c119b5726bf276b834e6754b6"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/get-pr-comments": {
+      "shas": [
+        "396aad5ff7cbe981124e9540ae786a120af77149"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/google-docs": {
+      "shas": [
+        "4885a5adff01c824ca495b8431c4d09dbf8dedb8"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "Cursor-hosted MCP; Cursor-only"
+    },
+    "cursor/plugins/google-drive": {
+      "shas": [
+        "cb717cc090e3fb6ca3a9c43d864b726038c963ec"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "Cursor-only; the google skill (gws) covers Drive"
+    },
+    "cursor/plugins/google-sheets": {
+      "shas": [
+        "201775889a0803c3e40588a77d10e259ee33b860"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "Cursor-hosted MCP; Cursor-only"
+    },
+    "cursor/plugins/google-slides": {
+      "shas": [
+        "3436198068b0a8f770355c23fabbdfef32d124ff"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "Cursor-hosted MCP; Cursor-only"
+    },
+    "cursor/plugins/how": {
+      "shas": [
+        "67edc340d4d8a9c7ab0b9e08c663e0e63b8d9125",
+        "b378f87fe02f41d9cdadb3a5c499206192a92187"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/in-your-own-words": {
+      "shas": [
+        "4b2a476a9017863032c8dba9d12f0a2026943292"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "Cursor-only; grilling covers it"
+    },
+    "cursor/plugins/interrogate": {
+      "shas": [
+        "94946d22d8bf896bfcc2c54d363df5af3d17b4ca",
+        "b6b047164e4e64f2149db7be723d7f10ab8becb2"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/ketchup": {
+      "shas": [
+        "9eef27f92f8029137a7bfa7378305b075df9dc4f"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "Cursor-only; r2-handoff's waiting-on-you covers it"
+    },
+    "cursor/plugins/loop-on-ci": {
+      "shas": [
+        "23a3860ad9873408960b285739c2927e70ad49c4"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/maintain-verification-skill": {
+      "shas": [
+        "a2680b91fead45a0b4963d8c367a854956bea59d",
+        "efc2ffcf9000e14e4d1d5f92477e95fe72b499e5"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/make-bot-ui": {
+      "shas": [
+        "446342ca35a46af771271e0cd901354a61997589",
+        "7f05b0504297fd22dba9cd9f79edc352ed79987e"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/make-pr-easy-to-review": {
+      "shas": [
+        "f5343c095b6a2196b1474aa5013d82b8ceaa2120"
+      ],
+      "verdict": "stole",
+      "date": "2026-09-27",
+      "why": "split check + tree identity on history-only force-push went into r2-pr"
+    },
+    "cursor/plugins/new-branch-and-pr": {
+      "shas": [
+        "860682f0154756f2225daccc6b84fb4360830fd9"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/no-comments": {
+      "shas": [
+        "3b7e32e82439cf90d3bec829c72f20c0d7135a10",
+        "a07ce9dfc657bdf1b2bdf3f7619225e7faac091b"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/orchestrate": {
+      "shas": [
+        "ff7fc8e3abea9f917b16090a374bf7b86130c4a7"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/origin-api": {
+      "shas": [
+        "803dc25a9aafbf97a2306468c114a428f816f61f"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "Cursor-only (Origin)"
+    },
+    "cursor/plugins/port-github-app-to-origin": {
+      "shas": [
+        "0002dcf487e5a60b76ad9d697d569a91d9638713"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "Cursor-only (Origin)"
+    },
+    "cursor/plugins/poteto-help": {
+      "shas": [
+        "121cfaa526e64c2b58f41672cf364aa5885e3589",
+        "9d68a7a72da3a9712f77cc06d4a6bead90222b95"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-24",
+      "why": "Cursor-only (pstack help); re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/poteto-mode": {
+      "shas": [
+        "1bb3884a529e8a5ec047c0c8ff7a2385b62a55dc",
+        "21993f546032ca37671d5f1caf39c9a82ab4fa9d"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "principle-* skills cannot self-trigger; useful ones folded in; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/pr-review-canvas": {
+      "shas": [
+        "1a35b6e87a2762a016bb11e6b986ef5f0d0cb3bb",
+        "d88de04910e71537455eea8dd252631eea408475"
+      ],
+      "verdict": "stole",
+      "date": "2026-09-27",
+      "why": "hunk flag callouts, moved-code detection, generated class: pr-viz tasks"
+    },
+    "cursor/plugins/principle-attack-the-premise": {
+      "shas": [
+        "e9a6d499606992edd9963b80f8f8f57feaccb221"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "would belong in diagnosing-bugs, which is not owned; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-boundary-discipline": {
+      "shas": [
+        "dfe9a6fb0e5acd6ae43a41437ee0951adfe839cb"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "principle-* skills cannot self-trigger; not folded in"
+    },
+    "cursor/plugins/principle-build-the-lever": {
+      "shas": [
+        "cbf003850489d95fea78e64198fd972c35b1aad3"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "principle-* skills cannot self-trigger; not folded in; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-encode-lessons-in-structure": {
+      "shas": [
+        "4a96f77fe70e36cb030f9c5efa142f66877bf58a"
+      ],
+      "verdict": "stole",
+      "date": "2026-10-18",
+      "why": "fix-strength ranking went into dream; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-exhaust-the-design-space": {
+      "shas": [
+        "395a0839126bb231430a9c9da02ebab5422557d5"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "principle-* skills cannot self-trigger; not folded in; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-experience-first": {
+      "shas": [
+        "5ea51741302cf3af4cc0b90ec70815bd3208dbf2"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "principle-* skills cannot self-trigger; not folded in"
+    },
+    "cursor/plugins/principle-explain-the-number": {
+      "shas": [
+        "1e180c14aefe49a3b2a515320398e08c3ebeb57d"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "a three-bullet digest of benchmark-checklist, which was installed instead"
+    },
+    "cursor/plugins/principle-fix-root-causes": {
+      "shas": [
+        "14fc189fa1ec3fb1614b0a3c75557f92943d8f13"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "principle-* skills cannot self-trigger; not folded in; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-foundational-thinking": {
+      "shas": [
+        "19cc6c0eaa6fcbc2863fb73d1d25ca196c6a46e0"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "principle-* skills cannot self-trigger; not folded in"
+    },
+    "cursor/plugins/principle-guard-the-context-window": {
+      "shas": [
+        "0a1d3cfcf4539fe048887174000fecbf2fa40e81"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "principle-* skills cannot self-trigger; not folded in; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-laziness-protocol": {
+      "shas": [
+        "016c3c7c8dfffd995c1a02135a62248e6625879b"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "would belong in ponytail, which is not owned; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-make-operations-idempotent": {
+      "shas": [
+        "c93f323d694a4d310515ea27165a093d399bc55e"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "principle-* skills cannot self-trigger; not folded in; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-migrate-callers-then-delete-legacy-apis": {
+      "shas": [
+        "57ddd7b27d06ba4ee9e2d3811880476a18b88df6"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "principle-* skills cannot self-trigger; not folded in; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-minimize-reader-load": {
+      "shas": [
+        "628999088c5d05c1c546b3a3ca89da553cd3f3b2"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "principle-* skills cannot self-trigger; not folded in; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-model-the-domain": {
+      "shas": [
+        "09b7c739955facf03f08f66e1e329745d2f8880e"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "principle-* skills cannot self-trigger; not folded in; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-never-block-on-the-human": {
+      "shas": [
+        "4f59bdc69f79d536b30b0014a563ed3be05b8b62"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "principle-* skills cannot self-trigger; not folded in; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-outcome-oriented-execution": {
+      "shas": [
+        "c49be0bc74783f0dee013101365ae09b2abb48a2"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "principle-* skills cannot self-trigger; not folded in"
+    },
+    "cursor/plugins/principle-prove-it-works": {
+      "shas": [
+        "31df67d63d26fcc8c7fd8b022b1be34dd59b00cb",
+        "5dc14a3b06f9d579e5c17cd8a7242f432ddb3125"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "principle-* skills cannot self-trigger; not folded in; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-redesign-from-first-principles": {
+      "shas": [
+        "5ca5246cbb0fa08884ce17b0d22c117ae1ad67b8"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "principle-* skills cannot self-trigger; not folded in; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-separate-before-serializing-shared-state": {
+      "shas": [
+        "ff93b4a2032c08e2232992a9a24f2891ee14e58f"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "principle-* skills cannot self-trigger; not folded in"
+    },
+    "cursor/plugins/principle-sequence-verifiable-units": {
+      "shas": [
+        "986371260ebccd9a5a6818c9561e88c1d270d0ee"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "principle-* skills cannot self-trigger; not folded in"
+    },
+    "cursor/plugins/principle-subtract-before-you-add": {
+      "shas": [
+        "b8740ba6f06922d8e7ef3b23f9fb16e0fc4a876f"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "principle-* skills cannot self-trigger; not folded in; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-test-behavior-not-implementation": {
+      "shas": [
+        "78c9389bfe707d6d56485ade32c59150958228f9"
+      ],
+      "verdict": "stole",
+      "date": "2026-10-18",
+      "why": "the undefined-imports check went into r2-testing-paradigm; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/principle-the-algorithm": {
+      "shas": [
+        "0a3dea25422a220d5bb5fe667155762b2200f79e"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "Cursor-only (pstack principle)"
+    },
+    "cursor/plugins/principle-type-system-discipline": {
+      "shas": [
+        "9fa08b0b17d536ce751fffa90134be8fb03699c7"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "principle-* skills cannot self-trigger; not folded in; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/ralph-loop": {
+      "shas": [
+        "5c943180ac88bb7b0981071a69712e78cfed7089"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/ralph-loop-help": {
+      "shas": [
+        "8e6a76acc42b71a215edbb29e3ce5a4eea6663a8"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/recall": {
+      "shas": [
+        "a82ea1b287a66f99d70473f03aed18a44efb3779",
+        "cd8cc20790d90579e632626fe6db2b1fff593eea"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/reflect": {
+      "shas": [
+        "9bb153bd2121e49d73a7af7d55ef372079889e62",
+        "dcb6c9175978c9c25080d666072565b9bdef3941"
+      ],
+      "verdict": "stole",
+      "date": "2026-10-24",
+      "why": "its lenses went into dream (wip/dream); re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/reproduce-and-fix-issues": {
+      "shas": [
+        "effa5f0a38d2cfe7d948a71ff51827e2e2017257"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/review-and-ship": {
+      "shas": [
+        "000e7537949adcbd60c49e1723e55cc700a5a62f"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/review-plugin-submission": {
+      "shas": [
+        "37b0982e30c290d09fa8fdfd44334c8ebab22d74"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/run-learning-retrospective": {
+      "shas": [
+        "d8f465c9eb1a4d087b16423aafd40c85a9fc7dba"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "mattpocock teach covers it"
+    },
+    "cursor/plugins/run-smoke-tests": {
+      "shas": [
+        "fb0337f699926eb5835a82cf9de2b8c9078bd9f4"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/setup-benny": {
+      "shas": [
+        "b05c26f4d4a39c16559f5ef2bbdd380adc923fda"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/setup-pstack": {
+      "shas": [
+        "672bb4bef320fe6c9edd77b75bb63efd16155321",
+        "cb61b8d3ee5d2a1b8fa403d8b99ed8d2e18f77df"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/sharpen": {
+      "shas": [
+        "5b4a7b104e709f8cded1726541be42431c334164"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-24",
+      "why": "a one-paragraph self-check nudge; grilling and steelman cover the need"
+    },
+    "cursor/plugins/show-me-your-work": {
+      "shas": [
+        "52765f07b3cafcbfdd184af9b4fc5c993d92ebe2",
+        "ada1bba1e51356de0e0d4da1d13ba5a56ba9c7cb"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "not wanted; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/swarm": {
+      "shas": [
+        "9cd32247b4f381bb020cbbf0fc546ba71407d558",
+        "c285769778ddec6e4a0f5dc4abb8497b7464215b"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-24",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/tailscale-setup": {
+      "shas": [
+        "de58bfbd69f71194e7170db0629faf2d39a2d231"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "Cursor-only (Grok Bot tailnet setup)"
+    },
+    "cursor/plugins/tdd": {
+      "shas": [
+        "ca6f24c963001d9d518db2936dfe3d12f29b4e94"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "r2-testing-paradigm already has the loop incl. red for the intended reason"
+    },
+    "cursor/plugins/teach": {
+      "shas": [
+        "25369f3f554ed6b5826340ae3eee688fac0bda80",
+        "44a108bde55866308d115c73e7d99465c8eb581f"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "needs pstack how/why/unslop; teach-viz task wraps mattpocock teach instead; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/technical-writing": {
+      "shas": [
+        "3e6d26109376cd66439c87ed48b4033df8d78a3a",
+        "903d7d6d2a2bc12e846eb2947e53d2f159b23938"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/thermo-nuclear-code-quality-review": {
+      "shas": [
+        "ac76a2bc88bb2d895e83ab1788aa584a82346cfc",
+        "ac76a2bc88bb2d895e83ab1788aa584a82346cfc"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/thermo-nuclear-review": {
+      "shas": [
+        "1aa5dfd03bc75bc9d0b250fa9a31826cb2a32cb4"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/thermos": {
+      "shas": [
+        "e7aeeafd1ed4200f4f6481136d3c3a92dc993011"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/triage-issue-reports": {
+      "shas": [
+        "d691672d00fb8f8f07fc17290d00ae49d1fd119b"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/typescript-best-practices": {
+      "shas": [
+        "e1e5aa7c97ed39c425d60d933a96424a3f14539e"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/verify-this": {
+      "shas": [
+        "54bcf49ad0cc6256a90750fdbec7e27f79eb3d39"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/weekly-review": {
+      "shas": [
+        "216e855f7831afacac92c46345fee2ea4ba14629"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/what-did-i-get-done": {
+      "shas": [
+        "e6772b22b74998fc25cd8663981b6ac30cd91613"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/why": {
+      "shas": [
+        "4747bc594bd48f424ebd997e1581f2354f56842e",
+        "b5fe93f8b78f58b06e0bf245a6b5b8faae4300e8"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-18",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/workflow-from-chats": {
+      "shas": [
+        "a5170df9d84a937c210eb7739bff00451f9aa8cb"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/x-api-mcp-guide": {
+      "shas": [
+        "a8625aaee04f8386824c7234244a158af6987f98"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-24",
+      "why": "seen in the 2026-09-27 audit list; no interest; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "cursor/plugins/x-chat": {
+      "shas": [
+        "0d2b97a920d28d6800f2b9a1363b2df3b85bf895"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "cursor/plugins/x-money-guide": {
+      "shas": [
+        "a40a45126b722fde304ced688cfd055642953d85"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "mattpocock/skills/chief-of-staff": {
+      "shas": [
+        "6dbdd4da9296e7dd3ef7cd8c7fd498be6e834620"
+      ],
+      "verdict": "passed",
+      "date": "2026-10-24",
+      "why": "seen; no interest"
+    },
+    "mattpocock/skills/claude-handoff": {
+      "shas": [
+        "77f82fc59c89c3a83ed5a92521dc2869f0533724"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "handoff covers it; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "mattpocock/skills/git-guardrails-claude-code": {
+      "shas": [
+        "58bcdd875b164093b95f436fa32a65c6cb5eb572"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "mattpocock/skills/grill-me": {
+      "shas": [
+        "3947ff9c4ad980d14fc07fccbf659d47c114e81d"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "grilling / grill-me-viz replace it"
+    },
+    "mattpocock/skills/grill-with-docs": {
+      "shas": [
+        "62b9efb6f991d1b229adee7506962f13ced0c499"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "grilling covers it"
+    },
+    "mattpocock/skills/handoff": {
+      "shas": [
+        "a224edc643a20ddb989f9bca1547440169159810"
+      ],
+      "verdict": "stole",
+      "date": "2026-10-18",
+      "why": "forked as owned skill r2-handoff (upstream paragraphs kept verbatim; section list, rescue mode added); see skills/r2-handoff/PROVENANCE.md; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "mattpocock/skills/loop-me": {
+      "shas": [
+        "e58a474ca80feffdeb28842bc3bdee37da6510e7"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "mattpocock/skills/migrate-to-shoehorn": {
+      "shas": [
+        "ae4f965e204fc93cedbc4e2c306e92829d93f800"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "not needed"
+    },
+    "mattpocock/skills/pr": {
+      "shas": [
+        "84dd4fb2f068e9f6282690235d20dd505b418119"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "r2-pr is the owned PR-body skill; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "mattpocock/skills/retro": {
+      "shas": [
+        "12149acf2dd23b4514dec57b04a6293eaa1352fa"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "not wanted"
+    },
+    "mattpocock/skills/scaffold-exercises": {
+      "shas": [
+        "d87df28e7d8abb4e57ecc6e47d71c274d16054c7"
+      ],
+      "verdict": "declined",
+      "date": "2026-09-27",
+      "why": "not needed"
+    },
+    "mattpocock/skills/setup-pre-commit": {
+      "shas": [
+        "1b9708168263067adb4684d06ebb8f4ccfe9682c"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "mattpocock/skills/setup-ts-deep-modules": {
+      "shas": [
+        "7e30047eaeda175de5d93886596a37baf365bb90"
+      ],
+      "verdict": "passed",
+      "date": "2026-09-27",
+      "why": "seen in the 2026-09-27 audit list; no interest"
+    },
+    "mattpocock/skills/tdd": {
+      "shas": [
+        "01eadaa34e7c9a63a67d6dc3cce1cc81b0e49985"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "uninstalled; r2-testing-paradigm is the one testing skill; re-recorded 2026-10-18 after an upstream edit, verdict unchanged"
+    },
+    "vercel-labs/skills/pr-labeling": {
+      "shas": [
+        "7420be30bea97f914503206ae7c85413dfa5a4d6"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-18",
+      "why": "only for maintainers of the vercel-labs/skills CLI repo"
+    },
+    "vercel-labs/skills/triage": {
+      "shas": [
+        "711ef21136f838e2a81a74d519c1c3d9bab5c980"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-24",
+      "why": "only for maintainers of the vercel-labs/skills CLI repo"
+    },
+    "cursor/plugins/ketchup-video": {
+      "shas": [
+        "69aa72aba763ae1836f8440d88e03e2928eb3719"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-24",
+      "why": "a /ketchup catch-up as a silent slide video; pr-viz and viz already make films"
+    },
+    "cursor/plugins/maintain-formal-verification-skill": {
+      "shas": [
+        "5d2f7f2228a3b771ca5b03124fc265ddfc53c5fc",
+        "d56ef9ce9951b118f59db13e0baa0d33083e02b8"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-24",
+      "why": "twin of create-formal-verification-skill (declined); no TLA+ models here to maintain"
+    },
+    "cursor/plugins/statechart": {
+      "shas": [
+        "66670ebd1856621ef5307bb73eed09e60133212b"
+      ],
+      "verdict": "declined",
+      "date": "2026-10-24",
+      "why": "Mermaid statecharts from a TLA+ model; no TLA+ here, and viz draws state machines"
+    }
+  }
+}

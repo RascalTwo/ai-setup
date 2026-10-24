@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+"""`view open`: link-click action. Remember the clicked image, open the viewer pane.
+`view`:      the overlay pane. Show that image full-pane; any click or key closes it.
+
+Sends the ORIGINAL file as PNG (kitty f=100) and lets the terminal scale it into
+the cell box. chafa instead re-rasterises at a guessed cell size and ships raw
+pixels, which came out blocky: unreadable text on a full-pane screenshot.
+"""
+import base64, fcntl, os, struct, subprocess, sys, termios, tty, urllib.parse
+
+state = os.path.join(os.environ.get("TTYIMGSPOOL_DIR", os.path.expanduser("~/.agents/state/ttyimgspool")), ".clicked")
+
+if sys.argv[1:] == ["open"]:
+    url = os.environ.get("HERDR_PLUGIN_CLICKED_URL", "")
+    with open(state, "w") as f:
+        # file:///p, or <scheme>://ttyimg/p when a scheme is borrowed (ttyimgspool-link)
+        rest = url.partition("://")[2]
+        f.write(urllib.parse.unquote(rest.removeprefix("ttyimg")))
+    herdr = os.environ.get("HERDR_BIN_PATH", "herdr")
+    os.execvp(herdr, [herdr, "plugin", "pane", "open", "--plugin", "rascaltwo.ttyimgspool",
+                      "--entrypoint", "viewer"])
+
+path = open(state).read()
+if path.lower().endswith(".png"):
+    png = open(path, "rb").read()
+else:
+    tmp = f"/tmp/ttyimgspool-view-{os.getpid()}.png"
+    subprocess.run(["sips", "-s", "format", "png", path, "--out", tmp], capture_output=True, check=True)
+    png = open(tmp, "rb").read()
+    os.unlink(tmp)
+w, h = struct.unpack(">II", png[16:24])
+
+rows, cols, xpx, ypx = struct.unpack("HHHH", fcntl.ioctl(1, termios.TIOCGWINSZ, b"\0" * 8))
+cell = (ypx / rows) / (xpx / cols) if xpx and ypx else 2.0
+c = cols
+r = round(c * h / w / cell)
+if r > rows - 2:
+    r = rows - 2
+    c = round(r * cell * w / h)
+
+out = sys.stdout.buffer
+out.write(b"\x1b[2J\x1b[H\x1b[?25l" + f"\x1b[1;{(cols - c) // 2 + 1}H".encode())
+data = base64.b64encode(png)
+chunks = [data[i:i + 4096] for i in range(0, len(data), 4096)]
+for k, chunk in enumerate(chunks):
+    more = int(k < len(chunks) - 1)
+    ctrl = f"a=T,f=100,c={c},r={r},q=2,m={more}" if k == 0 else f"q=2,m={more}"
+    out.write(b"\x1b_G" + ctrl.encode() + b";" + chunk + b"\x1b\\")
+out.write(f"\x1b[{rows};1H{os.path.basename(path)} · {w}×{h}  (click or any key closes)".encode())
+out.write(b"\x1b[?1000h")          # a mouse click arrives as input, like a key
+out.flush()
+
+old = termios.tcgetattr(0)
+try:
+    tty.setcbreak(0)
+    os.read(0, 1)
+finally:
+    termios.tcsetattr(0, termios.TCSADRAIN, old)
+    out.write(b"\x1b[?1000l\x1b[?25h")
+    out.flush()

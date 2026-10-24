@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ringside</title>
+    <!-- Publish posture — the SOLE source of truth for viz publish. Default "local" = stays
+     on this machine, never published. Change to "public" (open web) or "private"
+     (magic-link sealed) ONLY when you intend to share this viz. -->
+    <meta name="viz:uid" content="v-da2fcb3a6d7c" />
+    <meta name="viz:posture" content="local" />
+    <meta name="viz:listed" content="unlisted" />
+    <meta name="viz:title" content="Ringside — watch a Claude Code session live, together" />
+    <meta
+      name="viz:description"
+      content="Tails a Claude Code transcript: what it is doing right now, every action as a bar on a swimlane timeline, and a prediction board for the room."
+    />
+    <!-- <meta name="viz:spoiler" content="true"> -->
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 16px 20px 40px;
+        font-family: var(--sans);
+      }
+      .top {
+        display: flex;
+        gap: 16px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+      }
+      .top .viz-header {
+        flex: 1 1 420px;
+        margin: 0;
+      }
+      .controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      select,
+      input[type="text"],
+      button {
+        font: inherit;
+        color: var(--text);
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 6px 9px;
+      }
+      select {
+        max-width: 460px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--accent);
+      }
+      .seg button[aria-pressed="true"] {
+        background: var(--accent);
+        color: var(--bg);
+        border-color: var(--accent);
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .dot {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--faint);
+        margin-right: 5px;
+        vertical-align: middle;
+      }
+      .dot.live {
+        background: var(--good);
+        box-shadow: 0 0 8px var(--good);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .panel h2 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin: 0 0 10px;
+        font-weight: 600;
+      }
+
+      #now {
+        position: relative;
+        overflow: hidden;
+        min-height: 150px;
+      }
+      #now .stripe {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 6px;
+      }
+      #now .verb {
+        font-size: 26px;
+        font-weight: 650;
+        line-height: 1.2;
+        margin: 2px 0 6px;
+      }
+      #now .clock {
+        font-family: var(--mono);
+        font-size: 40px;
+        font-weight: 600;
+        float: right;
+        margin-left: 12px;
+      }
+      #now .detail {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 4.5em;
+        overflow: hidden;
+      }
+      #now .said {
+        margin-top: 10px;
+        font-size: 14px;
+        color: var(--text);
+        border-left: 3px solid var(--border);
+        padding-left: 10px;
+      }
+      #now.running .stripe {
+        animation: pulse 1.4s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        50% {
+          opacity: 0.35;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #now.running .stripe {
+          animation: none;
+        }
+      }
+
+      .bars {
+        display: grid;
+        grid-template-columns: 70px 1fr 34px;
+        gap: 5px 8px;
+        align-items: center;
+        font-size: 13px;
+      }
+      .bars .track {
+        height: 12px;
+        background: var(--panel-2);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .bars .fill {
+        height: 100%;
+        border-radius: 3px;
+      }
+      .bars .n {
+        text-align: right;
+        font-family: var(--mono);
+        color: var(--muted);
+      }
+      .round-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .round-top .seg {
+        flex: none;
+      }
+      .roundmeta {
+        display: flex;
+        gap: 14px;
+        margin-top: 10px;
+        font-size: 13px;
+        color: var(--muted);
+        flex-wrap: wrap;
+      }
+      .roundmeta b {
+        color: var(--text);
+        font-family: var(--mono);
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 8px;
+      }
+      .chip {
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+      }
+      .chip .p {
+        color: var(--good);
+      }
+      .chip .m {
+        color: var(--danger);
+      }
+
+      #timeline {
+        width: 100%;
+        display: block;
+      }
+      #timeline .lane-label {
+        fill: var(--muted);
+        font-size: 12px;
+      }
+      #timeline .tick {
+        fill: var(--faint);
+        font-size: 11px;
+        font-family: var(--mono);
+      }
+      #timeline rect.call {
+        cursor: pointer;
+      }
+      #timeline rect.call:hover,
+      #timeline rect.call.sel {
+        stroke: var(--text);
+        stroke-width: 1.5;
+      }
+      #timeline rect.call.run {
+        stroke: var(--text);
+        stroke-width: 1.5;
+        stroke-dasharray: 4 3;
+      }
+      #timeline .run-stripes,
+      #timeline .you-label {
+        pointer-events: none;
+      }
+      #timeline rect.you {
+        fill: var(--muted);
+        opacity: 0.45;
+      }
+      #timeline .you-label {
+        fill: var(--text);
+        font-size: 11px;
+      }
+      #timeline rect.call.err {
+        stroke: var(--danger);
+        stroke-width: 2;
+      }
+      #timeline .helper-row {
+        cursor: pointer;
+      }
+      #timeline .spark,
+      #timeline .helper-status {
+        pointer-events: none;
+      }
+      #timeline .mini-label {
+        fill: var(--faint);
+        font-size: 9px;
+      }
+      #timeline .helper-status {
+        font-size: 11px;
+        fill: var(--muted);
+        paint-order: stroke;
+        stroke: var(--panel);
+        stroke-width: 3px;
+      }
+      #timeline .helper-status.running {
+        fill: var(--good);
+      }
+      #timeline .helper-status.failed {
+        fill: var(--danger);
+      }
+      #timeline .gap {
+        fill: var(--panel-2);
+        stroke: var(--muted);
+        stroke-dasharray: 3 3;
+        opacity: 0.9;
+      }
+      #timeline .gap-label {
+        fill: var(--muted);
+        font-size: 11px;
+        pointer-events: none;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        #timeline .call.run,
+        #timeline .spark.run {
+          animation: pulse 1.6s ease-in-out infinite;
+        }
+      }
+      @keyframes pulse {
+        50% {
+          opacity: 0.25;
+        }
+      }
+      #timeline,
+      #overview {
+        touch-action: none;
+      }
+      #overview {
+        display: block;
+        width: 100%;
+        margin-top: 4px;
+      }
+      #timeline:focus-visible {
+        outline: 1px solid var(--c1);
+        outline-offset: 2px;
+      }
+      .ov-win {
+        fill: var(--c1);
+        fill-opacity: 0.18;
+        stroke: var(--c1);
+        cursor: grab;
+      }
+      .ov-h {
+        fill: var(--c1);
+        cursor: ew-resize;
+      }
+      #overview .ov-gap {
+        fill: var(--panel-2);
+        stroke: var(--muted);
+        stroke-dasharray: 2 2;
+      }
+      .brush {
+        fill: var(--c1);
+        fill-opacity: 0.2;
+        stroke: var(--c1);
+        pointer-events: none;
+      }
+      .working {
+        color: var(--warn);
+      }
+      .mins {
+        color: var(--muted);
+        font-size: 12px;
+        margin-right: 6px;
+      }
+      .mins input {
+        width: 4.5em;
+        font: inherit;
+        color: var(--text);
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 1px 4px;
+      }
+      .seg-note {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        margin-left: 8px;
+      }
+      .cust {
+        font-size: 11px;
+        color: var(--c1);
+      }
+      #timeline .link {
+        fill: none;
+        stroke: var(--c8);
+        stroke-width: 1.5;
+        stroke-dasharray: 4 3;
+        opacity: 0.8;
+      }
+      #timeline .prompt-line {
+        stroke: var(--text);
+        stroke-dasharray: 3 4;
+        opacity: 0.5;
+      }
+      #timeline .prompt-tag {
+        cursor: pointer;
+        fill: var(--text);
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+      .legend i {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        margin-right: 5px;
+        vertical-align: -2px;
+      }
+      .ai-note {
+        /* Fixed, so the note appearing never moves the page. */
+        height: 1.6em;
+        line-height: 1.6;
+        overflow: hidden;
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--c4);
+      }
+      #picked {
+        margin-top: 10px;
+        font-size: 13px;
+        /* Fixed, so hovering a bar never changes the page's height; a long model line scrolls inside. */
+        height: 9em;
+        overflow-y: auto;
+      }
+      #picked .pl {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.6;
+      }
+      #picked .tag {
+        font: inherit;
+        font-size: 11px;
+        color: var(--muted);
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 0 7px;
+      }
+      #picked .unpin {
+        color: var(--accent);
+        cursor: pointer;
+      }
+      #picked .pl.whole {
+        white-space: normal;
+      }
+      #picked .steps {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      #picked .steps b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      #picked code {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .ai {
+        color: var(--c4);
+        font-size: 0.8em;
+        cursor: help;
+      }
+      #now .summary {
+        margin-top: 8px;
+        font-size: 13px;
+        white-space: pre-line;
+      }
+      #now .last {
+        margin-top: 8px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      #now .helpers {
+        margin-top: 8px;
+        font-size: 13px;
+        color: var(--muted);
+        white-space: pre-line;
+      }
+      #status.bad {
+        color: var(--danger);
+      }
+
+      .story h3 {
+        margin: 12px 0 2px;
+        font-size: 13px;
+      }
+      .story p {
+        margin: 0 0 4px;
+        font-size: 14px;
+      }
+      .story ul {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+      .story-state {
+        color: var(--c4);
+        font-weight: 400;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+      .convo {
+        position: relative;
+        max-height: 560px;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding-right: 6px;
+      }
+      .turn {
+        display: flex;
+      }
+      .turn.user {
+        justify-content: flex-end;
+      }
+      .turn.claude {
+        justify-content: flex-start;
+      }
+      .turn.inrange .bubble {
+        box-shadow: inset 3px 0 0 var(--c1);
+      }
+      .bubble .md h1,
+      .bubble .md h2,
+      .bubble .md h3,
+      .bubble .md h4,
+      .bubble .md h5,
+      .bubble .md h6 {
+        margin: 4px 0 6px;
+        font-size: 14px;
+      }
+      .bubble .md blockquote {
+        margin: 0 0 6px;
+        padding-left: 10px;
+        border-left: 3px solid var(--border);
+        color: var(--muted);
+      }
+      .bubble .md table {
+        border-collapse: collapse;
+        margin: 0 0 6px;
+        font-size: 13px;
+      }
+      .bubble .md th,
+      .bubble .md td {
+        padding: 3px 8px;
+        border: 1px solid var(--border);
+        text-align: left;
+      }
+      .bubble .md th {
+        background: var(--panel);
+      }
+      .bubble {
+        max-width: 78%;
+        padding: 8px 12px;
+        border-radius: 12px;
+        font-size: 14px;
+        line-height: 1.45;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+      }
+      .turn.user .bubble {
+        background: color-mix(in srgb, var(--c1) 20%, var(--panel-2));
+        border-bottom-right-radius: 3px;
+      }
+      .turn.claude .bubble {
+        border-bottom-left-radius: 3px;
+      }
+      .bubble .meta {
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 3px;
+      }
+      .bubble .text {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .bubble .md {
+        overflow-wrap: anywhere;
+      }
+      .bubble .md p {
+        margin: 0 0 6px;
+      }
+      .bubble .md ul,
+      .bubble .md ol {
+        margin: 0 0 6px;
+        padding-left: 20px;
+      }
+      .bubble .md pre {
+        margin: 0 0 6px;
+        padding: 6px 8px;
+        overflow: auto;
+        background: var(--bg);
+        border-radius: 6px;
+      }
+      .bubble .md code {
+        font-family: var(--mono);
+        font-size: 12.5px;
+      }
+      .strip {
+        margin: 0 10px;
+        padding-left: 10px;
+        border-left: 2px solid var(--border);
+      }
+      .strip-h {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        font-size: 12px;
+        color: var(--muted);
+        cursor: pointer;
+      }
+      .beat {
+        margin: 4px 0 2px;
+        font-size: 13px;
+        color: var(--text);
+      }
+      .beat > :first-child {
+        margin-top: 0;
+      }
+      .beat ul {
+        margin: 2px 0 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+      .beat p {
+        margin: 0;
+      }
+      .beat.pending {
+        color: var(--c4);
+      }
+      .ticks {
+        display: inline-flex;
+        align-items: center;
+        gap: 1px;
+      }
+      .ticks i {
+        display: inline-block;
+        width: 3px;
+        height: 10px;
+      }
+      .acts {
+        list-style: none;
+        margin: 6px 0 2px;
+        padding: 0;
+        font-size: 12px;
+      }
+      .act {
+        display: grid;
+        grid-template-columns: 4px 1fr auto;
+        gap: 8px;
+        padding: 3px 0;
+        cursor: pointer;
+      }
+      .act .sw {
+        border-radius: 2px;
+      }
+      .act .what {
+        display: flex;
+        flex-direction: column;
+      }
+      .act .out {
+        color: var(--muted);
+      }
+      .act .out.pending {
+        color: var(--c4);
+      }
+      .act .d {
+        color: var(--muted);
+        font-family: var(--mono);
+      }
+      .act.err .d {
+        color: var(--danger);
+      }
+      .note {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 8px;
+        padding: 4px 0 4px 12px;
+        color: var(--muted);
+        border-left: 2px solid var(--border);
+      }
+      .note .d {
+        font-family: var(--mono);
+      }
+      .note .md > :first-child {
+        margin-top: 0;
+      }
+      .note .md > :last-child {
+        margin-bottom: 0;
+      }
+      .helper-h {
+        padding: 3px 0;
+        color: var(--muted);
+      }
+      .empty {
+        color: var(--faint);
+        font-size: 13px;
+      }
+      .full {
+        grid-column: 1 / -1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top">
+      <div class="viz-header">
+        <h1>Ringside</h1>
+        <div class="sub">
+          A live view of one Claude Code session, for watching it together. Every action Claude
+          takes is a bar below: its lane is the kind of work, its length is how long it took.
+        </div>
+      </div>
+      <div class="controls">
+        <span><span class="dot" id="live"></span><span id="status">connecting…</span></span>
+        <select id="session" aria-label="Session to watch"></select>
+        <label><input type="checkbox" id="follow" checked /> follow newest</label>
+      </div>
+    </div>
+
+    <div class="grid">
+      <section class="panel" id="now" aria-live="polite">
+        <div class="stripe" id="now-stripe"></div>
+        <h2 id="now-h">Right now</h2>
+        <span class="clock" id="now-clock">0s</span>
+        <div class="verb" id="now-verb">—</div>
+        <div class="detail" id="now-detail" data-verify-clip-ok></div>
+        <div class="helpers" id="now-helpers"></div>
+        <div class="summary" id="now-summary"></div>
+        <div class="last" id="now-last"></div>
+        <div class="said" id="now-said" hidden></div>
+      </section>
+
+      <section class="panel" id="round">
+        <div class="round-top">
+          <h2 id="round-h">This round</h2>
+          <span class="seg" id="round-nav">
+            <button id="round-prev" type="button" title="Previous round">‹</button>
+            <button id="round-next" type="button" title="Next round">›</button>
+            <button id="round-latest" type="button" title="Follow the latest round">latest</button>
+          </span>
+        </div>
+        <div class="bars" id="round-bars"></div>
+        <div class="roundmeta" id="round-meta"></div>
+        <div class="chips" id="round-files"></div>
+      </section>
+
+      <section class="panel full">
+        <h2 style="display: flex; justify-content: space-between; align-items: center">
+          <span>Timeline — x is clock time, each row is a kind of work</span>
+          <span class="seg" id="window">
+            <button data-w="round">This round</button>
+            <button data-w="last">Last</button>
+            <label class="mins"
+              ><input id="mins" type="number" min="1" step="1" aria-label="minutes back" />
+              min</label
+            >
+            <button data-w="all">Whole session</button>
+            <span class="seg-note" id="viewctl" hidden>
+              <span class="cust">Custom</span>
+              <button id="reset-view" type="button">Reset</button>
+              <button id="jump-now" type="button" hidden>Jump to now</button>
+            </span>
+          </span>
+        </h2>
+        <svg
+          id="timeline"
+          role="img"
+          tabindex="0"
+          aria-label="Swimlane timeline of Claude's actions. Wheel to zoom, drag to pan, shift-drag to zoom into a range, arrow keys to pan, plus and minus to zoom, 0 to reset."
+        ></svg>
+        <svg
+          id="overview"
+          role="img"
+          aria-label="Overview of the whole session; drag the window to pan"
+        ></svg>
+        <div class="legend" id="legend"></div>
+        <div id="ai-note" class="ai-note" aria-live="polite"></div>
+        <div id="picked" class="empty">
+          Hover or click a bar to see the exact command, file or query.
+        </div>
+      </section>
+
+      <section class="panel full">
+        <h2>The story so far <span id="story-state" class="story-state"></span></h2>
+        <div id="story" class="md story" aria-live="polite"></div>
+      </section>
+
+      <section class="panel full">
+        <h2>Conversation</h2>
+        <div id="convo" class="convo" tabindex="0" aria-label="The conversation so far"></div>
+      </section>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
