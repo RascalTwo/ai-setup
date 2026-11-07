@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta name="viz:template" content="walkthrough" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>walkthrough</title>
+    <!-- Posture stays local: a walkthrough runs against throwaway copies on this machine. -->
+    <meta name="viz:posture" content="local" />
+    <meta name="viz:listed" content="unlisted" />
+    <meta name="viz:title" content="Walkthrough" />
+    <meta
+      name="viz:description"
+      content="A guided walkthrough of finished work on the real running build, made by the walkthrough-viz skill from walk.json"
+    />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="walk.css" />
+  </head>
+  <body>
+    <!-- Everything below is filled from walk.json by app.ts. Edit walk.json, not this file. -->
+    <div class="viz-header">
+      <h1 id="title">Walkthrough</h1>
+      <div class="sub" id="change"></div>
+    </div>
+    <div class="what">
+      <b>How this works.</b> The guide leads you through the real build one step at a time; you do
+      the clicking. Say anything the moment it strikes you (🎙 bottom right, or 💬 to type): it's
+      filed under the step you're on. The strip at the bottom shows the steps you've been through.
+      At the end, decide once.
+    </div>
+    <div class="bar">
+      <button id="reset" data-label="Start over">↺ Start over</button
+      ><span class="hint">resets the throwaway copy and starts the guide again</span>
+    </div>
+    <main id="stage">
+      <figure class="pane before web">
+        <figcaption>Previous build (before this change)</figcaption>
+        <iframe
+          id="before"
+          title="Previous build"
+          data-viz-id="stage-before"
+          data-label="Previous build, running"
+        ></iframe>
+      </figure>
+      <figure class="pane now web">
+        <figcaption>This build, with the guide</figcaption>
+        <iframe
+          id="now"
+          title="This build"
+          data-viz-id="stage-now"
+          data-label="This build, running, with the guide"
+        ></iframe>
+      </figure>
+      <figure class="pane before cli">
+        <figcaption>Previous build</figcaption>
+        <pre
+          id="term-before"
+          data-viz-id="term-before"
+          data-label="Previous build's terminal"
+        ></pre>
+      </figure>
+      <figure class="pane now cli">
+        <figcaption>This build</figcaption>
+        <div id="guide" data-viz-id="guide" data-label="The guide"></div>
+        <pre id="term-now" data-viz-id="term-now" data-label="This build's terminal"></pre>
+      </figure>
+    </main>
+    <figure id="clip" hidden data-viz-id="clip" data-label="A recording of the agent's own run">
+      <figcaption><b>A recording, not live.</b> <span id="clip-why"></span></figcaption>
+      <div id="clip-body"></div>
+    </figure>
+    <section id="decide" aria-label="Your decision">
+      <h2>Your decision</h2>
+      <div class="decide">
+        <button data-decide="Accepted" data-label="Accept">✓ Accept</button
+        ><button data-decide="Changes" data-label="Changes">✗ Changes</button
+        ><span class="hint">You can still add to what you said afterwards.</span>
+      </div>
+      <p id="yes" data-viz-id="yes" data-label="What a yes does">
+        <b>What Accept does:</b> <span id="yes-text"></span> Accept and Send approves the task, and
+        the agent ships it. Comments you send with it are kept on the task; for a change, pick
+        Changes.
+      </p>
+      <div id="account" data-viz-id="account" data-label="The agent's own notes">
+        <h3>The agent's own notes</h3>
+        <p class="locked">🔒 These open after you decide, so you judge what you saw first.</p>
+        <ul id="notes"></ul>
+      </div>
+      <div id="result" hidden data-viz-id="result" data-label="What happened to your Send">
+        <p id="result-line"></p>
+        <div id="result-words">
+          <textarea id="words" readonly rows="8" aria-label="Your words, as sent"></textarea>
+          <button id="copy" data-label="Copy your words">Copy your words</button>
+        </div>
+      </div>
+    </section>
+    <footer class="foot">
+      <div id="pips" aria-label="Steps"></div>
+      <span id="why" data-viz-id="why" data-label="Why Send can't be pressed yet"></span>
+      <button id="send" disabled>Send to the build agent</button>
+    </footer>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

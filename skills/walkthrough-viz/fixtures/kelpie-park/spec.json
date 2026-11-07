@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "changes": [],
+  "task": { "project": "fixtures", "id": "fixture-kelpie-park", "title": "kelpie: park returns a task to the refine queue" },
+  "ask": "When you park a task, it goes back to be agreed again, instead of waiting for you to mark it Refined by hand.",
+  "hero": {
+    "why": "A parked task sat in its own Parked row until you remembered to re-mark it; it never came back on its own.",
+    "done": ["Park puts your words on the task and sends it back to the refine queue", "The build slot frees at once", "The next tick picks it up to refine, in the same folder"],
+    "scope": "The kelpie CLI's park and what status and the next tick do after it. A fixture for walkthrough-viz: past work (563236a), re-run as if just finished. The sign-off half of that commit (a refine sign-off keeps unshipped work) isn't walked through; its tests cover it.",
+    "slot": "<svg viewBox=\"0 0 200 60\" role=\"img\" aria-label=\"A terminal\"><rect x=\"4\" y=\"4\" width=\"192\" height=\"52\" rx=\"6\" fill=\"#0d1117\" stroke=\"#8b93a7\"/></svg>"
+  },
+  "assumptions": [
+    { "id": "A1", "text": "The task's folder and branch stay, so the next run picks up the work so far.", "verdict": "ok" }
+  ],
+  "examples": [
+    { "id": "E1", "kind": "should", "text": "Parking a task mid-build, with your words, puts them on the task and sends it back to the refine queue, to be agreed again.", "verdict": "ok" },
+    { "id": "E2", "kind": "should", "text": "The build slot is free straight away, and status no longer has a Parked row.", "verdict": "ok" },
+    { "id": "E3", "kind": "should", "text": "On the next tick Kelpie starts a refine run for it, in the same folder.", "verdict": "ok" },
+    { "id": "E4", "kind": "shouldnt", "text": "A parked task goes back to the build queue with its old sign-off.", "verdict": "ok" }
+  ],
+  "visuals": [],
+  "plan": [{ "id": "P1", "step": "park resets the run's history and unrefines the task; drop the Parked row." }],
+  "signedOffAt": "2026-10-10T12:00:00.000Z"
+}

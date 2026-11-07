@@ -1,0 +1,69 @@
+<!doctype html>
+<!-- The panel's page: this session's views in a list, the chosen one in a sandbox frame, relayed to its AppBridge in host.ts. -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
+  <title>app-panel</title>
+  <style>
+    html, body { margin: 0; background: Canvas; color: CanvasText; font: 13px -apple-system, system-ui, sans-serif; }
+    header { padding: 18px 34px 4px 8px; } /* the top 18px is the native drag strip (helper/Panel.swift Grip), so the list sits below it */
+    select { max-width: 100%; font: 600 12px -apple-system, system-ui, sans-serif; color: inherit; background: transparent; border: 0; opacity: .75; }
+    iframe { display: block; width: 100%; height: 320px; border: 0; }
+  </style>
+</head>
+<body>
+  <header><select id="list" aria-label="Views in this session"></select></header>
+  <iframe id="f" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+  <script type="module">
+    const f = document.getElementById("f"), list = document.getElementById("list");
+    const native = (m) => window.webkit?.messageHandlers?.panel?.postMessage(m); // helper/Panel.swift folds and unfolds
+    let items = [], shown, view, sandboxOrigin;
+
+    // One view at a time: a fresh sandbox and socket each, so a view opened again from the list starts clean.
+    function open(id) {
+      const it = items.find((i) => i.id === id);
+      if (!it || id === shown) return;
+      view?.close();
+      view = undefined;
+      shown = id;
+      list.value = id;
+      document.title = it.title;
+      f.style.height = `${it.height ?? 320}px`;
+      window.panelWidth = it.width ?? 760; // the panel reads this and fits its width to it
+      sandboxOrigin = new URL(it.sandbox).origin;
+      f.src = it.sandbox;
+    }
+
+    addEventListener("message", (e) => {
+      if (e.source !== f.contentWindow || e.origin !== sandboxOrigin) return;
+      if (e.data?.method === "ui/notifications/sandbox-proxy-ready") {
+        // Only now is there somewhere to put the view, so only now start its bridge.
+        const ws = (view = new WebSocket(`ws://${location.host}/ws?view=${shown}`));
+        ws.onmessage = (m) => {
+          const d = JSON.parse(m.data);
+          if (d.panel === "size") {
+            if (d.height) f.style.height = `${d.height}px`;
+            if (d.width) window.panelWidth = Math.min(Math.max(d.width, 240), 760);
+          } else if (d.panel === "close") native("fold");
+          else f.contentWindow.postMessage(d, sandboxOrigin);
+        };
+      } else if (view?.readyState === WebSocket.OPEN) view.send(JSON.stringify(e.data));
+    });
+
+    list.onchange = () => open(list.value);
+
+    // The host's socket: the history, and which view is newest. The host going away closes the panel.
+    const host = new WebSocket(`ws://${location.host}/ws${location.search}`);
+    host.onmessage = (m) => {
+      const d = JSON.parse(m.data);
+      const fresh = d.current !== items.at(-1)?.id;
+      items = d.items;
+      list.replaceChildren(...items.map((i) => new Option(i.title, i.id)).reverse());
+      if (fresh) (open(d.current), native("unfold"));
+      else list.value = shown;
+    };
+    host.onclose = () => window.close();
+  </script>
+</body>
+</html>

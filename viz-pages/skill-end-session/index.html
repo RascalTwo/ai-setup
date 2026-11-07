@@ -1,0 +1,880 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>end-session — "thanks" is not an order</title>
+    <!-- posture/listing — public + listed, like the other skill posters -->
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:uid" content="v-70594b3de755" />
+    <meta name="viz:title" content="end-session" />
+    <meta
+      name="viz:description"
+      content="Closes the herdr pane an agent session runs in, on the user's direct command only: a finished task, thanks or bye leave it open. One last line, then a detached three-second timer does the closing."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* end-session's identity: a terminal pane, amber on near-black. The kit is
+         re-themed by tokens, not forked — accent is the only colour that moves. */
+      :root {
+        --s: 1;
+        --accent: #ffb454;
+        --bg: #0c0d0f;
+        --panel: #15161a;
+        --panel-2: #1d1f24;
+        --border: #2c2e35;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            700px 420px at 100% 0%,
+            color-mix(in srgb, var(--accent) 13%, transparent),
+            transparent 62%
+          ),
+          radial-gradient(
+            640px 400px at 0% 108%,
+            color-mix(in srgb, var(--danger) 9%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(165deg, #0a0b0d, #0c0d0f 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 450px;
+        gap: 38px;
+        align-items: center;
+        padding: 56px 66px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 20px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 60px;
+        line-height: 1.02;
+        margin: 0 0 22px;
+        letter-spacing: -1.8px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--accent);
+      }
+      p.sub {
+        font-size: 19px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 22px;
+        max-width: 500px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 15px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 9px;
+        padding: 10px 15px;
+        color: var(--text);
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the pane mock = the card's proof slot */
+      .pane {
+        background: #08090b;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+        overflow: hidden;
+      }
+      .pane .bar {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 14px;
+        background: var(--panel-2);
+        border-bottom: 1px solid var(--border);
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+      }
+      .pane .bar i {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--faint);
+        display: inline-block;
+      }
+      .pane .bar span {
+        margin-left: 8px;
+      }
+      .pane .hears {
+        padding: 6px 16px 10px;
+      }
+      .say {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        font-family: var(--mono);
+        font-size: 14px;
+        padding: 9px 0;
+        border-bottom: 1px dashed color-mix(in srgb, var(--border) 80%, transparent);
+        color: var(--text);
+      }
+      .say:last-child {
+        border-bottom: 0;
+      }
+      .say .u::before {
+        content: "› ";
+        color: var(--accent);
+      }
+      .say .u small {
+        color: var(--faint);
+        font-size: 11.5px;
+      }
+      .say .o {
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        white-space: nowrap;
+      }
+      .say.go .o {
+        color: var(--good);
+      }
+      .say.stay .o {
+        color: var(--danger);
+      }
+      .say.ask .o {
+        color: var(--c5);
+      }
+      .pane .tick {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-top: 1px solid var(--border);
+        background: color-mix(in srgb, var(--accent) 6%, transparent);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+      .pane .tick code {
+        color: var(--accent);
+        background: none;
+        padding: 0;
+      }
+      .pane .tick .cells {
+        margin-left: auto;
+        display: flex;
+        gap: 4px;
+      }
+      .pane .tick .cells b {
+        width: 22px;
+        height: 8px;
+        border-radius: 2px;
+        background: var(--accent);
+      }
+      .pane .tick .cells b:nth-child(2) {
+        opacity: 0.55;
+      }
+      .pane .tick .cells b:nth-child(3) {
+        opacity: 0.22;
+      }
+
+      /* ── the dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin: 42px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      pre .n {
+        color: var(--faint);
+        user-select: none;
+      }
+      pre .k {
+        color: var(--accent);
+      }
+      .callout {
+        border-left: 3px solid var(--accent);
+        background: color-mix(in srgb, var(--accent) 7%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--accent);
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+      table.verbs {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.verbs td {
+        border-top: 1px solid var(--border);
+        padding: 9px 12px 9px 0;
+        vertical-align: top;
+        line-height: 1.5;
+      }
+      table.verbs td:first-child {
+        font-family: var(--mono);
+        font-size: 13.5px;
+        white-space: nowrap;
+        width: 210px;
+      }
+      table.verbs .y {
+        color: var(--good);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+      }
+      table.verbs .x {
+        color: var(--danger);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+      }
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #08090b;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 14px 10px 8px;
+      }
+      .fig .stage svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 72px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .fig .cap {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--faint);
+        margin: 10px 0 0;
+        letter-spacing: 0.02em;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #08090b;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      /* svg bits */
+      #time .el {
+        opacity: 0.12;
+        transition: opacity 0.3s;
+      }
+      #time .el.on {
+        opacity: 0.55;
+      }
+      #time .el.on.cur {
+        opacity: 1;
+        filter: drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 55%, transparent));
+      }
+      .vsvg-label {
+        font-family: var(--sans);
+      }
+      .nd {
+        font-size: 12.5px;
+        line-height: 1.25;
+      }
+      .nd b {
+        display: block;
+        font: 600 10.5px var(--mono);
+        letter-spacing: 0.1em;
+        color: var(--accent);
+        margin-bottom: 3px;
+      }
+      .nd code {
+        font-size: 11.5px;
+        background: none;
+        padding: 0;
+        color: #fff;
+      }
+      .ex {
+        font-size: 12px;
+        line-height: 1.3;
+        text-align: left;
+        justify-content: flex-start;
+        color: var(--muted);
+      }
+      .ex b {
+        display: block;
+        font: 600 10.5px var(--mono);
+        letter-spacing: 0.1em;
+        margin-bottom: 3px;
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="end-session"
+        data-viz-id="poster-card"
+        data-label="end-session poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · END-SESSION</div>
+          <h1 class="hook">Finished is<br />not <em>an order.</em></h1>
+          <p class="sub">
+            A session ends when you <b>say so</b>, never because the work looks done.
+            <b>end-session</b> says one last line, then closes the very pane it is running in, three
+            seconds later.
+          </p>
+          <div class="trigger"><span>say</span>&nbsp;"end the session"</div>
+        </div>
+        <div
+          class="pane"
+          data-viz-id="pane-card"
+          data-label="what end-session does with each phrase"
+        >
+          <div class="bar"><i></i><i></i><i></i><span>HERDR PANE · WHAT IT HEARS</span></div>
+          <div class="hears">
+            <div class="say go">
+              <span class="u">end the session</span><span class="o">✓ CLOSES</span>
+            </div>
+            <div class="say go"><span class="u">close it</span><span class="o">✓ CLOSES</span></div>
+            <div class="say go">
+              <span class="u">yo, end it</span><span class="o">✓ CLOSES</span>
+            </div>
+            <div class="say ask">
+              <span class="u">and the session <small>(dictation)</small></span
+              ><span class="o">? ASKS ONCE</span>
+            </div>
+            <div class="say stay">
+              <span class="u">thanks, that's great</span><span class="o">✗ STAYS OPEN</span>
+            </div>
+            <div class="say stay">
+              <span class="u">bye</span><span class="o">✗ STAYS OPEN</span>
+            </div>
+            <div class="say stay">
+              <span class="u"><small>(the task just finished)</small></span
+              ><span class="o">✗ STAYS OPEN</span>
+            </div>
+          </div>
+          <div class="tick">
+            <span>goodbye ▸ <code>sleep 3</code> ▸ pane gone</span>
+            <span class="cells"><b></b><b></b><b></b></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install end-session">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <pre><span class="l"><span class="c">npx</span> skills add <span class="r">RascalTwo/ai-setup</span> <span class="f">-g</span> <span class="f">-s</span> end-session</span></pre>
+      <p class="needs">needs <code>herdr</code></p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">An agent can't walk out without cutting off its own last word</h2>
+      <p>
+        A session lives in a terminal pane. When you are done, the pane has to go, and there are two
+        ways to get that wrong. Either <b>you</b> do it: hands off the conversation, find the pane,
+        close it. Or you give the agent the power to do it, and now an agent that thinks it has
+        finished can pull the plug on a session you were not finished with.
+      </p>
+      <p>
+        <code>end-session</code> is the answer to both halves. The trigger is deliberately narrower
+        than the agent's own sense of "done", and the closing is deliberately clumsier than
+        <code>kill</code>: the pane is closed by a process the agent starts, on a timer, so that the
+        agent gets to finish its sentence first. The agent is killing the thing that is talking, so
+        the order of operations <em>is</em> the skill.
+      </p>
+
+      <h2 data-beat="using">Say it plainly. Everything else is a pause.</h2>
+      <p class="m">
+        <code>skills/end-session/SKILL.md</code> line 11:
+        <b>"The user's direct command is the only trigger."</b> Its description lists three
+        phrasings and gives the register:
+      </p>
+      <table class="verbs">
+        <tbody>
+          <tr>
+            <td>"end the session"</td>
+            <td><span class="y">CLOSES</span> the canonical form.</td>
+          </tr>
+          <tr>
+            <td>"close it"</td>
+            <td><span class="y">CLOSES</span> when it is plain from context what "it" is.</td>
+          </tr>
+          <tr>
+            <td>"yo, end it"</td>
+            <td><span class="y">CLOSES</span> casual is fine; it is still a command.</td>
+          </tr>
+          <tr>
+            <td>"and the session"</td>
+            <td>
+              <span class="y">ASKS</span> once, in a line, and waits. Dictation garbles "end" into
+              "and", and the cost of guessing wrong is an unrecoverable close (step 1).
+            </td>
+          </tr>
+          <tr>
+            <td>"thanks" · "bye" · a finished task</td>
+            <td>
+              <span class="x">STAYS OPEN</span> says the file by name: these "leave the session
+              open".
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        There are no arguments. It acts on the pane it is already in; there is no way to point it at
+        another one.
+      </p>
+
+      <h2 data-beat="limits">It will not walk out on its own</h2>
+      <ul>
+        <li>
+          <b>It never infers an ending.</b> A finished task, "thanks" and "bye" are named in the
+          skill precisely because each one <em>feels</em> like permission. None is.
+        </li>
+        <li>
+          <b>It will not guess through a garbled command.</b> One question, one line, then it waits.
+          It does not ask twice and it does not proceed on a hunch.
+        </li>
+        <li>
+          <b>It only works inside herdr.</b> Outside, the skill's answer is not a workaround: it
+          says so, tells you to type <code>/exit</code>, and stops. It does not try to find a parent
+          process to kill.
+        </li>
+        <li>
+          <b>It reports unfinished work; it does not tidy it.</b> The goodbye names uncommitted
+          changes, a running background task or an unanswered question, then the session ends with
+          them. The skill defines no step that commits, waits for or cancels any of them.
+        </li>
+        <li>
+          <b>There is no abort.</b> Once the timer is set, the file's instruction is "send nothing
+          after the command". The three seconds are for the goodbye to render, not for second
+          thoughts.
+        </li>
+        <li>
+          <b>It closes one pane: its own.</b> The id comes from <code>$HERDR_PANE_ID</code>, the
+          pane this process lives in.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Two lines of manifest, one hard dependency</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/end-session/SKILL.md</code>: a single file, 22 lines. No scripts, no
+              hooks, no references. The whole skill is the sentence-by-sentence instruction the
+              model reads.
+            </td>
+          </tr>
+          <tr>
+            <td>Declared</td>
+            <td>
+              <code>kind: skill</code>, <code>state: false</code>.
+              <code>requires.commands: [herdr]</code>; no <code>integrates</code> and no
+              <code>deletion-policy</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>None.</b> It writes no file, keeps no log and remembers no earlier session. What it
+              changes is not on disk at all: a pane in your herdr workspace stops existing, so there
+              is nothing of it to delete or retain.
+            </td>
+          </tr>
+          <tr>
+            <td>Actually depends on</td>
+            <td>
+              The <code>herdr</code> CLI on <code>PATH</code> and <code>$HERDR_PANE_ID</code> in the
+              environment. That dependency lives in prose (step 2), not in the manifest. The check
+              is run live, every time. Other tools here read the same variable to learn which pane
+              they are in: the statusline and <code>ttyimgspool</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Called from</td>
+            <td>
+              Nothing in this repo. No other skill or hook invokes it; the only caller is you saying
+              the words.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">Four gates, then the door</h2>
+      <p>
+        The skill is an ordered list, and every earlier step exists to protect a later one.
+        Following one utterance down the file:
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="gates-figure"
+        data-label="diagram: the gates before the pane closes"
+      >
+        <div class="stage">
+          <svg
+            id="gates"
+            viewBox="0 0 800 300"
+            role="img"
+            aria-label="Decision ladder: direct command, unambiguous, inside herdr, goodbye, close the pane; with the three exits that leave the session open."
+          ></svg>
+        </div>
+        <p class="cap">
+          Line numbers are <code>skills/end-session/SKILL.md</code>. Red exits leave the session
+          alive; only the last box ends it.
+        </p>
+      </div>
+
+      <pre><span class="n">11</span> Closes the herdr pane this session runs in. The user's direct command is the only trigger;
+<span class="n">  </span> a finished task, "thanks", or "bye" leaves the session open.
+<span class="n">13</span> 1. <b>Confirm the command is unambiguous.</b> ... ask once in a line and wait.
+<span class="n">14</span> 2. <b>Check you are in herdr:</b> <span class="k">[ -n "$HERDR_PANE_ID" ]</span>. If not, say so, tell the user to type /exit, and stop.
+<span class="n">15</span> 3. <b>Say goodbye in one line</b>, naming anything left unfinished. This is the last text you write.
+<span class="n">16</span> 4. <b>Close the pane:</b>
+<span class="n">19</span>    <span class="k">nohup sh -c 'sleep 3; herdr pane close "$0"' "$HERDR_PANE_ID" >/dev/null 2>&amp;1 &amp;</span></pre>
+
+      <h3>The last three seconds</h3>
+      <p>
+        Step 4 is one line of shell and the reason the skill is not one sentence long. The agent
+        needs to destroy its own pane, but the pane contains the agent, the shell that runs the
+        command, and the process tree beneath them. So the command is sent first and takes effect
+        last. Step through it:
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="timeline-figure"
+        data-label="stepper: the timeline from goodbye to pane closed"
+      >
+        <div class="stage">
+          <svg
+            id="time"
+            viewBox="0 0 800 300"
+            role="img"
+            aria-label="Timeline with three lanes — the agent's turn, a detached shell, and the pane — all ending together when the pane closes three seconds after the command."
+          ></svg>
+        </div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+
+      <h3>Reading the one-liner</h3>
+      <ul>
+        <li>
+          <code>nohup sh -c '…'</code>: a fresh <code>sh</code> that ignores hang-up signals, so the
+          timer is not dropped when the tool call's shell exits.
+        </li>
+        <li>
+          <code>sleep 3; herdr pane close "$0"</code>: the whole payload.
+          <code>herdr pane close</code> takes exactly one argument, a pane id (<code
+            >herdr pane close --help</code
+          >
+          prints <code>&lt;pane_id&gt;</code>).
+        </li>
+        <li>
+          <code>"$HERDR_PANE_ID"</code> after the quoted script becomes <code>$0</code> inside it.
+          The calling shell resolves the id and hands it over as data, so the pane that gets closed
+          was fixed at the moment the command was sent.
+        </li>
+        <li>
+          <code>&gt;/dev/null 2&gt;&amp;1 &amp;</code>: no output to hold the tool call open, and
+          into the background. The call returns at once: a <code>sleep 2</code> variant of the same
+          line, run as a test, came back in a few milliseconds and wrote its effect two seconds
+          later.
+        </li>
+      </ul>
+
+      <div class="callout">
+        <b>The inversion.</b> In the transcript the close command comes <em>before</em> the end of
+        the turn. In time it happens <em>after</em> it. That inversion is the entire design: the
+        goodbye is spoken to a pane that still exists, the instruction "send nothing after the
+        command" keeps the model's output from racing the shutdown, and step 2 makes sure the timer
+        is never set where it cannot work.
+      </div>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its
+        own existence.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

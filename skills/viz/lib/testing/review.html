@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Screenshots to review</title>
+    <style>
+      :root {
+        --bg: #14181d;
+        --panel: #1d232b;
+        --line: #2e3844;
+        --text: #e6e9ee;
+        --muted: #8b96a4;
+        --ok: #3fb672;
+        --bad: #e0504f;
+        --accent: #5aa9f0;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font:
+          14px/1.4 system-ui,
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        height: 100vh;
+      }
+      aside {
+        border-right: 1px solid var(--line);
+        overflow: auto;
+        padding: 12px;
+      }
+      aside h1 {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 600;
+        margin: 0 0 10px;
+      }
+      aside button {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: 1px solid transparent;
+        color: var(--text);
+        padding: 7px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        font: inherit;
+      }
+      aside button[aria-current="true"] {
+        background: var(--panel);
+        border-color: var(--line);
+      }
+      .tag {
+        font-size: 11px;
+        padding: 1px 6px;
+        border-radius: 99px;
+        background: var(--line);
+        color: var(--muted);
+      }
+      .tag.new {
+        background: #24425e;
+        color: #9fd0ff;
+      }
+      .tag.changed {
+        background: #5a3a1c;
+        color: #ffc98a;
+      }
+      main {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        min-width: 0;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+      header h2 {
+        font-size: 15px;
+        margin: 0 12px 0 0;
+      }
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        overflow: hidden;
+      }
+      .seg button {
+        background: none;
+        border: 0;
+        color: var(--muted);
+        padding: 6px 10px;
+        cursor: pointer;
+        font: inherit;
+      }
+      .seg button[aria-pressed="true"] {
+        background: var(--panel);
+        color: var(--text);
+      }
+      .actions {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+      }
+      .act {
+        border: 0;
+        border-radius: 7px;
+        padding: 7px 14px;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        color: #fff;
+      }
+      .approve {
+        background: var(--ok);
+      }
+      .reject {
+        background: var(--bad);
+      }
+      label.ctl {
+        color: var(--muted);
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+      }
+      #stage {
+        overflow: auto;
+        padding: 16px;
+      }
+      .checker {
+        background: repeating-conic-gradient(#2a2f36 0 25%, #20252b 0 50%) 0 0 / 16px 16px;
+      }
+      .pair {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      .pair.tb {
+        flex-direction: column;
+      }
+      figure {
+        margin: 0;
+      }
+      figcaption {
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 4px;
+      }
+      img,
+      canvas {
+        display: block;
+        max-width: 100%;
+      }
+      .stack {
+        position: relative;
+        display: inline-block;
+        user-select: none;
+        touch-action: none;
+      }
+      .stack > img,
+      .stack > canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .stack > img:first-child {
+        position: relative;
+      }
+      .stack svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      .note {
+        color: var(--muted);
+        margin: 0 0 10px;
+      }
+      .empty {
+        padding: 40px;
+        color: var(--muted);
+      }
+      kbd {
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 0 4px;
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <aside>
+      <h1 id="title">Screenshots to review</h1>
+      <div id="list"></div>
+      <p class="note" style="margin-top: 14px">
+        <kbd>A</kbd> approve · <kbd>R</kbd> reject · <kbd>↑</kbd><kbd>↓</kbd> next ·
+        <kbd>1</kbd>–<kbd>6</kbd> view
+      </p>
+    </aside>
+    <main>
+      <header id="bar"></header>
+      <div id="stage"></div>
+    </main>
+    <script type="module" src="/review.js"></script>
+  </body>
+</html>

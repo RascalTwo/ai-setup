@@ -1,0 +1,1382 @@
+{
+ "styles": [
+  {
+   "id": "balloon",
+   "name": "Crayon",
+   "family": "dry media",
+   "medium": "wax crayon on toothed paper: back-and-forth scribble fills that skip the valleys, a darker crayon on the shade side, a white one burnishing the highlight, a fat contour gone over twice",
+   "nearest": "moonPhases",
+   "hero": "a hot-air balloon",
+   "drawFilm": "balloonDraw",
+   "askEx": "a kid's birthday card: a hot-air balloon over the park, in crayon"
+  },
+  {
+   "id": "blueprint",
+   "name": "Cyanotype blueprint",
+   "family": "technical drawing",
+   "medium": "ruling pen and spring-bow compass in white ink on Prussian-blue cyanotype stock",
+   "nearest": "pocketWatch",
+   "hero": "a watch movement's going train, plan and section A-A",
+   "drawFilm": "blueprint",
+   "askEx": "a patent-style drawing of our espresso machine, cyanotype blueprint"
+  },
+  {
+   "id": "brokenColour",
+   "name": "Broken colour",
+   "family": "oil",
+   "medium": "opaque oil dabs from a loaded flat hog brush on primed linen, unmixed colours side by side for the eye to mix",
+   "nearest": "ranunculus",
+   "hero": "a small harbour at sunrise",
+   "drawFilm": "brokenColour",
+   "askEx": "a harbour at sunrise, broken-colour oil, 1x1"
+  },
+  {
+   "id": "charcoalErasure",
+   "name": "Charcoal, erased and redrawn",
+   "family": "dry media",
+   "medium": "vine and compressed charcoal on heavy rag paper, stumped, lifted with a kneaded eraser, redrawn over its own residue",
+   "nearest": "pocketWatch",
+   "hero": "one oak through four seasons on one sheet",
+   "drawFilm": "charcoalErasure",
+   "askEx": "one tree through four seasons in charcoal, drawing itself"
+  },
+  {
+   "id": "colouredPencil",
+   "name": "Coloured pencil",
+   "family": "dry media",
+   "medium": "wax coloured pencils hatched in one diagonal on toothy cream cartridge paper, hues layered, darks cross-hatched",
+   "nearest": "balloon (crayon)",
+   "hero": "a wind-up tin robot mending a music box while a crow steals a screw",
+   "drawFilm": "colouredPencil",
+   "askEx": "a tin robot fixing a music box, coloured pencil, drawing itself"
+  },
+  {
+   "id": "embroidery",
+   "name": "Hand embroidery",
+   "family": "textile",
+   "medium": "stranded cotton floss stitched through natural plain-weave linen in a beech hoop",
+   "nearest": "fox",
+   "hero": "a botanical wreath with a honeybee",
+   "drawFilm": "embroidery",
+   "askEx": "our logo as hand embroidery in a hoop"
+  },
+  {
+   "id": "flatVector",
+   "name": "Flat vector",
+   "family": "modern flat illustration",
+   "medium": "pen-tool paths in a vector app, flat fills that land when a path closes, long-shadow shapes with a transparency ramp, a raster grain brush over the shade sides",
+   "nearest": "fox",
+   "hero": "a regatta of small sailboats on a bay under hills, the leader rounding the mark",
+   "drawFilm": "flatVector",
+   "askEx": "a flat vector hero of a sailing regatta, 16x9"
+  },
+  {
+   "id": "folkTale",
+   "name": "Folk-tale storybook",
+   "family": "paint",
+   "medium": "gouache and watercolour over an HB pencil drawing on cream cartridge: opaque, dry-brushed paint in the foreground thinning to a pale wash and then to bare pencil in the distance",
+   "nearest": "storybook",
+   "hero": "a boy carrying a rooster through a village kitchen garden at the edge of a birch wood",
+   "drawFilm": "folkTale",
+   "askEx": "a folk-tale storybook spread: a boy carrying a rooster home"
+  },
+  {
+   "id": "fox",
+   "name": "Cut-paper collage",
+   "family": "collage",
+   "medium": "zero drawn lines: torn pieces with a white fibrous edge, scissor pieces crisp, each lifting a soft shadow off the piece below",
+   "nearest": "lighthouse",
+   "hero": "a fox at dusk",
+   "drawFilm": "foxDraw",
+   "askEx": "a fox at dusk, in cut paper"
+  },
+  {
+   "id": "halftone",
+   "name": "Newsprint halftone",
+   "family": "print",
+   "medium": "web-offset newspaper print: black on a 45 degree AM screen plus one orange spot at 15 degrees, oil ink gaining into unbleached groundwood newsprint",
+   "nearest": "lighthouse",
+   "hero": "a steam train crossing a stone viaduct at golden hour",
+   "drawFilm": "halftone",
+   "askEx": "a steam train on a viaduct as a newspaper halftone"
+  },
+  {
+   "id": "isometric",
+   "name": "Isometric cutaway",
+   "family": "digital",
+   "medium": "flat vector planes on a true 2:1 isometric grid, three tones per material, crisp edges, pen-tool order",
+   "nearest": "koi",
+   "hero": "a two-floor bakery cutaway at night, lit by its oven, the baker turning with a fresh loaf",
+   "drawFilm": "isometric",
+   "askEx": "an isometric cutaway of our office at night"
+  },
+  {
+   "id": "koi",
+   "name": "Marker comic",
+   "family": "marker comic",
+   "medium": "alcohol-marker cel fills with a hard shadow edge under one heavy contour that thickens away from the light",
+   "nearest": "lighthouse",
+   "hero": "a Sanke koi turning under lily pads",
+   "drawFilm": "koiDraw",
+   "askEx": "a koi turning under lily pads, marker comic, 4-second loop"
+  },
+  {
+   "id": "lighthouse",
+   "name": "Risograph",
+   "family": "print",
+   "medium": "soy ink, one layer per drum multiplied through its own registration offset; every other colour an overprint, tone a halftone screen per ink angle, white is bare paper",
+   "nearest": "fox",
+   "hero": "a lighthouse at sunset",
+   "drawFilm": "lighthouseDraw",
+   "askEx": "a lighthouse poster in risograph, 4x5"
+  },
+  {
+   "id": "lowPoly",
+   "name": "Low-poly",
+   "family": "3D in code",
+   "medium": "triangle meshes projected by hand through a pinhole camera, each facet flat-shaded by its normal against one low sun, painter-sorted far to near; no 3D engine",
+   "nearest": "none (the only geometry plate); closest in spirit riso's flat inks",
+   "hero": "A mountain lake at dawn: pink-lit range, spruce shores, a red canoe, reflections",
+   "drawFilm": "lowPoly",
+   "askEx": "a low-poly mountain lake at dawn with a red canoe"
+  },
+  {
+   "id": "mellan",
+   "name": "Single-line engraving",
+   "family": "engraving",
+   "medium": "one unbroken engraved line whose width follows a procedural tone field: the whole picture is a single stroke",
+   "nearest": "pocketWatch",
+   "hero": "a moon spiralled out of one line",
+   "drawFilm": "mellanUnspool",
+   "askEx": "a moon engraved from one spiral line"
+  },
+  {
+   "id": "midCentury",
+   "name": "Mid-century gouache",
+   "family": "1950s-60s storybook",
+   "medium": "opaque matte designer's gouache on warm illustration board, a dry brush dragged over the flats, a loose brush-and-ink line printed off register",
+   "nearest": "fox",
+   "hero": "a hillside village where a girl flies a kite",
+   "drawFilm": "midCentury",
+   "askEx": "a mid-century gouache village with a girl flying a kite"
+  },
+  {
+   "id": "moonPhases",
+   "name": "Chalkboard",
+   "family": "chalk",
+   "medium": "side-of-the-chalk scumble on a slate board, lit limbs worked twice, every stroke broken by the board's tooth with dust either side, ghosts of old lessons",
+   "nearest": "balloon",
+   "hero": "the phases of the moon",
+   "drawFilm": "moonPhasesDraw",
+   "askEx": "explain the phases of the moon on a chalkboard"
+  },
+  {
+   "id": "paintedOil",
+   "name": "Oil on canvas",
+   "family": "paint",
+   "medium": "opaque oil paint with hog-bristle brushes on a toned linen canvas, lean block-in to fat impasto",
+   "nearest": "ranunculus",
+   "hero": "two pears and a copper pot by a window",
+   "drawFilm": "paintedOil",
+   "askEx": "a still life of pears and a copper pot, oil on canvas, drawing itself"
+  },
+  {
+   "id": "paperCraft",
+   "name": "Toy-theatre paper collage",
+   "family": "collage",
+   "medium": "a cardboard toy theatre: patterned and sugar papers cut and torn, gouache-painted cut-outs with a white sticker margin, every piece with a card edge and a gap to the flat behind",
+   "nearest": "fox",
+   "hero": "A seaside town on a toy-theatre stage: sea rows, harbour houses, a newspaper boat, a sun on a stick",
+   "drawFilm": "paperCraft",
+   "askEx": "a toy-theatre paper seaside town, on twos at 12 fps"
+  },
+  {
+   "id": "pixelArt",
+   "name": "Pixel art",
+   "family": "digital",
+   "medium": "a 120x120 grid of cells, each one of 16 declared palette colours, laid one cell at a time and blown up by a whole number, no smoothing",
+   "nearest": "koi",
+   "hero": "a cat mid-pounce after fireflies in a moonlit garden",
+   "drawFilm": "pixelArt",
+   "askEx": "a pixel-art cat pouncing at fireflies, laid down cell by cell"
+  },
+  {
+   "id": "pocketWatch",
+   "name": "Ballpoint sketch",
+   "family": "pen & ink",
+   "medium": "one blue ballpoint on cream cartridge, near-constant weight; tone only from where the hatching sits, plus the blob where a firm stroke stops",
+   "nearest": "wren",
+   "hero": "a pocket watch lying on a table",
+   "drawFilm": "pocketWatchDraw",
+   "askEx": "a ballpoint sketch of a pocket watch"
+  },
+  {
+   "id": "ranunculus",
+   "name": "Pencil & watercolour",
+   "family": "watercolour",
+   "medium": "graphite and pan watercolour on cold-press: washes that never quite fill their outline, form shaded toward one light, graphite over the paint",
+   "nearest": "storybook",
+   "hero": "a ranunculus in bloom",
+   "drawFilm": "ranunculusDraw",
+   "askEx": "a ranunculus in pencil and watercolour for a greeting card"
+  },
+  {
+   "id": "rubberHose",
+   "name": "Rubber hose",
+   "family": "1930s cartoon",
+   "medium": "India ink at one pressure on a clear cel over a blue-pencil rough, flat grey paint on the back, photographed and printed on black-and-white film",
+   "nearest": "koi",
+   "hero": "a coffee pot mid-dance-step on a kitchen counter, steam curling",
+   "drawFilm": "rubberHose",
+   "askEx": "a 1930s rubber-hose coffee pot dancing, 24 fps, with jazz"
+  },
+  {
+   "id": "scrapbook",
+   "name": "Archival scrapbook",
+   "family": "collage + print",
+   "medium": "foxed rag-paper album page; torn cards, cellulose tape, a clothespin on twine; copperplate engravings hand-tinted; typewriter, ransom-note cut letters, red pen, rubber stamp",
+   "nearest": "fox",
+   "hero": "How a honeybee finds flowers: the forager, the rose, the waggle dance, the evidence",
+   "drawFilm": "scrapbook",
+   "askEx": "an archival scrapbook explainer: how a honeybee finds flowers"
+  },
+  {
+   "id": "scratchboard",
+   "name": "Scratchboard",
+   "family": "ink",
+   "medium": "white china clay under black India ink; every mark is ink scraped away with a knife or scratch nib",
+   "nearest": "mellan",
+   "hero": "a lynx, head and shoulders, in moonlight",
+   "drawFilm": "scratchboard",
+   "askEx": "a lynx in moonlight, scratchboard"
+  },
+  {
+   "id": "stipple",
+   "name": "Pen-and-ink stipple",
+   "family": "ink",
+   "medium": "one 0.25 mm technical pen dotted straight down onto hot-press bristol; tone is dot density only",
+   "nearest": "mellan",
+   "hero": "a nautilus shell sawn in half, chambers lit from the upper left, cast shadow in dots",
+   "drawFilm": "stipple",
+   "askEx": "a sectioned nautilus in pen-and-ink stipple"
+  },
+  {
+   "id": "storybook",
+   "name": "Storybook pencil + watercolour",
+   "family": "watercolour",
+   "medium": "storybook graphite and gentle pan watercolour, drawn for a recurring character",
+   "nearest": "ranunculus",
+   "hero": "Bit, waving, in storybook pencil and watercolour",
+   "drawFilm": "storybookDraw",
+   "askEx": "our robot mascot waving, storybook pencil and watercolour"
+  },
+  {
+   "id": "sumiE",
+   "name": "Sumi-e ink painting",
+   "family": "ink",
+   "medium": "one loaded soft brush of sumi ink, five dilutions, on unsized absorbent xuan paper, with a cinnabar seal",
+   "nearest": "wren",
+   "hero": "bamboo in wind with a tree sparrow",
+   "drawFilm": "sumiE",
+   "askEx": "bamboo in wind with a sparrow, sumi-e, painting itself"
+  },
+  {
+   "id": "toyBrick",
+   "name": "Toy brick",
+   "family": "rendered",
+   "medium": "moulded ABS toy bricks, rendered flat-plastic in orthographic view: face tones by the cube rule, bevel highlights, seam hairlines, real studs, a soft ground shadow",
+   "nearest": "fox",
+   "hero": "a brick-built harbour tugboat on a baseplate",
+   "drawFilm": "toyBrick",
+   "askEx": "a toy-brick harbour tugboat"
+  },
+  {
+   "id": "woodcut",
+   "name": "Ukiyo-e colour woodblock",
+   "family": "print",
+   "medium": "water-based pigment printed by baren from hand-carved cherry blocks onto damp kozo washi: a sumi keyblock, flat colour blocks, bokashi wipes",
+   "nearest": "lighthouse",
+   "hero": "two grey herons in rain on a wooden drum bridge",
+   "drawFilm": "woodcut",
+   "askEx": "two herons in rain on a bridge, ukiyo-e woodblock"
+  },
+  {
+   "id": "wren",
+   "name": "Ink & line-wash",
+   "family": "ink",
+   "medium": "wet washes first that flood past the line and settle along each shape's bottom edge, backruns, then a flexible nib thick on the press and hair-thin on the lift",
+   "nearest": "ranunculus",
+   "hero": "a wren",
+   "drawFilm": "wrenDraw",
+   "askEx": "a wren on a twig in ink and line-wash"
+  }
+ ],
+ "music": [
+  {
+   "id": "bellsHopeful",
+   "style": "cinematic",
+   "mood": "hopeful",
+   "master": "gentle",
+   "lufs": -16,
+   "tp": -5.8,
+   "onsets": 1,
+   "centroid": 1645
+  },
+  {
+   "id": "celestaWonder",
+   "style": "lullaby",
+   "mood": "curious + awe blend",
+   "master": "gentle",
+   "lufs": -16,
+   "tp": -4.5,
+   "onsets": 0.83,
+   "centroid": 633
+  },
+  {
+   "id": "chiptunePlayful",
+   "style": "chiptune",
+   "mood": "playful",
+   "master": "dense",
+   "lufs": -14,
+   "tp": -2.1,
+   "onsets": 4.08,
+   "centroid": 4324
+  },
+  {
+   "id": "cinematicAwe",
+   "style": "cinematic",
+   "mood": "awe",
+   "master": "gentle",
+   "lufs": -16,
+   "tp": -3.9,
+   "onsets": 1.25,
+   "centroid": 1081
+  },
+  {
+   "id": "driveElectronic",
+   "style": "drive",
+   "mood": "drive",
+   "master": "dense",
+   "lufs": -14,
+   "tp": -2.3,
+   "onsets": 3.67,
+   "centroid": 2991
+  },
+  {
+   "id": "folkCalm",
+   "style": "folk",
+   "mood": "calm",
+   "master": "gentle",
+   "lufs": -16,
+   "tp": -2,
+   "onsets": 2,
+   "centroid": 2097
+  },
+  {
+   "id": "ghostFixture",
+   "style": "ambient",
+   "mood": "calm (a deliberate failure)",
+   "master": "gentle",
+   "lufs": -16,
+   "tp": -4.5,
+   "onsets": 0,
+   "centroid": 839
+  },
+  {
+   "id": "guitarWistful",
+   "style": "folk",
+   "mood": "wistful",
+   "master": "gentle",
+   "lufs": -16.6,
+   "tp": -1.1,
+   "onsets": 1.33,
+   "centroid": 1640
+  },
+  {
+   "id": "harpTender",
+   "style": "lullaby",
+   "mood": "tender",
+   "master": "gentle",
+   "lufs": -16,
+   "tp": -1.6,
+   "onsets": 1.92,
+   "centroid": 1899
+  },
+  {
+   "id": "lofiNostalgic",
+   "style": "lofi",
+   "mood": "nostalgic",
+   "master": "dense",
+   "lufs": -14,
+   "tp": -2.9,
+   "onsets": 2.42,
+   "centroid": 669
+  },
+  {
+   "id": "marimbaCurious",
+   "style": "minimalist",
+   "mood": "curious",
+   "master": "gentle",
+   "lufs": -16,
+   "tp": -3.8,
+   "onsets": 2.08,
+   "centroid": 433
+  },
+  {
+   "id": "minorPianoMelancholy",
+   "style": "nocturne",
+   "mood": "melancholy",
+   "master": "gentle",
+   "lufs": -16.7,
+   "tp": -1,
+   "onsets": 1.17,
+   "centroid": 472
+  },
+  {
+   "id": "musicBoxJoy",
+   "style": "musicBox",
+   "mood": "joy",
+   "master": "gentle",
+   "lufs": -16,
+   "tp": -3.2,
+   "onsets": 3.17,
+   "centroid": 1011
+  },
+  {
+   "id": "nocturne",
+   "style": "nocturne",
+   "mood": "tender",
+   "master": "gentle",
+   "lufs": -16,
+   "tp": -1.3,
+   "onsets": 1.33,
+   "centroid": 544
+  }
+ ],
+ "musicStyles": [
+  {
+   "id": "musicBox",
+   "lo": 110,
+   "hi": 130,
+   "note": "12/8 · the default",
+   "master": "gentle"
+  },
+  {
+   "id": "nocturne",
+   "lo": 50,
+   "hi": 72,
+   "note": "3/4 or 6/8",
+   "master": "gentle"
+  },
+  {
+   "id": "cinematic",
+   "lo": 60,
+   "hi": 120,
+   "note": "hall",
+   "master": "gentle"
+  },
+  {
+   "id": "lullaby",
+   "lo": 60,
+   "hi": 75,
+   "note": "",
+   "master": "gentle"
+  },
+  {
+   "id": "folk",
+   "lo": 80,
+   "hi": 120,
+   "note": "",
+   "master": "gentle"
+  },
+  {
+   "id": "minimalist",
+   "lo": 100,
+   "hi": 140,
+   "note": "",
+   "master": "gentle"
+  },
+  {
+   "id": "jazz",
+   "lo": 90,
+   "hi": 180,
+   "note": "swing 0.60–0.67",
+   "master": "gentle"
+  },
+  {
+   "id": "ambient",
+   "lo": 50,
+   "hi": 80,
+   "note": "hall",
+   "master": "gentle"
+  },
+  {
+   "id": "chiptune",
+   "lo": 120,
+   "hi": 160,
+   "note": "no reverb",
+   "master": "dense"
+  },
+  {
+   "id": "lofi",
+   "lo": 70,
+   "hi": 90,
+   "note": "swing 0.55–0.62",
+   "master": "dense"
+  },
+  {
+   "id": "drive",
+   "lo": 110,
+   "hi": 140,
+   "note": "hall",
+   "master": "dense"
+  }
+ ],
+ "moods": [
+  "joy",
+  "playful",
+  "tender",
+  "wistful",
+  "melancholy",
+  "hopeful",
+  "curious",
+  "tension",
+  "dread",
+  "awe",
+  "triumph",
+  "drive",
+  "calm",
+  "nostalgic",
+  "romantic"
+ ],
+ "refusedBlends": [
+  [
+   "joy",
+   "dread"
+  ],
+  [
+   "calm",
+   "tension"
+  ],
+  [
+   "playful",
+   "melancholy"
+  ]
+ ],
+ "pipeline": [
+  {
+   "name": "Ask",
+   "sub": "intake, 1 Q per turn",
+   "detail": "What, which style, what shape, how long, what sound, which characters. Only what your request left open, with a recommendation first. “You pick” gets a pick plus a one-line reason."
+  },
+  {
+   "name": "Brief",
+   "sub": "written down first",
+   "detail": "A short brief file: kind, style (and why), shape(s), length, sound, characters, the one-sentence idea. Your words stay yours; its decisions are marked so you can veto them in one line."
+  },
+  {
+   "name": "Story + grid",
+   "sub": "films only",
+   "detail": "The story in three sentences (setup, transformation, payoff) plus the token that returns. Then the grid: at 120 bpm and 30 fps a beat is 15 frames, and one cue table holds every frame number, with a checker that runs at load."
+  },
+  {
+   "name": "Reference",
+   "sub": "real, opened, named",
+   "detail": "For anything that exists (animals, objects, people) it opens real reference and states the anatomy and the view. Hand-placed control points, never ellipses: a pear, not the icon of a pear."
+  },
+  {
+   "name": "Look still",
+   "sub": "the hardest frame",
+   "gate": true,
+   "detail": "ONE still, the hardest frame, rendered at full size and at --scale 2, then a written critique and a detail pass on crops (faces, hands, feet, joins). This is the first approval. For a still, it is the only one."
+  },
+  {
+   "name": "8 s of music",
+   "sub": "one human listens",
+   "gate": true,
+   "detail": "One 8-second music sample. The model can't hear, so a person listens before the score is built out. It's recorded as confirmedBy in the file."
+  },
+  {
+   "name": "Build",
+   "sub": "the whole thing",
+   "detail": "The whole piece, end to end. Mechanical checks (determinism, contract, dead air) run continuously; gates stop here because they would cost more than they save."
+  },
+  {
+   "name": "Review once",
+   "sub": "from the rendered file",
+   "detail": "A contact sheet per beat, each cut as a pair, the dead-air numbers. One ranked fix list, one rebuild."
+  },
+  {
+   "name": "Final",
+   "sub": "what was verified",
+   "gate": true,
+   "detail": "Final approval, with an honest account: what was measured, what a human confirmed, and what can't be verified (it can't hear the score or watch the film move)."
+  },
+  {
+   "name": "Deliver",
+   "sub": "all sizes, one source",
+   "detail": "PNG, MP4 with score, GIF, WebM/APNG with alpha, one offline HTML player, an interactive module, WAV. Every shape from the same source; it says “reproducible” was printed."
+  }
+ ],
+ "kinds": [
+  {
+   "id": "still",
+   "name": "Still",
+   "typS": 0,
+   "len": "1 frame",
+   "gates": 1,
+   "gateNames": "the look",
+   "motion": 0,
+   "sound": 0,
+   "interactive": 0,
+   "workflow": "SKILL.md › Still · references/formats.md",
+   "what": "A hero, spot, cover, card or poster, or a series (one draw function, many seeds). Any size, including transparent stickers and icons.",
+   "steps": [
+    "Say the idea in one sentence; name the focal subject and the light",
+    "Open real reference for anything that exists",
+    "Pick the style; read its plate header",
+    "Draw in that medium's order",
+    "Render with still.mjs at full size, run the detail pass, and write a critique",
+    "Deliver every size and shape from the same source"
+   ],
+   "media": {
+    "type": "img",
+    "src": "media/x/socialCard.jpg",
+    "cap": "anidoodle's own repo social card, one still drawn entirely by the engine, including six plates rendered by their own modules."
+   },
+   "askEx": "a 1200x630 social card for my repo, pen lettering and a few prints on a desk",
+   "askT": "a ${st.shape} still of ${st.subject}, in ${st.style}"
+  },
+  {
+   "id": "drawing",
+   "name": "Drawing timelapse",
+   "typS": 15,
+   "len": "5–30 s",
+   "gates": 1,
+   "gateNames": "the look",
+   "motion": 1,
+   "sound": 0,
+   "interactive": 0,
+   "workflow": "references/workflows/drawing-process.md",
+   "what": "A picture that draws itself. Frame 0 is bare ground, marks go down in the medium's real order, and the last frame is the still, pixel for pixel. Judged on a finer dead-air floor (kind: “drawing”).",
+   "steps": [
+    "Declare meta.kind = “drawing” and any holds",
+    "Author the marks as timed operations, or add a clock to an existing plate",
+    "Something visibly changes every second (short pen-lifts up to 0.5 s allowed)",
+    "The final frame must equal the still"
+   ],
+   "media": {
+    "type": "video",
+    "src": "media/styles/sumiE.webm",
+    "cap": "Sumi-e: one loaded brush, five dilutions, the seal last."
+   },
+   "askEx": "show my sumi-e bamboo painting itself, 20 seconds, 9x16",
+   "askT": "a ${fmt(st.secs)} ${st.shape} timelapse of ${st.subject} drawing itself in ${st.style}"
+  },
+  {
+   "id": "loop",
+   "name": "Loop · sticker · logo",
+   "typS": 6,
+   "len": "2–8 s",
+   "gates": 1,
+   "gateNames": "on the moving file",
+   "motion": 1,
+   "sound": 0,
+   "interactive": 0,
+   "workflow": "SKILL.md › Loop · references/formats.md",
+   "what": "Ambient headers, stickers with alpha, animated logos (drawn on, settle, idle). Every motion is periodic over the loop, so the last frame meets frame 0 and nothing ever stops.",
+   "steps": [
+    "Every motion periodic over the loop (integer cycles)",
+    "The subject never stops; something moves every second",
+    "Check the seam: last frame against frame 0",
+    "WebM or APNG keep the alpha for stickers"
+   ],
+   "media": {
+    "type": "video",
+    "src": "media/x/banner.webm",
+    "cap": "banner.ts: anidoodle's working-table ambient header, looping."
+   },
+   "askEx": "an animated sticker of our mascot waving, 4-second loop, transparent webm",
+   "askT": "a ${fmt(st.secs)} seamless loop of ${st.subject} in ${st.style}, ${st.shape}"
+  },
+  {
+   "id": "film",
+   "name": "Story film",
+   "typS": 60,
+   "len": "any · 30 s – 20 min",
+   "gates": 3,
+   "gateNames": "look still · 8 s of music · final",
+   "motion": 1,
+   "sound": 1,
+   "interactive": 0,
+   "workflow": "SKILL.md › Film · references/workflows/long-film.md · references/storytelling.md",
+   "what": "One transformation, one payoff, one token that returns changed. A hook in the first three seconds, a turn caused inside the world, a composed score. Long films get a spine plus chapters, rendered in parallel and concatenated.",
+   "steps": [
+    "The story in three sentences, plus the token",
+    "The grid: one cue table, cuts on beats, checked at load",
+    "Real reference; <b>one look still</b> ✋",
+    "<b>One 8-second music sample</b> ✋",
+    "Build the whole film; mechanical checks run continuously",
+    "Review once from the rendered file: contact sheets, cut pairs, dead-air numbers",
+    "<b>Final approval</b> ✋, with what was verified and what can't be"
+   ],
+   "media": {
+    "type": "video",
+    "muted": false,
+    "src": "media/x/lepidoptera.mp4",
+    "cap": "MECHANICAL LEPIDOPTERA, the skill's worked example: 47 s, 1410 frames, scored, rendered for this page. A clockwork butterfly is drawn on a blueprint, comes alive, and leaves its blueprint behind in the grass. <b>Unmute it.</b>"
+   },
+   "askEx": "a 45-second film about a lighthouse keeper's last night, woodcut, 16x9, a wistful nocturne",
+   "askT": "a ${fmt(st.secs)} ${st.shape} story film: ${st.subject}, in ${st.style}, score: ${snd}"
+  },
+  {
+   "id": "explainer",
+   "name": "Explainer · infographic",
+   "typS": 180,
+   "len": "one idea per chapter",
+   "gates": 3,
+   "gateNames": "film gates; storyboard review optional",
+   "motion": 1,
+   "sound": 1,
+   "interactive": 0,
+   "workflow": "references/workflows/explainer.md",
+   "what": "One concept on screen at a time; numbers readable at a glance, charts to scale, captions as drawn lettering. An infographic is one page with 3–7 facts. A research ledger records claim, source, confidence and simplification.",
+   "steps": [
+    "Research ledger: every claim with a source and a confidence",
+    "STORYBOARD.md: one row per shot",
+    "One concept on screen; captions drawn, not typeset",
+    "Charts drawn to scale",
+    "Film gates apply"
+   ],
+   "media": {
+    "type": "video",
+    "src": "media/styles/scrapbook.webm",
+    "cap": "The archival-scrapbook plate is itself an explainer: how a honeybee finds flowers, with the forager, the rose, the waggle dance and the evidence."
+   },
+   "askEx": "a 3-minute explainer on how sourdough rises, archival scrapbook, one idea per chapter",
+   "askT": "a ${fmt(st.secs)} explainer on ${st.subject}, ${st.style}, ${st.shape}"
+  },
+  {
+   "id": "launch",
+   "name": "Launch · product video",
+   "typS": 45,
+   "len": "15 s teaser · 30–60 s launch",
+   "gates": 3,
+   "gateNames": "film gates",
+   "motion": 1,
+   "sound": 1,
+   "interactive": 0,
+   "workflow": "references/workflows/launch-video.md",
+   "what": "One promise, shown being kept. Your own screenshots are welcome: they're embedded and pinned by sha256, never regenerated. Music leans drive, minimalist or lo-fi.",
+   "steps": [
+    "Hook within 2 s",
+    "The turn: the product arrives",
+    "At most three proofs",
+    "Payoff and call to action",
+    "Cut in 9x16, 16x9 and 1x1 from one source"
+   ],
+   "media": {
+    "type": "timeline",
+    "html": "<svg viewBox=\"0 0 520 90\" style=\"width:100%\"><g font-size=\"11\" fill=\"var(--text)\"><rect x=\"0\" y=\"20\" width=\"35\" height=\"34\" fill=\"var(--c8)\" rx=\"4\"/><text x=\"4\" y=\"72\">hook</text><text x=\"2\" y=\"14\" fill=\"var(--faint)\">0–2 s</text><rect x=\"37\" y=\"20\" width=\"80\" height=\"34\" fill=\"var(--c4)\" rx=\"4\"/><text x=\"42\" y=\"72\">the turn</text><rect x=\"119\" y=\"20\" width=\"90\" height=\"34\" fill=\"var(--c5)\" rx=\"4\"/><text x=\"124\" y=\"72\">proof 1</text><rect x=\"211\" y=\"20\" width=\"90\" height=\"34\" fill=\"var(--c5)\" rx=\"4\" opacity=\".8\"/><text x=\"216\" y=\"72\">proof 2</text><rect x=\"303\" y=\"20\" width=\"90\" height=\"34\" fill=\"var(--c5)\" rx=\"4\" opacity=\".6\"/><text x=\"308\" y=\"72\">proof 3 (max)</text><rect x=\"395\" y=\"20\" width=\"123\" height=\"34\" fill=\"var(--accent)\" rx=\"4\"/><text x=\"400\" y=\"72\">payoff + CTA</text><text x=\"470\" y=\"14\" fill=\"var(--faint)\">30–60 s</text></g></svg>",
+    "cap": "The shape of a launch video, to scale for a 45-second cut. The skill ships no launch example; this is its recipe."
+   },
+   "askEx": "a 30-second launch video for our app, using these three screenshots, flat vector, drive music",
+   "askT": "a ${fmt(st.secs)} launch video for ${st.subject}, ${st.style}, ${st.shape}, music: ${snd}"
+  },
+  {
+   "id": "interactive",
+   "name": "Interactive web piece",
+   "typS": 0,
+   "len": "runs live",
+   "gates": 0,
+   "gateNames": "",
+   "motion": 1,
+   "sound": 0,
+   "interactive": 1,
+   "workflow": "references/workflows/interactive.md",
+   "what": "A live canvas that reacts to pointer, focus, clicks, scroll, typing and UI state. Pure in its input log, so every session can be replayed exactly. It's gated by replay.mjs rather than by approvals. See chapter 7.",
+   "steps": [
+    "Write the Piece: springs, bake, draw",
+    "Mark UI elements with data-anidoodle; drop in <ani-doodle>",
+    "emit-interactive → .html + .mjs",
+    "replay.mjs gate; record-interactive.mjs for a demo MP4"
+   ],
+   "media": {
+    "type": "iframe",
+    "src": "media/int/mascot-hero.html",
+    "cap": "Live: Bit watches your pointer. Hover a button."
+   },
+   "askEx": "make our signup form's mascot react while people type, and look away on the password",
+   "askT": "an interactive web piece: ${st.subject}, in ${st.style}"
+  },
+  {
+   "id": "lesson",
+   "name": "Drawing lesson",
+   "typS": 49,
+   "len": "6–8 steps",
+   "gates": 1,
+   "gateNames": "a human looks",
+   "motion": 1,
+   "sound": 1,
+   "interactive": 0,
+   "workflow": "references/workflows/teach-drawing.md",
+   "what": "“How do I draw an owl?” gets a real lesson: the medium named, construction first (blue lines later erased to a ghost), 6–8 steps each with a caption, a look, a how and a common mistake. The output is a steps sheet, a timelapse, a contact sheet, the final and LESSON.md.",
+   "steps": [
+    "Name the medium; state the anatomy and construction",
+    "Write 6–8 steps first: title, a caption of 24 words or fewer, look, how, mistake",
+    "ScoreBuilder: layers, parts, add/erase, corrections that supersede",
+    "lesson.mjs renders the whole set"
+   ],
+   "media": {
+    "type": "video",
+    "muted": false,
+    "src": "media/x/lessonOwlSocial.mp4",
+    "cap": "The owl lesson, 9x16 social cut with its score, rendered for this page."
+   },
+   "askEx": "teach me to draw an owl in pencil, step by step",
+   "askT": "teach me to draw ${st.subject} in ${st.style}"
+  },
+  {
+   "id": "character",
+   "name": "Character",
+   "typS": 0,
+   "len": "model sheet",
+   "gates": 1,
+   "gateNames": "the model sheet",
+   "motion": 0,
+   "sound": 0,
+   "interactive": 0,
+   "workflow": "references/workflows/character-consistency.md · references/anatomy.md",
+   "what": "Build a character once, as a module, then pose it in any shot and any hand. See chapter 5.",
+   "steps": [
+    "Identity paragraph → canon row → module → model sheet ✋",
+    "Prove the hands: triptych and every-hand sheet",
+    "Use: a pose per frame; any change bumps the version",
+    "character-check.mjs gates it"
+   ],
+   "media": {
+    "type": "img",
+    "src": "media/x/miraEveryHand.jpg",
+    "cap": "Mira, one module, in every hand."
+   },
+   "askEx": "make me a recurring character: a nine-year-old inventor, and show her in every style",
+   "askT": "a character: ${st.subject}, with a model sheet, drawn in ${st.style}"
+  },
+  {
+   "id": "adapt",
+   "name": "Match my style · house style",
+   "typS": 0,
+   "len": "a new hand",
+   "gates": 1,
+   "gateNames": "side-by-side compare",
+   "motion": 0,
+   "sound": 0,
+   "interactive": 0,
+   "workflow": "references/workflows/adapt-a-style.md",
+   "what": "“Draw it like this picture”. It borrows the hand, never the picture: it analyses your image, writes the recipe (MARK / EDGE / ORDER / PAPER / PALETTE, and what it is not), grows the nearest plate and draws a different subject. The result can be saved as a house style and reused.",
+   "steps": [
+    "analyze-style.mjs on your image; look at full size and a 3× crop",
+    "Write the medium recipe, including what it is NOT",
+    "Grow the nearest plate; draw a different subject",
+    "compare.mjs side by side; iterate 2–3 rounds",
+    "Save to styles/house/<name>.json"
+   ],
+   "media": {
+    "type": "img",
+    "src": "media/x/adaptAquarelle.jpg",
+    "cap": "adaptAquarelle: a moon jellyfish in an adapted “pastel blotch” hand (house style pastel-blotch.json). The quiet-scrapbook adaptation also ships."
+   },
+   "askEx": "here's a painting I love; draw our product in that hand, and save it as our house style",
+   "askT": "match the style of my image and draw ${st.subject} in it"
+  },
+  {
+   "id": "score",
+   "name": "Score · soundtrack",
+   "typS": 8,
+   "len": "any, fit to the film",
+   "gates": 1,
+   "gateNames": "8 s human listen",
+   "motion": 0,
+   "sound": 1,
+   "interactive": 0,
+   "workflow": "references/music/README.md",
+   "what": "A composed, synthesized, mastered score: a style, a mood per section, notes as data, then measurement. It fits any length. See chapter 6.",
+   "steps": [
+    "A plan: style + a mood per section",
+    "Notes as bar-checked data",
+    "Perform → instruments → room → master",
+    "Meter it (LUFS, peak, onsets, brightness) and run the guards",
+    "8 seconds heard by a human ✋"
+   ],
+   "media": {
+    "type": "audio",
+    "src": "media/music/nocturne.m4a",
+    "cap": "“Window Light”, a nocturne in A♭, composed and synthesized by the engine."
+   },
+   "askEx": "score my 40-second clip: a folk piece that starts wistful and ends hopeful",
+   "askT": "a ${fmt(st.secs)} score, ${snd}, for ${st.subject}"
+  }
+ ],
+ "characters": [
+  {
+   "name": "Mira · every hand",
+   "type": "img",
+   "src": "media/x/miraEveryHand.jpg",
+   "module": "characters/mira",
+   "what": "Mira v1.0.0: nine years old, an inventor, round red glasses, an auburn bob with a cowlick, a yellow raincoat with three toggles, teal wellies. Canon: 5.2 heads, 1.30 m, with a declared 1.19× head enlargement. One module, posed once, drawn by every line hand (storybook, marker, riso, woodcut, scratch, sumi, pencil) and resampled by the grid hands (pixel, brick)."
+  },
+  {
+   "name": "Mira · model sheet",
+   "type": "img",
+   "src": "media/x/miraSheet.jpg",
+   "module": "miraSheet.ts",
+   "what": "The model sheet: turnaround views, proportions, palette roles and the distinguishing features that must appear in every view. This is the one approval a character spends."
+  },
+  {
+   "name": "Mira · triptych",
+   "type": "img",
+   "src": "media/x/miraTriptych.jpg",
+   "module": "miraTriptych.ts",
+   "what": "Proving the hands: the same pose in three hands side by side."
+  },
+  {
+   "name": "Mira · walk cycle",
+   "type": "video",
+   "src": "media/x/miraWalk.webm",
+   "module": "miraWalk.ts",
+   "what": "An 8-second walk: joint limits hold on every frame, bone lengths stay constant and the feet don't slide. The character gate checks all three."
+  },
+  {
+   "name": "Mira · comic panel",
+   "type": "img",
+   "src": "media/x/miraComic.jpg",
+   "module": "miraComic.ts",
+   "what": "The same module in a marker-comic panel."
+  },
+  {
+   "name": "Mira · riso poster",
+   "type": "img",
+   "src": "media/x/miraRiso.jpg",
+   "module": "miraRiso.ts",
+   "what": "The same module pulled as a risograph poster."
+  },
+  {
+   "name": "Mira · tile loop",
+   "type": "video",
+   "src": "media/x/miraTile.webm",
+   "module": "miraTile.ts",
+   "what": "A looping tile: the same Mira, moving."
+  },
+  {
+   "name": "Theo · figure sheet",
+   "type": "img",
+   "src": "media/x/figureSheet.jpg",
+   "module": "characters/theo",
+   "what": "Theo, a realistic adult (7.5 heads, 1.78 m), exists to prove the rig on the hard cases: foreshortening, hands, balance."
+  },
+  {
+   "name": "Theo · the baker",
+   "type": "img",
+   "src": "media/x/bakerSheet.jpg",
+   "module": "bakerSheet.ts",
+   "what": "Theo in a new wardrobe and a new hand (coloured pencil). He is still recognisably Theo."
+  }
+ ],
+ "charChecks": [
+  "canon ratios",
+  "constant bone lengths",
+  "symmetry",
+  "joint limits",
+  "balance",
+  "feet on the floor",
+  "five digits",
+  "features in all ten views",
+  "palette roles per hand",
+  "deterministic geometry",
+  "no foot sliding",
+  "grid-hand identity IoU > 0.8"
+ ],
+ "interactive": [
+  {
+   "name": "Mascot hero",
+   "src": "media/int/mascot-hero.html",
+   "what": "Bit, the storybook wind-up robot, lives in a landing-page hero and is its most attentive reader. His eyes follow your pointer and his head follows a beat later. Hover or Tab to a button and he turns to present it. Press and he winds up; click “start” and he jumps and cheers.",
+   "try": "move the pointer around · hover or Tab to the buttons · click “Get started” · poke Bit",
+   "embed": "<button data-anidoodle=\"start\">Get started</button>\n<ani-doodle piece=\"mascot-hero\"></ani-doodle>\n<!--anidoodle-->   ← emit-interactive inlines the module here"
+  },
+  {
+   "name": "Scroll hero",
+   "src": "media/int/scroll-hero.html",
+   "what": "Scrolling is the illustrator's hand: construction ovals, then a light pencil pass (head first), then washes spreading from where the brush landed, then the full-weight line. Scroll back up and it un-draws.",
+   "try": "scroll down slowly inside the frame, then back up",
+   "embed": "<ani-doodle piece=\"scroll-hero\" scroll-track=\"#track\"></ani-doodle>"
+  },
+  {
+   "name": "Form mascot",
+   "src": "media/int/form-mascot.html",
+   "what": "Bit keeps a sign-up form company. He reads along as you type (the log keeps only the length and caret, never the text), covers his eyes on the password, peeks when you tick “show”, and is delighted when it works.",
+   "try": "type your name · focus the password · press Show · submit",
+   "embed": "<input data-anidoodle=\"name\">\n<input type=\"password\" data-anidoodle=\"password\">\n<ani-doodle piece=\"form-mascot\"></ani-doodle>"
+  }
+ ],
+ "inputs": [
+  "pointer move",
+  "hover enter/leave",
+  "down / up (click)",
+  "focus / blur",
+  "key: length + caret only",
+  "scroll 0..1",
+  "UI state: idle · busy · success · error",
+  "element rects",
+  "DPR",
+  "reduced motion"
+ ],
+ "tools": [
+  {
+   "id": "scaffold.mjs",
+   "short": "a new project",
+   "row": 0,
+   "col": 0,
+   "to": [
+    "still.mjs"
+   ],
+   "what": "Turns the engine into a working project with a still and/or a film.",
+   "usage": "node <skill>/engine/tools/scaffold.mjs <dir> [--still name] [--film name] [--duration s]\n  [--size WxH | --format 1x1|9x16|16x9|4x5] [--fps N] [--bpm N] [--example]"
+  },
+  {
+   "id": "still.mjs",
+   "short": "one frame + hash",
+   "row": 0,
+   "col": 1,
+   "to": [
+    "render.mjs"
+   ],
+   "what": "One frame at full resolution, drawn twice, with its hash, so a re-render can be proved identical.",
+   "usage": "node tools/still.mjs <film> [--shot id] [--frame N] [--out x.png] [--scale 1]"
+  },
+  {
+   "id": "render.mjs",
+   "short": "the whole piece",
+   "row": 0,
+   "col": 2,
+   "to": [
+    "gate.mjs"
+   ],
+   "what": "Every frame through an auto-detected backend, encoded with ffmpeg, then a determinism probe (forward on one page vs reversed on another).",
+   "usage": "node tools/render.mjs [film] [--scale 1] [--workers 4] [--out out/x.mp4|.gif|.webm|.apng]\n  [--gif-fps 15] [--width 640]"
+  },
+  {
+   "id": "music.mjs",
+   "short": "render + meter",
+   "row": 0,
+   "col": 3,
+   "what": "Renders and meters a score: LUFS, LRA, true peak, onsets, centroid.",
+   "usage": "node tools/music.mjs list | render <piece> <out.wav> [--seconds] [--tempo] [--fit]\n  | meter <files…> | samples <dir> | score <piece> | probe"
+  },
+  {
+   "id": "lesson.mjs",
+   "short": "a lesson set",
+   "row": 0,
+   "col": 4,
+   "what": "Steps sheet, timelapse, contact sheet, final, LESSON.md and a gates file.",
+   "usage": "node tools/lesson.mjs <lessonFilm> --out dir [--ref img [--ref-crop x,y,w,h]] [--no-mp4]"
+  },
+  {
+   "id": "gate.mjs",
+   "short": "determinism · dead air",
+   "row": 1,
+   "col": 2,
+   "to": [
+    "emit.mjs"
+   ],
+   "what": "The quality gate: determinism (1 vs N workers, forward vs reversed), the contract scan, dead air, and the artifact checks. --self-test proves it can fail.",
+   "usage": "node tools/gate.mjs <film> [--adapter html-player] [--mp4 path] [--samples 12] [--self-test]"
+  },
+  {
+   "id": "deadair.mjs",
+   "short": "motion per second",
+   "row": 1,
+   "col": 1,
+   "what": "Dead-air analysis of a film or an MP4: identical frames, still windows.",
+   "usage": "node tools/deadair.mjs <film|mp4> [--win 15] [--min 0.5] [--exempt a:b]"
+  },
+  {
+   "id": "character-check.mjs",
+   "short": "rig + identity",
+   "row": 1,
+   "col": 3,
+   "what": "The character gate. No browser needed; every check has a negative twin.",
+   "usage": "node tools/character-check.mjs [--json out]"
+  },
+  {
+   "id": "replay.mjs",
+   "short": "interactive gate",
+   "row": 1,
+   "col": 4,
+   "what": "Scripted desktop and touch sessions at DPR 2, replayed reversed, forward and cold; hashes must match.",
+   "usage": "node tools/replay.mjs <page.html> [--out report.json] [--seconds 1]"
+  },
+  {
+   "id": "docs-check.mjs",
+   "short": "docs vs code",
+   "row": 1,
+   "col": 5,
+   "what": "Fails when any doc's style count, length or path disagrees with the code.",
+   "usage": "node tools/docs-check.mjs"
+  },
+  {
+   "id": "emit.mjs",
+   "short": "offline HTML player",
+   "row": 2,
+   "col": 2,
+   "what": "One self-contained offline HTML file that plays the film and synthesizes its own sound, proved to be the gated film.",
+   "usage": "node tools/emit.mjs <film> [--out x.html] [--frames 24]"
+  },
+  {
+   "id": "emit-interactive.mjs",
+   "short": "live web piece",
+   "row": 2,
+   "col": 3,
+   "to": [
+    "record-interactive.mjs"
+   ],
+   "what": "An inlined .html plus an ES module exporting mount(el, piece) with setState, pause, play and destroy.",
+   "usage": "node tools/emit-interactive.mjs <piece> [--page page.html] [--out x.html] [--module x.mjs]"
+  },
+  {
+   "id": "record-interactive.mjs",
+   "short": "demo MP4",
+   "row": 2,
+   "col": 4,
+   "what": "A frame-exact demo video of an interactive page, driven by a choreography (glide, hold, click, type, key, scroll).",
+   "usage": "node tools/record-interactive.mjs <page.html> <choreo.mjs> --out demo.mp4 [--fps 30] [--size 1280x800]"
+  },
+  {
+   "id": "gallery.mjs",
+   "short": "style contact sheet",
+   "row": 2,
+   "col": 5,
+   "what": "The last frame of every draw film, plus a labelled gallery sheet.",
+   "usage": "node tools/gallery.mjs [--only id,id] [--dry]"
+  },
+  {
+   "id": "analyze-style.mjs",
+   "short": "read your image",
+   "row": 3,
+   "col": 0,
+   "to": [
+    "compare.mjs"
+   ],
+   "what": "Measures a reference image's marks (edges, texture, palette, grain) to write a style recipe.",
+   "usage": "node tools/analyze-style.mjs <image> [--json out] [--crop x,y,w,h] [--exclude …]"
+  },
+  {
+   "id": "compare.mjs",
+   "short": "side by side",
+   "row": 3,
+   "col": 1,
+   "what": "Your reference and the new drawing, side by side at one height.",
+   "usage": "node tools/compare.mjs <ref> <new.png> --out sbs.png [--height 800]"
+  },
+  {
+   "id": "snap.mjs",
+   "short": "proof frames",
+   "row": 3,
+   "col": 2,
+   "what": "Proof frames and a contact sheet per shot.",
+   "usage": "node tools/snap.mjs <film> [--shot id] [--samples N] [--sheet] [--only] [--scale S]"
+  },
+  {
+   "id": "registry.mjs",
+   "short": "style list",
+   "row": 3,
+   "col": 3,
+   "what": "Regenerates styles.gen.json and INDEX.md from the plates themselves.",
+   "usage": "node tools/registry.mjs"
+  }
+ ],
+ "gateRuns": [
+  {
+   "name": "Run 1: FAIL",
+   "checks": [
+    [
+     1,
+     "12 sampled frames hash-identical, 1 page vs 3 pages, forward vs reversed"
+    ],
+    [
+     1,
+     "no forbidden call in 157 art-core modules"
+    ],
+    [
+     1,
+     "all randomness is rng(seed): 225 seeded call sites"
+    ],
+    [
+     1,
+     "MP4 frame count matches film: 600/600"
+    ],
+    [
+     0,
+     "no unexplained identical consecutive frames: 17, 18, 19, 20"
+    ],
+    [
+     0,
+     "no 30-frame window under 0.02% changed: 166–211, 510–558"
+    ],
+    [
+     1,
+     "no http(s) reference of any kind"
+    ],
+    [
+     1,
+     "no external element (img, audio, video, link)"
+    ],
+    [
+     1,
+     "no web font"
+    ],
+    [
+     1,
+     "no embedded binary asset"
+    ],
+    [
+     1,
+     "no network call in the bundle"
+    ],
+    [
+     1,
+     "the asset manifest is empty"
+    ],
+    [
+     1,
+     "exposes window.FILM so any host can drive it"
+    ],
+    [
+     1,
+     "any score is synthesized in the page, never loaded"
+    ]
+   ],
+   "note": "Frames 166–211: the long hairline swash crawled at the same pace as the shaded strokes. Frames 17–20: the pencil guides were so faint that the MP4 encode flattened them into identical frames. Frames 510–558: a tiny arrow and small lettering."
+  },
+  {
+   "name": "Run 4: PASS 14/14",
+   "checks": [
+    [
+     1,
+     "12 sampled frames hash-identical, 1 page vs 3 pages, forward vs reversed"
+    ],
+    [
+     1,
+     "no forbidden call in 157 art-core modules"
+    ],
+    [
+     1,
+     "all randomness is rng(seed): 225 seeded call sites"
+    ],
+    [
+     1,
+     "MP4 frame count matches film: 600/600"
+    ],
+    [
+     1,
+     "no unexplained identical consecutive frames: none"
+    ],
+    [
+     1,
+     "no 30-frame window under 0.02% changed: none"
+    ],
+    [
+     1,
+     "no http(s) reference of any kind"
+    ],
+    [
+     1,
+     "no external element (img, audio, video, link)"
+    ],
+    [
+     1,
+     "no web font"
+    ],
+    [
+     1,
+     "no embedded binary asset"
+    ],
+    [
+     1,
+     "no network call in the bundle"
+    ],
+    [
+     1,
+     "the asset manifest is empty"
+    ],
+    [
+     1,
+     "exposes window.FILM so any host can drive it"
+    ],
+    [
+     1,
+     "any score is synthesized in the page, never loaded"
+    ]
+   ],
+   "note": "The fixes were craft, not tuning: the pen now spends time in proportion to ink laid (width × length), so it flicks through hairlines and presses slowly through shades, as a real pointed pen does. The guides are ruled a touch darker. The last 60 frames are a declared hold. The <a href=\"media/int/showcaseTitle-player.html\" target=\"_blank\">87 KB offline HTML player</a> it emitted plays the film with no network at all."
+  }
+ ],
+ "cheat": [
+  [
+   "a fox at dusk, in cut paper",
+   "a still, full size, reproducible"
+  ],
+  [
+   "…drawing itself, 20 s",
+   "a drawing timelapse MP4"
+  ],
+  [
+   "…as a 4-second loop / sticker",
+   "a seamless loop; WebM or APNG with alpha"
+  ],
+  [
+   "a 60-second film about X, woodcut, nocturne",
+   "a scored story film, three approvals"
+  ],
+  [
+   "explain how X works, one idea per chapter",
+   "an explainer film or a one-page infographic"
+  ],
+  [
+   "a 30 s launch video with my screenshots",
+   "hook → turn → ≤3 proofs → payoff, in three shapes"
+  ],
+  [
+   "make our hero mascot react to the pointer",
+   "an interactive <ani-doodle> piece plus a replay gate"
+  ],
+  [
+   "teach me to draw an owl",
+   "a lesson: steps sheet, timelapse, LESSON.md"
+  ],
+  [
+   "a recurring character, in every style",
+   "a character module plus a model sheet"
+  ],
+  [
+   "draw it in the style of this image",
+   "an adapted hand, savable as a house style"
+  ],
+  [
+   "score this: wistful, then hopeful",
+   "a composed, metered WAV, fit to length"
+  ],
+  [
+   "you pick",
+   "a pick, with a one-line reason"
+  ],
+  [
+   "also in 9x16 and 1x1",
+   "every shape from the same source"
+  ],
+  [
+   "as one offline HTML file",
+   "a self-contained player that synthesizes its own sound"
+  ]
+ ]
+}

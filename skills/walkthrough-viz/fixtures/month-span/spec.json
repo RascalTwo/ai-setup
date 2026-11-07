@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "changes": [],
+  "task": { "project": "fixtures", "id": "fixture-month-span", "title": "Calendar view: month span" },
+  "ask": "A Month option in the calendar's Show menu, so you can see a whole month at once.",
+  "hero": {
+    "why": "The calendar shows a day or a week; planning further out means stepping week by week.",
+    "done": ["Show has Month: the whole month in whole weeks", "A full day says how much more it holds and opens", "‹ and › step a month"],
+    "scope": "Timeline Studio's calendar view only. A fixture for walkthrough-viz: past work (3c303d1), re-run as if just finished.",
+    "slot": "<svg viewBox=\"0 0 200 60\" role=\"img\" aria-label=\"A month grid\"><rect x=\"4\" y=\"4\" width=\"192\" height=\"52\" rx=\"6\" fill=\"none\" stroke=\"#8b93a7\"/></svg>"
+  },
+  "assumptions": [
+    { "id": "A1", "text": "Weeks start on the plan's own week start, as the Week view's do.", "verdict": "ok" }
+  ],
+  "examples": [
+    { "id": "E1", "kind": "should", "text": "Show has a Month option: the whole month in whole weeks from the plan's week start, the days either side greyed.", "verdict": "ok" },
+    { "id": "E2", "kind": "should", "text": "Each day lists what's on it like the Week view does, in time order; something running past midnight shows on both days.", "verdict": "ok" },
+    { "id": "E3", "kind": "should", "text": "A day too full to fit says +N more; that, or the day's number, opens the day.", "verdict": "ok" },
+    { "id": "E4", "kind": "should", "text": "‹ and › (and the arrow keys) step a whole month.", "verdict": "ok" },
+    { "id": "E5", "kind": "shouldnt", "text": "Zoom still shows in Month, where there are no hours to zoom.", "verdict": "ok" }
+  ],
+  "visuals": [],
+  "plan": [{ "id": "P1", "step": "Add Month to Show and draw it from the Week view's pieces." }],
+  "signedOffAt": "2026-10-11T12:00:00.000Z"
+}

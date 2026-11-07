@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>watch-for — the skill that waits for the screen</title>
+    <meta name="viz:uid" content="v-0f5807125115" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="watch-for" />
+    <meta
+      name="viz:description"
+      content="Waits until something is visible on a screen, window, video or folder of images, judged by a local d1:2b model for ~0 Claude vision tokens."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* ── POSTER + DIVE ──────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls beneath it.
+     poster.css owns the scale mechanics (--s drives #fit's height too, so a
+     scaled card doesn't reserve a dead 630px of flow).
+     ─────────────────────────────────────────────────────────────────────────── */
+      :root {
+        --s: 1;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 96% -10%,
+            color-mix(in srgb, var(--c4) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 108%,
+            color-mix(in srgb, var(--good) 14%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 486px;
+        gap: 38px;
+        align-items: center;
+        padding: 54px 64px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 18px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 53px;
+        line-height: 1.05;
+        margin: 0 0 18px;
+        letter-spacing: -1.5px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      p.sub {
+        font-size: 18.5px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 20px;
+        max-width: 500px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 14.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 20px;
+        max-width: 500px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14.5px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 9px;
+        padding: 10px 15px;
+        color: var(--text);
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the router = the "proof" slot: one image in, two intents out, one fallback */
+      .router {
+        display: grid;
+        gap: 12px;
+      }
+      .ask {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.13em;
+        color: var(--muted);
+        text-align: center;
+      }
+      .ask b {
+        color: var(--text);
+      }
+      .fork {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        align-items: stretch;
+      }
+      .lane {
+        background: color-mix(in srgb, var(--panel) 78%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px 14px 15px;
+        display: flex;
+        flex-direction: column;
+      }
+      .lane .lbl {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.11em;
+        line-height: 1.35;
+        margin-bottom: 10px;
+      }
+      .lane .cost {
+        font-size: 29px;
+        font-weight: 700;
+        letter-spacing: -1px;
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+      .lane .costsub {
+        font-size: 11.5px;
+        color: var(--muted);
+        line-height: 1.35;
+        margin-bottom: 11px;
+        font-family: var(--mono);
+      }
+      .lane ul {
+        list-style: none;
+        margin: 0 0 12px;
+        padding: 0;
+      }
+      .lane li {
+        font-size: 12.5px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+      .lane .route {
+        margin-top: auto;
+        font-family: var(--mono);
+        font-size: 12px;
+        padding-top: 9px;
+        border-top: 1px dashed var(--border);
+      }
+      .lane.local {
+        border-top: 2px solid var(--good);
+      }
+      .lane.local .lbl,
+      .lane.local .cost,
+      .lane.local .route {
+        color: var(--good);
+      }
+      .lane.native {
+        border-top: 2px solid var(--c4);
+      }
+      .lane.native .lbl,
+      .lane.native .cost,
+      .lane.native .route {
+        color: var(--c4);
+      }
+      .ladder {
+        background: color-mix(in srgb, var(--panel) 60%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 11px 14px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+      }
+      .ladder .k {
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        font-size: 10.5px;
+        margin-right: 2px;
+      }
+      .ladder .tier {
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 4px 8px;
+        color: var(--text);
+      }
+      .ladder .tier.last {
+        border-color: color-mix(in srgb, var(--c4) 50%, transparent);
+        color: var(--c4);
+      }
+      .ladder .arw {
+        color: var(--faint);
+      }
+      .fine {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--faint);
+        text-align: center;
+        letter-spacing: 0.04em;
+      }
+
+      /* ── the dive (below the fold) ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.88em;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 1px 5px;
+        color: var(--text);
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      /* ── beat-5 furniture: sub-headings, the manifest table, the stepper figure ── */
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--accent);
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        min-height: 190px;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 46px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+
+      .pipe {
+        display: grid;
+        gap: 10px;
+      }
+      .pipe .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .box {
+        background: color-mix(in srgb, var(--panel) 78%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 13px 14px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+      .box b {
+        color: var(--text);
+      }
+      .box .big {
+        font-family: var(--sans);
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: -1px;
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+      .box.good {
+        border-top: 2px solid var(--good);
+      }
+      .box.good .big {
+        color: var(--good);
+      }
+      .box.c4 {
+        border-top: 2px solid var(--c4);
+      }
+      .box.c4 .big {
+        color: var(--c4);
+      }
+      .film {
+        display: flex;
+        gap: 6px;
+      }
+      .film i {
+        flex: 1;
+        height: 34px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--panel-2);
+      }
+      .film i.hit {
+        border-color: var(--good);
+        background: color-mix(in srgb, var(--good) 28%, transparent);
+      }
+      .film i.same {
+        opacity: 0.45;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="watch-for"
+        data-viz-id="poster-card"
+        data-label="watch-for poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · WATCH-FOR</div>
+          <h1 class="hook">Stop taking<br />screenshots to<br /><em>see if it's done.</em></h1>
+          <p class="sub">
+            Waiting on a UI used to mean a screenshot, a look, and ~1&ndash;2k vision tokens per
+            glance. <b>watch-for</b> polls the screen locally and wakes Claude only when the thing
+            you named is <b>actually visible</b>: ~0 Claude vision tokens while it waits.
+          </p>
+          <p class="not">
+            Answers <b>"is X visible"</b>, never "what does it say".<br />A 2B model: small text is
+            its weak spot.
+          </p>
+          <div class="trigger">
+            <span>run</span>&nbsp;watch-for '"Deploy succeeded"' --in window:Chrome
+          </div>
+        </div>
+        <div class="pipe">
+          <div class="ask">ONE FRAME PER SECOND&nbsp; ↓ &nbsp;<b>ONE VERDICT</b></div>
+          <div class="film">
+            <i class="same"></i><i class="same"></i><i></i><i class="hit"></i><i class="hit"></i>
+          </div>
+          <div class="row">
+            <div class="box good">
+              <div class="big">~0</div>
+              Claude vision tokens while it waits
+            </div>
+            <div class="box c4">
+              <div class="big">2 in a row</div>
+              frames at p&ge;0.5 before it fires
+            </div>
+          </div>
+          <div class="box">
+            <b>d1:2b</b> on Ollama, native resolution. Batched questions: <b>~3.5&times; faster</b>,
+            98.8&ndash;100% same verdicts.
+          </div>
+          <div class="fine">EXIT 0 MATCH · 1 TIMEOUT · 2 ERROR</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install watch-for">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <pre><span class="l"><span class="c">npx</span> skills add <span class="r">RascalTwo/ai-setup</span> <span class="f">-g</span> <span class="f">-s</span> watch-for</span></pre>
+      <p class="needs">needs <code>python3</code> <code>ollama</code> <code>ffmpeg</code></p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">Looking, again and again, to see if it's done</h2>
+      <p>
+        Before this, waiting on a screen meant a loop: take a screenshot, <b>Read</b> it, decide it
+        isn't ready, sleep, repeat. Every glance parks <b>~1&ndash;2k vision tokens</b> in context,
+        and they accumulate. A ten-minute deploy watched every 20 seconds is thirty images spent on
+        "not yet".
+      </p>
+      <p>
+        <code>watch-for</code> moves the looking out of Claude. A small local model on Ollama judges
+        each frame; Claude runs the watcher in the background and is told when it exits.
+      </p>
+
+      <h2 data-beat="using">When the skill fires</h2>
+      <p>
+        When Claude would otherwise screenshot repeatedly to wait on a UI (a dialog, a banner, a
+        page finished loading, a spinner gone), or has to find the moments a recording shows
+        something. The skill tells Claude to:
+      </p>
+      <ul>
+        <li>
+          phrase each condition as something <b>visible</b>, and wait for success <b>or</b> failure
+          in one expression so a failure ends the wait early;
+        </li>
+        <li>
+          narrow the source (<code>--in window:&lt;App&gt;</code>, a region) because a smaller frame
+          is faster and more legible;
+        </li>
+        <li>
+          run it with Bash <code>run_in_background: true</code> and a sized <code>--timeout</code>,
+          then read the exit code and JSON line when notified;
+        </li>
+        <li><code>Read</code> the saved frame once before any irreversible action.</li>
+      </ul>
+
+      <h2 data-beat="limits">What it won't do</h2>
+      <ul>
+        <li>
+          <b>Small text is weakest.</b> d1 is a 2B model. A small target can take a few frames to
+          trigger; a region makes it bigger and faster.
+        </li>
+        <li>
+          <b>It answers "is X visible", never "what does it say".</b> Reading values is
+          <code>read-image-locally</code>.
+        </li>
+        <li>
+          <b>Ollama serializes requests.</b> Another loaded model, yours or another session's,
+          stalls every check; a check stuck behind it ends as exit 2 after 300 s.
+        </li>
+        <li>
+          <b>macOS only for screen and window sources</b> (<code>screencapture</code> and
+          <code>osascript</code>). Videos, folders and stdin paths do not care.
+        </li>
+        <li>
+          <b>At most 1 frame per second.</b> Something on screen for less than a second can be
+          missed.
+        </li>
+      </ul>
+      <div class="callout">
+        <b>Waiting, not proof.</b> d1 is ~93% right per frame and confirms over 2 frames. Before an
+        irreversible action, <code>Read</code> the saved frame once yourself.
+      </div>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/watch-for/SKILL.md</code>: instructions only. The work is done by the
+              tool <code>tools/watch-for/watch-for</code>, installed at
+              <code>~/.agents/ai-setup/tools/watch-for/watch-for</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Integrates</td>
+            <td><b>Ollama</b>: the <code>d1:2b</code> decision model.</td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>The commands <code>python3</code>, <code>ollama</code> and <code>ffmpeg</code>.</td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>None</b> (<code>state: false</code>). The skill is prose; the saved frames belong
+              to the tool, which keeps them under its own folder in <code>~/.agents/state/</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete</td>
+            <td>Nothing of the skill's to delete. See the tool's poster for the frames folder.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">How it actually works</h2>
+      <p class="m">One <code>watch-for</code> invocation, from the expression to an exit code.</p>
+
+      <div class="fig" data-viz-id="watch-figure" data-label="stepper: one watch-for run">
+        <div class="stage" id="stage"></div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+
+      <h3>The expression is parsed, not evaluated</h3>
+      <p>
+        <code>ast.parse(expr, mode="eval")</code> reads the condition, and a walker allows only
+        strings, <code>and</code>/<code>or</code>/<code>not</code>,
+        <code>"x" in &lt;region&gt;</code>, <code>box()</code> and <code>px()</code>. Anything else
+        is refused with exit 2 before a single frame is captured. Regions are fractions of the frame
+        (<code>box(x,y,w,h)</code>) or exact pixels (<code>px(x,y,w,h)</code>).
+      </p>
+
+      <h3>Getting frames</h3>
+      <pre><span class="c"># live screen: one capture per loop, three rotating temp files</span>
+screencapture -x -t png [-D N] frame.png
+<span class="c"># window:&lt;App&gt;: bounds from System Events, then a rectangle capture</span>
+osascript -e 'tell application "System Events" to tell (first process whose name is "App") to get {position, size} of front window'
+screencapture -x -t png -R x,y,w,h frame.png
+<span class="c"># video file, stream URL or camera: decoded once, one frame per second</span>
+ffmpeg -nostdin -i SOURCE -vf fps=1 %08d.png</pre>
+      <p>
+        A live source takes the next frame as soon as the last answer is in, but never more often
+        than once per second. For a live stream ffmpeg skips to the newest frame; a file is judged
+        frame by frame.
+      </p>
+
+      <h3>One call per region, conditions batched</h3>
+      <p>
+        <code>judge()</code> groups conditions by region and makes
+        <b>one d1 call per distinct region</b>, putting every condition for that region in the same
+        request to <code>/v1/systemone</code> as separate questions. Measured on 40 screenshots, 4
+        questions per call gave <b>98.8&ndash;100% the same verdicts</b> as asking them singly and
+        was <b>~3.5&times; faster</b>.
+      </p>
+      <p>
+        Frames go at <b>native resolution</b>: 1536 px was ~native accuracy (768 px scored 90.0%,
+        1536 px 93.8%), and a real 3456&times;2234 screen costs <b>2.4&ndash;3.0 s per call</b>.
+      </p>
+
+      <h3>Skipping work, then deciding</h3>
+      <p>
+        Each frame is reduced to grayscale at 512 px and compared with the last judged frame. If no
+        pixel moved by more than <b>24/255</b>, the previous verdict is
+        <b>repeated without asking the model</b>. Each probability is turned into true at
+        <code>p &ge; 0.5</code>, the boolean tree is evaluated, and a
+        <b>match needs 2 consecutive true frames</b>. <code>--gone</code>
+        inverts the result to wait for something to disappear.
+      </p>
+
+      <h3>Time, output and exit codes</h3>
+      <p>
+        Each d1 call is handed only the <b>time remaining</b> of <code>--timeout</code>, so the
+        deadline holds even while Ollama is busy. On a match it copies the frame to the tool's own
+        folder in <code>~/.agents/state/</code> and prints one JSON line:
+      </p>
+      <pre>
+{"matched": true, "t": 312.0, "frame": "(saved frame, path in the JSON line)", "p": {"Saved @ frac[0.5, 0.5, 0.5, 0.5]": 0.91}}</pre>
+      <p>
+        Exit <b>0</b> on a match, <b>1</b> on timeout or end of stream (it prints
+        <code>{"matched": false, …}</code> with the last probabilities), <b>2</b> on any error.
+      </p>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its
+        own existence.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
