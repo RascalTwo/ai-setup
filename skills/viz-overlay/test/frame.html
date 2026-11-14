@@ -1,0 +1,9 @@
+<!doctype html>
+<!-- The iframe test page: a cross-origin frame (?inner=URL) with a text field, in a hit region. -->
+<meta charset="utf-8">
+<title>e2e-frame</title>
+<div data-overlay-hit style="position:fixed;left:40px;top:120px;padding:8px;background:#fff"><iframe id="f" style="width:260px;height:40px;border:0"></iframe></div>
+<script>
+  f.src = new URLSearchParams(location.search).get("inner");
+  addEventListener("message", (e) => overlay.send(JSON.stringify({ what: "inner", value: e.data })));
+</script>

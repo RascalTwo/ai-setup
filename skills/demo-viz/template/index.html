@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta name="viz:template" content="demo" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>demo</title>
+    <!-- Posture stays local: a demo runs against throwaway copies on this machine. -->
+    <meta name="viz:posture" content="local" />
+    <meta name="viz:listed" content="unlisted" />
+    <meta name="viz:title" content="Demo" />
+    <meta
+      name="viz:description"
+      content="A demo of a change by persona, before beside after: promised (a mock) or live (the real build), made by the demo-viz skill from walk.json"
+    />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="walk.css" />
+  </head>
+  <body>
+    <!-- Everything below is filled from walk.json by app.ts. Edit walk.json, not this file. -->
+    <div class="viz-header">
+      <h1 id="title">Demo</h1>
+      <div class="sub" id="change"></div>
+    </div>
+    <div class="what" id="what"></div>
+    <nav id="personas" aria-label="Personas"></nav>
+    <div class="bar">
+      <button id="reset" data-label="Start over">↺ Start over</button
+      ><span class="hint">resets the throwaway copy and starts the guide again</span>
+    </div>
+    <div id="play" class="bar play" data-viz-id="play" data-label="Play controls">
+      <button id="play-go" data-label="Play">▶ Play</button
+      ><button id="play-back" data-label="Previous step" aria-label="Previous step">‹</button
+      ><span id="play-pos" data-viz-id="play-pos" data-label="Position">1 / 1</span
+      ><button id="play-fwd" data-label="Next step" aria-label="Next step">›</button
+      ><button id="play-mine" data-label="Do it myself">✋ Do it myself</button
+      ><span class="hint">arrow keys step; Play replays each step with a fake cursor</span>
+    </div>
+    <div id="differs" hidden data-viz-id="differs" data-label="Differs from the promise"></div>
+    <main id="stage">
+      <figure class="pane before web">
+        <figcaption>Before</figcaption>
+        <iframe
+          id="before"
+          title="Previous build"
+          data-viz-id="stage-before"
+          data-label="Previous build, running"
+        ></iframe>
+      </figure>
+      <figure class="pane before term">
+        <figcaption>Before</figcaption>
+        <pre
+          id="term-before"
+          data-viz-id="term-before"
+          data-label="Previous version's terminal"
+        ></pre>
+      </figure>
+      <figure class="pane before cap">
+        <figcaption>Before, as captured</figcaption>
+        <div id="cap-body" data-viz-id="capture" data-label="The before, captured"></div>
+      </figure>
+      <figure class="pane now web">
+        <figcaption id="now-cap">After, with the guide</figcaption>
+        <iframe
+          id="now"
+          title="After"
+          data-viz-id="stage-now"
+          data-label="After, running, with the guide"
+        ></iframe>
+      </figure>
+      <figure class="pane now term">
+        <figcaption>After</figcaption>
+        <div id="guide" data-viz-id="guide" data-label="The guide"></div>
+        <pre id="term-now" data-viz-id="term-now" data-label="This version's terminal"></pre>
+      </figure>
+    </main>
+    <figure id="measure" hidden data-viz-id="measure" data-label="Measured, before and after">
+      <figcaption>
+        <b>Measured, the same task in both.</b> Each pair is on its own scale.
+      </figcaption>
+      <div id="measure-rows"></div>
+    </figure>
+    <details id="promised" hidden data-viz-id="promised" data-label="What was promised">
+      <summary>What was promised for this step</summary>
+      <div id="promised-body"></div>
+    </details>
+    <figure id="clip" hidden data-viz-id="clip" data-label="A recording of the agent's own run">
+      <figcaption><b>A recording, not live.</b> <span id="clip-why"></span></figcaption>
+      <div id="clip-body"></div>
+    </figure>
+    <section id="decide" aria-label="Your decision">
+      <h2>Your decision</h2>
+      <div class="decide">
+        <button data-decide="Accepted" data-label="Accept">✓ Accept</button
+        ><button data-decide="Changes" data-label="Changes">✗ Changes</button
+        ><span class="hint">You can still add to what you said afterwards.</span>
+      </div>
+      <p id="yes" data-viz-id="yes" data-label="What a yes does">
+        <b>What Accept does:</b> <span id="yes-text"></span> Accept and Send approves the task, and
+        the agent ships it. Comments you send with it are kept on the task; for a change, pick
+        Changes.
+      </p>
+      <div id="account" data-viz-id="account" data-label="The agent's own notes">
+        <h3>The agent's own notes</h3>
+        <p class="locked">🔒 These open after you decide, so you judge what you saw first.</p>
+        <ul id="notes"></ul>
+      </div>
+      <div id="result" hidden data-viz-id="result" data-label="What happened to your Send">
+        <p id="result-line"></p>
+        <div id="result-words">
+          <textarea id="words" readonly rows="8" aria-label="Your words, as sent"></textarea>
+          <button id="copy" data-label="Copy your words">Copy your words</button>
+        </div>
+      </div>
+    </section>
+    <footer class="foot">
+      <div id="pips" aria-label="Steps"></div>
+      <span id="why" data-viz-id="why" data-label="Why Send can't be pressed yet"></span>
+      <button id="send" disabled>Send to the build agent</button>
+    </footer>
+    <script src="api/narrate"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

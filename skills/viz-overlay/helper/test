@@ -1,0 +1,7 @@
+#!/bin/sh
+# Runs the pure-logic tests (LogicTests.swift against Logic.swift).
+set -e
+cd "$(dirname "$0")"
+[ -d /Library/Developer/CommandLineTools ] && export DEVELOPER_DIR="${DEVELOPER_DIR:-/Library/Developer/CommandLineTools}"
+swiftc -swift-version 5 -parse-as-library Logic.swift LogicTests.swift -o logic-tests
+./logic-tests

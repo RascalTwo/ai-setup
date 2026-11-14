@@ -1,0 +1,12 @@
+#!/bin/sh
+# A fake herdr for a CLI demo's sandbox: put its folder first on PATH. It answers the calls
+# Kelpie makes with empty, valid replies and logs each one to $HERDR_LOG (default: fake-herdr.log in
+# $TMPDIR), so a sandboxed run never opens a tab or types into a pane.
+echo "herdr $*" >> "${HERDR_LOG:-${TMPDIR:-/tmp}/fake-herdr.log}"
+case "$*" in
+  "agent list"*) echo '{"result":{"agents":[]}}' ;;
+  "workspace list"*) echo '{"result":{"workspaces":[]}}' ;;
+  "workspace create"*) echo '{"result":{"workspace":{"workspace_id":"sandbox-w1"}}}' ;;
+  "tab create"*) echo '{"result":{"root_pane":{"pane_id":"sandbox-w1:p1"}}}' ;;
+  *) echo '{"result":{}}' ;;
+esac

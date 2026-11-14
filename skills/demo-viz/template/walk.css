@@ -1,0 +1,478 @@
+/* Demo page: before beside after per persona, the decision under it (live), the step strip along the bottom. */
+body {
+  height: auto;
+  min-height: 100vh;
+  padding: 0 20px 90px;
+}
+.what {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 16px;
+  margin: 8px 0;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.what b {
+  color: var(--text);
+}
+.what .impact {
+  color: var(--text);
+  font-size: 1.1em;
+  margin: 0 0 8px;
+}
+.bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 6px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.bar button,
+.decide button,
+.foot button,
+#copy {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+}
+#stage {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+#stage > * {
+  min-width: 0;
+}
+#stage .pane.before {
+  display: none;
+}
+#stage.split {
+  grid-template-columns: 2fr 3fr;
+}
+body:not(.web) #stage.split {
+  grid-template-columns: 1fr 1fr;
+}
+#stage.split .pane.before:not(.cap) {
+  display: block;
+}
+/* A capture stands for the before: it replaces the running previous build (or its terminal) for that step. */
+#stage.has-cap .pane.before:not(.cap) {
+  display: none;
+}
+#stage.has-cap .pane.before.cap {
+  display: block;
+}
+body.web .pane.term,
+body:not(.web) .pane.web {
+  display: none !important;
+}
+#cap-body {
+  min-height: 200px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: auto;
+  max-height: calc(100vh - 230px);
+  background: var(--panel);
+}
+#cap-body img {
+  display: block;
+  max-width: 100%;
+}
+#cap-body pre {
+  margin: 0;
+  padding: 10px;
+  font: 12px/1.35 var(--mono);
+  background: #0d1117;
+}
+.pane {
+  margin: 0;
+  position: relative;
+}
+.pane figcaption {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.pane iframe {
+  width: 100%;
+  height: calc(100vh - 230px);
+  min-height: 520px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+.pane pre {
+  width: 100%;
+  height: calc(100vh - 230px);
+  min-height: 520px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #0d1117;
+  color: var(--text);
+  font: 12px/1.35 var(--mono);
+  padding: 10px;
+  overflow: auto;
+  white-space: pre;
+  margin: 0;
+  box-sizing: border-box;
+}
+.pane pre .cmd {
+  color: var(--accent);
+  font-weight: 700;
+}
+.pane pre mark {
+  background: color-mix(in srgb, #f0b429 30%, transparent);
+  color: var(--text);
+  outline: 1px solid #f0b429;
+}
+#guide {
+  position: absolute;
+  z-index: 2;
+  right: 14px;
+  top: 26px;
+  max-width: 360px;
+  background: #11161d;
+  color: #e6edf3;
+  border: 1px solid #f0b429;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.45;
+  box-shadow: 0 8px 30px rgb(0 0 0 / 45%);
+}
+#guide .n {
+  font: 600 11px var(--sans);
+  color: #f0b429;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+#guide .row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+#guide button {
+  font: 600 12px var(--sans);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  background: #21262d;
+  color: #e6edf3;
+  cursor: pointer;
+}
+#guide button.go {
+  background: #f0b429;
+  color: #11161d;
+  border-color: #f0b429;
+  font-family: var(--mono);
+}
+#decide {
+  margin: 18px 0;
+}
+#decide h2 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+.decide {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.decide button.on[data-decide="Accepted"] {
+  background: color-mix(in srgb, var(--good) 35%, var(--bg));
+  border-color: var(--good);
+}
+.decide button.on[data-decide="Changes"] {
+  background: color-mix(in srgb, var(--danger) 35%, var(--bg));
+  border-color: var(--danger);
+}
+.hint {
+  font-size: 13px;
+  color: var(--muted);
+}
+#account {
+  margin-top: 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--r);
+  padding: 10px 14px;
+  color: var(--faint);
+}
+#account h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+#account ul {
+  display: none;
+  margin: 6px 0 0;
+  padding-left: 18px;
+  color: var(--text);
+  line-height: 1.5;
+  font-size: 14px;
+}
+#account.open {
+  border-style: solid;
+  background: var(--panel);
+}
+#account.open ul {
+  display: block;
+}
+#account.open .locked {
+  display: none;
+}
+.foot {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 130px 10px 20px;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+}
+#pips {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+.pip {
+  flex: 1;
+  text-align: center;
+  font: 600 12px var(--mono);
+  padding: 5px 0;
+  border-radius: 4px;
+  background: var(--panel-2);
+  color: var(--faint);
+  border: 1px solid var(--border);
+}
+.pip.seen {
+  background: color-mix(in srgb, var(--accent) 25%, var(--bg));
+  color: var(--text);
+}
+.pip.cur {
+  background: #f0b429;
+  color: #11161d;
+  border-color: #f0b429;
+}
+#send:not(:disabled) {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+#sent {
+  font-size: 13px;
+  color: var(--good);
+}
+#why {
+  font-size: 13px;
+  color: var(--warn);
+}
+#clip {
+  margin: 10px 0 0;
+  border: 1px solid #f0b429;
+  border-radius: var(--r);
+  padding: 10px 14px;
+  background: var(--panel);
+}
+#clip figcaption {
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+#clip video {
+  width: 100%;
+  max-height: 60vh;
+}
+#clip pre {
+  margin: 0;
+  max-height: 50vh;
+  overflow: auto;
+  background: #0d1117;
+  font: 12px/1.35 var(--mono);
+  padding: 10px;
+  border-radius: 6px;
+}
+#result {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--panel);
+}
+#result.ok {
+  border-color: var(--good);
+}
+#result.ok #result-line {
+  color: var(--good);
+}
+#result.fail {
+  border-color: var(--danger);
+}
+#result.fail #result-line {
+  color: var(--danger);
+}
+#result-line {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+#result.ok #result-words {
+  display: none;
+}
+#words {
+  width: 100%;
+  box-sizing: border-box;
+  font: 12px/1.4 var(--mono);
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+}
+#copy {
+  margin-top: 6px;
+}
+
+#yes {
+  margin: 0.6rem 0 0;
+  font-size: 0.92rem;
+  opacity: 0.85;
+}
+
+/* Personas, ▶ Play, the marks on a step. */
+#personas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+.persona {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+}
+.persona.on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 22%, var(--bg));
+}
+.persona small {
+  color: var(--muted);
+  margin-left: 6px;
+}
+.play button {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+}
+#play-go {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+#play-pos {
+  font: 600 13px var(--mono);
+  min-width: 4.5em;
+  text-align: center;
+}
+#differs {
+  margin: 6px 0;
+  padding: 8px 14px;
+  border: 1px solid var(--warn);
+  border-left-width: 5px;
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--warn) 14%, var(--bg));
+  line-height: 1.45;
+}
+.pip.differs::after {
+  content: " ≠";
+  color: var(--warn);
+}
+.pip.cur.differs::after {
+  color: #11161d;
+}
+.pgroup {
+  align-self: center;
+  font: 700 11px var(--mono);
+  color: var(--muted);
+  padding: 0 2px 0 8px;
+  border-left: 2px solid var(--border);
+}
+.pgroup:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
+#promised {
+  margin: 8px 0;
+  padding: 8px 14px;
+  border: 1px dashed var(--border);
+  border-radius: var(--r);
+  background: var(--panel);
+}
+#promised summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+#measure {
+  margin: 10px 0 0;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--panel);
+}
+.mrow {
+  display: grid;
+  grid-template-columns: 12em 1fr;
+  gap: 10px;
+  align-items: center;
+  margin: 8px 0;
+}
+.mbars {
+  display: grid;
+  gap: 3px;
+}
+.mb {
+  min-width: fit-content;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font: 12px var(--mono);
+  white-space: nowrap;
+}
+.mb.before {
+  background: color-mix(in srgb, var(--muted) 35%, var(--bg));
+}
+.mb.after {
+  background: color-mix(in srgb, var(--accent) 45%, var(--bg));
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* A promised demo is judged on the spec page: no decision, no Send. It may sit in a frame there. */
+body.promised #decide,
+body.promised #send,
+body.promised #why {
+  display: none;
+}
+body.embedded .viz-header,
+body.embedded .what {
+  display: none;
+}

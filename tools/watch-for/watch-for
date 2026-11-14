@@ -1,0 +1,309 @@
+#!/usr/bin/env python3
+"""watch-for: watch a stream of frames until a condition is true, judged locally (0 Claude tokens).
+
+watch-for '<expression>' [--in SOURCE] [--timeout 10m] [--gone] [--all] [--threshold 0.5]
+
+expression   quoted conditions joined by and / or / not / ( ), each optionally limited to a region:
+             '("Deploy succeeded" in top or "error dialog" in bottom_right) and not "spinner"'
+regions      top bottom left right (halves), top_left top_right bottom_left bottom_right (quarters),
+             center (the middle half), box(x, y, w, h) in fractions of the frame, px(x, y, w, h) in pixels
+SOURCE       screen (default), screen:N, window:<App>, a video file, a stream URL, camera[:N],
+             dir:<folder> (its images in name order), - (image paths on stdin)
+
+Each frame goes to Liquid's d1:2b on Ollama at native resolution, one call per distinct region.
+A match needs the expression true on 2 frames in a row; --gone waits for it to turn false.
+Prints one JSON line per match (with every condition's probability and the saved frame) and exits
+0 on a match, 1 on timeout or end of stream with no match, 2 on error.
+"""
+import argparse
+import ast
+import base64
+import glob
+import io
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import urllib.request
+
+from PIL import Image, ImageChops
+
+OLLAMA = os.environ.get("WATCH_FOR_OLLAMA", "http://localhost:11434")
+MODEL = os.environ.get("WATCH_FOR_MODEL", "d1:2b")
+STATE = os.path.expanduser(os.environ.get("WATCH_FOR_STATE", "~/.agents/state/watch-for"))
+CONFIRM = 2          # frames in a row
+MIN_GAP = 1.0        # seconds between live frames, at most one per second
+SAME = 24            # a pixel must change by more than this (0-255) for the frame to count as changed
+IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff")
+
+REGIONS = {  # x, y, w, h as fractions of the frame
+    "top": (0, 0, 1, .5), "bottom": (0, .5, 1, .5), "left": (0, 0, .5, 1), "right": (.5, 0, .5, 1),
+    "top_left": (0, 0, .5, .5), "top_right": (.5, 0, .5, .5),
+    "bottom_left": (0, .5, .5, .5), "bottom_right": (.5, .5, .5, .5), "center": (.25, .25, .5, .5),
+}
+
+
+# --- the expression -----------------------------------------------------------------------------
+# Python's own parser reads it; only strings, and/or/not, "x" in <region>, box() and px() are allowed.
+
+def region(node):
+    if isinstance(node, ast.Name) and node.id in REGIONS:
+        return ("frac", *REGIONS[node.id])
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in ("box", "px") \
+            and len(node.args) == 4 and not node.keywords \
+            and all(isinstance(a, ast.Constant) and type(a.value) in (int, float) for a in node.args):
+        v = tuple(a.value for a in node.args)
+        if node.func.id == "box" and not all(0 <= x <= 1 for x in v):
+            raise ValueError(f"box() takes fractions 0-1, got {v}; use px() for pixels")
+        if v[2] <= 0 or v[3] <= 0:
+            raise ValueError(f"region needs a positive width and height, got {v}")
+        return ("frac" if node.func.id == "box" else "px", *v)
+    raise ValueError(f"unknown region {ast.unparse(node)!r}: use {', '.join(REGIONS)}, box(x,y,w,h) or px(x,y,w,h)")
+
+
+def parse(expr):
+    """Returns (tree, conditions): conditions maps "text@region" -> (text, region), region None,
+    ("frac", x, y, w, h) or ("px", x, y, w, h)."""
+    try:
+        tree = ast.parse(expr, mode="eval").body
+    except SyntaxError as e:
+        raise ValueError(f"not a valid expression: {e.msg}") from None
+    conds = {}
+
+    def walk(node):
+        if isinstance(node, ast.BoolOp):
+            for v in node.values:
+                walk(v)
+        elif isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+            walk(node.operand)
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value.strip():
+            conds[key(node.value, None)] = (node.value, None)
+        elif isinstance(node, ast.Compare) and len(node.ops) == 1 and isinstance(node.ops[0], ast.In) \
+                and isinstance(node.left, ast.Constant) and isinstance(node.left.value, str):
+            r = region(node.comparators[0])
+            conds[key(node.left.value, r)] = (node.left.value, r)
+        else:
+            raise ValueError(f"not allowed in an expression: {ast.unparse(node)!r}")
+    walk(tree)
+    return tree, conds
+
+
+def key(text, region):
+    return text if region is None else f"{text} @ {region[0]}{list(region[1:])}"
+
+
+def evaluate(node, truth):
+    """truth: key -> bool."""
+    if isinstance(node, ast.BoolOp):
+        vals = (evaluate(v, truth) for v in node.values)
+        return all(vals) if isinstance(node.op, ast.And) else any(vals)
+    if isinstance(node, ast.UnaryOp):
+        return not evaluate(node.operand, truth)
+    if isinstance(node, ast.Constant):
+        return truth[key(node.value, None)]
+    return truth[key(node.left.value, region(node.comparators[0]))]
+
+
+# --- frames -------------------------------------------------------------------------------------
+
+def run(cmd):
+    return subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
+
+
+def window_bounds(app):
+    out = run(["osascript", "-e", f'tell application "System Events" to tell (first process whose name is "{app}") '
+               'to get {position, size} of front window'])
+    x, y, w, h = (int(v) for v in out.replace(",", " ").split())
+    return x, y, w, h
+
+
+def live_frames(source, tmp):
+    """Yields (t, path) for screen and window sources, one capture per call."""
+    t0, n = time.time(), 0
+    while True:
+        path = os.path.join(tmp, f"{n % 3}.png")
+        cmd = ["screencapture", "-x", "-t", "png"]
+        if source.startswith("screen:"):
+            cmd += ["-D", source.split(":", 1)[1]]
+        elif source.startswith("window:"):
+            cmd += ["-R", ",".join(map(str, window_bounds(source.split(":", 1)[1])))]
+        subprocess.run(cmd + [path], check=True)
+        yield time.time() - t0, path
+        n += 1
+
+
+def file_frames(paths):
+    for i, p in enumerate(paths):
+        yield float(i), p
+
+
+def ffmpeg_frames(source, tmp, live):
+    """Video file, stream URL or camera, decoded by ffmpeg at 1 frame per second into tmp. Live streams
+    skip to the newest frame; a file is judged frame by frame."""
+    if source.startswith("camera"):
+        args = ["-f", "avfoundation", "-framerate", "30", "-i", source.partition(":")[2] or "0"]
+    else:
+        args = ["-i", source]
+    proc = subprocess.Popen(["ffmpeg", "-nostdin", "-loglevel", "error", *args, "-vf", "fps=1",
+                             os.path.join(tmp, "%08d.png")], stderr=subprocess.PIPE)
+    seen = 0
+    try:
+        while True:
+            files = sorted(glob.glob(os.path.join(tmp, "*.png")))
+            done = proc.poll() is not None
+            ready = files if done else files[:-1]  # the newest may still be half written
+            if len(ready) > seen:
+                i = len(ready) - 1 if live else seen
+                for old in ready[seen:i]:
+                    os.remove(old)
+                seen = i + 1
+                yield float(int(os.path.basename(ready[i])[:-4]) - 1), ready[i]
+            elif done:
+                if proc.returncode:
+                    raise RuntimeError("ffmpeg: " + proc.stderr.read().decode().strip()[-300:])
+                return
+            else:
+                time.sleep(0.1)
+    finally:
+        proc.kill()
+
+
+def frames(source, tmp):
+    """Returns (iterator of (t, path), live)."""
+    if source == "screen" or source.startswith(("screen:", "window:")):
+        return live_frames(source, tmp), True
+    if source.startswith("dir:"):
+        d = os.path.expanduser(source[4:])
+        return file_frames(sorted(p for p in glob.glob(os.path.join(d, "*")) if p.lower().endswith(IMAGE_EXT))), False
+    if source == "-":
+        return file_frames(line.strip() for line in sys.stdin if line.strip()), False
+    live = source.startswith("camera") or re.match(r"^[a-z]+://", source) is not None
+    if not live and not os.path.exists(source):
+        raise ValueError(f"no such source: {source}")
+    return ffmpeg_frames(source, tmp, live), live
+
+
+# --- judging ------------------------------------------------------------------------------------
+
+def crop(im, region):
+    if region is None:
+        return im
+    kind, x, y, w, h = region
+    if kind == "frac":
+        W, H = im.size
+        x, y, w, h = x * W, y * H, w * W, h * H
+    return im.crop((int(x), int(y), int(x + w), int(y + h)))
+
+
+def b64(im):
+    buf = io.BytesIO()
+    im.save(buf, "PNG")
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+def ask(im, texts, timeout=300):
+    """One call: p(each text is visible in im)."""
+    body = {"model": MODEL, "state": "a frame from a screen or video", "images": [b64(im)], "keep_alive": "30m",
+            "questions": {f"q{i}": {"type": "noul", "instructions": f"Is this visible in the image: {t}?"}
+                          for i, t in enumerate(texts)}}
+    req = urllib.request.Request(OLLAMA + "/v1/systemone", json.dumps(body).encode(),
+                                 {"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        a = json.load(r)["answers"]
+    return [float(a[f"q{i}"]["noul"]) for i in range(len(texts))]
+
+
+def judge(im, conds, timeout=300):
+    """key -> p, one call per distinct region."""
+    by_region = {}
+    for k, (text, region) in conds.items():
+        by_region.setdefault(region, []).append((k, text))
+    p = {}
+    for region, items in by_region.items():
+        for (k, _), v in zip(items, ask(crop(im, region), [t for _, t in items], timeout)):
+            p[k] = round(v, 3)
+    return p
+
+
+def unchanged(a, b):
+    if b is None or a.size != b.size:
+        return False
+    # any changed spot counts, not the average: a new line of text barely moves a whole frame's mean
+    small = (512, 512)
+    diff = ImageChops.difference(a.convert("L").resize(small), b.convert("L").resize(small))
+    return diff.point(lambda v: 255 if v > SAME else 0).getbbox() is None
+
+
+# --- main ---------------------------------------------------------------------------------------
+
+def seconds(s):
+    m = re.fullmatch(r"(\d+(?:\.\d+)?)([smh]?)", s)
+    if not m:
+        raise argparse.ArgumentTypeError("a duration like 90, 30s, 10m or 1h")
+    return float(m.group(1)) * {"": 1, "s": 1, "m": 60, "h": 3600}[m.group(2)]
+
+
+def main(argv):
+    ap = argparse.ArgumentParser(prog="watch-for", description=__doc__.split("\n\n")[0])
+    ap.add_argument("expression")
+    ap.add_argument("--in", dest="source", default="screen")
+    ap.add_argument("--timeout", type=seconds, default=600.0)
+    ap.add_argument("--gone", action="store_true", help="wait for the expression to turn false")
+    ap.add_argument("--all", action="store_true", help="report every match in a file or folder, don't stop")
+    ap.add_argument("--threshold", type=float, default=0.5)
+    a = ap.parse_args(argv)
+    try:
+        tree, conds = parse(a.expression)
+    except ValueError as e:
+        print(f"watch-for: {e}", file=sys.stderr)
+        return 2
+    os.makedirs(STATE, exist_ok=True)
+    tmp = tempfile.mkdtemp(prefix="watch-for-")
+    start, streak, prev, last, matched, last_p = time.time(), 0, None, None, False, {}
+    try:
+        it, live = frames(a.source, tmp)
+        if a.all and live:
+            raise ValueError("--all needs a finite source (a file, dir: or -)")
+        for t, path in it:
+            began = time.time()
+            if began - start > a.timeout:
+                break
+            im = Image.open(path).convert("RGB")
+            # an unchanged frame repeats the last verdict without asking the model again
+            if not unchanged(im, prev):
+                try:  # a call gets only the time left, so --timeout holds even while Ollama is busy
+                    last_p = judge(im, conds, max(1.0, start + a.timeout - time.time()))
+                except (TimeoutError, OSError) as e:
+                    if time.time() - start >= a.timeout:
+                        break
+                    raise e
+                last = evaluate(tree, {k: v >= a.threshold for k, v in last_p.items()}) != a.gone
+                prev = im
+            streak = streak + 1 if last else 0
+            if streak == CONFIRM:
+                matched = True
+                saved = os.path.join(STATE, time.strftime("%Y%m%d-%H%M%S-") + f"{t:.0f}s.png")
+                shutil.copy(path, saved)
+                print(json.dumps({"matched": True, "t": round(t, 1), "frame": saved, "p": last_p}), flush=True)
+                if not a.all:
+                    return 0
+            if live:
+                time.sleep(max(0.0, MIN_GAP - (time.time() - began)))
+    except KeyboardInterrupt:
+        return 1
+    except Exception as e:  # noqa: BLE001  (a CLI: report any failure as exit 2)
+        print(f"watch-for: {type(e).__name__}: {e}", file=sys.stderr)
+        return 2
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    if not matched:
+        print(json.dumps({"matched": False, "waited": round(time.time() - start, 1), "p": last_p}), flush=True)
+    return 0 if matched else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

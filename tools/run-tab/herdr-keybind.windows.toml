@@ -1,0 +1,19 @@
+# run-tab's herdr keybindings on Windows. Merged into %APPDATA%\herdr\config.toml by
+# install.ts (guarded on "run-tab"). Same bindings as herdr-keybind.toml, but runs the
+# PowerShell port. `~` is expanded by install.ts.
+
+[[keys.command]]
+key = "prefix+c"
+type = "popup"
+command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File ~/.agents/ai-setup/tools/run-tab/run-tab.ps1'
+description = "new tab running a command (empty = plain tab)"
+width = "60%"
+height = 5
+
+[[keys.command]]
+key = "prefix+shift+c"
+type = "popup"
+command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File ~/.agents/ai-setup/tools/run-tab/run-tab.ps1 -Close'
+description = "new tab running a command, closed when it exits"
+width = "60%"
+height = 5

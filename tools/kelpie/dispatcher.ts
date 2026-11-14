@@ -1,0 +1,838 @@
+// The dispatcher's logic, free of any particular tracker or terminal so it can be tested with
+// fakes. Timeline Studio lives in timeline-studio.ts, herdr in herdr.ts, the CLI in
+// kelpie.ts. Design and the why: README.md.
+import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { basename, join, relative, sep } from "node:path";
+import { post, seconds, touch } from "./panel.ts";
+
+export type Review = "needs" | "changes" | "approved" | "none";
+export type Comment = { text: string; at: string; mine: boolean };
+export type TaskView = {
+  id: string; label: string; desc: string; ready: boolean; rank: number | null;
+  status: "todo" | "running" | "paused" | "done"; review: Review; comments: Comment[];
+  refined: boolean; // signed off (refinedAt)
+  noQueue: boolean; // off its lane's queue, so only deps and the sign-off can hold it
+  due: string | null; // the plan's deadline (a UTC ISO instant), or none
+  waitingOn: string | null; // the tracker's reason it isn't ready; "unrefined" = only the sign-off is missing
+  blockedBy: string[]; // the unfinished tasks it waits on
+  notBefore?: string | null; // the earliest it may start (`kelpie later` sets it)
+  touched: string | null; // the latest of the plan's created, edited and signed-off stamps; comments are read from `comments`
+};
+export interface Tracker {
+  listTasks(color: string): Promise<TaskView[]>; // the tasks handed to agents (For: Agent) in this Project colour
+  colors(): Promise<string[]>; // the plan's Project colour ids, which a project file's `color` must name
+  setNoQueue(id: string): Promise<void>;
+  setNotBefore(id: string, at: string): Promise<void>; // the earliest it may start: `kelpie later` pushes a stale task out
+  signOff(id: string): Promise<void>; // only on the human's explicit word, via the `signoff` command
+  unrefine(id: string): Promise<void>; // clears the sign-off; only via `park`, on the human's word
+  start(id: string): Promise<void>;
+  stop(id: string): Promise<void>;
+  comment(id: string, text: string): Promise<void>;
+  finish(id: string): Promise<void>;
+  setReview(id: string, v: Review): Promise<void>;
+  setDesc(id: string, text: string): Promise<void>;
+  notice(): Promise<string | null>; // the plan-wide notice, shared by every automation: one line each
+  setNotice(text: string | null): Promise<void>;
+  forAgent(id: string): Promise<void>; // For: Agent, from the board's Outside Kelpie list, on the human's click
+  addColor(id: string, color: string): Promise<void>; // adds a Project colour, keeping the task's others
+  openTasks(): Promise<OpenTask[]>; // every open task in the plan but meetings, Agent or not: the board's "outside Kelpie" lists
+}
+export type OpenTask = { id: string; label: string; status: string; agent: boolean; colors: string[] };
+export type RunModel = { model: string; effort: string };
+// Which model runs a run. Refines run on Opus: they write the spec page (spec-viz), and switching
+// models part-way isn't worth it. A build runs on what its signed-off description
+// asks for ("Build with: sonnet", written by the refine and approved with the sign-off), else Opus.
+export const MODELS = {
+  refine: { model: "claude-opus-5-5", effort: "medium" },
+  sonnet: { model: "claude-sonnet-5-5", effort: "high" },
+  opus: { model: "claude-opus-5-5", effort: "medium" },
+} as const satisfies Record<string, RunModel>;
+export const buildModel = (desc: string): RunModel => (/^\W*Build with:\W*sonnet\b/im.test(desc) ? MODELS.sonnet : MODELS.opus);
+export type AgentStatus = "idle" | "working" | "blocked" | "done" | "unknown";
+export interface Herdr {
+  agents(): Promise<Map<string, { status: AgentStatus; seq: number; cwd?: string }>>; // pane id → its agent
+  // → pane id. The tab opens in the herdr space labelled `space`, created (at `home`) if missing.
+  // `resume`: a Claude Code session id to carry on, with the prompt file as its next message.
+  spawn(label: string, cwd: string, promptFile: string, space: { label: string; home: string }, run: RunModel, resume?: string): Promise<string>;
+  prompt(pane: string, text: string): Promise<void>;
+  tail(pane: string, lines: number): Promise<string>;
+  close(pane: string): Promise<void>;
+}
+
+// ── config ──────────────────────────────────────────────────────────────────────────────────
+
+export type Config = { ceiling: number; stall_minutes: number; stale_minutes: number };
+// live: the ref whose tree is what's deployed. publish: run in the repo after an approved merge.
+export type Repo = { path: string; base: string; live?: string; publish?: string };
+export type Project = { id: string; color: string; space: string; repos: Repo[]; setup: string[]; checks: string[]; productionalize: string; prompt: string; priority?: number };
+
+const DEFAULTS: Config = { ceiling: 0.85, stall_minutes: 15, stale_minutes: 30 };
+export const home = () => {
+  const h = process.env.HOME;
+  if (!h) throw new Error("HOME is not set");
+  return h;
+};
+const tilde = (p: string) => p.replace(/^~(?=\/|$)/, home());
+
+export function loadConfig(dir: string): Config {
+  const f = join(dir, "config.json");
+  const c = { ...DEFAULTS, ...(existsSync(f) ? JSON.parse(readFileSync(f, "utf8")) : {}) };
+  for (const k of Object.keys(DEFAULTS) as (keyof Config)[])
+    if (typeof c[k] !== "number" || !(c[k] >= 0)) throw new Error(`${f}: ${k} must be a non-negative number`);
+  return c;
+}
+
+// Lowest `priority` first, then the rest by file name.
+export function loadProjects(dir: string): Project[] {
+  const pdir = join(dir, "projects");
+  if (!existsSync(pdir)) return [];
+  const rank = (p: Project) => p.priority ?? Infinity;
+  return readdirSync(pdir).filter(f => f.endsWith(".md")).sort().map(f => {
+    const file = join(pdir, f), bad = (m: string) => new Error(`${file}: ${m}`);
+    const m = readFileSync(file, "utf8").match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+    if (!m) throw bad("needs YAML frontmatter between --- lines");
+    const [, yaml = "", prompt = ""] = m;
+    const fm = (Bun.YAML.parse(yaml) ?? {}) as any;
+    const strs = (k: string) => {
+      const v = fm[k] ?? [];
+      if (!Array.isArray(v) || v.some(x => typeof x !== "string")) throw bad(`${k} must be a list of strings`);
+      return v as string[];
+    };
+    if (fm.color != null && (typeof fm.color !== "string" || !fm.color)) throw bad("color must be the id of a Project colour");
+    if (fm.space != null && (typeof fm.space !== "string" || !fm.space)) throw bad("space must be a herdr space label");
+    if (!Array.isArray(fm.repos ?? [])) throw bad("repos must be a list");
+    const repos = (fm.repos ?? []).map((r: any, i: number) => {
+      if (typeof r?.path !== "string" || typeof r?.base !== "string") throw bad(`repos[${i}] needs path and base`);
+      for (const k of ["live", "publish"]) if (r[k] != null && (typeof r[k] !== "string" || !r[k])) throw bad(`repos[${i}].${k} must be text`);
+      if (r.publish != null && r.live == null) throw bad(`repos[${i}] has publish but no live: say which ref the publish moves`);
+      return { path: tilde(r.path), base: r.base, ...(r.live != null && { live: r.live }), ...(r.publish != null && { publish: r.publish }) };
+    });
+    if (fm.productionalize != null && typeof fm.productionalize !== "string") throw bad("productionalize must be text");
+    if (fm.priority != null && typeof fm.priority !== "number") throw bad("priority must be a number (lowest goes first)");
+    const id = f.slice(0, -3);
+    // The herdr space its agents run in: "timeline-studio" → "Timeline Studio" unless it says otherwise.
+    const space = fm.space ?? id.split("-").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    return { id, color: fm.color ?? id, space, repos, setup: strs("setup"), checks: strs("checks"),
+      productionalize: fm.productionalize ?? "", prompt: prompt.trim(), ...(fm.priority != null && { priority: fm.priority }) };
+  }).sort((a, b) => rank(a) - rank(b) || 0); // two unset: Infinity - Infinity is NaN
+}
+
+/** The top-priority project (or projects, on a tie) starts new builds and refines past a shut gate. */
+export const pastGate = (projects: Project[], p: Project) =>
+  p.priority != null && p.priority === Math.min(...projects.map(q => q.priority ?? Infinity));
+
+// ── state, derived from the task alone ──────────────────────────────────────────────────────
+
+// Every dispatcher comment's first line is `[dispatch] <kind> key=value …`. They are told apart
+// from the human's by `mine` (the tracker's author field), never by this prefix.
+export type Event = { kind: string; kv: Record<string, string>; i: number };
+export function events(t: TaskView): Event[] {
+  return t.comments.flatMap((c, i) => {
+    const [line = ""] = c.text.split("\n", 1);
+    if (!c.mine || !line.startsWith("[dispatch] ")) return [];
+    const [kind = "", ...rest] = line.slice(11).split(" ");
+    return [{ kind: kind.replace(/:$/, ""), kv: Object.fromEntries(rest.filter(w => w.includes("=")).map(w => w.split(/=(.*)/s).slice(0, 2))), i }];
+  });
+}
+
+export const HANDOFF = ["review", "questions", "stalled", "idle"]; // each one set Needs review
+const BOUNDARY = ["dispatching", "refining", "relayed", "input", "approved"]; // each one began a round of agent work
+
+// A refine run drafts a task handed to agents but not signed off. It never starts the task,
+// and ends when the human signs it off ("signedoff"); a `refined` comment then closes it, and the
+// task starts over as an ordinary candidate.
+// `stale` and `superseded` are never derived from the task alone: `tidy` sets them on queued tasks.
+export type State = "candidate" | "refinable" | "stale" | "superseded" | "ignored" | "working" | "waiting" | "input" | "approved" | "signedoff" | "finished";
+// When a signed-off task's build starts, as the sign-off said (`signoff --now|--hold`): `slot` (the default) is the next free slot.
+export type When = "slot" | "now" | "hold";
+export type Derived = { state: State; since: Comment[]; pane?: string; restarts: number; relayPending: boolean; refine: boolean; when: When; rounds: number };
+
+export function derive(t: TaskView): Derived {
+  const all = events(t);
+  // `parked` is a cut too: the task goes back to the refine queue. It has had sessions, so it reads
+  // paused rather than todo, and /api/ready doesn't judge paused tasks: unrefined + unblocked is refinable.
+  // A paused task with no Kelpie history (started by hand once, then handed over), or one Kelpie has
+  // since refined, is taken the same way.
+  const cut = Math.max(-1, ...all.filter(e => e.kind === "refined" || e.kind === "parked").map(e => e.i));
+  const ev = all.filter(e => e.i > cut);
+  const lastOf = (kinds: string[]) => Math.max(cut, ...ev.filter(e => kinds.includes(e.kind)).map(e => e.i));
+  const handoff = lastOf(HANDOFF), relayed = lastOf(["relayed"]), boundary = lastOf(BOUNDARY);
+  // The last sign-off's choice binds only while the task is signed off, until a build starts or it is parked.
+  const sign = all.findLast(e => e.kind === "signoff"), w = sign?.kv.when;
+  const spent = sign && all.some(e => e.i > sign.i && ["dispatching", "parked"].includes(e.kind));
+  const when: When = t.refined && !spent && (w === "now" || w === "hold") ? w : "slot";
+  const base = { since: [] as Comment[], restarts: 0, relayPending: false, refine: false, when, rounds: 0 };
+  if (!ev.length) {
+    const adopted = t.status === "paused" && (cut >= 0 || !all.length);
+    const fresh = t.status === "todo" || adopted;
+    const held = t.notBefore != null && Date.parse(t.notBefore) > Date.now(); // `later` on a paused task
+    const unrefined = t.waitingOn === "unrefined" || (adopted && !t.refined && !t.blockedBy.length && !held);
+    return { ...base, state: !fresh ? "ignored" : t.ready ? "candidate" : unrefined ? "refinable" : "ignored" };
+  }
+  const refine = ev[0]?.kind === "refining";
+  const pane = ev.filter(e => e.kv.pane).at(-1)?.kv.pane;
+  const restarts = ev.filter(e => e.kind === "restarted" && e.i > boundary && e.kv.counted === "1").length;
+  const since = t.comments.slice(Math.max(handoff, relayed) + 1).filter(c => !c.mine);
+  const state: State = t.status === "done" ? "finished"
+    : refine && t.refined ? "signedoff"
+    : t.review === "approved" ? "approved"
+    : t.review === "changes" ? "input"
+    : t.review === "needs" ? (since.length || relayed > handoff ? "input" : "waiting")
+    // Review cleared by hand while the agent still waits: its handoff comment is the truth.
+    : handoff > boundary ? (since.length ? "input" : "waiting")
+    : "working";
+  // A relay that prompted the pane but died before clearing Review is finished, not repeated.
+  const rounds = ev.filter(e => e.kind === "review").length; // handovers so far this run (a parked task starts over)
+  return { state, since, pane, restarts, relayPending: relayed > handoff && t.review !== "none", refine, when, rounds };
+}
+
+// ── tidying: Kelpie keeps its own queues, as plain code in the tick (no agent, no quota) ─────
+
+export const STALE_DAYS = 14;
+const DAY = 864e5;
+const GCAL = /^gcal-(.+)_[^_]+$/; // a calendar task: gcal-<event id>_<occurrence instant>; the capture is the event
+/** When anyone last touched it: the plan's own stamps or a comment, either side's. NaN when nothing is dated. */
+export const touchedAt = (t: TaskView) => {
+  const at = [t.touched, ...t.comments.map(c => c.at)].map(a => Date.parse(a ?? "")).filter(n => !isNaN(n));
+  return at.length ? Math.max(...at) : NaN;
+};
+/** Two rules on the queued runs (candidate, refinable), by marking their state, never by deleting a task:
+ *  - superseded: of a recurring calendar event's open copies only the next one is eligible, the first still
+ *    running or upcoming by its due (the event's end), else the latest. The older copies don't clog the queue,
+ *    and a later one waits until the next has finished.
+ *  - stale: a task nobody touched for STALE_DAYS is not dispatched on its own; `status` asks "still want this?".
+ *    Calendar tasks keep their fast lane: they are created weeks ahead of their event, so age says nothing. */
+export function tidy(runs: { t: TaskView; s: Derived }[], now: number) {
+  const queued = (r: (typeof runs)[number]) => r.s.state === "candidate" || r.s.state === "refinable";
+  const events = Map.groupBy(runs.filter(r => r.t.status !== "done" && GCAL.test(r.t.id)), r => GCAL.exec(r.t.id)?.[1]);
+  for (const copies of events.values()) {
+    const byDue = copies.sort((a, b) => dueAt(a.t) - dueAt(b.t) || (a.t.id < b.t.id ? -1 : 1));
+    const next = byDue.find(r => dueAt(r.t) >= now) ?? byDue.at(-1);
+    for (const r of copies) if (r !== next && queued(r)) r.s.state = "superseded";
+  }
+  for (const r of runs) if (queued(r) && !GCAL.test(r.t.id) && now - touchedAt(r.t) > STALE_DAYS * DAY) r.s.state = "stale";
+}
+
+// ── usage gate ──────────────────────────────────────────────────────────────────────────────
+
+const WEEK = 7 * 864e5;
+export function gate(tidemarkDir: string, c: Config, now = Date.now()): { open: boolean; why: string } {
+  const files = existsSync(tidemarkDir) ? readdirSync(tidemarkDir).filter(f => /^\d{4}-\d{2}\.jsonl$/.test(f)).sort().slice(-2).reverse() : [];
+  for (const f of files) {
+    const lines = readFileSync(join(tidemarkDir, f), "utf8").trimEnd().split("\n").reverse();
+    for (const l of lines) {
+      let r: any; try { r = JSON.parse(l); } catch { continue; }
+      const w = r?.src === "api" && r.usage?.seven_day;
+      if (!w || typeof w.utilization !== "number" || !w.resets_at) continue;
+      const t = Date.parse(r.t), age = (now - t) / 6e4;
+      if (!(age <= c.stale_minutes)) return { open: false, why: `usage data is ${Math.round(age)} min old` };
+      const elapsed = Math.min(1, Math.max(0, (t - (Date.parse(w.resets_at) - WEEK)) / WEEK));
+      const line = elapsed * 100 * c.ceiling;
+      return { open: w.utilization <= line, why: `weekly ${w.utilization}% vs even pace ${line.toFixed(1)}%` };
+    }
+  }
+  return { open: false, why: "no usage data" };
+}
+
+// ── task folders ────────────────────────────────────────────────────────────────────────────
+
+export const safe = (id: string) => id.replace(/[^A-Za-z0-9._-]/g, "_");
+export const branch = (id: string) => `agent/${safe(id)}`;
+export const folder = (stateDir: string, p: Project, id: string) => join(stateDir, "runs", p.id, safe(id));
+
+function sh(args: string[], cwd?: string) {
+  const r = Bun.spawnSync(args, { cwd, stdout: "pipe", stderr: "pipe" });
+  return { ok: r.exitCode === 0, out: r.stdout.toString() + r.stderr.toString() };
+}
+function must(args: string[], cwd?: string) {
+  const r = sh(args, cwd);
+  if (!r.ok) throw new Error(`${args.join(" ")} failed: ${r.out.trim().split("\n").slice(-5).join("\n")}`);
+  return r.out;
+}
+
+export function createFolder(stateDir: string, p: Project, t: TaskView): string {
+  const dir = folder(stateDir, p, t.id);
+  mkdirSync(join(dir, "notes"), { recursive: true });
+  writeFileSync(join(dir, ".task.json"), JSON.stringify({ project: p.id, id: t.id }));
+  for (const r of p.repos) {
+    const wt = join(dir, basename(r.path));
+    if (existsSync(wt)) continue;
+    const exists = sh(["git", "-C", r.path, "rev-parse", "--verify", "--quiet", `refs/heads/${branch(t.id)}`]).ok;
+    must(["git", "-C", r.path, "worktree", "add", wt, ...(exists ? [branch(t.id)] : ["-b", branch(t.id), r.base])]);
+    // A half-set-up worktree would be skipped on retry, so a failed setup takes it away again.
+    try { for (const cmd of p.setup) must(["sh", "-c", cmd], wt); }
+    catch (e) { sh(["git", "-C", r.path, "worktree", "remove", "--force", wt]); throw e; }
+  }
+  return dir;
+}
+
+// Why a folder can't be thrown away yet: a worktree with uncommitted changes, or a branch not
+// merged into its base. Empty means everything of value already lives somewhere else.
+export function unshipped(dir: string, p: Project, id: string): string[] {
+  return p.repos.flatMap(r => {
+    const wt = join(dir, basename(r.path));
+    if (!existsSync(wt)) return [];
+    const why: string[] = [];
+    if (must(["git", "status", "--porcelain"], wt).trim()) why.push(`${basename(r.path)} has uncommitted changes`);
+    if (!sh(["git", "-C", r.path, "merge-base", "--is-ancestor", branch(id), r.base]).ok) why.push(`${branch(id)} is not merged into ${r.base}`);
+    return why;
+  });
+}
+
+// The commits on `base` that aren't live: those after the newest base commit whose tree is `live`'s
+// tree (`live` can be a one-commit orphan snapshot, so `live..base` won't do). Newest first, short
+// shas. null: no base commit has the live tree. `not`: leave out commits reachable from it, and merges.
+export function unpublished(r: Repo & { live: string }, not?: string): string[] | null {
+  const tree = must(["git", "-C", r.path, "rev-parse", `${r.live}^{tree}`]).trim();
+  const hit = must(["git", "-C", r.path, "log", "--format=%H %T", r.base]).split("\n").find(l => l.endsWith(` ${tree}`))?.split(" ")[0];
+  if (!hit) return null;
+  return must(["git", "-C", r.path, "rev-list", "--abbrev-commit", `${hit}..${r.base}`, ...(not ? [`^${not}`, "--no-merges"] : [])]).split("\n").filter(Boolean);
+}
+const hasLive = (r: Repo): r is Repo & { live: string } => !!r.live;
+
+// Kelpie's own line in the plan's notice: every project repo with `live` whose base is ahead of it.
+export function shipLine(projects: Project[], log: (s: string) => void): string | null {
+  const parts = projects.flatMap(p => p.repos.filter(hasLive).flatMap(r => {
+    const name = p.repos.filter(hasLive).length > 1 ? `${p.space} (${basename(r.path)})` : p.space;
+    try {
+      const n = unpublished(r);
+      return n === null ? [`${name}: trunk differs from the live site`]
+        : n.length ? [`${name}: ${n.length} commit${n.length > 1 ? "s" : ""} on trunk ${n.length > 1 ? "aren't" : "isn't"} live yet`] : [];
+    } catch (e: any) { log(`${p.id}: live check failed: ${e.message}`); return []; }
+  }));
+  return parts.length ? `${SHIP} ${parts.join(", ")}` : null;
+}
+const SHIP = "🚢";
+/** `notice` with Kelpie's line (the one starting 🚢) set to `line`, or removed when null; every other line kept. */
+export function withShipLine(notice: string | null, line: string | null): string | null {
+  const lines = notice ? notice.split("\n") : [];
+  const i = lines.findIndex(l => l.startsWith(SHIP));
+  if (line === null) { if (i >= 0) lines.splice(i, 1); }
+  else if (i >= 0) lines[i] = line;
+  else lines.push(line);
+  return lines.length ? lines.join("\n") : null;
+}
+
+// Deletes the folder only when nothing in it is unshipped; otherwise marks it kept, for a human.
+export function cleanup(dir: string, p: Project, id: string): string[] {
+  const why = unshipped(dir, p, id);
+  if (why.length) { writeFileSync(join(dir, ".kept"), why.join("\n") + "\n"); return why; }
+  for (const r of p.repos) {
+    const wt = join(dir, basename(r.path));
+    if (!existsSync(wt)) continue;
+    must(["git", "-C", r.path, "worktree", "remove", wt]);
+    sh(["git", "-C", r.path, "branch", "-d", branch(id)]);
+  }
+  rmSync(dir, { recursive: true, force: true });
+  return [];
+}
+
+// ── the prompt ──────────────────────────────────────────────────────────────────────────────
+
+export function prompt(template: string, p: Project, t: TaskView, dir: string, cli: string, extra = ""): string {
+  const list = (xs: string[]) => xs.length ? xs.map(x => `- \`${x}\``).join("\n") : "- (none)";
+  const vars: Record<string, string> = {
+    cli, project: p.id, color: p.color, task_id: t.id, label: t.label, desc: t.desc || "(no description)", folder: dir,
+    repos: p.repos.length ? p.repos.map(r => `- \`${basename(r.path)}/\`: worktree of ${r.path} on \`${branch(t.id)}\`, branched off \`${r.base}\``).join("\n") : "- (none: this task has no repository)",
+    repo_paths: p.repos.length ? p.repos.map(r => `- \`${r.path}\` (base \`${r.base}\`)`).join("\n") : "- (none)",
+    checks: list(p.checks), productionalize: p.productionalize.trim() || "Nothing to ship: run `finish --nothing-to-ship`.",
+    publish: publishStep(p, cli), goes_live: goesLive(p, cli),
+    project_prompt: p.prompt || "(none)",
+    // The human's words at sign-off, comments from the spec page included.
+    signoff: t.comments.findLast(c => c.text.startsWith("[dispatch] signoff"))?.text.replace(/^\[dispatch\] signoff[^\n]*\n*/, "") || "(none recorded)",
+  };
+  return template.replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] ?? "") + (extra ? `\n\n${extra}` : "");
+}
+
+// Only for repos with `publish`: empty otherwise, so the prompt reads exactly as before.
+const pubs = (p: Project) => p.repos.filter((r): r is Repo & { live: string; publish: string } => !!r.publish && !!r.live);
+const publishStep = (p: Project, cli: string) => pubs(p).map(r => `
+
+Then publish, still before \`finish\`: \`cd ${r.path}\` and run \`${r.publish}\`. It deploys, so it runs only now, after the human's approval and your merge. Then, still in that folder, wait for the CI run on the commit it pushed: \`sha=$(git rev-parse ${r.live})\`, find the run with \`gh run list --commit "$sha"\` (it can take a minute to appear), and \`gh run watch <run id> --exit-status\`. Green: go on to \`finish\`. If the publish fails or CI goes red, don't revert, roll back or retry anything, and don't run \`finish\`: tell the human what failed (the step, the run's URL) and run \`${cli} review\` with it.`).join("");
+const goesLive = (p: Project, cli: string) => pubs(p).length ? `
+
+**Approving here also publishes.** This project deploys on approval, and the deploy ships the whole of ${pubs(p).map(r => `\`${r.base}\``).join(", ")}, so commits already on it that the live site doesn't have yet go live with yours. Just before your final handover, run \`${cli} unpublished\` and put what it lists in your "Approve?" line (and the demo's \`yes\`, which the page shows beside Accept), e.g. "a yes also publishes the site, with 39ecb59, f8f904d, 99b159b (other approved work waiting on trunk)". If it lists nothing, say a yes publishes only your work.` : "";
+
+/** A refine still unsigned after this many handovers asks if it is still worth it before another one. */
+export const WORTH_IT_AFTER = 2;
+const quote = (cs: Comment[]) => cs.map(c => `> ${c.text.replace(/\n/g, "\n> ")}`).join("\n\n");
+const worthIt = (n: number) => ` This spec is still unsigned and your next handover is number ${n}: make its first line "Is this still worth it?" with your recommendation (keep going, park, or close), then the changes since last time as usual.`;
+export function relayText(d: Derived, cli: string): string {
+  const said = d.since.length ? `\n\nWhat they wrote:\n\n${quote(d.since)}` : "";
+  if (d.state === "approved" && d.refine)
+    return `[kelpie] The human marked this Approved, but a refine run ends only when they sign the task off: the Refined field in its Inspector ("Refined just now"). Tell them so, then run \`${cli} review\`.${said}`;
+  return d.state === "approved"
+    ? `[kelpie] The human APPROVED this task. Productionalize it as your instructions say, then run \`${cli} finish\`.${said}`
+    : `[kelpie] The human replied${d.since.length ? "" : " (marked Changes requested, no comment)"}. Continue, and run \`${cli} review\` when you next need them.${d.refine && d.rounds >= WORTH_IT_AFTER ? worthIt(d.rounds + 1) : ""}${said}`;
+}
+
+// ── tick ────────────────────────────────────────────────────────────────────────────────────
+
+export type Deps = {
+  tracker: Tracker; herdr: Herdr; config: Config; projects: Project[];
+  stateDir: string; templates: { work: string; refine: string; dredge: string }; cli: string;
+  gate: () => { open: boolean; why: string }; now: () => number; log: (s: string) => void;
+  bootTime: () => number; // when the machine last booted: deaths across a reboot aren't the agent's fault
+  paused: (project?: string) => boolean; // `kelpie pause [project]`: start nothing new (there); running agents carry on
+  active: () => number; // `kelpie more` / `less`: how many projects may have runs at once
+};
+type Cache = { lastTick: number; panes: Record<string, { seq: number; status: AgentStatus; idleMs: number }> };
+
+export function lock(stateDir: string): (() => void) | null {
+  const dir = join(stateDir, "tick.lock");
+  mkdirSync(stateDir, { recursive: true });
+  try { mkdirSync(dir); } catch {
+    const pid = Number(readFileSync(join(dir, "pid"), "utf8").trim() || 0);
+    try { if (pid) { process.kill(pid, 0); return null; } } catch { /* dead holder: take over */ }
+  }
+  writeFileSync(join(dir, "pid"), String(process.pid));
+  return () => rmSync(dir, { recursive: true, force: true });
+}
+
+/** Queue order, the plan's own rule (Auto-order, ADR 0012): deadlines first, earliest first; your rank
+ *  only where the dates do not care; unranked last. A calendar task is due at its event's end. */
+const dueAt = (t: TaskView) => (t.due ? Date.parse(t.due) : Infinity);
+export const byRank = (a: TaskView, b: TaskView) =>
+  dueAt(a) - dueAt(b) || (a.rank ?? Infinity) - (b.rank ?? Infinity); // Infinity - Infinity is NaN: falls through
+
+export async function tick(d: Deps): Promise<void> {
+  const cacheFile = join(d.stateDir, "state.json");
+  const cache: Cache = existsSync(cacheFile) ? JSON.parse(readFileSync(cacheFile, "utf8")) : { lastTick: 0, panes: {} };
+  const now = d.now();
+  // ponytail: a gap longer than 10 min (sleep, launchd skipped) counts as 10, so a Mac that slept
+  // overnight doesn't wake to every run stalled.
+  const dt = cache.lastTick ? Math.min(now - cache.lastTick, 10 * 6e4) : 0;
+  const runs = (await Promise.all(d.projects.map(async p => (await d.tracker.listTasks(p.color)).map(t => ({ p, t, s: derive(t) }))))).flat();
+  tidy(runs, now);
+  type Run = (typeof runs)[number];
+  const guarded = async (r: Run, what: string, f: () => Promise<void>, flag = true) => {
+    try { await f(); } catch (e: any) {
+      d.log(`${r.t.id}: ${what} failed: ${e.message}`);
+      if (!flag) return; // retried next tick
+      await stall(d, r.t, `error`, `${what} failed:\n\n${e.message}`).catch(e2 => d.log(`${r.t.id}: could not flag: ${e2.message}`));
+      r.s.state = "waiting";
+    }
+  };
+
+  // Handed over without noQueue, a task waits behind the human's own queue and never reads as
+  // ready. Fixed here rather than trusted to every way of setting For: Agent; ready catches up next tick.
+  for (const r of runs.filter(r => !r.t.noQueue && r.t.status !== "done"))
+    // Setting For: Agent counts as keep, so a task handed over long after it was made isn't stale at once.
+    await d.tracker.setNoQueue(r.t.id).then(() => d.tracker.comment(r.t.id, "[tidy] keep\n\nHanded over to agents.")).then(() => d.log(`${r.t.id}: set noQueue`), e => d.log(`${r.t.id}: setNoQueue failed: ${e.message}`));
+
+  // The plan's notice says when trunk is ahead of the live site. Written only when Kelpie's line changes.
+  try {
+    const was = await d.tracker.notice(), next = withShipLine(was, shipLine(d.projects, d.log));
+    if (next !== was) { await d.tracker.setNotice(next); d.log(`notice: ${next ?? "(cleared)"}`); }
+  } catch (e: any) { d.log(`notice update failed: ${e.message}`); }
+
+  // Review cleared by hand on a run that still waits (derive reads the handoff): put the chip back.
+  for (const r of runs.filter(r => r.s.state === "waiting" && r.t.review === "none"))
+    await d.tracker.setReview(r.t.id, "needs").then(() => d.log(`${r.t.id}: Review was cleared, set back to Needs review`), e => d.log(`${r.t.id}: setReview failed: ${e.message}`));
+
+  let agents: Awaited<ReturnType<Herdr["agents"]>> | null = null;
+  try { agents = await d.herdr.agents(); } catch (e: any) { d.log(`herdr unavailable, only cleaning up: ${e.message}`); }
+
+  // 1. clean up finished runs
+  for (const { p, t, s } of runs.filter(r => r.s.state === "finished")) {
+    const dir = folder(d.stateDir, p, t.id);
+    if (!existsSync(dir) || existsSync(join(dir, ".kept"))) continue;
+    if (s.pane && agents) await d.herdr.close(s.pane).catch(() => {});
+    const why = cleanup(dir, p, t.id);
+    if (why.length) await d.tracker.comment(t.id, `[dispatch] kept folder=${dir}\n\nThe task folder was kept because:\n\n${why.map(w => `- ${w}`).join("\n")}`);
+    d.log(why.length ? `${t.id}: kept ${dir}` : `${t.id}: cleaned up`);
+  }
+  // A refine run whose task you signed off is over: its folder held only a draft, unless the task
+  // was parked mid-build. Then it holds work, which the build picks up in the same folder.
+  for (const { p, t, s } of runs.filter(r => r.s.state === "signedoff")) {
+    if (s.pane && agents) await d.herdr.close(s.pane).catch(() => {});
+    const dir = folder(d.stateDir, p, t.id);
+    if (!existsSync(dir) || !unshipped(dir, p, t.id).length) {
+      // The signed spec (the spec page writes it here) is the build's acceptance criteria: it stays.
+      const spec = join(dir, "spec.json"), signed = existsSync(spec) ? readFileSync(spec) : null;
+      rmSync(dir, { recursive: true, force: true });
+      if (signed) { mkdirSync(dir, { recursive: true }); writeFileSync(spec, signed); }
+    }
+    await d.tracker.comment(t.id, `[dispatch] refined`);
+    if (s.when === "now") Object.assign(s, { state: "candidate", refine: false }); // the slot-filling below starts it this tick
+    if (t.review !== "none") await d.tracker.setReview(t.id, "none");
+    d.log(`${t.id}: signed off, refine run closed`);
+  }
+  if (!agents) { save(); return; }
+  const known = agents; // narrowing doesn't reach the callbacks below
+
+  // A pane moved to another herdr space gets a new id. Find its agent by the run folder it works in
+  // and record the new id, rather than taking the old one for dead and restarting a live agent.
+  for (const r of runs.filter(r => r.s.pane && !known.has(r.s.pane) && r.s.state !== "finished")) {
+    const dir = folder(d.stateDir, r.p, r.t.id);
+    const moved = [...agents.entries()].find(([, a]) => a.cwd === dir || a.cwd?.startsWith(dir + "/"))?.[0];
+    if (!moved) continue;
+    await d.tracker.comment(r.t.id, `[dispatch] moved pane=${moved}`);
+    d.log(`${r.t.id}: pane moved ${r.s.pane} → ${moved}`);
+    r.s.pane = moved;
+  }
+
+  // A reboot or a closed tab takes a waiting run's pane with it. Bring it back to wait at its prompt,
+  // or nothing on screen says the slot is held until the human answers. Not a crash: never counted.
+  for (const r of runs.filter(r => r.s.state === "waiting" && !(r.s.pane && known.has(r.s.pane))))
+    await guarded(r, "revive", async () => {
+      const pane = await spawn(d, r.p, r.t, r.s.refine, REVIVE);
+      await d.tracker.comment(r.t.id, `[dispatch] revived pane=${pane}`);
+      d.log(`${r.t.id}: revived in ${pane}`);
+    }, false);
+
+  // 2. watch working runs
+  const seen = new Set<string>();
+  for (const r of runs.filter(r => r.s.state === "working")) {
+    const pane = r.s.pane, a = pane ? agents.get(pane) : undefined;
+    if (!pane || !a) {
+      const counted = cache.panes[r.s.pane ?? ""]?.status === "working" && d.bootTime() < cache.lastTick;
+      await guarded(r, "restart", () => restart(d, r.p, r.t, r.s, counted));
+      continue;
+    }
+    const prev = cache.panes[pane];
+    // Background work (a shell, a subagent, a workflow) is the agent still at it, however quiet the pane.
+    const busy = backgroundRunning(folder(d.stateDir, r.p, r.t.id)).length > 0;
+    const idleMs = a.status === "working" || busy || !prev || prev.seq !== a.seq ? 0 : prev.idleMs + dt;
+    cache.panes[pane] = { seq: a.seq, status: a.status, idleMs };
+    seen.add(pane);
+    if (idleMs >= d.config.stall_minutes * 6e4) {
+      const tail = await d.herdr.tail(pane, 20).catch(() => "");
+      const lines = tail ? "The pane's last lines:\n\n```\n" + tail.trimEnd() + "\n```" : "";
+      // An agent that went quiet at a prompt is waiting on the human, not broken: only a pane
+      // herdr can't read is a stall.
+      if (a.status === "idle" || a.status === "blocked") await waitOnHuman(d, r.t, a.status, lines);
+      else await stall(d, r.t, a.status, lines);
+      r.s.state = "waiting";
+    }
+  }
+  for (const k of Object.keys(cache.panes)) if (!seen.has(k)) delete cache.panes[k];
+
+  // 3. fill free slots. Each project has its own build slot and refine slot: a refine run (talking
+  // to the human) never holds up a build, nor one project another. Only the usage gate is shared.
+  // In-flight runs first (approved, then input), then at most one new run of each kind per tick.
+  const kind = (r: Run): "work" | "refine" => r.s.refine || r.s.state === "refinable" ? "refine" : "work";
+  const busy = (k: "work" | "refine", p?: Project) => runs.filter(r => kind(r) === k && r.s.state === "working" && (!p || r.p === p)).length;
+  for (const state of ["approved", "input"] as const)
+    for (const r of runs.filter(r => r.s.state === state)) {
+      const k = kind(r);
+      if (busy(k, r.p)) continue;
+      // Not flagged on failure: a stall would bury the human's input under a new handoff.
+      let ok = false;
+      await guarded(r, "relay", async () => { await relay(d, r.p, r.t, r.s, known); ok = true; }, false);
+      if (ok) r.s.state = "working";
+    }
+  // A spec signed before every change got a persona demo has no `demo`: a build could not make its live
+  // demo from it. Back to the refine queue; it never ran, so there is no work to lose.
+  for (const r of runs.filter(r => r.s.state === "candidate" && noDemo(folder(d.stateDir, r.p, r.t.id))))
+    await guarded(r, "send back to refine", async () => {
+      await d.tracker.comment(r.t.id, "[dispatch] parked\n\nBack in the refine queue by the dispatcher, not by the human: the signed spec has no `demo`. It was signed before every change got a persona demo, and a build could not show one.");
+      await d.tracker.unrefine(r.t.id);
+      Object.assign(r.t, { refined: false, ready: false });
+      r.s.state = "refinable";
+    }, false);
+  const g = d.gate();
+  // A project is active while any run of it is in flight (waiting on you included) or a dredge is open.
+  // Only that many projects run at once; room goes to the highest-priority one with work.
+  const live = new Set(runs.filter(r => ACTIVE.includes(r.s.state)).map(r => r.p));
+  for (const p of d.projects) if ([...agents.values()].some(a => a.cwd === dredgeFolder(d.stateDir, p) || a.cwd?.startsWith(dredgeFolder(d.stateDir, p) + "/"))) live.add(p);
+  const full = (p: Project) => d.active() === 0 || (!live.has(p) && live.size >= d.active()); // 0: not even active projects start more
+  for (const k of ["work", "refine"] as const) {
+    // Refining only touches tasks handed over unsigned, by the human's choice.
+    const want: State = k === "work" ? "candidate" : "refinable";
+    for (const p of d.projects) {
+      const pending = runs.some(r => r.p === p && kind(r) === k && ["waiting", "input", "approved"].includes(r.s.state));
+      // A held build waits for an explicit start; "build now" goes first, and past the gate and the active limit, as a manual start does.
+      const next = runs.filter(r => r.p === p && r.s.state === want && r.s.when !== "hold").sort((a, b) => +(b.s.when === "now") - +(a.s.when === "now") || byRank(a.t, b.t))[0];
+      if (!next || busy(k, p) || pending) continue;
+      if (d.paused()) { d.log(`not starting ${next.t.id}: paused`); break; }
+      if (d.paused(p.id)) { d.log(`not starting ${next.t.id}: ${p.id} paused`); continue; }
+      const asked = next.s.when === "now";
+      if (full(p) && !asked) continue; // an active project further down may still start
+      if (!g.open && !pastGate(d.projects, p) && !asked) { d.log(`not starting ${next.t.id}: gate shut (${g.why})`); break; }
+      await guarded(next, "dispatch", () => dispatch(d, p, next.t, k === "refine"));
+      Object.assign(next.s, { state: "working", refine: k === "refine" });
+      live.add(p);
+      break; // one new run of each kind per tick: usage data only refreshes every ~15 min, so projects start staggered
+    }
+  }
+
+  // 4. dredge: a project with nothing left to build or refine looks back over its history for new
+  // work (the dredge skill). One at a time per project, at most once a day, and only once a commit has
+  // landed since the last one, so an idle project doesn't re-pitch the same list.
+  const WORK: State[] = ["candidate", "refinable", "stale", "working", "waiting", "input", "approved", "signedoff"];
+  for (const p of d.projects) {
+    // A task taken off the queue this tick reads ready only on the next: it is work too.
+    if (runs.some(r => r.p === p && (WORK.includes(r.s.state) || (!r.t.noQueue && r.t.status !== "done")))) continue;
+    const dir = dredgeFolder(d.stateDir, p), stamp = join(dir, ".started");
+    if ([...agents.values()].some(a => a.cwd === dir || a.cwd?.startsWith(dir + "/"))) continue;
+    const last = existsSync(stamp) ? Date.parse(readFileSync(stamp, "utf8")) : 0;
+    if (now - last < DAY || full(p)) continue;
+    try { if (last && quiet(p, last)) continue; }
+    catch (e: any) { d.log(`${p.id}: dredge check failed: ${e.message}`); continue; }
+    if (d.paused()) { d.log(`not dredging ${p.id}: paused`); break; }
+    if (d.paused(p.id)) continue;
+    if (!g.open) { d.log(`not dredging ${p.id}: gate shut (${g.why})`); break; }
+    await dredge(d, p, dir).catch(e => d.log(`${p.id}: dredge failed: ${e.message}`));
+    break; // one new run per tick, like builds and refines
+  }
+  save();
+
+  function save() { cache.lastTick = now; writeFileSync(cacheFile, JSON.stringify(cache)); }
+}
+
+// shortcut: an unreadable or missing spec.json builds as before; only a readable one without `demo` goes back to refine.
+const noDemo = (dir: string) => { try { return !JSON.parse(readFileSync(join(dir, "spec.json"), "utf8")).demo; } catch { return false; } };
+export const ACTIVE: State[] = ["working", "waiting", "input", "approved"];
+export const dredgeFolder = (stateDir: string, p: Project) => join(stateDir, "dredge", p.id);
+// No commit on any repo's base since `since`. A project without repos is never quiet.
+const quiet = (p: Project, since: number) => p.repos.length > 0 &&
+  p.repos.every(r => !must(["git", "-C", r.path, "log", "-1", "--format=%H", `--since=@${Math.floor(since / 1000)}`, r.base]).trim());
+
+// A dredge run has no task: its folder and a live pane working in it are its whole state. The
+// `.started` stamp is written only once the pane is up, so a failed spawn retries next tick.
+async function dredge(d: Deps, p: Project, dir: string) {
+  mkdirSync(dir, { recursive: true });
+  const file = join(dir, ".prompt.md");
+  writeFileSync(file, prompt(d.templates.dredge, p, { id: "dredge", label: `dredge ${p.id}`, desc: "", comments: [] } as TaskView, dir, d.cli));
+  const pane = await d.herdr.spawn(`💡 dredge ${p.id}`, dir, file, { label: p.space, home: p.repos[0]?.path ?? dir }, MODELS.refine);
+  writeFileSync(join(dir, ".started"), new Date(d.now()).toISOString());
+  d.log(`${p.id}: no work left, dredging in ${pane}`);
+}
+
+// Refine runs leave the task's sessions alone: it stays todo, so a sign-off makes it a plain candidate.
+async function ensureRunning(d: Deps, t: TaskView, refine = false) { if (!refine && t.status !== "running") { await d.tracker.start(t.id); t.status = "running"; } }
+
+// The agent stopped without running `review` (an unanswered question, or work done and left for
+// the human). Same handoff as a review, so the human's reply is relayed the usual way.
+async function waitOnHuman(d: Deps, t: TaskView, status: AgentStatus, body: string) {
+  await d.tracker.comment(t.id, `[dispatch] idle: ${status === "blocked" ? "blocked on a prompt, waiting on you" : "waiting on you"}${body ? `\n\n${body}` : ""}`);
+  await d.tracker.setReview(t.id, "needs");
+  if (t.status === "running") await d.tracker.stop(t.id);
+  d.log(`${t.id}: ${status}, waiting on the human`);
+}
+
+async function stall(d: Deps, t: TaskView, reason: string, body: string) {
+  await d.tracker.comment(t.id, `[dispatch] stalled: ${reason}${body ? `\n\n${body}` : ""}`);
+  await d.tracker.setReview(t.id, "needs");
+  if (t.status === "running") await d.tracker.stop(t.id);
+  d.log(`${t.id}: stalled (${reason})`);
+}
+
+// "✎ add type-aware Oxlint…": a refine (✎) or work (⚒) run, minus a "Timeline Studio: " prefix
+// that only repeats the project, cut to what a sidebar shows.
+export const tabLabel = (p: Project, label: string, refine: boolean) =>
+  `${refine ? "✎" : "⚒"} ${label.replace(new RegExp(`^${p.id.replace(/-/g, "[ -]")}:\\s*`, "i"), "")}`.slice(0, 60);
+
+async function spawn(d: Deps, p: Project, t: TaskView, refine: boolean, extra = ""): Promise<string> {
+  const dir = createFolder(d.stateDir, refine ? { ...p, repos: [] } : p, t); // refining only reads the repos
+  const file = join(dir, ".prompt.md");
+  // A restart carries on the run's own conversation when it can: that already holds the briefing.
+  const resume = extra ? resumable(dir) : undefined;
+  writeFileSync(file, resume ? extra : prompt(refine ? d.templates.refine : d.templates.work, p, t, dir, d.cli, extra));
+  // The tab is named for the task, so herdr's sidebar says what each agent is on.
+  return d.herdr.spawn(tabLabel(p, t.label, refine), dir, file, { label: p.space, home: p.repos[0]?.path ?? dir }, refine ? MODELS.refine : buildModel(t.desc), resume);
+}
+
+// The session the run's SessionStart hook (`kelpie session`) last recorded. /clear (auto-handoff)
+// starts a new one, so this is the current one. None if its transcript is gone (`claude --resume`
+// would exit and the restart count as a crash) or has no reply yet (a /clear with nothing sent
+// since: resuming it would skip the briefing).
+export function resumable(dir: string): string | undefined {
+  try {
+    const s = JSON.parse(readFileSync(join(dir, ".session"), "utf8"));
+    return readFileSync(s.transcript, "utf8").includes('"type":"assistant"') ? s.id : undefined;
+  } catch { return undefined; }
+}
+
+export async function dispatch(d: Deps, p: Project, t: TaskView, refine: boolean) {
+  await d.tracker.comment(t.id, refine ? `[dispatch] refining` : `[dispatch] dispatching`);
+  await ensureRunning(d, t, refine);
+  const pane = await spawn(d, p, t, refine);
+  await d.tracker.comment(t.id, `[dispatch] started pane=${pane} folder=${folder(d.stateDir, p, t.id)}`);
+  d.log(`${t.id}: dispatched to ${pane}`);
+}
+
+const RESUME = "## You are resuming\n\nAn earlier session on this task ended unexpectedly. Run the `history` command (your earlier handovers and the human's replies), then read notes/ and the repositories' state to see how far it got, and carry on.";
+const REVIVE = "## You are back, waiting on the human\n\nAn earlier session on this task ended (a reboot or a closed tab) after handing its work over for review. Run the `history` command, then show the human your latest handover again here, in full, and stop. Don't run `review` again, change anything, or carry on the work: wait for their reply.";
+
+export async function restart(d: Deps, p: Project, t: TaskView, s: Derived, wasWorking: boolean) {
+  if (wasWorking && s.restarts >= 2) return stall(d, t, "crashed 3×", "The agent died three times in this round.");
+  if (s.pane) await d.herdr.close(s.pane).catch(() => {});
+  await ensureRunning(d, t, s.refine);
+  const pane = await spawn(d, p, t, s.refine, RESUME);
+  await d.tracker.comment(t.id, `[dispatch] restarted pane=${pane} counted=${wasWorking ? 1 : 0}`);
+  d.log(`${t.id}: restarted in ${pane}`);
+}
+
+export async function relay(d: Deps, p: Project, t: TaskView, s: Derived, agents: Map<string, unknown>) {
+  if (!s.relayPending) {
+    const text = relayText(s, d.cli);
+    let pane = "";
+    if (s.pane && agents.has(s.pane)) await d.herdr.prompt(s.pane, text);
+    else pane = await spawn(d, p, t, s.refine, `${RESUME}\n\n## Latest from the human\n\n${text}`);
+    await d.tracker.comment(t.id, `[dispatch] relayed kind=${s.state}${pane ? ` pane=${pane}` : ""}`);
+  }
+  await d.tracker.setReview(t.id, "none");
+  await ensureRunning(d, t, s.refine);
+  d.log(`${t.id}: relayed ${s.state}`);
+}
+
+// ── commands an agent runs from inside its task folder ──────────────────────────────────────
+
+// What the agent's Stop hook (`kelpie bg`) last saw running in the background, per run folder.
+export function backgroundRunning(dir: string): string[] {
+  try { return JSON.parse(readFileSync(join(dir, ".background"), "utf8")).running ?? []; } catch { return []; }
+}
+
+export function locate(stateDir: string, cwd: string) {
+  const runs = join(stateDir, "runs");
+  const rel = existsSync(runs) ? relative(realpathSync(runs), realpathSync(cwd)) : "..";
+  const [project, dirName] = rel.split(sep);
+  if (rel.startsWith("..") || !project || !dirName) throw new Error(`not inside a task folder (under ${runs}/<project>/<task>)`);
+  const dir = join(runs, project, dirName);
+  const meta = JSON.parse(readFileSync(join(dir, ".task.json"), "utf8")) as { project: string; id: string };
+  return { dir, ...meta };
+}
+
+export async function agentCommand(tracker: Tracker, projects: Project[], stateDir: string, cwd: string, cmd: string, arg: string, flags: Set<string>) {
+  const at = locate(stateDir, cwd);
+  const p = projects.find(x => x.id === at.project);
+  if (!p) throw new Error(`no project file for ${at.project}`);
+  const t = (await tracker.listTasks(p.color)).find(x => x.id === at.id);
+  if (!t) throw new Error(`task ${at.id} is no longer handed to agents (For: Agent, Project ${p.color})`);
+  const needText = () => { if (!arg.trim()) throw new Error(`${cmd} needs text`); };
+  // signoff / approve / close act on the human's explicit word (typed into the pane, or the spec page's
+  // Sign off button, which quotes the judgments), and quote it
+  // into the task's history so the record shows exactly what was said.
+  const said = (what: string) => { needText(); return `${what}, on the human's word:\n\n> ${arg.trim().replace(/\n/g, "\n> ")}`; };
+  switch (cmd) {
+    case "review":
+      if (flags.has("--questions")) { needText(); await tracker.comment(t.id, `[dispatch] questions\n\nnot refined enough:\n\n${arg}`); }
+      // The record is the handover itself: the words the human just read in the pane.
+      else {
+        if (!arg.trim()) throw new Error('review needs your handover as text: review "<what you just told the human: what you did, then what you need from them>". There is no REVIEW.md any more.');
+        await tracker.comment(t.id, `[dispatch] review\n\n${arg}`);
+      }
+      await tracker.setReview(t.id, "needs");
+      if (t.status === "running") await tracker.stop(t.id);
+      await touch(t.id, { stage: "Waiting on you" }); // a new stage with no eta: the sidebar's ⏳ clears
+      return "Recorded on the task. Now tell the human, here, what you need from them (see Handing over), and wait. They are the reviewer: don't tell them you sent it for review.";
+    case "unpublished": {
+      // What else goes live when this build's approval publishes: base commits the live site lacks, minus this task's own.
+      const rs = pubs(p);
+      if (!rs.length) return "This project doesn't publish on approval.";
+      return rs.map(r => {
+        const n = unpublished(r, branch(t.id));
+        return `${basename(r.path)}: ${n === null ? `${r.base} differs from the live site (${r.live}), and no commit on it matches; the publish ships all of ${r.base}` : n.length ? `also goes live: ${n.join(", ")}` : "nothing else goes live"}`;
+      }).join("\n");
+    }
+    case "history":
+      // What a resumed session needs: the task as written, and every handover and reply so far.
+      return [`# ${t.label}`, t.desc || "(no description)", ...t.comments.map(c => `---\n${c.mine ? "dispatcher/agent" : "human"} ${c.at}\n${c.text}`)].join("\n\n");
+    case "input":
+      needText();
+      await tracker.comment(t.id, `[dispatch] input\n\n${arg}`);
+      await tracker.setReview(t.id, "none");
+      if (!derive(t).refine && t.status !== "running") await tracker.start(t.id);
+      return "Logged.";
+    case "describe": {
+      // Only while refining: rewriting a description clears the human's sign-off.
+      if (!derive(t).refine) throw new Error("describe is only for refine runs: changing a signed-off task's description voids the sign-off");
+      const text = existsSync(join(at.dir, arg)) ? readFileSync(join(at.dir, arg), "utf8") : arg;
+      if (!text.trim()) throw new Error("describe needs the new description, or a file in the task folder holding it");
+      await tracker.setDesc(t.id, text);
+      return "Description updated.";
+    }
+    case "eta": {
+      // The run's own estimate, as one bar titled with the task id; its deadline is the sidebar's ⏳.
+      const [time = "", ...stage] = arg.trim().split(/\s+/);
+      const secs = seconds(time);
+      const shown = await post({ title: t.id, stage: stage.join(" ") || "Working", eta: secs });
+      await tracker.comment(t.id, `[dispatch] eta ${time}${stage.length ? ` (${stage.join(" ")})` : ""}`);
+      return shown ? `Estimate posted: ${time}.` : `Estimate recorded: ${time}. No app-panel in this pane, so no bar.`;
+    }
+    case "comment":
+      needText();
+      await tracker.comment(t.id, `[dispatch] note\n\n${arg}`);
+      return "Commented.";
+    case "signoff": {
+      if (!derive(t).refine) throw new Error("signoff is for refine runs; a build is approved with `approve`");
+      if (flags.has("--now") && flags.has("--hold")) throw new Error("signoff takes --now or --hold, not both");
+      const when = flags.has("--now") ? "now" : flags.has("--hold") ? "hold" : "slot";
+      await tracker.comment(t.id, `[dispatch] signoff${when === "slot" ? "" : ` when=${when}`}\n\n${said("Signed off")}`);
+      await tracker.signOff(t.id);
+      await touch(t.id, { status: "done" });
+      return `Signed off. Your refine run is over: stop here. ${{ now: "The build starts at once.", hold: "The build waits until they say (`build <task>`).", slot: "The build starts on the next tick." }[when]}`;
+    }
+    case "approve":
+      if (derive(t).refine) throw new Error("approve is for builds; a refine run is signed off with `signoff`");
+      await tracker.comment(t.id, `[dispatch] approved\n\n${said("Approved")}`);
+      await tracker.setReview(t.id, "none");
+      if (t.status !== "running") await tracker.start(t.id);
+      return "Approved. Productionalize it as your instructions say, then run finish.";
+    case "close":
+      await tracker.comment(t.id, `[dispatch] closed\n\n${said("Closed without building")}`);
+      if (t.review !== "none") await tracker.setReview(t.id, "none");
+      await tracker.finish(t.id);
+      await touch(t.id, { status: "done" });
+      return "Closed. The dispatcher cleans up this folder on its next tick.";
+    case "park":
+      // Set aside, not dropped: back to the refine queue, with the folder and branch kept for the
+      // runs that pick it up again. Frees the project's slot now.
+      await tracker.comment(t.id, `[dispatch] parked\n\n${said("Parked until signed off again")}`);
+      if (t.status === "running") await tracker.stop(t.id);
+      if (t.review !== "none") await tracker.setReview(t.id, "none");
+      if (t.refined) await tracker.unrefine(t.id);
+      await touch(t.id, { status: "done" });
+      return "Parked: back in the refine queue. Your run is over: stop here.";
+    case "finish": {
+      if (derive(t).refine) throw new Error("finish is for work runs: a refine run ends with `signoff`, or `close` if the human drops it");
+      const why = flags.has("--nothing-to-ship") ? [] : [...unshipped(at.dir, p, t.id), ...notLive(p)];
+      if (why.length) throw new Error(`not finished, because:\n${why.map(w => `- ${w}`).join("\n")}\nShip it, or pass --nothing-to-ship if this task genuinely has nothing to ship.`);
+      await tracker.comment(t.id, `[dispatch] finished${arg.trim() ? `\n\n${arg.trim()}` : ""}`);
+      await tracker.finish(t.id);
+      await touch(t.id, { status: "done" });
+      return "Finished. The dispatcher cleans up this folder on its next tick.";
+    }
+  }
+  throw new Error(`unknown command ${cmd}`);
+}
+
+// Approved from a demo page (no agent ran `approve`): tell the build pane to ship, as a
+// spec page's Sign off tells its pane. The approval is already on the task, so a closed pane
+// loses nothing: the tick restarts the run, and its history says approved.
+export const PAGE_APPROVED = "The human pressed Accept and Send on the demo page, so the task is approved (their words, comments included, are on it). Productionalize it as your instructions say, then run finish. Make no other change to the build: had they wanted one, they would have picked Changes.";
+export async function approvedFromPage(d: Deps, stateDir: string, cwd: string) {
+  const { pane } = await pageEvent(d, d.tracker, stateDir, cwd, PAGE_APPROVED, true);
+  return { pane, msg: pane ? "Approved. Told the agent to ship it." : "Approved. The agent's pane was closed: Kelpie starts it again to ship it." };
+}
+
+// A repo that publishes isn't finished until its base is what's live.
+const notLive = (p: Project) => pubs(p).flatMap(r =>
+  must(["git", "-C", r.path, "rev-parse", `${r.base}^{tree}`]).trim() === must(["git", "-C", r.path, "rev-parse", `${r.live}^{tree}`]).trim()
+    ? [] : [`${r.base} isn't live yet: ${r.live} has a different tree (run ${r.publish} and let CI finish)`]);
+
+// The human's word from a page (corrections sent, a sign-off), delivered to the run's pane now
+// instead of at the next tick. `human` writes as the human, so the reply reads as theirs.
+export async function pageEvent(d: Deps, human: Tracker, stateDir: string, cwd: string, text: string, closeAfter = false) {
+  const at = locate(stateDir, cwd);
+  const p = d.projects.find(x => x.id === at.project);
+  if (!p) throw new Error(`no project file for ${at.project}`);
+  const find = async () => (await d.tracker.listTasks(p.color)).find(x => x.id === at.id);
+  let t = await find();
+  if (!t) throw new Error(`task ${at.id} is no longer handed to agents`);
+  const agents = await d.herdr.agents();
+  const pane = derive(t).pane;
+  const live = !!pane && agents.has(pane);
+  if (!closeAfter) {
+    await human.comment(t.id, text); // the record, and what a relay quotes
+    const again = await find();
+    if (!again) throw new Error(`task ${at.id} is no longer handed to agents`);
+    t = again;
+    const s = derive(t);
+    if (s.state === "input" || s.state === "approved") { await relay(d, p, t, s, agents); return { msg: live ? "Told the agent." : "The agent had no live pane: restarted it with your words.", pane: live ? pane : undefined }; }
+  }
+  if (live && pane) { await d.herdr.prompt(pane, `[kelpie] ${text}`); return { msg: "Told the agent.", pane }; }
+  return { msg: "The agent has no live pane; the next tick picks the comment up.", pane: undefined };
+}

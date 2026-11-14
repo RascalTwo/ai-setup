@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>cdp-relay — agent-browser on your real Chrome, without taking your screen</title>
+    <meta name="viz:uid" content="v-cd647572f1eb" />
+    <meta name="viz:posture" content="local" />
+    <meta name="viz:listed" content="unlisted" />
+    <meta name="viz:title" content="cdp-relay" />
+    <meta
+      name="viz:description"
+      content="cdp-relay sits between agent-browser and your signed-in Chrome, opens agent tabs in the background, and swallows the calls that pull Chrome to the front."
+    />
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* Card + dive. transform:scale() does not shrink the layout box, so poster.css
+     collapses #fit's height off the same --s. */
+      :root {
+        --s: 1;
+        --gone: #5a6474;
+        --kept: var(--c5);
+        --ask: var(--c4);
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -12%,
+            color-mix(in srgb, var(--c5) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 112%,
+            color-mix(in srgb, var(--c4) 13%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 560px;
+        gap: 32px;
+        align-items: center;
+        padding: 46px 48px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        letter-spacing: 0.14em;
+        color: var(--c5);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c5);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c5) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 46px;
+        line-height: 1.06;
+        margin: 0 0 16px;
+        letter-spacing: -1.3px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      p.sub {
+        font-size: 17px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 14px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 16px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c5);
+        border-radius: 9px;
+        padding: 9px 13px;
+        color: var(--text);
+      }
+
+      /* ── the proof slot: a week's tank, and the part nobody can account for ── */
+      .rig {
+        background: color-mix(in srgb, var(--panel) 88%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px 17px;
+        font-family: var(--mono);
+      }
+      .rig .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10.5px;
+        letter-spacing: 0.13em;
+        color: var(--c5);
+        margin-bottom: 13px;
+      }
+      .rig .cap span:last-child {
+        color: var(--faint);
+      }
+
+      /* ── dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c5);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul,
+      .dive ol {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c4);
+      }
+      .dive table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0 0 16px;
+      }
+      .dive table td {
+        border-top: 1px solid var(--border);
+        padding: 11px 0;
+        font-size: 15px;
+        line-height: 1.55;
+        vertical-align: top;
+        color: var(--text);
+      }
+      .dive table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.05em;
+        padding-right: 16px;
+      }
+      .fig {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        margin: 0 0 18px;
+      }
+      .fig figcaption {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+        letter-spacing: 0.06em;
+        margin-top: 12px;
+        line-height: 1.5;
+      }
+      .pre {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 12px 14px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--muted);
+        overflow-x: auto;
+        margin: 0 0 16px;
+      }
+      .pre b {
+        color: var(--c5);
+        font-weight: 400;
+      }
+      .pre em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 14px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 19px;
+      }
+      .step .k {
+        flex: 0 0 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+      }
+      .step.you .k {
+        background: var(--c4);
+        color: #0d1117;
+      }
+      .step.bot .k {
+        background: var(--accent);
+        color: #0d1117;
+      }
+      .step .v b {
+        color: var(--text);
+      }
+      .step .v {
+        color: var(--muted);
+      }
+      .say {
+        font-family: var(--mono, monospace);
+        color: var(--c5);
+      }
+    </style>
+    <style>
+      .rig .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        font-size: 13px;
+        line-height: 1.5;
+        padding: 9px 0;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .rig .row:first-of-type {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .rig .row b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .rig .row .bad {
+        color: var(--c4);
+        white-space: nowrap;
+      }
+      .rig .row .ok {
+        color: var(--c5);
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="cdp-relay"
+        data-viz-id="poster-card"
+        data-label="cdp-relay poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED TOOL · CDP-RELAY</div>
+          <h1 class="hook">
+            Your agent opens a tab.<br /><em>Chrome stays where you left it.</em>
+          </h1>
+          <p class="sub">
+            <b>cdp-relay</b> sits between agent-browser and your signed-in Chrome. It opens agent
+            tabs in the background and swallows the calls that drag Chrome to the front.
+          </p>
+          <p class="not">
+            Not a browser and not a security boundary. Anything local can drive your Chrome while it
+            runs.
+          </p>
+          <div class="chip">agent-browser → ws://127.0.0.1:9333 → relay → one socket → Chrome</div>
+        </div>
+        <div class="rig" data-viz-id="the-measurement" data-label="the 2026-11-13 focus test">
+          <div class="cap"><span>2026-11-13</span><span>FOCUS TEST · TAB NEW</span></div>
+          <div class="row">
+            <span><b>Attached straight to Chrome</b><br />Chrome comes to the front</span
+            ><span class="bad">~6 s in</span>
+          </div>
+          <div class="row">
+            <span><b>Attached straight to Chrome</b><br />your tab is hidden</span
+            ><span class="bad">14–17 s</span>
+          </div>
+          <div class="row">
+            <span><b>Through cdp-relay</b><br />front app and your tab</span
+            ><span class="ok">nothing moved</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install cdp-relay">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <p class="why">
+        the full setup, run in a clone of
+        <a href="https://github.com/RascalTwo/ai-setup">RascalTwo/ai-setup</a>
+      </p>
+      <pre><span class="l"><span class="c">bun</span> install.ts</span></pre>
+      <p class="needs">needs <code>node</code> <code>npm</code> <code>agent-browser</code></p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓ scroll</div>
+
+    <article class="dive">
+      <h2 data-beat="why">agent-browser took your screen every time it opened a tab</h2>
+      <p>
+        Attached straight to your Chrome over CDP, agent-browser 0.41–0.43 pulls Chrome to the front
+        and hides the tab you are on whenever it opens a tab. It calls
+        <code>Target.createTarget</code> without <code>background: true</code>, and sends
+        <code>Page.bringToFront</code> when it switches tabs. Measured on 2026-11-13: Chrome came to
+        the front about 6 s into a run, and your tab stayed hidden for 14–17 s. Through the relay,
+        nothing moved.
+      </p>
+      <p>
+        Upstream issue
+        <a href="https://github.com/vercel-labs/agent-browser/issues/1247">#1247</a> has been open
+        since April 2026 with no maintainer reply, and the fix PRs (#1880, #2292, #1427) are
+        unmerged. Every new attach also costs an "allow remote debugging" click, which an unattended
+        run cannot give.
+      </p>
+      <p class="m">
+        So the fix lives outside agent-browser: a small local relay that rewrites those calls on the
+        way to Chrome.
+      </p>
+
+      <h2 data-beat="using">Point agent-browser at the relay</h2>
+      <div class="pre">
+        <b>agent-browser</b> --cdp ws://127.0.0.1:9333/devtools/browser/relay --session mine
+        <b>tab new</b> --label work https://example.com
+      </div>
+      <ul>
+        <li>
+          <b>Open your own tab and close it when done.</b> Use <code>tab new</code> and
+          <code>tab close</code>. <code>close</code> ends the agent-browser session, not the tab
+          (the relay keeps Chrome open either way).
+        </li>
+        <li>
+          <b>The <code>browser</code> skill picks it for you</b> when browse is down and the job
+          needs your signed-in Chrome.
+        </li>
+        <li>
+          <b>Check it is up:</b> <code>curl -s 127.0.0.1:9333/stats</code> returns the counters
+          (<code>createTarget</code>, <code>swallowed</code>, <code>focusEmu</code>,
+          <code>upstreamConnects</code>, <code>clients</code>) and <code>"upstream":true</code> once
+          it holds a connection to Chrome.
+        </li>
+        <li>
+          <b>Test it:</b> <code>cd tools/cdp-relay &amp;&amp; npm test</code> runs the real relay
+          against a fake Chrome (a <code>ws</code> server) and checks each rewrite.
+        </li>
+      </ul>
+
+      <h2 data-beat="limits">What it won't do</h2>
+      <ul>
+        <li>
+          <b>No lock on your Chrome.</b> While it runs, anything local can drive your signed-in
+          Chrome with no prompt. It binds 127.0.0.1 only. That is the accepted price of one Allow
+          click.
+        </li>
+        <li>
+          <b>Discarded tabs stay asleep.</b> agent-browser revives a Memory Saver tab with
+          <code>Target.activateTarget</code>, which the relay swallows. Open your own tab instead.
+        </li>
+        <li>
+          <b>Chrome needs remote debugging on</b>
+          (<code>chrome://inspect/#remote-debugging</code>, Chrome 144+). With it off, the relay
+          waits and retries.
+        </li>
+        <li><b>Headless agent-browser does not need it.</b> The relay changes nothing there.</li>
+        <li>
+          <b>macOS only</b> as shipped: launchd and Chrome's <code>DevToolsActivePort</code> path.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>Integrates with</td>
+            <td>
+              <b>launchd</b>: <code>com.rascaltwo.cdp-relay</code>, always on. <b>agent-browser</b>:
+              <code>--cdp ws://127.0.0.1:9333/devtools/browser/relay</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td><code>node</code>, <code>npm</code> and <code>agent-browser</code>.</td>
+          </tr>
+          <tr>
+            <td>Installed copy</td>
+            <td>
+              launchd may not read scripts under <code>~/Desktop</code> (TCC), where the repo lives,
+              so the plist runs a copy of <code>cdp-relay.js</code> and its
+              <code>node_modules</code> in the state folder. Re-run the install after changing the
+              script.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <code>~/.agents/state/cdp-relay/</code>: the installed copy and
+              <code>relay.log</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>
+              <b>Yes</b>, <code>deletion-policy: delete</code>. It only holds the installed copy and
+              its log; reinstall to restore.
+            </td>
+          </tr>
+          <tr>
+            <td>Platform</td>
+            <td>macOS (launchd, Chrome's <code>DevToolsActivePort</code> path).</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One tab, end to end</h2>
+      <p class="m">
+        One Node file, <code>cdp-relay.js</code> (178 lines, one dependency: <code>ws</code>). It
+        runs two WebSocket sides and a table that remaps ids.
+      </p>
+      <figure class="fig">
+        <svg
+          viewBox="0 0 760 360"
+          width="100%"
+          role="img"
+          aria-label="cdp-relay: agent-browser clients connect to the relay on port 9333; the relay rewrites or swallows commands and holds one upstream connection to Chrome"
+        >
+          <defs>
+            <marker
+              id="ah"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="#58a6ff" />
+            </marker>
+          </defs>
+          <g data-viz-id="node-clients" data-label="agent-browser clients">
+            <rect
+              x="10"
+              y="40"
+              width="170"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="95" y="70" text-anchor="middle" fill="#e6edf3" font-size="14">
+              agent-browser
+            </text>
+            <text x="95" y="92" text-anchor="middle" fill="#8b949e" font-size="12">
+              1..n clients
+            </text>
+          </g>
+          <g data-viz-id="node-relay" data-label="relay">
+            <rect
+              x="260"
+              y="20"
+              width="250"
+              height="230"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="385" y="46" text-anchor="middle" fill="#e6edf3" font-size="14">
+              cdp-relay.js :9333
+            </text>
+            <text x="385" y="76" text-anchor="middle" fill="#8b949e" font-size="12">
+              swallow: bringToFront,
+            </text>
+            <text x="385" y="94" text-anchor="middle" fill="#8b949e" font-size="12">
+              activateTarget, Browser.close
+            </text>
+            <text x="385" y="122" text-anchor="middle" fill="#8b949e" font-size="12">
+              createTarget + background:true
+            </text>
+            <text x="385" y="150" text-anchor="middle" fill="#8b949e" font-size="12">
+              id remap: 1,000,000 and up
+            </text>
+            <text x="385" y="178" text-anchor="middle" fill="#8b949e" font-size="12">
+              sessionId → owning client
+            </text>
+            <text x="385" y="206" text-anchor="middle" fill="#8b949e" font-size="12">
+              ours: setFocusEmulationEnabled
+            </text>
+            <text x="385" y="234" text-anchor="middle" fill="#8b949e" font-size="12">
+              /stats, /json/version
+            </text>
+          </g>
+          <g data-viz-id="node-chrome" data-label="Chrome">
+            <rect
+              x="590"
+              y="40"
+              width="160"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#3fb950"
+              stroke-width="2"
+            />
+            <text x="670" y="70" text-anchor="middle" fill="#e6edf3" font-size="14">Chrome</text>
+            <text x="670" y="92" text-anchor="middle" fill="#8b949e" font-size="12">
+              your signed-in one
+            </text>
+          </g>
+          <g data-viz-id="node-keepup" data-label="keepUp loop">
+            <rect
+              x="260"
+              y="290"
+              width="250"
+              height="56"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="385" y="314" text-anchor="middle" fill="#e6edf3" font-size="14">
+              keepUp, every 5 s
+            </text>
+            <text x="385" y="334" text-anchor="middle" fill="#8b949e" font-size="12">
+              DevToolsActivePort, else :9222
+            </text>
+          </g>
+          <path
+            d="M180 75 L260 75"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <text x="190" y="66" fill="#8b949e" font-size="12">commands</text>
+          <path
+            d="M510 75 L590 75"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <text x="520" y="66" fill="#8b949e" font-size="12">one socket</text>
+          <path
+            d="M590 100 L510 100"
+            stroke="#3fb950"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M260 100 L180 100"
+            stroke="#3fb950"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <text x="200" y="120" fill="#8b949e" font-size="12">replies, own events</text>
+          <path
+            d="M385 290 L385 250"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <text x="395" y="276" fill="#8b949e" font-size="12">opens it</text>
+        </svg>
+        <figcaption>
+          Blue: commands going up. Green: answers coming back, each to the client that asked.
+        </figcaption>
+      </figure>
+      <ol>
+        <li>
+          <b>Hold the one connection.</b> At start, and every 5 s after (<code>RETRY_MS</code>),
+          <code>keepUp()</code> reads <code>DevToolsActivePort</code> (port on line 1, path on line
+          2), probes the port with <code>net.connect</code>, and calls <code>connectUp()</code>: one
+          <code>ws</code> socket to Chrome. That is where Chrome asks you to Allow. Under launchd,
+          TCC denies reading Chrome's Application Support folder, so
+          <code>upstreamUrl()</code> falls back to
+          <code>ws://127.0.0.1:9222/devtools/browser</code> (<code>CHROME_PORT</code> overrides
+          9222).
+        </li>
+        <li>
+          <b>Accept a client.</b> agent-browser connects to
+          <code>ws://127.0.0.1:9333/devtools/browser/relay</code>. The relay waits for the upstream
+          connection first, and closes the client with 1011 if Chrome is unreachable.
+        </li>
+        <li>
+          <b>Swallow three calls.</b> <code>Page.bringToFront</code>,
+          <code>Target.activateTarget</code> and <code>Browser.close</code> are answered at once
+          with <code>{ id, result: {} }</code> and never reach Chrome. <code>swallowed</code> counts
+          them.
+        </li>
+        <li>
+          <b>Rewrite <code>Target.createTarget</code>.</b> The relay sets
+          <code>params.background = true</code>, so the new tab opens behind your work. When Chrome
+          answers, the new <code>targetId</code> goes into the <code>ours</code> set.
+        </li>
+        <li>
+          <b>Remap the id.</b> Every other command gets a fresh upstream id from a counter that
+          starts at 1,000,000, stored in <code>pending</code> with its client and original id. Two
+          clients that both send <code>id: 1</code> cannot collide.
+        </li>
+        <li>
+          <b>Own the session.</b> On <code>Target.attachToTarget</code>, the answer's
+          <code>sessionId</code> is recorded in <code>sessionOwner</code> against that client. If
+          the target is in <code>ours</code>, the relay also sends
+          <code>Emulation.setFocusEmulationEnabled</code> to that session, so a hidden tab still
+          takes clicks. Child sessions that arrive in <code>Target.attachedToTarget</code> inherit
+          the owner and get the same treatment.
+        </li>
+        <li>
+          <b>Route answers and events.</b> A response goes back to its client with the original id
+          restored. An event with a <code>sessionId</code> goes only to that session's owner. An
+          event without one (browser-level) goes to every client.
+        </li>
+        <li>
+          <b>Clean up.</b> When a client leaves, its sessions and pending entries are dropped. When
+          Chrome's socket closes, the relay clears all tables and closes every client with 1011;
+          <code>keepUp()</code> reconnects when Chrome is back.
+        </li>
+      </ol>
+      <p class="m">
+        launchd (<code>com.rascaltwo.cdp-relay</code>, <code>RunAtLoad</code> and
+        <code>KeepAlive</code>) starts the installed copy in
+        <code>~/.agents/state/cdp-relay/</code> and sends stderr to <code>relay.log</code>.
+      </p>
+    </article>
+    <script type="module" src="/_kit/poster.js"></script>
+  </body>
+</html>

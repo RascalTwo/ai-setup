@@ -1,0 +1,37 @@
+#!/bin/bash
+# show-image <path | url | clipboard> — put an image in front of the user.
+# Normalises the source to a PNG and prints "show-image: <path>"; the ttyimgspool
+# hook sees that line and draws the image inline in Claude Code.
+src=${1:?usage: show-image <path|url|clipboard>}
+out=${TMPDIR:-/tmp}/$(date +%s)-$$
+# Git Bash (Windows): no sips/osascript. Pillow converts, PowerShell reads the clipboard,
+# and the printed path is a C:/ one, since the hook's Windows Python can't open /tmp/x.
+[ "$(uname -o 2>/dev/null)" = Msys ] && win=1
+case $src in
+  http://*|https://*)
+    curl -fsSL "$src" -o "$out.dl" || { echo "show-image: download failed: $src" >&2; exit 1; }
+    src=$out.dl ;;
+  clipboard)
+    if [ -n "$win" ]; then
+      if powershell -NoProfile -STA -c "Add-Type -AssemblyName System.Windows.Forms; \$i = [Windows.Forms.Clipboard]::GetImage(); if (-not \$i) { exit 1 }; \$i.Save('$(cygpath -w "$out.clip")', [Drawing.Imaging.ImageFormat]::Png)" 2>/dev/null; then
+        src=$out.clip
+      else
+        exec "$0" "$(powershell -NoProfile -c Get-Clipboard | tr -d '\r')"
+      fi
+    # An image on the clipboard wins; otherwise treat clipboard text as the source.
+    elif osascript -e "set f to open for access POSIX file \"$out.clip\" with write permission" \
+                 -e 'write (the clipboard as «class PNGf») to f' -e 'close access f' 2>/dev/null; then
+      src=$out.clip
+    else
+      exec "$0" "$(pbpaste)"
+    fi ;;
+esac
+[ -f "$src" ] || { echo "show-image: no such file: $src" >&2; exit 1; }
+if [ -n "$win" ]; then
+  python3 -c 'import sys; from PIL import Image; Image.open(sys.argv[1]).convert("RGBA").save(sys.argv[2], "PNG")' \
+    "$(cygpath -m "$src")" "$(cygpath -m "$out.png")" 2>/dev/null || { echo "show-image: not an image: $src" >&2; exit 1; }
+  echo "show-image: $(cygpath -m "$out.png")"
+  exit 0
+fi
+sips -s format png "$src" --out "$out.png" >/dev/null 2>&1 || { echo "show-image: not an image: $src" >&2; exit 1; }
+echo "show-image: $out.png"

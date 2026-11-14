@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>dream queue</title>
+    <!-- Never published: this reads a private repo's proposal queue and can mutate it. -->
+    <meta name="viz:uid" content="v-4dff354aa718" />
+    <meta name="viz:posture" content="local" />
+    <meta name="viz:listed" content="unlisted" />
+    <!-- Operational: a frozen copy of this page is a picture of a queue, not the queue. -->
+    <meta name="viz:title" content="dream queue" />
+    <meta
+      name="viz:description"
+      content="Review, approve and merge overnight dream proposals. The single human touchpoint."
+    />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <style>
+      /* Re-theme only, per the kit rules: tokens overridden, components kept. */
+      :root {
+        --rail: 62px;
+        --top: 0px;
+      }
+      body {
+        font-family: var(--sans);
+      }
+
+      /* ── Command bar ───────────────────────────────────────────────────────── */
+      #bar {
+        position: sticky;
+        z-index: 39;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 18px;
+        flex-wrap: wrap;
+      }
+      #bar .stat {
+        display: flex;
+        align-items: baseline;
+        gap: 5px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      #bar .stat b {
+        font: 700 15px/1 var(--sans);
+        color: var(--text);
+      }
+      #bar .sep {
+        width: 1px;
+        height: 22px;
+        background: var(--border);
+      }
+      .chip {
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--muted);
+        border-radius: 999px;
+        padding: 4px 11px;
+        font: 500 12px/1 var(--sans);
+        cursor: pointer;
+      }
+      .chip.on {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: color-mix(in oklab, var(--accent) 14%, var(--bg));
+      }
+      #q {
+        flex: 1;
+        min-width: 130px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 5px 10px;
+        font: 400 13px/1.3 var(--sans);
+      }
+      #q:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .btn {
+        border: 1px solid var(--border);
+        background: var(--panel-2);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 6px 12px;
+        font: 600 12px/1 var(--sans);
+        cursor: pointer;
+      }
+      .btn:hover:not(:disabled) {
+        border-color: var(--accent);
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn.go {
+        border-color: var(--good);
+        color: var(--good);
+      }
+      .btn.go:hover:not(:disabled) {
+        background: color-mix(in oklab, var(--good) 18%, var(--panel-2));
+      }
+
+      #fixbar {
+        background: color-mix(in oklab, var(--c8) 22%, var(--bg));
+        border-bottom: 1px solid var(--c8);
+        color: var(--text);
+        font: 600 12px/1 var(--sans);
+        padding: 7px 18px;
+        letter-spacing: 0.04em;
+      }
+
+      /* ── List ──────────────────────────────────────────────────────────────── */
+      main {
+        padding: 0 18px 40vh;
+        max-width: 1500px;
+      }
+      .band {
+        position: sticky;
+        z-index: 30;
+        background: var(--bg);
+        padding: 16px 0 7px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 10px;
+      }
+      .band h2 {
+        margin: 0;
+        font: 700 12px/1 var(--sans);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .band .cnt {
+        font: 400 11px/1 var(--mono);
+        color: var(--faint);
+      }
+      .band .caret {
+        margin-left: auto;
+        color: var(--faint);
+        font-size: 11px;
+      }
+      .band .hint {
+        color: var(--faint);
+        font: 400 11px/1 var(--sans);
+      }
+      .b0 h2 {
+        color: var(--accent);
+      }
+      .b1 h2 {
+        color: color-mix(in oklab, var(--accent) 70%, var(--muted));
+      }
+      .b2 h2 {
+        color: var(--muted);
+      }
+      .b3 h2 {
+        color: var(--faint);
+      }
+
+      /* ── Proposal card ─────────────────────────────────────────────────────── */
+      .p {
+        display: grid;
+        grid-template-columns: var(--rail) 1fr auto;
+        gap: 0 14px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin-bottom: 8px;
+        scroll-margin-top: 190px;
+      }
+      .p.sel {
+        border-color: var(--accent);
+        box-shadow:
+          0 0 0 1px var(--accent),
+          0 6px 24px -12px var(--accent);
+      }
+      .p.done {
+        opacity: 0.55;
+      }
+      .p.top {
+        border-color: color-mix(in oklab, var(--accent) 50%, var(--border));
+      }
+
+      /* Rank meter — a single ratio against the queue's maximum.
+     Per dataviz: length carries the magnitude and hue does NOT (one color for
+     every bar, so the free channel isn't burned double-encoding rank); the
+     unfilled track is a lighter step of the same ramp, not gray; bar capped at
+     18px so the rail's leftover is air; rounded data-end, square at baseline.
+     The number under every bar means color is never the sole signal. */
+      /* Explicit columns: two items span every row, so auto-placement would otherwise
+     decide where the body lands (it put the buttons between the meter and the
+     title). Scan line must be rank → title → meta, with actions parked right. */
+      .rail {
+        grid-column: 1;
+        grid-row: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+      }
+      .pbody {
+        grid-column: 2;
+        min-width: 0;
+      }
+      .meter {
+        width: 18px;
+        height: 46px;
+        background: color-mix(in oklab, var(--accent) 15%, var(--bg));
+        border-radius: 3px;
+        display: flex;
+        align-items: flex-end;
+        overflow: hidden;
+      }
+      .meter i {
+        display: block;
+        width: 100%;
+        background: var(--accent);
+        border-radius: 4px 4px 0 0;
+      }
+      .rankn {
+        font: 700 13px/1 var(--mono);
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+      }
+      .rankl {
+        font: 400 9px/1 var(--sans);
+        color: var(--faint);
+        letter-spacing: 0.08em;
+      }
+
+      .hd {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        flex-wrap: wrap;
+      }
+      .p h3 {
+        margin: 0;
+        font: 600 15.5px/1.35 var(--sans);
+        flex: 1;
+        min-width: 220px;
+      }
+      .p.top h3 {
+        font-size: 18px;
+      }
+      .crown {
+        font-size: 11px;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        border-radius: 4px;
+        padding: 2px 6px;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+      }
+      .meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-top: 6px;
+        font: 400 11.5px/1.5 var(--mono);
+        color: var(--muted);
+      }
+      .meta .k {
+        color: var(--faint);
+      }
+      .meta .occ {
+        color: var(--text);
+        font-weight: 700;
+      }
+      .ev {
+        display: inline-flex;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+      .ev span {
+        background: var(--panel-2);
+        border-radius: 3px;
+        padding: 1px 5px;
+        font-size: 10.5px;
+        color: var(--faint);
+      }
+      /* Collapsed rationales are truncated in JS, not clipped with overflow:hidden —
+     so nothing on the page is ever visually cut off, and the layout audit stays
+     honest instead of reporting a permanent false positive. */
+      .rat {
+        margin: 8px 0 0;
+        font: 400 13.5px/1.55 var(--sans);
+        color: var(--muted);
+        white-space: pre-wrap;
+        cursor: pointer;
+        max-width: 78ch;
+      }
+      .more {
+        font: 500 11px/1 var(--sans);
+        color: var(--accent);
+        cursor: pointer;
+        margin-top: 4px;
+        display: inline-block;
+      }
+
+      .acts {
+        grid-column: 3;
+        grid-row: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: stretch;
+      }
+      .acts button {
+        width: 46px;
+        height: 34px;
+        font-size: 17px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--panel-2);
+        cursor: pointer;
+      }
+      .acts .yes:hover,
+      .acts .yes.on {
+        border-color: var(--good);
+        background: color-mix(in oklab, var(--good) 25%, var(--panel-2));
+      }
+      .acts .no:hover,
+      .acts .no.on {
+        border-color: var(--danger);
+        background: color-mix(in oklab, var(--danger) 25%, var(--panel-2));
+      }
+      .acts .undo {
+        height: 22px;
+        font-size: 10px;
+        color: var(--faint);
+      }
+
+      /* ── Diff drawer ───────────────────────────────────────────────────────── */
+      .dtog {
+        margin-top: 9px;
+        font: 500 11.5px/1 var(--mono);
+        color: var(--muted);
+        cursor: pointer;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 5px 9px;
+        display: inline-flex;
+        gap: 9px;
+        background: var(--bg);
+      }
+      .dtog:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .dtog .add {
+        color: var(--good);
+      }
+      .dtog .del {
+        color: var(--danger);
+      }
+      /* `.diff div` sets white-space: pre and out-specifies a bare `.chg`, so the plan text
+     ran off the right edge. Qualify it. The plan is prose, not a patch — it must wrap. */
+      .diff .chg,
+      .chg {
+        margin-top: 6px;
+        background: var(--bg);
+        border-radius: 6px;
+        padding: 12px 14px;
+        font: 400 12.5px/1.6 var(--mono);
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        color: var(--text);
+      }
+      .note {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .diff {
+        margin-top: 8px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        max-height: 620px;
+        overflow: auto;
+        font: 400 11.5px/1.5 var(--mono);
+      }
+      .diff div {
+        padding: 0 10px;
+        white-space: pre;
+      }
+      .diff .a {
+        background: color-mix(in oklab, var(--good) 15%, transparent);
+        color: var(--good);
+      }
+      .diff .r {
+        background: color-mix(in oklab, var(--danger) 15%, transparent);
+        color: var(--danger);
+      }
+      .diff .h {
+        color: var(--c4);
+        background: var(--panel);
+      }
+      .diff .f {
+        color: var(--muted);
+        background: var(--panel-2);
+        font-weight: 700;
+      }
+      .diff .err {
+        color: var(--danger);
+        padding: 10px;
+        white-space: pre-wrap;
+      }
+      .diff .edb {
+        margin-left: 8px;
+        font: 600 11px/1 var(--sans);
+        color: var(--accent);
+        background: none;
+        border: 1px solid var(--accent);
+        border-radius: 4px;
+        padding: 2px 7px;
+        cursor: pointer;
+      }
+      .diff .ed {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px 10px;
+        white-space: normal;
+        background: var(--panel);
+      }
+      .spin {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        vertical-align: -1px;
+        margin-right: 4px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .diff .ed textarea {
+        width: 100%;
+        box-sizing: border-box;
+        background: var(--bg);
+        color: var(--text);
+        border: 1px solid var(--accent);
+        border-radius: 6px;
+        padding: 8px;
+        font: 400 12.5px/1.55 var(--mono);
+        resize: vertical;
+        white-space: pre-wrap;
+      }
+
+      /* ── Conflict clusters ─────────────────────────────────────────────────── */
+      .cl {
+        border: 2px solid var(--cc);
+        border-radius: 10px;
+        margin-bottom: 12px;
+        background: color-mix(in oklab, var(--cc) 7%, transparent);
+        padding: 0 8px 8px;
+      }
+      .cl > .clh {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 6px;
+        font: 700 11.5px/1 var(--sans);
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--cc);
+      }
+      .cl > .clh .why {
+        font: 400 11.5px/1.4 var(--sans);
+        text-transform: none;
+        letter-spacing: 0;
+        color: var(--muted);
+      }
+      .cl .p {
+        background: var(--panel);
+      }
+      .cbadge {
+        border: 1px solid var(--cc);
+        color: var(--cc);
+        border-radius: 4px;
+        padding: 2px 6px;
+        font: 700 10.5px/1 var(--sans);
+        letter-spacing: 0.06em;
+      }
+      .cwarn {
+        margin-top: 7px;
+        font: 500 11.5px/1.4 var(--sans);
+        color: var(--warn);
+        border-left: 2px solid var(--warn);
+        padding-left: 8px;
+      }
+
+      /* ── Overlays ──────────────────────────────────────────────────────────── */
+      .veil {
+        position: fixed;
+        inset: 0;
+        background: #000a;
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 30px;
+      }
+      .veil .box {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        max-width: 860px;
+        width: 100%;
+        max-height: 80vh;
+        overflow: auto;
+        padding: 20px 22px;
+      }
+      .veil h3 {
+        margin: 0 0 12px;
+        font-size: 16px;
+      }
+      .veil pre {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 12px;
+        font: 400 11.5px/1.55 var(--mono);
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .kk {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 6px 14px;
+        font-size: 13px;
+        align-items: baseline;
+      }
+      .kk kbd {
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-bottom-width: 2px;
+        border-radius: 4px;
+        padding: 2px 7px;
+        font: 600 11px/1.5 var(--mono);
+        color: var(--text);
+        justify-self: start;
+      }
+      #toast {
+        position: fixed;
+        bottom: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 70;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: center;
+        pointer-events: none;
+      }
+      #toast div {
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 7px 14px;
+        font: 500 12.5px/1 var(--sans);
+      }
+      #toast .bad {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+      #toast .ok {
+        border-color: var(--good);
+        color: var(--good);
+      }
+      #keys {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--panel);
+        border-top: 1px solid var(--border);
+        padding: 5px 18px;
+        font: 400 11px/1.5 var(--mono);
+        color: var(--faint);
+        z-index: 35;
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      #keys b {
+        color: var(--muted);
+        font-weight: 700;
+      }
+      .empty {
+        color: var(--faint);
+        padding: 40px 0;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="fixbar" hidden></div>
+    <div id="bar"></div>
+    <main id="list"><div class="empty">loading…</div></main>
+    <div id="keys"></div>
+    <div id="toast"></div>
+
+    <script type="module" src="./queue.js"></script>
+  </body>
+</html>

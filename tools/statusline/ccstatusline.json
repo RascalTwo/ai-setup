@@ -1,0 +1,119 @@
+{
+  "version": 4,
+  "lines": [
+    [
+      {
+        "id": "w-ctx",
+        "type": "custom-command",
+        "commandPath": "$HOME/.agents/ai-setup/tools/statusline/statusline-context.sh",
+        "preserveColors": true
+      },
+      {
+        "id": "sep-model",
+        "type": "separator",
+        "character": " │ "
+      },
+      {
+        "id": "w-model",
+        "type": "model",
+        "rawValue": true
+      },
+      {
+        "id": "sep-effort",
+        "type": "separator",
+        "character": " "
+      },
+      {
+        "id": "w-effort",
+        "type": "thinking-effort",
+        "rawValue": true
+      },
+      {
+        "id": "sep-cache",
+        "type": "separator",
+        "character": " │ "
+      },
+      {
+        "id": "w-cache",
+        "type": "custom-command",
+        "commandPath": "$HOME/.agents/ai-setup/tools/statusline/statusline-cache.sh",
+        "preserveColors": true
+      },
+      {
+        "id": "sep-5h",
+        "type": "separator",
+        "character": " │ "
+      },
+      {
+        "id": "w-5h",
+        "type": "custom-command",
+        "commandPath": "$HOME/.agents/ai-setup/tools/statusline/statusline-5h.sh",
+        "preserveColors": true
+      },
+      {
+        "id": "sep-wk",
+        "type": "separator",
+        "character": " │ "
+      },
+      {
+        "id": "w-wk",
+        "type": "custom-command",
+        "commandPath": "$HOME/.agents/ai-setup/tools/statusline/statusline-wk.sh",
+        "preserveColors": true
+      },
+      {
+        "id": "sep-day",
+        "type": "separator",
+        "character": " │ "
+      },
+      {
+        "id": "w-day",
+        "type": "custom-command",
+        "commandPath": "$HOME/.agents/ai-setup/tools/statusline/statusline-day.sh",
+        "preserveColors": true
+      },
+      {
+        "id": "sep-veil",
+        "type": "separator",
+        "character": " │ "
+      },
+      {
+        "id": "w-veil",
+        "type": "custom-command",
+        "commandPath": "$HOME/.agents/ai-setup/tools/statusline/statusline-veil.sh",
+        "preserveColors": true
+      },
+      {
+        "id": "w-supervisor",
+        "type": "custom-command",
+        "commandPath": "$HOME/.agents/ai-setup/tools/statusline/statusline-supervisor.sh",
+        "preserveColors": true
+      },
+      {
+        "id": "w-eta",
+        "type": "custom-command",
+        "commandPath": "$HOME/.agents/ai-setup/tools/statusline/statusline-eta.sh",
+        "preserveColors": true
+      }
+    ],
+    [],
+    []
+  ],
+  "flexMode": "full-minus-40",
+  "compactThreshold": 60,
+  "colorLevel": 2,
+  "inheritSeparatorColors": false,
+  "globalBold": false,
+  "powerline": {
+    "enabled": false,
+    "separators": [
+      ""
+    ],
+    "separatorInvertBackground": [
+      false
+    ],
+    "startCaps": [],
+    "endCaps": [],
+    "autoAlign": false
+  }
+}

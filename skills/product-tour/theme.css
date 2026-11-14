@@ -1,0 +1,80 @@
+/* The house look for driver.js, loaded after its driver.css: a bold amber highlight that glides
+   between targets, a dark compact bubble, and the app behind it stays clickable. Re-theme an app
+   by overriding the --tour-* variables. Rules marked UPGRADE CHECK lean on driver.js internals. */
+:root {
+  --tour-accent: #f0b429;
+  --tour-bg: #11161d;
+  --tour-fg: #e6edf3;
+  --tour-muted: #8b949e;
+  --tour-line: #30363d;
+}
+
+/* UPGRADE CHECK: the overlay is an SVG path; its cutout's edge is the highlight, so it glides with driver's animation. */
+.driver-overlay path {
+  stroke: var(--tour-accent);
+  stroke-width: 2px;
+}
+/* the overlay is one path, the screen's edge included: clip the edge's half of the stroke off */
+.driver-overlay {
+  clip-path: inset(1px);
+}
+/* UPGRADE CHECK: driver makes everything but the target inert, and sets pointer-events on the
+   overlay from script; undo both so the app behind the tour stays clickable. */
+.driver-active * {
+  pointer-events: auto;
+}
+.driver-active .driver-overlay,
+.driver-active .driver-overlay * {
+  pointer-events: none !important;
+}
+.driver-popover.tour {
+  background: var(--tour-bg);
+  color: var(--tour-fg);
+  border: 1px solid var(--tour-accent);
+  border-radius: 10px;
+  padding: 12px 14px;
+  max-width: 320px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  font:
+    14px/1.45 system-ui,
+    sans-serif;
+}
+.driver-popover.tour .driver-popover-description {
+  color: var(--tour-fg);
+  font: inherit;
+}
+.driver-popover.tour .driver-popover-title {
+  color: var(--tour-accent);
+  font: 600 11px system-ui;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.driver-popover.tour .driver-popover-footer {
+  margin-top: 10px;
+}
+.driver-popover.tour .driver-popover-footer button {
+  font: 600 12px system-ui;
+  text-shadow: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--tour-line);
+  background: #21262d;
+  color: var(--tour-fg);
+}
+.driver-popover.tour .driver-popover-footer .driver-popover-next-btn {
+  background: var(--tour-accent);
+  color: var(--tour-bg);
+  border-color: var(--tour-accent);
+}
+.driver-popover.tour .driver-popover-arrow-side-bottom {
+  border-bottom-color: var(--tour-accent);
+}
+.driver-popover.tour .driver-popover-arrow-side-top {
+  border-top-color: var(--tour-accent);
+}
+.driver-popover.tour .driver-popover-arrow-side-left {
+  border-left-color: var(--tour-accent);
+}
+.driver-popover.tour .driver-popover-arrow-side-right {
+  border-right-color: var(--tour-accent);
+}

@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>delegate-to-local — the same turn, on this Mac</title>
+    <!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+    <meta name="viz:uid" content="v-79a9186d35e6" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="delegate-to-local" />
+    <meta
+      name="viz:description"
+      content="Hands a small, well-specified coding task to Qwen3.6 running locally in Claude Code through Ollama — no Claude or ChatGPT quota."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card stays a fixed 1200×630 clip target (viz verify --og shoots a 1200×630
+     viewport => --s resolves to 1 => the OG image is pixel-native). The only change
+     from the stock poster template: the page SCROLLS, so a deep dive lives below.
+
+     The gotcha this solves: transform:scale() does NOT shrink an element's layout
+     box, so a scaled card still reserves 630px of flow and leaves a dead gap.
+     Fix: scale from `top center` and drive #fit's height off the same --s.
+     ──────────────────────────────────────────────────────────────────────────── */
+      :root {
+        --s: 1;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+      #fit {
+      }
+      .og-card {
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            900px 500px at 88% -10%,
+            color-mix(in srgb, var(--c3) 22%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 110%,
+            color-mix(in srgb, var(--accent) 16%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 44px;
+        align-items: center;
+        padding: 60px 70px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--c3);
+        margin-bottom: 18px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c3);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c3) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 58px;
+        line-height: 1.04;
+        margin: 0 0 20px;
+        letter-spacing: -1.5px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c3);
+      }
+      p.sub {
+        font-size: 19px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 26px;
+        max-width: 540px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 15px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c3);
+        border-radius: 9px;
+        padding: 10px 15px;
+        color: var(--text);
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the meters = the "proof" slot */
+      .meters {
+        display: grid;
+        gap: 16px;
+      }
+      .meter {
+        background: color-mix(in srgb, var(--panel) 78%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 17px 19px;
+      }
+      .meter .lbl {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+      .meter .val {
+        font-size: 25px;
+        font-weight: 700;
+        letter-spacing: -0.4px;
+        margin-bottom: 11px;
+      }
+      .bar {
+        height: 11px;
+        border-radius: 99px;
+        background: var(--panel-2);
+        overflow: hidden;
+      }
+      .bar i {
+        display: block;
+        height: 100%;
+        border-radius: 99px;
+      }
+      .meter.claude .val {
+        color: var(--good);
+      }
+      .meter.claude .bar i {
+        width: 2%;
+        background: var(--good);
+      }
+      .meter.local .val {
+        color: var(--c3);
+      }
+      .meter.local .bar i {
+        width: 100%;
+        background: linear-gradient(
+          90deg,
+          color-mix(in srgb, var(--c3) 50%, transparent),
+          var(--c3)
+        );
+      }
+      .meter .note {
+        margin-top: 9px;
+        font-size: 12.5px;
+        color: var(--muted);
+        font-family: var(--mono);
+      }
+
+      /* ── the dive (below the fold) ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c3);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      /* ── poster standard: beat-4 table, beat-5 figure ── */
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        min-height: 190px;
+      }
+      .fig .stage svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 46px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="delegate-to-local"
+        data-viz-id="poster-card"
+        data-label="delegate-to-local poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · DELEGATE-TO-LOCAL</div>
+          <h1 class="hook">The same turn.<br /><em>On this Mac.</em></h1>
+          <p class="sub">
+            Hands a small, well-specified coding task to <b>Qwen3.6</b> running locally inside
+            Claude Code, through <b>Ollama</b>. It costs no Claude quota and no ChatGPT quota.
+          </p>
+          <div class="trigger"><span>say</span>&nbsp;"delegate to local"</div>
+        </div>
+        <div class="meters">
+          <div class="meter claude">
+            <div class="lbl">CLAUDE + CHATGPT QUOTA</div>
+            <div class="val">none spent</div>
+            <div class="bar"><i></i></div>
+            <div class="note">for when the weekly limit is close</div>
+          </div>
+          <div class="meter local">
+            <div class="lbl">RUNS ON</div>
+            <div class="val">this Mac</div>
+            <div class="bar"><i></i></div>
+            <div class="note">qwen3.6:35b-a3b · 23 GB · via Ollama</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section
+      class="install"
+      data-viz-id="install-strip"
+      data-label="how to install delegate-to-local"
+    >
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <pre><span class="l"><span class="c">npx</span> skills add <span class="r">RascalTwo/ai-setup</span> <span class="f">-g</span> <span class="f">-s</span> delegate-to-local</span></pre>
+      <p class="needs">needs <code>ollama</code> <code>claude</code></p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">Both other meters were nearly full</h2>
+      <p>
+        Near the weekly Claude limit, handing work to <code>delegate-to-codex</code> still costs
+        something: it moves the bill to ChatGPT quota. Some tasks are small enough that neither
+        meter should move at all, and a model already sitting on this Mac can do them.
+      </p>
+      <p>
+        <b>delegate-to-local</b> runs one Claude Code turn on <code>qwen3.6:35b-a3b</code> (a
+        mixture-of-experts model with about 3B parameters active, 23 GB on disk) through Ollama's
+        Anthropic-compatible endpoint. It works like <code>delegate-to-codex</code>, but the compute
+        is this machine.
+      </p>
+
+      <h2 data-beat="using">Reach for it when</h2>
+      <p class="m">
+        Say "delegate to local", "use Qwen" (the transcriber may hear "Quinn"), "run it locally", or
+        ask to save quota with a local model. Then:
+      </p>
+      <ul>
+        <li>
+          The task is <b>small and well specified</b>, with a test or an exact check: implement a
+          function against tests, fix a named bug, make a one-file edit.
+        </li>
+        <li>
+          The prompt carries everything. The model <b>starts cold</b>: the goal, an exact definition
+          of done (the test command that must pass), exact file paths relative to the working dir,
+          and the files it must not touch.
+        </li>
+      </ul>
+      <pre><span class="c"># run as a background Bash call; a task takes 1-7 min, the first call adds ~30 s to load the model</span>
+~/.claude/skills/delegate-to-local/scripts/delegate-local.py -C &lt;working-dir&gt; "&lt;task prompt&gt;"
+
+<span class="c"># options: --minutes N (default 30) · --model M · --resume &lt;session_id&gt;</span></pre>
+      <p>
+        When it finishes it prints one line (<code>done</code>, <code>error</code>, or
+        <code>timed out after N min</code>, plus the run folder and session id). Read
+        <code>result.md</code> in the run folder, not stdout. Prefer a git repo with a clean tree as
+        the working dir, so the change is a reviewable diff.
+      </p>
+
+      <h2 data-beat="limits">What it will not do</h2>
+      <ul>
+        <li>
+          <b>Hard or ambiguous work.</b> The model is much weaker than the orchestrating Claude.
+          Design, ambiguity, judgement and broad repo reading stay with Claude.
+        </li>
+        <li>
+          <b>Fire on usage level alone.</b> It is never triggered automatically because a quota is
+          running low; the user asks for it.
+        </li>
+        <li>
+          <b>More than one run at a time.</b> There is no fan-out. On a 36 GB Mac a second large
+          model does not fit, so the launcher refuses a second run and refuses to start while
+          another model of 2 GB or more is loaded.
+        </li>
+        <li>
+          <b>Download anything.</b> A missing model is a refusal that names the size and the
+          <code>ollama pull</code> command. The user pulls 23 GB, the skill never does.
+        </li>
+        <li>
+          <b>Ask a question mid-turn.</b> It never blocks for input. If it needs something it ends
+          the turn with the question in <code>result.md</code>, and the orchestrating Claude resumes
+          the session with an answer.
+        </li>
+        <li>
+          <b>Be asked before it acts.</b> It runs with <code>--dangerously-skip-permissions</code>
+          in the working dir, like Codex's bypass mode.
+        </li>
+      </ul>
+      <div class="callout">
+        <b>"Done" is a claim, not a result.</b> Before reporting the task finished, the
+        orchestrating Claude reads the diff (looking for edits outside the task, deleted or weakened
+        tests, stubs) and runs the tests or the check itself.
+      </div>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/delegate-to-local/SKILL.md</code> and one launcher,
+              <code>scripts/delegate-local.py</code>. The SKILL.md tells the orchestrating Claude
+              how to run it, how to write the prompt and how to check the work.
+            </td>
+          </tr>
+          <tr>
+            <td>Declared</td>
+            <td>
+              <code>kind: skill</code>, <code>state: true</code>,
+              <code>integrates: claude-code → headless local-model subagent</code>,
+              <code>requires.commands: [ollama, claude]</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <code>~/.agents/state/delegate-to-local</code>. It holds <code>run.lock</code> (a pid
+              file), <code>claudehome/</code> (the isolated Claude Code config dir) and
+              <code>runs/&lt;timestamp&gt;/</code>, one folder per run. <b>Safe to delete:</b>
+              <code>claudehome</code> is recreated on the next run and the run folders are only
+              logs. Deleting <code>claudehome</code> only costs the ability to
+              <code>--resume</code> earlier sessions.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <code>ollama</code>, answering at <code>localhost:11434</code> with
+              <code>qwen3.6:35b-a3b</code> already pulled, and the <code>claude</code> CLI.
+            </td>
+          </tr>
+          <tr>
+            <td>Sits beside</td>
+            <td>
+              <code>delegate-to-codex</code>, the same idea billed to ChatGPT. This one is for small
+              tasks where neither meter should move.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One run, from refusal check to result.md</h2>
+      <p>
+        <code>delegate-local.py</code> is a thin launcher around <code>claude -p</code>. It does
+        three jobs: prove it is safe to start, start Claude Code in a cage pointed at Ollama, and
+        write down what came back.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="run-figure"
+        data-label="diagram: pre-flight, the isolated claude -p launch, the timeout, the exit codes and the run folder"
+      >
+        <div class="stage">
+          <svg
+            viewBox="0 0 780 508"
+            role="img"
+            aria-label="Flow from four pre-flight checks to launching claude -p with an isolated environment, to waiting up to the time limit, to three outcomes with exit codes 0, 1 and 124, to the run folder files and the resume loop"
+          >
+            <defs>
+              <marker
+                id="dl-a"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)" />
+              </marker>
+            </defs>
+            <g font-family="var(--mono)">
+              <rect
+                x="20"
+                y="6"
+                width="740"
+                height="112"
+                rx="8"
+                fill="#0e131b"
+                stroke="var(--warn)"
+              />
+              <text x="34" y="26" font-size="9.5" letter-spacing="1" fill="var(--warn)">
+                PRE-FLIGHT · ANY FAILURE = EXIT 2, NOTHING STARTED
+              </text>
+              <text x="34" y="48" font-size="11" fill="var(--text)">
+                1. GET /api/version → Ollama is up
+              </text>
+              <text x="34" y="66" font-size="11" fill="var(--text)">
+                2. GET /api/tags → model present, else refuse with its size + `ollama pull`
+              </text>
+              <text x="34" y="84" font-size="11" fill="var(--text)">
+                3. GET /api/ps → no other model ≥ 2 GB loaded, else `ollama stop &lt;name&gt;`
+              </text>
+              <text x="34" y="102" font-size="11" fill="var(--text)">
+                4. run.lock holds a live pid? → another run is going, refuse
+              </text>
+
+              <line
+                x1="390"
+                y1="118"
+                x2="390"
+                y2="136"
+                stroke="var(--muted)"
+                marker-end="url(#dl-a)"
+              />
+
+              <rect
+                x="20"
+                y="138"
+                width="380"
+                height="118"
+                rx="8"
+                fill="#0e131b"
+                stroke="var(--accent)"
+              />
+              <text x="34" y="158" font-size="9.5" letter-spacing="1" fill="var(--accent)">
+                CHILD ENVIRONMENT
+              </text>
+              <text x="34" y="178" font-size="10.5" fill="var(--muted)">
+                drop every CLAUDE* / ANTHROPIC* var, then set:
+              </text>
+              <text x="34" y="196" font-size="10.5" fill="var(--text)">
+                ANTHROPIC_BASE_URL=http://localhost:11434
+              </text>
+              <text x="34" y="212" font-size="10.5" fill="var(--text)">
+                ANTHROPIC_AUTH_TOKEN=ollama · API_KEY=""
+              </text>
+              <text x="34" y="228" font-size="10.5" fill="var(--text)">
+                CLAUDE_CONFIG_DIR=…/delegate-to-local/claudehome
+              </text>
+              <text x="34" y="244" font-size="10.5" fill="var(--text)">
+                opus/sonnet/haiku/subagent aliases → the local model
+              </text>
+
+              <line
+                x1="400"
+                y1="196"
+                x2="418"
+                y2="196"
+                stroke="var(--muted)"
+                marker-end="url(#dl-a)"
+              />
+
+              <rect
+                x="420"
+                y="138"
+                width="340"
+                height="118"
+                rx="8"
+                fill="#0e131b"
+                stroke="var(--c5)"
+              />
+              <text x="434" y="158" font-size="9.5" letter-spacing="1" fill="var(--c5)">
+                THE COMMAND · STDIN = /dev/null
+              </text>
+              <text x="434" y="178" font-size="10.5" fill="var(--text)">
+                claude -p --model qwen3.6:35b-a3b
+              </text>
+              <text x="434" y="194" font-size="10.5" fill="var(--text)">--output-format json</text>
+              <text x="434" y="210" font-size="10.5" fill="var(--text)">
+                --dangerously-skip-permissions
+              </text>
+              <text x="434" y="226" font-size="10.5" fill="var(--text)">
+                --safe-mode --strict-mcp-config
+              </text>
+              <text x="434" y="244" font-size="10.5" fill="var(--muted)">
+                --session-id &lt;uuid&gt; chosen up front
+              </text>
+
+              <line
+                x1="590"
+                y1="256"
+                x2="590"
+                y2="274"
+                stroke="var(--muted)"
+                marker-end="url(#dl-a)"
+              />
+
+              <rect
+                x="20"
+                y="276"
+                width="740"
+                height="62"
+                rx="8"
+                fill="#0e131b"
+                stroke="var(--border)"
+              />
+              <text x="34" y="296" font-size="11.5" fill="#fff">
+                wait up to --minutes (default 30) in its own process group
+              </text>
+              <text x="34" y="314" font-size="10.5" fill="var(--muted)">
+                the model runs its own loop: read, edit, run tests, until it ends the turn
+              </text>
+              <text x="34" y="330" font-size="10.5" fill="var(--danger)">
+                on expiry: killpg SIGTERM, then SIGKILL, so no child outlives the limit
+              </text>
+
+              <line
+                x1="130"
+                y1="338"
+                x2="130"
+                y2="356"
+                stroke="var(--good)"
+                marker-end="url(#dl-a)"
+              />
+              <line
+                x1="390"
+                y1="338"
+                x2="390"
+                y2="356"
+                stroke="var(--warn)"
+                marker-end="url(#dl-a)"
+              />
+              <line
+                x1="650"
+                y1="338"
+                x2="650"
+                y2="356"
+                stroke="var(--danger)"
+                marker-end="url(#dl-a)"
+              />
+
+              <rect
+                x="20"
+                y="358"
+                width="220"
+                height="44"
+                rx="8"
+                fill="#0e131b"
+                stroke="var(--good)"
+              />
+              <text x="34" y="377" font-size="11.5" fill="#fff">exit 0 · done</text>
+              <text x="34" y="394" font-size="10" fill="var(--muted)">rc 0 and not is_error</text>
+
+              <rect
+                x="280"
+                y="358"
+                width="220"
+                height="44"
+                rx="8"
+                fill="#0e131b"
+                stroke="var(--warn)"
+              />
+              <text x="294" y="377" font-size="11.5" fill="#fff">exit 1 · error</text>
+              <text x="294" y="394" font-size="10" fill="var(--muted)">
+                non-zero rc, is_error, bad JSON
+              </text>
+
+              <rect
+                x="540"
+                y="358"
+                width="220"
+                height="44"
+                rx="8"
+                fill="#0e131b"
+                stroke="var(--danger)"
+              />
+              <text x="554" y="377" font-size="11.5" fill="#fff">exit 124 · timed out</text>
+              <text x="554" y="394" font-size="10" fill="var(--muted)">
+                "timed out after N min"
+              </text>
+
+              <line
+                x1="390"
+                y1="402"
+                x2="390"
+                y2="420"
+                stroke="var(--muted)"
+                marker-end="url(#dl-a)"
+              />
+
+              <rect
+                x="20"
+                y="422"
+                width="740"
+                height="40"
+                rx="8"
+                fill="#0e131b"
+                stroke="var(--good)"
+              />
+              <text x="34" y="440" font-size="11.5" fill="#fff">
+                ~/.agents/state/delegate-to-local/runs/&lt;timestamp&gt;/
+              </text>
+              <text x="34" y="455" font-size="10" fill="var(--muted)">
+                result.md · session_id · meta.json · stdout.json · stderr.log (run.lock removed)
+              </text>
+
+              <rect
+                x="20"
+                y="472"
+                width="740"
+                height="30"
+                rx="8"
+                fill="#0e131b"
+                stroke="var(--border)"
+                stroke-dasharray="4 3"
+              />
+              <text x="34" y="491" font-size="10.5" fill="var(--muted)">
+                needs an answer? --resume &lt;session_id&gt; "&lt;answer&gt;" continues the same
+                session, even after a timeout
+              </text>
+            </g>
+          </svg>
+        </div>
+        <p class="lede">
+          Everything left of the command is about <b>keeping the cage shut</b>: the user's own setup
+          never reaches the model, and nothing about the run depends on which Claude session
+          launched it.
+        </p>
+      </div>
+
+      <h3>The pre-flight is four questions and a note</h3>
+      <p>
+        Each check is a plain HTTP call to Ollama or a file read, and a refusal exits 2 with a
+        message that says what to do. The skill relays the message and acts on it only with the
+        user's go-ahead. Swap usage (<code>sysctl vm.swapusage</code>) and
+        <code>memory_pressure -Q</code> are printed to stderr as a note and never block a run: most
+        of the swap is in use on an ordinary day. If the lock names a dead pid it is ignored, and
+        the launcher removes it when the run ends (in a <code>finally</code>).
+      </p>
+
+      <h3>Why the launch looks the way it does</h3>
+      <ul>
+        <li>
+          <b>Config dir plus <code>--safe-mode</code> plus <code>--strict-mcp-config</code>.</b>
+          None of the user's hooks, MCP servers, skills, plugins or CLAUDE.md load. The parent's
+          <code>CLAUDE*</code> and <code>ANTHROPIC*</code> variables (session id, messaging socket,
+          subagent model, auth) are stripped before the new ones are set.
+        </li>
+        <li>
+          <b>Every model alias maps to the local model.</b> If Claude Code reaches for an Opus,
+          Sonnet or Haiku alias for a subagent or a background call, it still lands on Ollama.
+        </li>
+        <li>
+          <b>The session id is chosen first.</b> With <code>--session-id &lt;uuid&gt;</code> set
+          before the child starts, a timed-out run still has an id that
+          <code>--resume</code> accepts.
+        </li>
+        <li>
+          <b><code>stdin</code> is <code>/dev/null</code></b> and the child gets its own process
+          group, so the timeout can kill the whole tree.
+        </li>
+      </ul>
+
+      <h3>Why Claude Code is the harness</h3>
+      <p>
+        It was benchmarked, not assumed. On four agentic tasks with this model, Claude Code passed 4
+        of 4 (about 13.5 minutes in total), Qwen Code passed 3 of 4 (a stream error on the hardest
+        one), and Codex with <code>--oss</code> passed 0 of 4, because the model never saw its
+        tools.
+      </p>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its
+        own existence.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+  </body>
+</html>

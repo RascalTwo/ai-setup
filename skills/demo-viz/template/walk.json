@@ -1,0 +1,18 @@
+{
+ "mode": "live",
+ "title": "Demo: replace this with the change's name",
+ "change": { "repo": "repo", "commit": "abc1234", "subject": "the commit's subject" },
+ "impact": "Replace with 2-3 plain sentences: who is affected, their life before, their life after, why it matters.",
+ "source": "A stand-in demo: `from-spec.ts` writes the real one from the spec.",
+ "kind": "cli",
+ "personas": [{ "id": "P1", "who": "Someone running the command" }],
+ "reset": ["true"],
+ "cmd": { "now": ["echo", "this build:"], "before": ["echo", "previous build:"] },
+ "relay": { "folder": "/not/a/kelpie/run" },
+ "yes": "Accept adds this to your local copy of the project; nothing goes online.",
+ "steps": [
+  { "id": "S1", "persona": "P1", "example": "E1", "say": "Run it and read the highlighted row.", "run": ["hello"], "look": ["hello"], "before": true, "promised": "<p>It says hello.</p>" },
+  { "id": "S2", "persona": "P1", "say": "That's all. Decide below." }
+ ],
+ "notes": ["The agent's own account goes here."]
+}

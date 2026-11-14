@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ming-tts — Joseph's voice, served from the home GPU</title>
+    <meta name="viz:uid" content="v-b72f82298634" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="ming-tts" />
+    <meta
+      name="viz:description"
+      content="ming-tts serves Joseph's cloned voice and a generic voice from Ming-3.0-tts on the home PC GPU to voicemode and pr-viz, with Qwen3 and Kokoro on the Mac as fallbacks."
+    />
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* Card + dive. transform:scale() does not shrink the layout box, so poster.css
+     collapses #fit's height off the same --s. */
+      :root {
+        --s: 1;
+        --gone: #5a6474;
+        --kept: var(--c5);
+        --ask: var(--c4);
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -12%,
+            color-mix(in srgb, var(--c5) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 112%,
+            color-mix(in srgb, var(--c4) 13%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 560px;
+        gap: 32px;
+        align-items: center;
+        padding: 46px 48px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        letter-spacing: 0.14em;
+        color: var(--c5);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c5);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c5) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 46px;
+        line-height: 1.06;
+        margin: 0 0 16px;
+        letter-spacing: -1.3px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      p.sub {
+        font-size: 17px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 14px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 16px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c5);
+        border-radius: 9px;
+        padding: 9px 13px;
+        color: var(--text);
+      }
+
+      /* ── the proof slot: a week's tank, and the part nobody can account for ── */
+      .rig {
+        background: color-mix(in srgb, var(--panel) 88%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px 17px;
+        font-family: var(--mono);
+      }
+      .rig .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10.5px;
+        letter-spacing: 0.13em;
+        color: var(--c5);
+        margin-bottom: 13px;
+      }
+      .rig .cap span:last-child {
+        color: var(--faint);
+      }
+
+      /* ── dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c5);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul,
+      .dive ol {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c4);
+      }
+      .dive table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0 0 16px;
+      }
+      .dive table td {
+        border-top: 1px solid var(--border);
+        padding: 11px 0;
+        font-size: 15px;
+        line-height: 1.55;
+        vertical-align: top;
+        color: var(--text);
+      }
+      .dive table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.05em;
+        padding-right: 16px;
+      }
+      .fig {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        margin: 0 0 18px;
+      }
+      .fig figcaption {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+        letter-spacing: 0.06em;
+        margin-top: 12px;
+        line-height: 1.5;
+      }
+      .pre {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 12px 14px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--muted);
+        overflow-x: auto;
+        margin: 0 0 16px;
+      }
+      .pre b {
+        color: var(--c5);
+        font-weight: 400;
+      }
+      .pre em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 14px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 19px;
+      }
+      .step .k {
+        flex: 0 0 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+      }
+      .step.you .k {
+        background: var(--c4);
+        color: #0d1117;
+      }
+      .step.bot .k {
+        background: var(--accent);
+        color: #0d1117;
+      }
+      .step .v b {
+        color: var(--text);
+      }
+      .step .v {
+        color: var(--muted);
+      }
+      .say {
+        font-family: var(--mono, monospace);
+        color: var(--c5);
+      }
+
+      .dive table.nums td:not(:first-child) {
+        font-family: var(--mono);
+        font-size: 13.5px;
+        white-space: nowrap;
+        padding-left: 14px;
+      }
+      .dive table.nums td:first-child {
+        color: var(--muted);
+      }
+      .rig .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        font-size: 15px;
+        padding: 7px 0;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .rig .row b {
+        color: var(--text);
+      }
+      .rig .row .n {
+        color: var(--c5);
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="ming-tts"
+        data-viz-id="poster-card"
+        data-label="ming-tts poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED TOOL · LOCAL TTS ROUTER</div>
+          <h1 class="hook">
+            Joseph's voice,<br /><em>from the<br />home GPU.</em>
+          </h1>
+          <p class="sub">
+            voicemode and pr-viz ask one local endpoint. It asks <b>Ming-3.0-tts</b> on the home PC,
+            and if the PC is away, answers from the Mac anyway.
+          </p>
+          <p class="not">
+            Not always on the PC: the model loads on demand and unloads after 10 idle minutes.
+          </p>
+          <div class="chip">router :8895 → PC Ming → Qwen3 / Kokoro</div>
+        </div>
+        <div
+          class="rig"
+          data-viz-id="the-numbers"
+          data-label="Ming against Qwen3 on the same input"
+        >
+          <div class="cap"><span>SAME 6 SENTENCES</span><span>GENERATION TIME</span></div>
+          <div class="row"><span>Ming, home PC GPU</span><b class="n">4–31 s</b></div>
+          <div class="row"><span>Qwen3, loaded Mac</span><b>22–78 s</b></div>
+          <div class="row"><span>Joseph picked</span><b class="n">Ming, every sentence</b></div>
+          <div class="row"><span>First audio, warm</span><b class="n">1.8–3.5 s</b></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install ming-tts">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <p class="why">
+        the full setup, run in a clone of
+        <a href="https://github.com/RascalTwo/ai-setup">RascalTwo/ai-setup</a>
+      </p>
+      <pre><span class="l"><span class="c">bun</span> install.ts</span></pre>
+      <p class="needs">
+        needs <code>python3</code> <code>ffmpeg</code> <code>ssh</code> <code>ollama</code>
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle">home-pc SSH access</a>
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle"
+          >Ming-3.0-tts-0.5B in WSL on the home PC</a
+        >
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle">Qwen3-TTS via mlx-audio</a>
+      </p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓ scroll</div>
+
+    <article class="dive">
+      <h2 data-beat="why">Nothing spoke in Joseph's voice quickly</h2>
+      <p>
+        voicemode spoke with Kokoro's <code>af_sky</code>. pr-viz could clone Joseph with Qwen3-TTS,
+        but only on the Mac, where a clip took 22 to 78 seconds on a busy machine. There was no good
+        copy of Joseph's voice that both tools could reach.
+      </p>
+      <p class="m">
+        The home PC has a GPU that sits idle. Ming-3.0-tts-0.5B runs in about 3.4 GB of it. Joseph
+        listened to Ming and Qwen3 render the same six sentences from the same reference clip and
+        picked Ming on every one.
+      </p>
+
+      <h2 data-beat="using">You just talk to voicemode</h2>
+      <ul>
+        <li>
+          <b>voicemode</b> has <code>VOICEMODE_TTS_BASE_URLS</code> set to
+          <code>http://127.0.0.1:8895/v1</code> first and Kokoro second. Its voice stays
+          <code>af_sky</code>; the router turns any voice but <code>joseph</code> into Ming's
+          <code>US_Emma</code>.
+        </li>
+        <li>
+          <b>pr-viz</b> uses it through <code>"url": "http://127.0.0.1:8895"</code> on the
+          <code>joseph-animated</code> profile. Any request carrying <code>ref_audio</code> is
+          Joseph.
+        </li>
+        <li>
+          <b>By hand</b>: <code>POST /v1/audio/speech</code> with <code>voice</code>
+          <code>joseph</code>, or a built-in (<code>US_Emma</code>, <code>US_James</code>,
+          <code>US_Stella</code>, <code>UK_George</code>, <code>UK_Charlotte</code>).
+        </li>
+        <li>
+          <b>Optional fields</b> for Joseph: <code>emotion</code> (happy, sad, angry, fear, disgust,
+          surprise, neutral), <code>pitch</code> and <code>volume</code> (low, medium, high), and a
+          <code>speed</code> under 0.9 or over 1.1. Inline tags such as <code>[Laughter]</code> or
+          <code>[Sigh]</code> pass straight through.
+        </li>
+        <li>
+          <b>Pronunciations</b>: the <code>TTS &lt;regex&gt; &lt;replacement&gt;</code> lines in
+          <code>~/.voicemode/voicemode.env</code> apply to every request, so pr-viz gets them too
+          (<code>kubectl</code> becomes "kube control").
+        </li>
+        <li><b>Check</b>: <code>python3 tools/ming-tts/test_ming_tts.py</code>.</li>
+      </ul>
+
+      <h2 data-beat="limits">What it won't do</h2>
+      <ul>
+        <li>
+          <b>Question tags are slow.</b> <code>[Question-ei]</code> and its siblings often run on
+          past the end of the sentence. They needed 2 to 3 re-rolls in testing, which is 15 to 25
+          seconds.
+        </li>
+        <li>
+          <b>It doesn't stream.</b> The whole clip comes back at once. A cold start, when the model
+          loads on the first request, takes about 12 seconds.
+        </li>
+        <li>
+          <b>Controls are Joseph-only.</b> Emotion, pitch, volume and inline tags are not applied to
+          the built-in voices; tags are stripped from their text.
+        </li>
+        <li>
+          <b>The laugh isn't his.</b> Joseph's reference clip contains no laugh, so
+          <code>[Laughter]</code> doesn't sound like him.
+        </li>
+        <li>
+          <b>A PC that failed stays "down" for up to 30 seconds</b> before the router tries it
+          again.
+        </li>
+        <li>
+          <b>The server ignores the shared GPU lock.</b> Take <code>gpu.lock</code> yourself before
+          heavy GPU work on the PC.
+        </li>
+        <li>
+          <b>pr-viz's clip cache</b> is keyed on text and reference, not backend, so clips cached
+          from Qwen3 stay until their text changes.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>Integrates with</td>
+            <td>
+              <b>voicemode</b> (<code>VOICEMODE_TTS_BASE_URLS</code>), <b>pr-viz</b> (the
+              <code>joseph-animated</code> profile <code>url</code> in
+              <code>~/.config/viz/voices.json</code>),
+              <b>launchd</b> (<code>com.rascaltwo.ming-router</code>) and
+              <b>Windows Task Scheduler</b> (<code>ming-tts-server</code> on the home PC, at logon).
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              The <code>home-pc</code> skill, <code>python3</code>, <code>ffmpeg</code> and
+              <code>ssh</code>; Ming-3.0-tts-0.5B in WSL2 on the PC, Kokoro on the Mac, and
+              Qwen3-TTS through mlx-audio. Router: macOS. Server: Windows 10 with WSL2 and an NVIDIA
+              GPU.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <code>~/.agents/state/ming-tts/</code>: <code>router/router.py</code> (the copy
+              launchd actually runs, because launchd can't read <code>~/Desktop</code>),
+              <code>router.log</code> (backend and retries per request), test renders and the
+              evaluation report. On the PC, <code>ai-eval\ming-server\</code> holds the server, the
+              reference clip with its transcript, and <code>server.log</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>
+              <b>Not the installed copy</b>, <code>deletion-policy: retain</code>: removing
+              <code>router/router.py</code> makes the LaunchAgent fail until it is copied back. The
+              log and test renders can go.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One request, end to end</h2>
+      <p class="m">
+        voicemode sends <code>POST /v1/audio/speech</code> to <code>router.py</code> on
+        127.0.0.1:8895 with <code>voice=af_sky</code>, <code>response_format=pcm</code>.
+      </p>
+      <figure class="fig">
+        <svg
+          viewBox="0 0 760 300"
+          width="100%"
+          role="img"
+          aria-label="ming-tts request path with the Mac fallbacks"
+        >
+          <defs>
+            <marker
+              id="ah"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="#58a6ff" />
+            </marker>
+          </defs>
+          <g data-viz-id="n-callers" data-label="callers">
+            <rect
+              x="10"
+              y="95"
+              width="130"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="75" y="125" text-anchor="middle" fill="#e6edf3" font-size="14">voicemode</text>
+            <text x="75" y="145" text-anchor="middle" fill="#8b949e" font-size="12">pr-viz</text>
+          </g>
+          <g data-viz-id="n-router" data-label="router">
+            <rect
+              x="190"
+              y="95"
+              width="140"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="260" y="125" text-anchor="middle" fill="#e6edf3" font-size="14">
+              router.py
+            </text>
+            <text x="260" y="145" text-anchor="middle" fill="#8b949e" font-size="12">
+              Mac :8895
+            </text>
+          </g>
+          <g data-viz-id="n-ming" data-label="Ming on the PC">
+            <rect
+              x="400"
+              y="30"
+              width="170"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#3fb950"
+              stroke-width="2"
+            />
+            <text x="485" y="60" text-anchor="middle" fill="#e6edf3" font-size="14">
+              ming_server.py
+            </text>
+            <text x="485" y="80" text-anchor="middle" fill="#8b949e" font-size="12">
+              PC, WSL :8893 (via :8894)
+            </text>
+          </g>
+          <g data-viz-id="n-qwen" data-label="Qwen3 fallback">
+            <rect
+              x="400"
+              y="130"
+              width="170"
+              height="60"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="485" y="157" text-anchor="middle" fill="#e6edf3" font-size="14">
+              Qwen3 (joseph)
+            </text>
+            <text x="485" y="176" text-anchor="middle" fill="#8b949e" font-size="12">
+              mlx_audio.server :8892
+            </text>
+          </g>
+          <g data-viz-id="n-kokoro" data-label="Kokoro fallback">
+            <rect
+              x="400"
+              y="215"
+              width="170"
+              height="60"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="485" y="242" text-anchor="middle" fill="#e6edf3" font-size="14">
+              Kokoro (others)
+            </text>
+            <text x="485" y="261" text-anchor="middle" fill="#8b949e" font-size="12">
+              :8880 voice af_sky
+            </text>
+          </g>
+          <path
+            d="M140 130 L190 130"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M330 120 L400 70"
+            stroke="#3fb950"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M330 135 L400 160"
+            stroke="#d29922"
+            stroke-width="1.5"
+            fill="none"
+            stroke-dasharray="4 3"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M330 150 L400 240"
+            stroke="#d29922"
+            stroke-width="1.5"
+            fill="none"
+            stroke-dasharray="4 3"
+            marker-end="url(#ah)"
+          />
+          <text x="590" y="62" fill="#8b949e" font-size="12">PC up: US_Emma or joseph</text>
+          <text x="590" y="160" fill="#8b949e" font-size="12">PC down or no take</text>
+          <text x="590" y="178" fill="#8b949e" font-size="12">joseph only</text>
+          <text x="590" y="245" fill="#8b949e" font-size="12">PC down or no take</text>
+          <text x="590" y="263" fill="#8b949e" font-size="12">everyone else</text>
+        </svg>
+        <figcaption>
+          Solid green is the normal path. Dashed amber is a fallback, taken when the PC probe fails
+          or Ming returns no plausible take.
+        </figcaption>
+      </figure>
+      <ol>
+        <li>
+          <b>Rewrite the text.</b> <code>pronunciation_rules()</code> re-reads the
+          <code>TTS</code> lines of <code>voicemode.env</code> on every request, so edits apply
+          live.
+        </li>
+        <li>
+          <b>Pick the voice.</b> <code>voice == "joseph"</code> or a body with
+          <code>ref_audio</code> is Joseph. A Ming built-in name passes through; anything else is
+          <code>US_Emma</code>.
+        </li>
+        <li>
+          <b>Probe the PC.</b> <code>PcHealth.up()</code> calls <code>GET /health</code> on
+          <code>100.65.216.8:8894</code> with a 1 second timeout and caches the answer for 30
+          seconds, so a powered-off PC costs about one second, not a hang.
+        </li>
+        <li>
+          <b>Cross the network.</b> Tailscale delivers to Windows port 8894. A
+          <code>netsh portproxy</code> forwards it to <code>127.0.0.1:8893</code>, which WSL2
+          already forwards into the VM. A firewall rule admits only <code>100.64.0.0/10</code>.
+        </li>
+        <li>
+          <b>Choose the task.</b> In <code>ming_server.py</code>, <code>Ming.speak()</code> maps
+          Joseph to <code>TTS</code> (reference clip plus its transcript), <code>EMOTION</code> or
+          <code>BASIC</code>, and a built-in voice to <code>IP</code>. The model loads on the first
+          request.
+        </li>
+        <li>
+          <b>Check the take.</b> <code>expected_s()</code> estimates 19 characters per second plus
+          0.8 s per tag. Decoding is capped at 2.6 times that (<code>max_decode_steps</code>), and a
+          take shorter than 0.4 times or longer than 2.5 times the estimate is re-rolled with the
+          next seed, up to 5 tries. Then it returns <code>502</code> and the router falls back.
+        </li>
+        <li>
+          <b>Return audio.</b> Ming sends 44.1 kHz wav with <code>X-Ming-Retries</code>. The router
+          runs ffmpeg for any other format (<code>pcm</code> is 24 kHz s16le mono) and adds
+          <code>X-Voice-Backend</code>.
+        </li>
+        <li>
+          <b>Fallbacks.</b> Joseph goes to <code>Qwen.speak()</code>, which starts
+          <code>mlx_audio.server</code> on port 8892 with the <code>joseph-animated</code> profile
+          and stops it after 5 idle minutes. Everyone else goes to Kokoro on port 8880 with
+          <code>af_sky</code>.
+        </li>
+        <li>
+          <b>Free the GPU.</b> A reaper thread in the server drops the model and calls
+          <code>torch.cuda.empty_cache()</code> after 10 idle minutes (about 3 GB back).
+        </li>
+      </ol>
+
+      <h2 data-beat="how">The measured numbers</h2>
+      <p class="m">
+        The same six sentences, rendered from Joseph's pr-viz reference clip by both engines. Ming
+        ran on the home PC; Qwen3 ran on a heavily loaded Mac, so its times are not a clean
+        benchmark.
+      </p>
+      <table class="nums">
+        <tbody>
+          <tr>
+            <td>Short casual line</td>
+            <td>Ming 3.7 s</td>
+            <td>Qwen3 22.1 s</td>
+          </tr>
+          <tr>
+            <td>Technical sentence</td>
+            <td>Ming 8.6 s</td>
+            <td>Qwen3 28.7 s</td>
+          </tr>
+          <tr>
+            <td>Line with a laugh tag</td>
+            <td>Ming 4.7 s</td>
+            <td>Qwen3 31.7 s</td>
+          </tr>
+          <tr>
+            <td>20 second paragraph</td>
+            <td>Ming 30.8 s</td>
+            <td>Qwen3 78.4 s</td>
+          </tr>
+        </tbody>
+      </table>
+      <ul>
+        <li><b>Model:</b> about 3 GB of VRAM after load, a peak of 3.4 GB reserved.</li>
+        <li><b>Through the router:</b> 1.8 to 3.5 s to the first audio when warm, 12.3 s cold.</li>
+        <li>
+          <b>Retries:</b> of 28 tag, emotion and speed demos, 11 needed a re-roll. The four
+          <code>[Question-*]</code> tags needed 3 each; most failures were runaways to the 20 second
+          ceiling, one was a 0.3 second early stop.
+        </li>
+        <li>
+          <b>Fallbacks:</b> with the PC unreachable, Kokoro answered in 1.3 s and Joseph's Qwen3
+          clip in 2.6 s once its server was warm.
+        </li>
+      </ul>
+    </article>
+    <script type="module" src="/_kit/poster.js"></script>
+  </body>
+</html>

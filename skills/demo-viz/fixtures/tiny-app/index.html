@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>tiny app</title>
+  </head>
+  <!-- A stand-in built app for guide.test.ts: a select, a text that changes, and a button outside every target. -->
+  <body>
+    <select id="view"><option>timeline</option><option>calendar</option></select>
+    <button id="next">›</button> <span id="title">October</span>
+    <button id="other">other</button> <span id="clicks">0</span>
+    <script>
+      next.onclick = () => (title.textContent = "November");
+      other.onclick = () => (clicks.textContent = String(+clicks.textContent + 1));
+    </script>
+  </body>
+</html>

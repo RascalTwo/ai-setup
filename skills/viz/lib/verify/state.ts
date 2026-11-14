@@ -1,0 +1,27 @@
+// Everything verify produces or remembers for one viz lives in `<viz>/.verify/`: its report,
+// screenshots and test output (generated, git-ignored) and `floor.json` (the coverage floor:
+// committed, so it ratchets for everyone). The folder ignores itself, so a viz needs no .gitignore line.
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
+export const VERIFY_DIR = ".verify";
+const FLOOR = "floor.json";
+// Ignores itself too: a stub that kept itself showed up untracked in every verified viz.
+const STUB = `*\n!${FLOOR}\n`;
+
+/** `<viz>/.verify/`, created with its own .gitignore (everything but the floor). Older stubs are rewritten. */
+export function verifyDir(vizDir: string): string {
+  const dir = path.join(vizDir, VERIFY_DIR);
+  mkdirSync(dir, { recursive: true });
+  const ignore = path.join(dir, ".gitignore");
+  if (!existsSync(ignore) || readFileSync(ignore, "utf8") !== STUB) writeFileSync(ignore, STUB);
+  return dir;
+}
+
+/** The floor's path. A floor still at the old `tests/coverage-floor.json` is moved here first, so no run starts from nothing. */
+export function floorFile(vizDir: string): string {
+  const fp = path.join(verifyDir(vizDir), FLOOR);
+  const old = path.join(vizDir, "tests", "coverage-floor.json");
+  if (!existsSync(fp) && existsSync(old)) renameSync(old, fp);
+  return fp;
+}

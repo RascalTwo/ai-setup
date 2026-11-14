@@ -1,0 +1,11 @@
+# claude-tab's herdr keybinding on Windows. Merged into %APPDATA%\herdr\config.toml by
+# install.ts (guarded on "claude-tab", so re-running is a no-op). Same binding as
+# herdr-keybind.toml, but runs the PowerShell port. `~` is expanded by install.ts.
+
+[[keys.command]]
+key = "prefix+a"
+type = "popup"
+command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File ~/.agents/ai-setup/tools/claude-tab/claude-tab.ps1'
+description = "new tab running claude: prompt, model, effort"
+width = "70%"
+height = 5

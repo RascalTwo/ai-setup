@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>model-real-things-3d — a 3D model that is a script, not a mesh</title>
+    <!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+    <meta name="viz:uid" content="v-9a4d6ebdaae6" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="model-real-things-3d" />
+    <meta
+      name="viz:description"
+      content="Builds a lifelike, true-size 3D model of a real object as a re-runnable Blender script, so every later fix is a change request, not a regeneration."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card stays a fixed 1200×630 clip target (viz verify --og shoots a 1200×630
+     viewport => --s resolves to 1 => the OG image is pixel-native). The page
+     SCROLLS, so a deep dive lives below.
+
+     The gotcha this solves: transform:scale() does NOT shrink an element's layout
+     box, so a scaled card still reserves 630px of flow and leaves a dead gap.
+     Fix: scale from `top center` and drive #fit's height off the same --s.
+     ──────────────────────────────────────────────────────────────────────────── */
+      :root {
+        --s: 1;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+      #fit {
+      }
+      .og-card {
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -8%,
+            color-mix(in srgb, var(--danger) 18%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 110%,
+            color-mix(in srgb, var(--good) 14%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 430px;
+        gap: 40px;
+        align-items: center;
+        padding: 60px 70px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 18px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 56px;
+        line-height: 1.04;
+        margin: 0 0 20px;
+        letter-spacing: -1.5px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--danger);
+      }
+      p.sub {
+        font-size: 19px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 22px;
+        max-width: 520px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 15px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 22px;
+        max-width: 520px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 15px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 9px;
+        padding: 10px 15px;
+        color: var(--text);
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the two-sided argument = the "proof" slot */
+      /* stretch (not start) so CASE FOR / CASE AGAINST are always equal height —
+     the two sides argue at equal strength; the panels should look it. */
+      .arena {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        align-items: stretch;
+      }
+      .side {
+        background: color-mix(in srgb, var(--panel) 78%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 16px 18px;
+      }
+      .side .lbl {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.12em;
+        margin-bottom: 10px;
+      }
+      .side .arg {
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 8px;
+      }
+      .side .arg:last-child {
+        margin-bottom: 0;
+      }
+      .side .bar {
+        height: 8px;
+        border-radius: 99px;
+        margin-bottom: 12px;
+      }
+      .side.for {
+        border-top: 2px solid var(--good);
+      }
+      .side.for .lbl {
+        color: var(--good);
+      }
+      .side.for .bar {
+        background: linear-gradient(
+          90deg,
+          color-mix(in srgb, var(--good) 40%, transparent),
+          var(--good)
+        );
+      }
+      .side.against {
+        border-top: 2px solid var(--danger);
+      }
+      .side.against .lbl {
+        color: var(--danger);
+      }
+      .side.against .bar {
+        background: linear-gradient(
+          90deg,
+          var(--danger),
+          color-mix(in srgb, var(--danger) 40%, transparent)
+        );
+      }
+      .crux {
+        grid-column: 1 / -1;
+        text-align: center;
+        background: color-mix(in srgb, var(--warn) 10%, transparent);
+        border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent);
+        border-radius: 12px;
+        padding: 12px 14px;
+      }
+      .crux .k {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        color: var(--warn);
+        margin-bottom: 6px;
+      }
+      .crux .v {
+        font-size: 14.5px;
+        color: var(--text);
+        line-height: 1.4;
+      }
+      .verdict {
+        grid-column: 1 / -1;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 13px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+      }
+      .verdict b {
+        color: var(--text);
+      }
+
+      /* ── the dive (below the fold) ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      /* ── poster standard: beat-4 table, beat-5 figure ── */
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        min-height: 190px;
+      }
+      .fig .stage svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 46px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="model-real-things-3d"
+        data-viz-id="poster-card"
+        data-label="model-real-things-3d poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · MODEL-REAL-THINGS-3D</div>
+          <h1 class="hook">
+            A 3D model is<br />a <em>script,<br />not a mesh.</em>
+          </h1>
+          <p class="sub">
+            Fix a generated mesh and you regenerate it. Build the model as
+            <b>code in Blender</b> and a change request is an edit: <b>~8 minutes</b> in the
+            2026-10-16 bakeoff for a NAS case, at its <b>true size</b>.
+          </p>
+          <p class="not">
+            One build script makes the GLB.<br /><b>You</b> check it against the real thing.
+          </p>
+          <div class="trigger"><span>say</span>&nbsp;"make a 3D model of my X"</div>
+        </div>
+        <div class="arena">
+          <div class="side for">
+            <div class="lbl">BUILT BY CODE</div>
+            <div class="bar"></div>
+            <p class="arg">Blender Lab MCP: change request in <b>8.1 min</b>, 0% size error.</p>
+            <p class="arg">build123d: <b>8.8 min</b>, the only watertight one.</p>
+            <p class="arg">Side panels are named nodes.</p>
+          </div>
+          <div class="side against">
+            <div class="lbl">GENERATED MESH</div>
+            <div class="bar"></div>
+            <p class="arg">Hunyuan3D-2mv: <b>56.8 min</b> to a lumpy 1.4 MB mesh.</p>
+            <p class="arg">No parametric edits.</p>
+            <p class="arg"><b>Dropped</b> before the change round.</p>
+          </div>
+          <div class="crux">
+            <div class="k">↓&nbsp; THE CATCH</div>
+            <div class="v">
+              Every model passed the scorer and still got the front buttons wrong. Only the owner
+              knew.
+            </div>
+          </div>
+          <div class="verdict">THE SCRIPT IS THE MODEL. <b>YOU ARE THE JUDGE.</b></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section
+      class="install"
+      data-viz-id="install-strip"
+      data-label="how to install model-real-things-3d"
+    >
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <pre><span class="l"><span class="c">npx</span> skills add <span class="r">RascalTwo/ai-setup</span> <span class="f">-g</span> <span class="f">-s</span> model-real-things-3d</span></pre>
+      <p class="needs">
+        needs <code>uv</code> <a class="man" href="../rascal-ai-setup-tour/#manualTitle">Blender</a>
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle">Blender Lab MCP</a>
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle">build123d</a>
+      </p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">A mesh can't take "move the buttons to the top"</h2>
+      <p>
+        You want a lifelike 3D model of a real device at its real size. The quick route, an AI mesh
+        generator, hands back a lumpy surface you can only regenerate: the first fix request is a
+        new roll of the dice. The model-real-things-3d skill exists because the 2026-10-16 bakeoff
+        for a NAS case settled it. Code-built models took a change request in about 8 minutes; the
+        generated mesh (Hunyuan3D-2mv, 56.8 minutes, mostly a 4.9 GB checkpoint download) could not
+        take one at all and was dropped before round 2.
+      </p>
+
+      <h2 data-beat="using">When to fire it</h2>
+      <p class="m">
+        Say "make a 3D model of my X", "model this device", "lifelike model", or "fix the model". It
+        also fires for any job that needs Blender driven from an agent: a PC case, a router, a UPS,
+        furniture.
+      </p>
+      <ul>
+        <li>
+          You give it a <b>size in mm with a source</b>, and reference photos. Your own photos win
+          over product photos.
+        </li>
+        <li>
+          It asks what photos can't show: which way it faces, where the buttons really are, what
+          comes off.
+        </li>
+        <li>Later fixes are plain requests; they edit the same <code>build.py</code>.</li>
+      </ul>
+
+      <h2 data-beat="limits">What it doesn't do</h2>
+      <ul>
+        <li>
+          <b>It does not trust its own scorer.</b> In the bakeoff every model passed and still had
+          the front buttons wrong; the owner's eye is the real check.
+        </li>
+        <li>
+          <b>It does not generate meshes.</b> No photo-to-3D; the model is geometry written in code,
+          with fine detail (grilles, perforation) as alpha textures.
+        </li>
+        <li>
+          <b>It does not sandbox Blender.</b> The MCP runs agent-written Python with no sandbox;
+          keep sensitive data off the machine.
+        </li>
+        <li>
+          <b>Only one Blender MCP at a time.</b> Blender Lab MCP and blender-mcp both use port 9876.
+        </li>
+        <li>
+          <b>The default is not headless.</b> It needs a Blender window; with none (CI, remote,
+          overnight) it falls back to build123d + trimesh.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/model-real-things-3d/</code>: <code>SKILL.md</code>,
+              <code>setup.md</code>, and two scripts, <code>scripts/render.py</code> and
+              <code>scripts/score.py</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Declared</td>
+            <td>
+              <code>kind: skill</code>, <code>state: false</code>. <code>integrates</code> blender
+              and build123d.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <code>uv</code>, plus three manual installs: Blender (<code
+                >brew install --cask blender</code
+              >, 5.1+), the official Blender Lab MCP add-on, and build123d + trimesh for the
+              fallback. The full steps and gotchas are in <code>setup.md</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>None.</b> The skill keeps nothing. The model's state lives with the model: the
+              owner's <code>build.py</code>, the GLB it writes, and a <code>NOTES.md</code> of each
+              change's what and why, in the owner's project.
+            </td>
+          </tr>
+          <tr>
+            <td>Evidence</td>
+            <td>The 2026-10-16 bakeoff (NAS case, private notes).</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">Pin, script, score, hand over, edit</h2>
+      <p>
+        The model is a <b>re-runnable build script</b>, not a mesh. <code>build.py</code> runs
+        inside Blender through the Blender Lab MCP's code tool and exports
+        <code>&lt;name&gt;.glb</code> in glTF conventions: Y up, metres, front facing +Z, centred on
+        the origin. Anything that will move (a side panel, a door, a lid) is its own named node with
+        its origin at its own centre.
+      </p>
+      <p class="m">
+        Five steps. Green is what the step produces; red is what it is forbidden to do there.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="flow-figure"
+        data-label="stepper: the five steps of building a model"
+      >
+        <div class="stage" id="stage"></div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+
+      <h3>The judge is shared and scripted</h3>
+      <p>
+        Step 3 uses the same two files in every run. <code>scripts/render.py</code> runs under
+        <code
+          >Blender --background --factory-startup --python scripts/render.py -- &lt;glb&gt;
+          &lt;png&gt;</code
+        >
+        with one camera and one set of lights (the MCP's live scene has no lights, so its viewport
+        screenshots come out black). <code>scripts/score.py</code> loads the GLB with trimesh and
+        prints JSON: per-axis size error, triangles, file size, watertight, and any required node
+        names that are missing. Done means <code>within_1pct</code> is true,
+        <code>missing_nodes</code> is empty, and it is under the default budget of 50k triangles and
+        5 MB.
+      </p>
+
+      <div class="callout">
+        <b>Setup gotchas:</b> the Blender Lab MCP server only starts when Blender runs with
+        <code>--online-mode</code> (<code>open -a Blender --args --online-mode</code>), and its
+        first launch spends about 70 seconds installing dependencies, past the client's 30 second
+        timeout. Run <code>uv sync</code> in the unzipped bundle once first.
+      </div>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its
+        own existence.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

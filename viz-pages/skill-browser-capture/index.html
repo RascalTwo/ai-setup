@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      browser-capture — your real login, a smooth file, and a GIF that is not a slideshow
+    </title>
+    <!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+    <meta name="viz:uid" content="v-c4081527a971" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="browser-capture" />
+    <meta
+      name="viz:description"
+      content="Saves screenshots, smooth video and GIFs of the user's real, signed-in Chrome to disk through OpenCode Browse: no overlay, no focus stolen, and a GIF made from video rather than a slideshow."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* ── POSTER + DIVE ────────────────────────────────────────────────────────────
+     .og-card is a fixed 1200×630 clip target; the page scrolls, so the deep dive
+     lives below it. All mechanics (scale-to-fit, the collapsed #fit height that
+     avoids the transform:scale dead-gap) come from /_kit/poster.css.
+     ──────────────────────────────────────────────────────────────────────────── */
+      :root {
+        --s: 1;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 96% -10%,
+            color-mix(in srgb, var(--c4) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 112%,
+            color-mix(in srgb, var(--c5) 13%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 472px;
+        gap: 38px;
+        align-items: center;
+        padding: 54px 64px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 18px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 52px;
+        line-height: 1.05;
+        margin: 0 0 18px;
+        letter-spacing: -1.4px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      p.sub {
+        font-size: 18px;
+        line-height: 1.46;
+        color: var(--muted);
+        margin: 0 0 20px;
+        max-width: 520px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 15px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 20px;
+        max-width: 520px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 15px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 9px;
+        padding: 10px 15px;
+        color: var(--text);
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the proof slot = the gate. Three conditions AND-ed at a single instant, then a
+     fork, then the latch. The DIAGRAM's argument: the fragility has a timestamp. */
+      .route {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        background: color-mix(in srgb, var(--panel) 72%, transparent);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c5);
+        border-radius: 10px;
+        padding: 9px 13px;
+        margin-bottom: 16px;
+      }
+      .route .n {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--c5);
+        letter-spacing: 0.06em;
+        white-space: nowrap;
+      }
+      .route .d {
+        font-size: 12px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .route .tag {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.06em;
+        color: var(--c5);
+        white-space: nowrap;
+      }
+      .cap {
+        font-family: var(--mono);
+        font-size: 10.8px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+      .cap b {
+        color: var(--c4);
+      }
+      .conds {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        position: relative;
+      }
+      .conds::before {
+        content: "";
+        position: absolute;
+        left: 11px;
+        top: 14px;
+        bottom: 14px;
+        width: 2px;
+        background: color-mix(in srgb, var(--c4) 45%, var(--border));
+      }
+      .c {
+        display: grid;
+        grid-template-columns: 24px 1fr;
+        gap: 10px;
+        align-items: center;
+      }
+      .c .i {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--bg);
+        position: relative;
+        box-shadow: inset 0 0 0 2px var(--c4);
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--c4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .c .t {
+        background: color-mix(in srgb, var(--panel) 72%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 8px 11px;
+        font-size: 12.5px;
+        line-height: 1.35;
+        color: var(--muted);
+      }
+      .c .t b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .c .t em {
+        font-style: normal;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--c5);
+      }
+      .fork {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 11px;
+        margin-top: 12px;
+        align-items: stretch;
+      }
+      .arm {
+        border-radius: 12px;
+        padding: 11px 12px 12px;
+        border: 1px solid var(--border);
+        background: color-mix(in srgb, var(--panel) 60%, transparent);
+      }
+      .arm .k {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        margin-bottom: 7px;
+      }
+      .arm .h {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 5px;
+      }
+      .arm .d {
+        font-size: 11.5px;
+        line-height: 1.4;
+        color: var(--muted);
+      }
+      .arm.ok {
+        border-top: 2px solid var(--good);
+      }
+      .arm.ok .k {
+        color: var(--good);
+      }
+      .arm.bad {
+        border-top: 2px solid var(--danger);
+      }
+      .arm.bad .k {
+        color: var(--danger);
+      }
+      .arm.bad .h {
+        font-family: var(--mono);
+        font-size: 12.5px;
+      }
+      .evid {
+        margin-top: 11px;
+        border-radius: 11px;
+        padding: 10px 13px;
+        background: color-mix(in srgb, var(--good) 9%, transparent);
+        border: 1px solid color-mix(in srgb, var(--good) 34%, transparent);
+      }
+      .evid .k {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.13em;
+        color: var(--good);
+        margin-bottom: 5px;
+      }
+      .evid .v {
+        font-size: 12.5px;
+        line-height: 1.4;
+        color: var(--muted);
+      }
+      .evid .v b {
+        color: var(--text);
+      }
+      .pfoot {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.09em;
+        color: var(--faint);
+        margin-top: 11px;
+      }
+      .pfoot b {
+        color: var(--c4);
+      }
+
+      /* ── the dive (below the fold) ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .dive a:hover {
+        text-decoration: underline;
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+        display: block;
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      .quote {
+        border-left: 3px solid var(--c4);
+        padding: 4px 0 4px 18px;
+        margin: 0 0 16px;
+        font-size: 16.5px;
+        line-height: 1.6;
+        color: var(--text);
+        font-style: italic;
+      }
+      /* ── beat-5 furniture: sub-headings, the manifest table, the stepper figure ── */
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--accent);
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        min-height: 190px;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 46px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="browser-capture"
+        data-viz-id="poster-card"
+        data-label="browser-capture poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · BROWSER-CAPTURE</div>
+          <h1 class="hook">Your real login.<br />Smooth video.<br /><em>Not a slideshow.</em></h1>
+          <p class="sub">
+            It captures the user's <b>actual Chrome</b> through OpenCode Browse: their SSO session,
+            their data, their Retina pixel ratio. The tab stays <b>in the background</b>: no
+            overlay, no focus stolen, nothing for the user to click.
+          </p>
+          <p class="not">
+            A choppy GIF is not a quality bug to iterate on.<br /><b
+              >Record video, then convert it.</b
+            >
+            The GIF recorder is a slideshow by design.
+          </p>
+          <div class="trigger"><span>say</span>&nbsp;"record a walkthrough"</div>
+        </div>
+        <div>
+          <div class="route">
+            <span class="n">BROWSE · DEFAULT</span
+            ><span class="d">the session's tab in the user's Chrome</span
+            ><span class="tag">--mode auto</span>
+          </div>
+          <div class="cap">ONE TOOL, <b>THREE FILES</b></div>
+          <div class="conds">
+            <div class="c">
+              <span class="i">1</span
+              ><span class="t"
+                ><b>Still</b>: <code>page.screenshot</code>, at CSS pixels
+                <b>times the pixel ratio</b></span
+              >
+            </div>
+            <div class="c">
+              <span class="i">2</span
+              ><span class="t"
+                ><b>Video</b>: <code>browse recording</code> to an MP4 over CDP,
+                <em>no picker, no overlay</em></span
+              >
+            </div>
+            <div class="c">
+              <span class="i">3</span
+              ><span class="t"
+                ><b>GIF</b>: that MP4 through ffmpeg's two-pass palette,
+                <em>real motion, not one frame per click</em></span
+              >
+            </div>
+          </div>
+          <div class="fork">
+            <div class="arm ok">
+              <div class="k">↓&nbsp; DEFAULT MODE</div>
+              <div class="h">CDP recording</div>
+              <div class="d">
+                Covered window, another app in front, user still working: <b>none of it matters</b>.
+              </div>
+            </div>
+            <div class="arm bad">
+              <div class="k">↓&nbsp; tab-capture</div>
+              <div class="h">needs a human click</div>
+              <div class="d">
+                WebM only, and the user must click the toolbar icon on that tab first.
+              </div>
+            </div>
+          </div>
+          <div class="evid">
+            <div class="k">MEASURED, NOT ASSUMED</div>
+            <div class="v">
+              A 4.7 s todo-list take: <b>283 frames</b> of H.264 at 1672×946, then a
+              <b>71-frame GIF</b> at 800×453 in 54 KB.
+            </div>
+          </div>
+          <div class="pfoot">FRAMES FOLLOW REPAINTS: <b>SLOW TYPING LOOKS STEPPED</b></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section
+      class="install"
+      data-viz-id="install-strip"
+      data-label="how to install browser-capture"
+    >
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <p class="why">
+        the full setup, run in a clone of
+        <a href="https://github.com/RascalTwo/ai-setup">RascalTwo/ai-setup</a>: it needs the
+        cdp-relay tool
+      </p>
+      <pre><span class="l"><span class="c">bun</span> install.ts</span></pre>
+      <p class="needs">
+        needs <code>ffmpeg</code> <code>node</code> <code>browse</code> <code>agent-browser</code>
+        <code>npm</code> <a class="man" href="../rascal-ai-setup-tour/#manualTitle">Chrome</a>
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle"
+          >OpenCode Browse extension paired with `browse pair`</a
+        >
+      </p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">A slideshow, or no session</h2>
+      <p>
+        Putting a browser flow into a doc, a PR or a walkthrough has two obvious routes and both
+        fail in a way you only notice at the end. The GIF recorder produces a
+        <b>slideshow, always</b>: one frame per action, so the "choppy GIF" you keep re-recording is
+        the tool working as designed. And a spawned headless browser records beautifully but arrives
+        at the login page with <b>no session</b>, which for anything behind SSO is the end of the
+        exercise.
+      </p>
+      <p>
+        What was missing was the third thing: capturing the browser the user is
+        <em>already signed into</em>, at a real frame rate, without a red overlay across their
+        screen, without Chrome pulled to the front, and without asking them to click anything or
+        hand over a password. The previous design did it with a screen-share handshake that was
+        fragile for one instant; OpenCode Browse records the session's own tab over CDP, so that
+        instant is gone.
+      </p>
+
+      <h2 data-beat="using">Pick the capture before you touch anything</h2>
+      <p>
+        Turning a browser flow into files you can embed is one question: <b>still, video or GIF</b>.
+        The skill opens with the choice rather than a procedure because every obvious shortcut here
+        fails silently, which is how this costs hours instead of minutes.
+      </p>
+      <ul>
+        <li>
+          <b>Still</b> (viewport, full page, one element): <code>page.screenshot</code> inside a
+          <code>browse execute</code> script.
+        </li>
+        <li>
+          <b>Video</b>: <code>browse recording start / stop</code>, an MP4 in
+          <code>~/.agents/state/browser/&lt;task&gt;/</code>.
+        </li>
+        <li>
+          <b>GIF</b>: record the video, then <code>scripts/to-gif.sh</code>. It usually looks better
+          than the GIF recorder anyway.
+        </li>
+        <li>
+          <b>Spawned browser</b> (<code>record-flow.js</code>, <code>agent-browser record</code>)
+          when no login is needed and Chrome must stay untouched, and the
+          <code>gif_creator</code> fallback when a <b>slideshow</b> GIF (one frame per action) is
+          what's wanted.
+        </li>
+      </ul>
+      <p class="m">
+        The skill fires on "add screenshots of the steps", "show how to do X in the UI", "record a
+        walkthrough", "make a video of this", and especially on "this GIF came out choppy". Tool
+        choice itself (browse, agent-browser, claude-in-chrome) belongs to the
+        <code>browser</code> skill, not here.
+      </p>
+
+      <h2 data-beat="limits">What it will not do</h2>
+      <p>
+        Browse drives the user's own Chrome, so their sessions are already there: a protected app
+        typically shows an account picker with accounts marked "Signed in", one click and you're in,
+        no password. <b>Never type the user's credentials.</b> For a password, 2FA or payment the
+        script calls <code>handoff()</code> and the user finishes in the tab. The skill calls that a
+        hard line, not a difficulty.
+      </p>
+      <div class="callout">
+        <b>The GIF trap.</b> <code>gif_creator</code> yields a <b>slideshow, always</b>: one frame
+        per <em>action</em>, and extra screenshots add <b>zero</b> frames. A GIF cut from a
+        <code>browse recording</code> carries the video's motion. If a GIF looks janky, switch the
+        capture path; do not tune the slideshow.
+      </div>
+      <ul>
+        <li>
+          <b>No slideshow GIF.</b> <code>gif_creator</code> in claude-in-chrome makes one frame per
+          action. Click annotations are not the gap: the ui-narration overlay draws the cursor,
+          click pulse and captions in the page, so <code>browse recording</code> captures them.
+        </li>
+        <li>
+          <b>Smoothness follows repaints.</b> A CSS animation recorded at about 60 source frames per
+          second; keystrokes through browse about 10 distinct frames per second, so a typing-heavy
+          take looks stepped.
+        </li>
+        <li>
+          <b>tab-capture mode needs a human.</b> It fails until the user clicks the browse toolbar
+          icon on the tab, and writes WebM only. The default CDP mode never asks.
+        </li>
+        <li>
+          <b>The spawned browser has no session and cannot get one.</b> Copying cookies won't ride
+          an SSO session; that dead end is written down so nobody re-derives it.
+        </li>
+        <li>
+          <b>It records; it does not edit.</b> Trimming and captions are ffmpeg afterwards, not
+          features here.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The kit</td>
+            <td>
+              <code>scripts/to-gif.sh</code> (video to GIF, two-pass palette) and
+              <code>scripts/record-flow.js</code> (a puppeteer take in its own headless Chrome). The
+              capture itself is the <code>browse</code> CLI; there is nothing to inject.
+            </td>
+          </tr>
+          <tr>
+            <td>Integrates</td>
+            <td>
+              <b>Chrome</b>, through OpenCode Browse: screenshots and
+              <code>browse recording</code> in the user's own tabs, with a spawned headless Chrome
+              for scripted takes. claude-in-chrome survives only as the
+              <code>gif_creator</code> fallback for slideshow GIFs.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              The <a href="../skill-browser/">browser</a> skill (tool choice and the browse session
+              recipe), <code>ffmpeg</code> (convert and verify), <code>node</code> for
+              <code>record-flow.js</code>, and Chrome with the OpenCode Browse extension paired.
+            </td>
+          </tr>
+          <tr>
+            <td>Hard dependency</td>
+            <td>
+              <a href="../skill-ui-narration/">ui-narration</a>. <code>record-flow.js</code> injects
+              it unless you pass <code>--no-kit</code>, and <b>exits with the paths it tried</b> if
+              the skill isn't installed rather than recording a silent, unannotated take. For a
+              browse recording it supplies the highlight box, click pulse and eased scroll.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>None.</b> The manifest says <code>state: false</code> and the skill keeps nothing
+              between runs: no recording index, no settings file, no remembered tab or URL. A browse
+              session lives only for one take and is deleted at the end.
+            </td>
+          </tr>
+          <tr>
+            <td>What it writes</td>
+            <td>
+              Files you asked for, in <b><code>~/.agents/state/browser/&lt;task&gt;/</code></b> (the
+              <code>browser</code> skill's artifact folder): screenshots, an MP4 with a
+              <code>.json</code> sidecar of quality stats, and any GIF. Nothing is hidden and
+              nothing is written to <code>~/Downloads</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete</td>
+            <td>
+              Everything it produced. Re-running re-records. There is no local state that a deletion
+              could corrupt.
+            </td>
+          </tr>
+          <tr>
+            <td>Read next</td>
+            <td>
+              <code>references/long-takes.md</code> for anything over ~10 seconds,
+              <code>references/other-routes.md</code> for the spawned browser and the GIF fallback,
+              <code>references/sanitized-screenshots.md</code> for stills going into a document that
+              shows real account IDs, and <code>references/gotchas.md</code>: verified dead ends, so
+              nobody re-derives them.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One take, from an empty session to a verified file</h2>
+      <p class="m">
+        The sequence for video, which every other capture is a subset of. Press play or use the
+        arrow keys.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="take-figure"
+        data-label="stepper: one browse recording take, pick to verified GIF"
+      >
+        <div class="stage" id="stage"></div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+
+      <h3>What actually records</h3>
+      <p>
+        No injected recorder and no screen share.
+        <code>browse recording start -s &lt;name&gt; &lt;path&gt;</code> asks the browse relay to
+        record the session's tab. In <code>--mode auto</code> that is CDP for a tab the relay owns,
+        which is every tab a browse session opens, so the output can be H.264 MP4 and the frame rate
+        target is 60. <code>start</code> returns <code>startedAt</code> (epoch ms),
+        <code>mode</code>, <code>artifactType</code> and <code>frameRate</code>;
+        <code>stop</code> writes the file and a <code>&lt;file&gt;.json</code> sidecar with
+        <code>quality</code> stats (<code>achievedSourceFrameRate</code>,
+        <code>droppedFrameCount</code>, <code>screenshotFallback</code>).
+      </p>
+      <p class="m">
+        <code>--cursor</code> draws browse's ghost cursor into the recording; without it only the
+        page is recorded. <code>--max-duration-ms</code> (default 15 minutes) is the guard against a
+        forgotten recording. The alternative, <code>--mode tab-capture</code>, uses Chrome's own tab
+        capture, writes WebM only, and refuses until a human clicks the browse toolbar icon on the
+        tab (the activeTab permission).
+      </p>
+
+      <h3>Why frames are not free</h3>
+      <p>
+        A CDP screencast delivers a frame when the page <b>repaints</b>. Measured on the same
+        session: a CSS animation gave 201 source frames in 3.2 seconds, while a todo-list flow typed
+        through <code>pressSequentially</code> gave about 10 per second, with the encoder repeating
+        frames to fill the nominal 60. So the choreography decides smoothness: pace it (<code
+          >delay: 40</code
+        >, <code>waitForTimeout(500)</code> between beats) and lead with motion such as smooth
+        scroll when the clip must feel like video. <code>browse flight-recorder</code> is the same
+        capture as a rolling buffer (<code>start</code>, do the thing, <code>save-last</code>) for
+        something you did not plan to record, and it drops idle stretches because only repaints are
+        buffered.
+      </p>
+
+      <h3>Stills, and the pixel arithmetic</h3>
+      <p>
+        <code>page.screenshot({ path: files.path("x.png") })</code> inside
+        <code>browse execute</code> writes to browse's private temp folder, so the script returns
+        the path and the agent <code>cp</code>s it into the artifact folder. Output is CSS pixels
+        <b>times the device pixel ratio</b>: a 1672×947 viewport saved as 3344×1894, and
+        <code>fullPage: true</code> on a 7607 px page saved 15214 px tall.
+        <code>locator.screenshot</code> crops to one element. <code>page.setViewportSize</code>
+        pins the frame for a set of shots and read back as 1280×800. The page is rendered without
+        the OS pointer, so there is nothing to park.
+      </p>
+
+      <h3>Then prove the file is real</h3>
+      <pre>
+ffprobe -v error -count_frames -select_streams v:0 \
+  -show_entries stream=codec_name,pix_fmt,width,height,nb_read_frames:format=duration \
+  -of default=nw=1 flow.mp4
+ffmpeg -y -i flow.mp4 -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2:out_range=tv,format=yuv420p" \
+  -color_range tv -movflags +faststart flow-share.mp4</pre>
+      <p class="m">
+        Hundreds of frames is a real video. The recorder writes <code>yuvj420p</code> (full range),
+        which some players mishandle; the second command gives QuickTime, Slack and Confluence the
+        <code>yuv420p</code> tv-range file they expect.
+      </p>
+
+      <h3>GIF from the MP4</h3>
+      <p>
+        <code>scripts/to-gif.sh in.mp4 out.gif [width] [fps] [colors]</code> runs one ffmpeg call
+        with <code>fps</code>, <code>scale</code>, then <code>split</code> into
+        <code>palettegen=stats_mode=diff</code> and <code>paletteuse</code> with Bayer dither: a
+        palette built for this clip rather than the 256-color global default. It prints the frame
+        count, dimensions and bytes, so "more than one frame" is checked rather than assumed. The
+        4.7 s test take became 71 frames at 800×453 in 54 KB. Destination budgets (a Slack emoji is
+        128×128 under 3 s; a PR or Confluence GIF up to 480 wide under 10 s) and the rule that
+        dropping frames beats dropping dimensions live in <code>SKILL.md</code>.
+      </p>
+
+      <h3>The cursor is the narration</h3>
+      <p>
+        A recording has no click annotations of its own, so a cursor and highlight
+        <b>are</b> the explanation. Browse's <code>--cursor</code> is the cheap version;
+        <a href="../skill-ui-narration/">ui-narration</a> adds a highlight box, click pulse and
+        eased scroll, injected with <code>page.evaluate</code> and lost on every navigation, so
+        re-inject after each <code>page.goto</code>. Pick one cursor, not both. Wait for everything:
+        an early click is the most common way a take breaks, and a drag that does nothing is
+        indistinguishable from one that works until you measure the element's box before and after.
+      </p>
+      <p class="m">
+        Long takes trim from the recording's own clock: stamp <code>Date.now()</code> in the script
+        at the first beat, subtract <code>startedAt</code>, and cut with <code>ffmpeg -ss</code>. On
+        a 3.9 s take the stamp said 2.2 s and the first changed frame was at 2.25 s.
+      </p>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its
+        own existence.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

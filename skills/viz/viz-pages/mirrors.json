@@ -1,0 +1,13 @@
+{
+  "mirrors": [
+    {
+      "path": "../../../viz-pages",
+      "vizzes": [
+        {
+          "slug": "viz-self-portrait",
+          "access": "public"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>r2-app-stack — start an app from evidence, not from memory</title>
+    <meta name="viz:uid" content="v-5e2c9a7d41b8" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="r2-app-stack" />
+    <meta
+      name="viz:description"
+      content="Joseph's application stack by kind of app: language, runtime, lint, format, types, test runners, coverage and gates, each rule naming its source repos and where it is enforced."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <!-- skill/ is a symlink to skills/r2-app-stack; the explorer fetches its markdown at load, and a published page carries it from here. -->
+    <meta name="viz:bundle" content="skill/" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      :root {
+        --s: 1;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -8%,
+            color-mix(in srgb, var(--c4) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 110%,
+            color-mix(in srgb, var(--c5) 13%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 496px;
+        gap: 36px;
+        align-items: center;
+        padding: 50px 58px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--c4);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c4);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c4) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 50px;
+        line-height: 1.05;
+        margin: 0 0 18px;
+        letter-spacing: -1.4px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c5);
+      }
+      p.sub {
+        font-size: 18px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 16px;
+        max-width: 470px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 14.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 18px;
+        max-width: 470px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 14px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c4);
+        border-radius: 9px;
+        padding: 9px 14px;
+        color: var(--text);
+      }
+
+      /* the map: which pages to read for which kind */
+      .map {
+        background: color-mix(in srgb, var(--panel) 86%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px 15px;
+        font-family: var(--mono);
+      }
+      .map .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        letter-spacing: 0.13em;
+        color: var(--c4);
+        margin-bottom: 12px;
+      }
+      .map .cap span:last-child {
+        color: var(--faint);
+      }
+      .map .row {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 10px;
+        align-items: center;
+        padding: 7px 0;
+        border-top: 1px solid var(--border);
+        font-size: 13px;
+      }
+      .map .row .k {
+        color: var(--muted);
+      }
+      .map .row .p {
+        color: var(--text);
+      }
+      .map .row.all .k {
+        color: var(--c5);
+      }
+      .map .row.kind .p {
+        color: var(--good);
+      }
+      .map .row.adopt .p {
+        color: var(--warn);
+      }
+      .map .note {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+      .map .note b {
+        color: var(--text);
+      }
+
+      /* dive */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c4);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c5);
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        min-height: 190px;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 46px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--c5);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+
+      svg.loop text {
+        font-family: var(--mono);
+        fill: var(--text);
+      }
+      svg.loop .t {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      svg.loop .d {
+        font-size: 12px;
+        fill: var(--muted);
+      }
+      svg.loop .n {
+        font-size: 12px;
+        fill: var(--c4);
+        letter-spacing: 0.1em;
+      }
+      svg.loop rect.b {
+        fill: #0b0f16;
+        stroke: var(--border);
+      }
+      svg.loop rect.hot {
+        stroke: var(--warn);
+        fill: color-mix(in srgb, var(--warn) 9%, #0b0f16);
+      }
+      svg.loop path {
+        fill: none;
+        stroke: var(--muted);
+        stroke-width: 1.5;
+      }
+      svg.loop path.back {
+        stroke-dasharray: 5 4;
+      }
+      svg.loop polygon {
+        fill: var(--muted);
+      }
+      ol.gap {
+        margin: 0 0 14px;
+        padding-left: 22px;
+      }
+      ol.gap li {
+        font-size: 15.5px;
+        line-height: 1.5;
+        margin-bottom: 6px;
+      }
+    </style>
+    <link rel="stylesheet" href="./explorer.css" />
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="r2-app-stack"
+        data-viz-id="poster-card"
+        data-label="the r2-app-stack card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>R2-APP-STACK · A SKILL</div>
+          <h1 class="hook">Start the app from<br />evidence,<br /><em>not from memory.</em></h1>
+          <p class="sub">
+            Joseph's language, runtime, lint, format, types, test runners, coverage and gates, by
+            kind of app. <b>Every rule names its source repos and where it is enforced.</b>
+          </p>
+          <p class="not">
+            Without it, a new app is built from <b>whatever tools you happen to remember</b>, not
+            from choices already proven in his recent repos.
+          </p>
+          <div class="chip">name the kind, then read</div>
+        </div>
+
+        <div
+          class="map"
+          data-viz-id="kind-map"
+          data-label="which pages to read for which kind of app"
+        >
+          <div class="cap"><span>NAME THE KIND, THEN READ</span><span>reference/</span></div>
+          <div class="row all">
+            <span class="k">anything in TS</span><span class="p">shared.md</span>
+          </div>
+          <div class="row all">
+            <span class="k">anything with tests</span><span class="p">test-stack.md</span>
+          </div>
+          <div class="row all">
+            <span class="k">anything with a UI</span><span class="p">testable-apps.md</span>
+          </div>
+          <div class="row kind">
+            <span class="k">browser web app</span><span class="p">kinds/web-app.md</span>
+          </div>
+          <div class="row kind">
+            <span class="k">HTTP API, Lambda</span><span class="p">kinds/server.md</span>
+          </div>
+          <div class="row kind">
+            <span class="k">CLI or repo script</span><span class="p">kinds/cli.md</span>
+          </div>
+          <div class="row kind">
+            <span class="k">anything in Python</span><span class="p">kinds/python.md</span>
+          </div>
+          <div class="row adopt">
+            <span class="k">“get this in line”</span><span class="p">adopt.md</span>
+          </div>
+          <div class="note">
+            <b>A repo often holds several kinds.</b> Read each. Anything else still gets every
+            shared rule.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install r2-app-stack">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <pre><span class="l"><span class="c">npx</span> skills add <span class="r">RascalTwo/ai-setup</span> <span class="f">-g</span> <span class="f">-s</span> r2-app-stack</span></pre>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">A new app starts from choices, not recall</h2>
+      <p>
+        This skill records what Joseph builds with,
+        <b>so a new app starts from his choices instead of from memory</b>. It covers the language,
+        runtime, framework, lint, format, types, test runners, coverage, visual checks and gates, by
+        kind of app: web app, server, CLI, Python.
+      </p>
+      <p>
+        A standard is not an opinion. Each one is written as a rule, a one-line reason, the repos it
+        comes from, and where it is enforced: a lint rule, a gate in the check command, or "not
+        enforced yet". It earns its place from <b>two or more of his recent repos</b> (newest wins
+        on a split) or from a decision he made with evidence.
+      </p>
+      <p class="m">
+        How to test well (scope, stand-ins, flakiness, what coverage means) lives in
+        <code>r2-testing-paradigm</code>. This skill says which tools carry it out.
+      </p>
+
+      <h2 data-beat="using">Name the kind, then read</h2>
+      <p>
+        The skill fires when you start a new app, script, service or repo; choose a library,
+        framework or tool; set up tests, lint, types or CI; make a test findable by role; or hear
+        <em>"get this in line with my stack"</em>.
+      </p>
+      <ul>
+        <li>
+          <b>Name the kind</b> of thing you are building, then read the shared files
+          (<code>shared.md</code>, <code>test-stack.md</code>, and <code>testable-apps.md</code> for
+          anything a person or browser uses) and the one kind page that matches. The card above is
+          that table.
+        </li>
+        <li>
+          <b>A repo often holds several kinds</b> (a web app plus its API plus scripts): read each.
+        </li>
+        <li>
+          <b>"Get this in line with my stack"</b> goes to <code>reference/adopt.md</code>: the
+          output is a gap table Joseph approves before anything changes.
+        </li>
+      </ul>
+      <p class="m">
+        Read the standards as labelled. <b>Candidate</b> means one repo does it: use it if it fits,
+        but it is not a rule. <b>Not decided yet</b> means Joseph parked it: record what the repo
+        does and ask before standardising.
+      </p>
+
+      <h2 data-beat="limits">What it doesn't decide, or package yet</h2>
+      <ul>
+        <li>
+          <b>Four kinds only.</b> Web app, server, CLI and Python have pages. A content site, a
+          published library or a browser extension gets the shared rules only, with no kind page
+          yet. A thing that isn't a listed kind still gets every shared rule.
+        </li>
+        <li>
+          <b>Styling and routing are not decided.</b> Joseph parked both on 2026-11-07. The web-app
+          page records what his repos do; ask before standardising.
+        </li>
+        <li>
+          <b>The custom glue is not packaged yet.</b> The coverage kit, the screenshot approval step
+          and the step helpers need code no package provides. Copy it from the repo named as its
+          source into <code>scripts/</code> or <code>test-kit/</code>; Joseph will extract each
+          piece into npm and Python packages under the RascalTwo GitHub account once his repos
+          follow this skill. Write as little as the requirement allows, and never drop a requirement
+          because no package does it.
+        </li>
+        <li>
+          <b>It doesn't invent standards.</b> A new one needs two recent repos agreeing, or Joseph's
+          decision, with the evidence (repo, file, date) recorded next to it. When a repo's newer
+          choice contradicts a standard, raise it with Joseph rather than editing either.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/r2-app-stack/SKILL.md</code>: the routing table, how a standard is
+              written, the custom-glue rule.
+            </td>
+          </tr>
+          <tr>
+            <td>Shared files</td>
+            <td>
+              <code>reference/shared.md</code>, <code>reference/test-stack.md</code>,
+              <code>reference/testable-apps.md</code>, and <code>reference/adopt.md</code> for an
+              existing repo.
+            </td>
+          </tr>
+          <tr>
+            <td>Kind pages</td>
+            <td>
+              <code>reference/kinds/web-app.md</code>, <code>server.md</code>, <code>cli.md</code>,
+              <code>python.md</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Declared</td>
+            <td><code>kind: skill</code>, <code>state: false</code>.</td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>None.</b> It keeps nothing between runs, so there is nothing to clean up. A repo's
+              own drift notes and copied glue live in that repo, not here.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              Nothing installed. It points at <code>r2-testing-paradigm</code> for how to test; the
+              tools it names (vitest, Playwright, Allure, Istanbul) belong to the app being built.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">How the test stack fits together</h2>
+      <p class="m">
+        The test stack is the part with the most moving pieces: two runners, one coverage format,
+        one result list. Step through one check run, from the command to the exit code.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="stack-figure"
+        data-label="stepper: how the test stack turns two runners into one report"
+      >
+        <div class="stage" id="stage"></div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+
+      <h3>Why Istanbul everywhere</h3>
+      <p>
+        Measured against V8 coverage on a 342-test suite, V8 over-credited per-test coverage
+        (functions a test never called counted as run), depended on vitest's undocumented module
+        wrapper, and was slowest. Mixing V8 for browsers with Istanbul for vitest can't merge
+        branches. Joseph accepted the cost: browser tests run an instrumented bundle about 1.8× the
+        size and take about 55% longer, the whole check about 39% longer.
+      </p>
+
+      <h3>Getting an existing repo in line</h3>
+      <p>
+        The other mechanism is <code>reference/adopt.md</code>. It audits first and changes nothing,
+        shows Joseph a gap table, then adds one approved piece at a time, each proven by a gate that
+        has been seen to fail.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="adopt-figure"
+        data-label="the adopt loop: name kinds, audit, gap table, add a piece, plant a violation"
+      >
+        <svg
+          class="loop"
+          viewBox="0 0 780 250"
+          role="img"
+          aria-label="Name the kinds, audit, write the gap table, add one piece, plant a violation and watch it fail, then the next approved row"
+        >
+          <defs></defs>
+          <g>
+            <rect class="b" x="6" y="20" width="140" height="92" rx="8" />
+            <text class="n" x="18" y="42">1</text>
+            <text class="t" x="18" y="64">Name the kinds</text>
+            <text class="d" x="18" y="86">every program,</text>
+            <text class="d" x="18" y="102">with its folder</text>
+          </g>
+          <g>
+            <rect class="b" x="170" y="20" width="140" height="92" rx="8" />
+            <text class="n" x="182" y="42">2</text>
+            <text class="t" x="182" y="64">Audit</text>
+            <text class="d" x="182" y="86">a verdict per rule</text>
+            <text class="d" x="182" y="102">change nothing</text>
+          </g>
+          <g>
+            <rect class="b" x="334" y="20" width="140" height="92" rx="8" />
+            <text class="n" x="346" y="42">3</text>
+            <text class="t" x="346" y="64">Gap table</text>
+            <text class="d" x="346" y="86">Joseph approves</text>
+            <text class="d" x="346" y="102">the rows to do</text>
+          </g>
+          <g>
+            <rect class="b" x="498" y="20" width="140" height="92" rx="8" />
+            <text class="n" x="510" y="42">4</text>
+            <text class="t" x="510" y="64">Add one piece</text>
+            <text class="d" x="510" y="86">one approved row</text>
+            <text class="d" x="510" y="102">at a time</text>
+          </g>
+          <g>
+            <rect class="b hot" x="498" y="146" width="240" height="92" rx="8" />
+            <text class="n" x="510" y="168">5</text>
+            <text class="t" x="510" y="190">Plant a violation</text>
+            <text class="d" x="510" y="212">watch the check command</text>
+            <text class="d" x="510" y="228">fail, then remove it</text>
+          </g>
+          <g>
+            <rect class="b" x="170" y="146" width="280" height="92" rx="8" />
+            <text class="n" x="182" y="168">6</text>
+            <text class="t" x="182" y="190">Record drift left behind</text>
+            <text class="d" x="182" y="212">in the repo's notes, so the</text>
+            <text class="d" x="182" y="228">next audit doesn't rediscover it</text>
+          </g>
+          <path d="M146 66 H162" />
+          <polygon points="170,66 160,61 160,71" />
+          <path d="M310 66 H326" />
+          <polygon points="334,66 324,61 324,71" />
+          <path d="M474 66 H490" />
+          <polygon points="498,66 488,61 488,71" />
+          <path d="M568 112 V138" />
+          <polygon points="568,146 563,136 573,136" />
+          <path class="back" d="M718 146 V66 H646" />
+          <polygon points="638,66 648,61 648,71" />
+          <path d="M498 192 H458" />
+          <polygon points="450,192 460,187 460,197" />
+          <text class="d" x="650" y="134">next row</text>
+        </svg>
+        <p class="lede">
+          A gate you haven't seen fail isn't a gate. The violation is a <code>data-testid</code>
+          locator, a lint error, a dropped strict flag, an uncovered line or a changed screenshot.
+        </p>
+      </div>
+
+      <h3>The gap table is ordered, cheapest and most protective first</h3>
+      <ol class="gap">
+        <li>The check command, hook and CI, so every later piece is gated.</li>
+        <li>Format, lint, types.</li>
+        <li>Tests run by the right runner, one result list.</li>
+        <li>Coverage (Istanbul, merged, floor) and per-test coverage.</li>
+        <li>The locator rule and Given / When / Then.</li>
+        <li>Screenshots and approval.</li>
+        <li>Runtime moves (Bun to Node, puppeteer to Playwright) and framework moves.</li>
+      </ol>
+      <p class="m">
+        Each row has the rule, today's state with evidence, the change, its size (S, M, L) and what
+        Joseph would notice. Large moves become their own tasks rather than rows done in one
+        sitting.
+      </p>
+
+      <h2 data-beat="how">The whole stack, kind by layer</h2>
+      <p>
+        Everything above is written by hand. <b>This part is not.</b> When the page loads it reads
+        the skill's own markdown files and draws what they say, so the skill that tells the agent
+        what to do and this picture for people cannot disagree. Change a rule in the markdown and
+        this page changes with it. If a table stops parsing, or a tool named here disappears from
+        the text, the red box says so and the repo's checks fail.
+      </p>
+      <p class="m">
+        Each chip is a tool the skill names. The dot says how hard it is held. Click one for the
+        rules behind it.
+      </p>
+      <div
+        class="x"
+        id="x-stack"
+        data-viz-id="stack-matrix"
+        data-label="matrix of tools by kind of app and layer"
+      >
+        <p class="x-loading">Reading the skill's files…</p>
+      </div>
+
+      <h2 data-beat="how">One kind at a time</h2>
+      <p class="m">
+        Pick a kind to read its rules as the skill states them: the rule, why, which repos it comes
+        from, and what enforces it. Each links to the line it was read from.
+      </p>
+      <div
+        class="x"
+        id="x-kinds"
+        data-viz-id="kind-explorer"
+        data-label="the skill's rules, one kind at a time"
+      >
+        <p class="x-loading">Reading the skill's files…</p>
+      </div>
+
+      <h2 data-beat="how">The test stack as a flow</h2>
+      <p class="m">
+        The same test stack as the stepper above, but every box here is a sentence taken from
+        <code>test-stack.md</code>, not retyped.
+      </p>
+      <div class="x" id="x-flow" data-viz-id="test-flow" data-label="the test stack as four flows">
+        <p class="x-loading">Reading the skill's files…</p>
+      </div>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · the stack, with its
+        evidence attached.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

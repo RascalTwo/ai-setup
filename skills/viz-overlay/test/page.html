@@ -1,0 +1,29 @@
+<!doctype html>
+<!-- The end-to-end test page: reports what the host gave it through overlay.send, then waits. -->
+<meta charset="utf-8">
+<title>e2e</title>
+<style>
+  #box { position: fixed; border: 3px solid #f0a; border-radius: 6px; pointer-events: none; display: none }
+  #hit { position: fixed; left: 40px; top: 120px; padding: 8px 14px; background: #222; color: #fff; font: 14px system-ui; border-radius: 6px }
+</style>
+<div id="box"></div>
+<button id="hit" data-overlay-hit>hit region</button>
+<input id="field" data-overlay-hit autofocus placeholder="type here" style="position:fixed;left:40px;top:180px;width:200px;font:14px system-ui">
+<script>
+  const say = (what, data) => overlay.send(JSON.stringify({ what, ...data }));
+  const box = document.getElementById("box");
+  document.getElementById("hit").onclick = () => say("clicked", {});
+  document.getElementById("field").onkeydown = (e) => { if (e.key === "Enter") say("typed", { value: e.target.value }); };
+  say("init", { title: overlay.title, origin: overlay.origin, display: overlay.display, overlayAttr: "overlay" in document.documentElement.dataset });
+  overlay.on("target", (s) => {
+    say("target", { state: s });
+    if (s.rect) Object.assign(box.style, { display: "block", left: `${s.rect.x}px`, top: `${s.rect.y}px`, width: `${s.rect.width}px`, height: `${s.rect.height}px` });
+  });
+  overlay.on("visibility", (v) => say("visibility", v));
+  overlay.on("data", (value) => say("data", { value }));
+  addEventListener("load", () => say("loaded", { closeButton: Boolean(document.querySelector("html > div[data-overlay-hit]")) }));
+  const app = new URLSearchParams(location.search).get("track");
+  if (app) overlay.track({ app }, (s) => say("track", { state: s }));
+  if (app) overlay.elements(app, { role: "AXMenuBarItem" }).then((list) => say("elements", { count: list.length, first: list[0] }), (e) => say("elements", { error: String(e) }));
+  overlay.track({ app: "no-such-app-xyz" }, (s) => say("track-missing", { state: s }));
+</script>

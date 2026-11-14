@@ -1,0 +1,9 @@
+# ttyimgspool's herdr keybinding on Windows. Merged into %APPDATA%\herdr\config.toml by
+# install.ts (guarded on the command path, so re-running is a no-op). Same binding as
+# herdr-keybind.toml, but through the PowerShell launcher. `~` is expanded by install.ts.
+
+[[keys.command]]
+key = "prefix+i"
+type = "pane"
+command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File ~/.agents/ai-setup/tools/ttyimgspool/ttyimgspool.ps1'
+description = "browse this session's screenshots"

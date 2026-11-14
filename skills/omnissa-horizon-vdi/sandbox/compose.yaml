@@ -1,0 +1,17 @@
+# Browser-based VDI sandbox: Guacamole shows an RDP session to a Linux desktop in a browser tab.
+# Run through up.sh, which writes the login into $HOME/.agents/state/vdi-sandbox/guac-home.
+services:
+  desktop:
+    image: lscr.io/linuxserver/rdesktop:ubuntu-xfce   # :latest has no arm64 build
+    shm_size: 1gb
+    environment: [PUID=1000, PGID=1000]
+  guacd:
+    image: guacamole/guacd:1.5.5
+  guacamole:
+    image: guacamole/guacamole:1.5.5
+    depends_on: [guacd, desktop]
+    environment:
+      GUACD_HOSTNAME: guacd
+      GUACAMOLE_HOME: /guac-home
+    volumes: ["${HOME}/.agents/state/vdi-sandbox/guac-home:/guac-home:ro"]
+    ports: ["127.0.0.1:8088:8080"]

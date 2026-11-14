@@ -1,0 +1,15 @@
+{
+  "default": "work",
+  "accounts": {
+    "work": {
+      "email": "you@company.com",
+      "heard_as": ["work", "Company Name"],
+      "notes": "Which OAuth client/project this account logs in through, and any quirks."
+    },
+    "personal": {
+      "email": "you@gmail.com",
+      "heard_as": ["personal"],
+      "notes": ""
+    }
+  }
+}

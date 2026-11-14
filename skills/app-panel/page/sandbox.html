@@ -1,0 +1,41 @@
+<!doctype html>
+<!-- The sandbox proxy, on its own origin: it writes the view into an inner frame and relays
+     messages both ways. Adapted from ext-apps examples/basic-host/src/sandbox.ts. CSP arrives as
+     an HTTP header from host.ts, and the inner frame inherits it through document.write. -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    html, body { margin: 0; height: 100vh; width: 100vw; background: transparent; display: flex; }
+    iframe { flex-grow: 1; border: 0; background: transparent; color-scheme: inherit; }
+  </style>
+</head>
+<body>
+  <script>
+    if (window.self === window.top) throw new Error("only for use inside the app panel");
+    const HOST = new URL(document.referrer).origin;
+    if (!/^http:\/\/127\.0\.0\.1(:|$)/.test(HOST)) throw new Error(`refusing to embed in ${HOST}`);
+    const inner = document.createElement("iframe");
+    inner.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms");
+    document.body.appendChild(inner);
+
+    addEventListener("message", (e) => {
+      if (e.source === window.parent) {
+        if (e.origin !== HOST) return;
+        if (e.data?.method === "ui/notifications/sandbox-resource-ready") {
+          const { html, sandbox } = e.data.params;
+          if (typeof sandbox === "string") inner.setAttribute("sandbox", sandbox);
+          // shortcut: permissions (camera, mic, ...) are not mapped to an allow attribute; add buildAllowAttribute's mapping when a view needs them
+          const doc = inner.contentDocument;
+          if (doc) { doc.open(); doc.write(html); doc.close(); } else inner.srcdoc = html;
+        } else inner.contentWindow?.postMessage(e.data, "*");
+      } else if (e.source === inner.contentWindow) {
+        if (e.origin !== location.origin) return;
+        window.parent.postMessage(e.data, HOST);
+      }
+    });
+    window.parent.postMessage({ jsonrpc: "2.0", method: "ui/notifications/sandbox-proxy-ready", params: {} }, HOST);
+  </script>
+</body>
+</html>
