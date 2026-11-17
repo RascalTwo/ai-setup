@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>browser — one skill picks the right way into a web page</title>
+    <meta name="viz:uid" content="v-6d5dd5e89446" />
+    <meta name="viz:posture" content="local" />
+    <meta name="viz:listed" content="unlisted" />
+    <meta name="viz:title" content="browser" />
+    <meta
+      name="viz:description"
+      content="The browser skill routes every web task: OpenCode Browse by default, headless agent-browser for isolated runs, agent-browser through cdp-relay when browse is down, claude-in-chrome last."
+    />
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* Card + dive. transform:scale() does not shrink the layout box, so poster.css
+     collapses #fit's height off the same --s. */
+      :root {
+        --s: 1;
+        --gone: #5a6474;
+        --kept: var(--c5);
+        --ask: var(--c4);
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -12%,
+            color-mix(in srgb, var(--c5) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 112%,
+            color-mix(in srgb, var(--c4) 13%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 560px;
+        gap: 32px;
+        align-items: center;
+        padding: 46px 48px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        letter-spacing: 0.14em;
+        color: var(--c5);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c5);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c5) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 46px;
+        line-height: 1.06;
+        margin: 0 0 16px;
+        letter-spacing: -1.3px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      p.sub {
+        font-size: 17px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 14px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 16px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c5);
+        border-radius: 9px;
+        padding: 9px 13px;
+        color: var(--text);
+      }
+
+      /* ── the proof slot: a week's tank, and the part nobody can account for ── */
+      .rig {
+        background: color-mix(in srgb, var(--panel) 88%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px 17px;
+        font-family: var(--mono);
+      }
+      .rig .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10.5px;
+        letter-spacing: 0.13em;
+        color: var(--c5);
+        margin-bottom: 13px;
+      }
+      .rig .cap span:last-child {
+        color: var(--faint);
+      }
+
+      /* ── dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c5);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul,
+      .dive ol {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c4);
+      }
+      .dive table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0 0 16px;
+      }
+      .dive table td {
+        border-top: 1px solid var(--border);
+        padding: 11px 0;
+        font-size: 15px;
+        line-height: 1.55;
+        vertical-align: top;
+        color: var(--text);
+      }
+      .dive table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.05em;
+        padding-right: 16px;
+      }
+      .fig {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        margin: 0 0 18px;
+      }
+      .fig figcaption {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+        letter-spacing: 0.06em;
+        margin-top: 12px;
+        line-height: 1.5;
+      }
+      .pre {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 12px 14px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--muted);
+        overflow-x: auto;
+        margin: 0 0 16px;
+      }
+      .pre b {
+        color: var(--c5);
+        font-weight: 400;
+      }
+      .pre em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 14px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 19px;
+      }
+      .step .k {
+        flex: 0 0 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+      }
+      .step.you .k {
+        background: var(--c4);
+        color: #0d1117;
+      }
+      .step.bot .k {
+        background: var(--accent);
+        color: #0d1117;
+      }
+      .step .v b {
+        color: var(--text);
+      }
+      .step .v {
+        color: var(--muted);
+      }
+      .say {
+        font-family: var(--mono, monospace);
+        color: var(--c5);
+      }
+    </style>
+    <style>
+      .rig .route {
+        display: grid;
+        grid-template-columns: 26px 1fr;
+        gap: 4px 12px;
+        align-items: baseline;
+        font-size: 13px;
+        line-height: 1.45;
+        padding: 9px 0;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .rig .route:first-of-type {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .rig .route .n {
+        font-weight: 700;
+        color: var(--c5);
+      }
+      .rig .route b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .rig .route.last .n {
+        color: var(--c4);
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="browser"
+        data-viz-id="poster-card"
+        data-label="browser poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · BROWSER</div>
+          <h1 class="hook">Four ways into a page.<br /><em>Pick by the job, not by habit.</em></h1>
+          <p class="sub">
+            The <b>browser</b> skill picks the tool by the job: OpenCode Browse by default, headless
+            agent-browser for isolated runs, and the rest only when those cannot do it.
+          </p>
+          <p class="not">
+            Not a browser itself. It is the routing table and the recipe for each path, measured on
+            2026-11-13.
+          </p>
+          <div class="chip">say "open this page" · "fill the form" · "screenshot it"</div>
+        </div>
+        <div class="rig" data-viz-id="the-routes" data-label="the four routes, in order">
+          <div class="cap"><span>PICK ONE</span><span>TODOMVC MEDIAN</span></div>
+          <div class="route">
+            <span class="n">1</span
+            ><span><b>browse</b>, default: your Chrome, signed in. <b>10.9 s</b></span>
+          </div>
+          <div class="route">
+            <span class="n">2</span
+            ><span><b>agent-browser, headless</b>: own browser, no logins. <b>18.3 s</b></span>
+          </div>
+          <div class="route">
+            <span class="n">3</span
+            ><span><b>agent-browser + cdp-relay</b>: when browse is down.</span>
+          </div>
+          <div class="route last">
+            <span class="n">4</span><span><b>claude-in-chrome</b>: last resort. <b>25.5 s</b></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install browser">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <p class="why">
+        the full setup, run in a clone of
+        <a href="https://github.com/RascalTwo/ai-setup">RascalTwo/ai-setup</a>: it needs the
+        cdp-relay tool
+      </p>
+      <pre><span class="l"><span class="c">bun</span> install.ts</span></pre>
+      <p class="needs">
+        needs <code>browse</code> <code>agent-browser</code> <code>node</code> <code>npm</code>
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle">Chrome</a>
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle"
+          >OpenCode Browse extension paired with `browse pair`</a
+        >
+      </p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓ scroll</div>
+
+    <article class="dive">
+      <h2 data-beat="why">No browser tool was best at everything</h2>
+      <p>
+        Three tools could drive a browser for an agent, and none was right for every job. On
+        2026-11-13 they were measured head to head on your real, signed-in Chrome. OpenCode Browse
+        was the fastest and cheapest, and never took focus. agent-browser attached to your Chrome
+        pulled Chrome to the front about 6 s into a run and hid your tab for 14–17 s.
+        claude-in-chrome was the slowest.
+      </p>
+      <p>
+        Median seconds, three runs each: TodoMVC (it writes) browse 10.9, agent-browser 18.3,
+        claude-in-chrome 25.5. A GitHub project board (read-only, signed in) browse 47.2,
+        agent-browser 49.3, claude-in-chrome 53.3. All three passed 3/3 on both.
+      </p>
+      <p class="m">
+        The skill turns that table into a rule: one default, one headless path, one relay-backed
+        fallback, one last resort.
+      </p>
+
+      <h2 data-beat="using">When it fires</h2>
+      <ul>
+        <li>
+          <b>Whenever a task needs a browser:</b> reading or acting on a web page or signed-in site,
+          testing a web app, filling a form, or taking screenshots, recordings or PDFs of a page.
+        </li>
+        <li>
+          <b>It works under <code>claude -p</code> too.</b> Every path does.
+        </li>
+        <li>
+          <b>Kept artifacts</b> (screenshots, recordings, PDFs) go in
+          <code>~/.agents/state/browser/&lt;task&gt;/</code>.
+        </li>
+      </ul>
+
+      <h2 data-beat="limits">What it won't do</h2>
+      <ul>
+        <li>
+          <b>browse needs the extension connected.</b>
+          <code>browse status</code> must say <code>Extension: connected</code>. If it does not and
+          you cannot reconnect now (reopen Chrome or run <code>browse pair</code>), the skill uses
+          agent-browser through the relay.
+        </li>
+        <li>
+          <b>browse ignores default timeouts.</b> <code>page.setDefaultTimeout</code> and
+          <code>context.setDefaultTimeout</code> do nothing, so every action carries its own
+          <code>{ timeout }</code>. In the measured <code>claude -p</code> run, two selectors
+          matched nothing and each waited out Playwright's 30 s; the run took 162 s.
+        </li>
+        <li>
+          <b>Headless agent-browser has no logins.</b> It runs its own Chrome for Testing and does
+          not touch your screen or your tabs.
+        </li>
+        <li>
+          <b>The relay path is not lockless.</b> It needs <code>"upstream":true</code> on
+          <code>curl -s 127.0.0.1:9333/stats</code> first, and you open your own tab with
+          <code>tab new</code>. See the cdp-relay poster for what it cannot do.
+        </li>
+        <li>
+          <b>claude-in-chrome is last.</b> It is for an older skill that names it, a slideshow GIF,
+          or when both other tools failed. "Permission denied for this action on this domain" is
+          final for that site: the skill tells you and uses another path.
+        </li>
+        <li>
+          <b>Logins, 2FA and payments are yours.</b> In browse the script calls
+          <code>handoff()</code> and you finish in the tab.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>Integrates with</td>
+            <td>
+              <b>Chrome</b>: the OpenCode Browse extension (the default), and <b>cdp-relay</b> as
+              the fallback.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              The <b>cdp-relay</b> tool, the commands <code>browse</code> and
+              <code>agent-browser</code>, and by hand: Chrome, and the OpenCode Browse extension
+              paired with <code>browse pair</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <code>state: true</code>, so <code>~/.agents/state/browser/</code> is its folder. The
+              SKILL.md names no file in it; screenshots, recordings and PDFs go in
+              <code>~/.agents/state/browser/&lt;task&gt;/</code> per task.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>
+              <b>Yes</b>, <code>deletion-policy: delete</code>. What the skill leaves behind is
+              artifacts you chose to keep.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One page task, end to end</h2>
+      <p class="m">
+        A skill with no code of its own. Its architecture is the order of the choices and the recipe
+        it hands each path.
+      </p>
+      <figure class="fig">
+        <svg
+          viewBox="0 0 760 330"
+          width="100%"
+          role="img"
+          aria-label="The browser skill routes a task: your Chrome goes to browse; an isolated page goes to headless agent-browser; if browse is down, agent-browser through cdp-relay; claude-in-chrome last"
+        >
+          <defs>
+            <marker
+              id="ah"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="#58a6ff" />
+            </marker>
+          </defs>
+          <g data-viz-id="node-task" data-label="a task needs a browser">
+            <rect
+              x="10"
+              y="125"
+              width="150"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="85" y="155" text-anchor="middle" fill="#e6edf3" font-size="14">
+              a browser task
+            </text>
+            <text x="85" y="177" text-anchor="middle" fill="#8b949e" font-size="12">
+              what is the job?
+            </text>
+          </g>
+          <g data-viz-id="node-browse" data-label="browse">
+            <rect
+              x="260"
+              y="15"
+              width="230"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#3fb950"
+              stroke-width="2"
+            />
+            <text x="375" y="42" text-anchor="middle" fill="#e6edf3" font-size="14">
+              browse (default)
+            </text>
+            <text x="375" y="64" text-anchor="middle" fill="#8b949e" font-size="12">
+              Playwright in your Chrome
+            </text>
+          </g>
+          <g data-viz-id="node-headless" data-label="agent-browser headless">
+            <rect
+              x="260"
+              y="105"
+              width="230"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="375" y="132" text-anchor="middle" fill="#e6edf3" font-size="14">
+              agent-browser, headless
+            </text>
+            <text x="375" y="154" text-anchor="middle" fill="#8b949e" font-size="12">
+              own Chrome for Testing
+            </text>
+          </g>
+          <g data-viz-id="node-relay" data-label="agent-browser through cdp-relay">
+            <rect
+              x="260"
+              y="195"
+              width="230"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="375" y="222" text-anchor="middle" fill="#e6edf3" font-size="14">
+              agent-browser + cdp-relay
+            </text>
+            <text x="375" y="244" text-anchor="middle" fill="#8b949e" font-size="12">
+              :9333, your Chrome, background
+            </text>
+          </g>
+          <g data-viz-id="node-cic" data-label="claude-in-chrome">
+            <rect
+              x="260"
+              y="285"
+              width="230"
+              height="40"
+              rx="8"
+              fill="none"
+              stroke="#8b949e"
+              stroke-width="2"
+            />
+            <text x="375" y="310" text-anchor="middle" fill="#e6edf3" font-size="14">
+              claude-in-chrome
+            </text>
+          </g>
+          <path
+            d="M160 145 L260 55"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M160 160 L260 140"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M160 175 L260 225"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M160 190 L260 300"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <text x="505" y="55" fill="#8b949e" font-size="12">your Chrome, signed in</text>
+          <text x="505" y="143" fill="#8b949e" font-size="12">
+            no login, never touches your Chrome
+          </text>
+          <text x="505" y="225" fill="#8b949e" font-size="12">browse status: disconnected</text>
+          <text x="505" y="305" fill="#8b949e" font-size="12">
+            named by an old skill, or both failed
+          </text>
+        </svg>
+        <figcaption>
+          Four arrows, one per row of the routing table. Each path is a recipe, below.
+        </figcaption>
+      </figure>
+      <h3>The default path: browse, seven steps</h3>
+      <ol>
+        <li>
+          <b>Check.</b> <code>browse status</code> shows <code>Extension: connected</code>.
+          Disconnected means reopen Chrome or <code>browse pair</code>.
+        </li>
+        <li>
+          <b>Open a session.</b> <code>browse session new &lt;name&gt;</code>, one per task. Agent
+          tabs open in the background of your Chrome and never take focus.
+        </li>
+        <li>
+          <b>Run one script.</b>
+          <code
+            >browse execute -s &lt;name&gt; --timeout-ms 60000 '&lt;async Playwright code&gt;'</code
+          >
+          with the whole sequence (fill, click, read, return) in one script. That is where its speed
+          comes from: 2 calls on TodoMVC against 9–10 for the others.
+          <code>snapshot()</code> returns a page outline with refs; return only what you need.
+        </li>
+        <li>
+          <b>Time every action.</b> <code>locator.click({ timeout: 5000 })</code>, because the
+          defaults are ignored.
+        </li>
+        <li>
+          <b>Screenshots.</b> <code>files.path("name.png")</code> gives a temp path; write the
+          screenshot there, return the path, then <code>cp</code> it into
+          <code>~/.agents/state/browser/&lt;task&gt;/</code>. Other paths are refused.
+        </li>
+        <li>
+          <b>Hand off.</b> Logins, 2FA and payments: <code>handoff()</code> in the script, you
+          finish in the tab and click Continue.
+        </li>
+        <li>
+          <b>Finish.</b> <code>browse session delete &lt;name&gt;</code>. Done means the session is
+          gone from <code>browse session list</code>.
+        </li>
+      </ol>
+      <h3>The other paths</h3>
+      <ul>
+        <li>
+          <b>Headless:</b> <code>agent-browser --session &lt;name&gt; open &lt;url&gt;</code>, then
+          <code>snapshot -i</code> (refs like <code>@e3</code>), <code>click @e3</code>,
+          <code>fill @e5 "text"</code>, <code>get text</code>, <code>screenshot &lt;path&gt;</code>,
+          <code>record start &lt;file.mp4&gt;</code>. Chain commands with
+          <code>&amp;&amp;</code> and end with <code>close</code>.
+        </li>
+        <li>
+          <b>Relay:</b> the same commands with
+          <code>--cdp ws://127.0.0.1:9333/devtools/browser/relay</code>. Open your tab with
+          <code>tab new --label &lt;name&gt; &lt;url&gt;</code> and finish with
+          <code>tab close &lt;name&gt;</code>. Attached any other way, agent-browser pulls Chrome to
+          the front; the relay keeps it in the background.
+        </li>
+        <li>
+          <b>claude-in-chrome:</b> its <code>mcp__claude-in-chrome__*</code> tools, loaded in one
+          ToolSearch call. <code>find</code> sees only the accessibility tree, so refs go stale and
+          hidden, off-screen or virtualized elements are missing; use
+          <code>javascript_tool</code> or re-read the page right before acting.
+        </li>
+      </ul>
+    </article>
+    <script type="module" src="/_kit/poster.js"></script>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="bun test" tests="8" failures="2">
+  <testsuite name="sample.test.ts" file="tests/sample.test.ts" tests="8">
+    <testsuite name="The badge" file="tests/sample.test.ts" line="3" tests="2">
+      <testcase name="should say it scans" file="tests/sample.test.ts" line="4">
+        <failure type="AssertionError" />
+      </testcase>
+      <testsuite name="on a bad link" file="tests/sample.test.ts" line="12" tests="1">
+        <testcase name="should fall back" file="tests/sample.test.ts" line="13" />
+      </testsuite>
+    </testsuite>
+    <testsuite name="Styles" file="tests/sample.test.ts" line="25" tests="6">
+      <testcase name="should scan: a" file="tests/sample.test.ts" line="27" />
+      <testcase name="should scan: b" file="tests/sample.test.ts" line="27">
+        <failure type="Error" />
+      </testcase>
+      <testcase name="should fit wide" file="tests/sample.test.ts" line="37" />
+      <testcase name="should fit tall" file="tests/sample.test.ts" line="37" />
+      <testcase name="has nothing written" file="tests/sample.test.ts" line="43" />
+      <testcase name="is parked" file="tests/sample.test.ts" line="47">
+        <skipped />
+      </testcase>
+    </testsuite>
+  </testsuite>
+</testsuites>

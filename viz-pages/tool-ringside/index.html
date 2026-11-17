@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ringside — watch Claude work, live, from the room</title>
+    <meta name="viz:uid" content="v-f93e1af3f88b" />
+    <meta name="viz:posture" content="local" />
+    <meta name="viz:listed" content="unlisted" />
+    <meta name="viz:title" content="ringside" />
+    <meta
+      name="viz:description"
+      content="ringside is a live seat at a Claude Code session: what Claude is doing, why, and what came of it, drawn from the session transcript, with a local model writing the plain-English labels."
+    />
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* Card + dive. transform:scale() does not shrink the layout box, so poster.css
+     collapses #fit's height off the same --s. */
+      :root {
+        --s: 1;
+        --gone: #5a6474;
+        --kept: var(--c5);
+        --ask: var(--c4);
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -12%,
+            color-mix(in srgb, var(--c5) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 112%,
+            color-mix(in srgb, var(--c4) 13%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 560px;
+        gap: 32px;
+        align-items: center;
+        padding: 46px 48px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        letter-spacing: 0.14em;
+        color: var(--c5);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c5);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c5) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 46px;
+        line-height: 1.06;
+        margin: 0 0 16px;
+        letter-spacing: -1.3px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      p.sub {
+        font-size: 17px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 14px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 16px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c5);
+        border-radius: 9px;
+        padding: 9px 13px;
+        color: var(--text);
+      }
+
+      /* ── the proof slot: a week's tank, and the part nobody can account for ── */
+      .rig {
+        background: color-mix(in srgb, var(--panel) 88%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px 17px;
+        font-family: var(--mono);
+      }
+      .rig .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10.5px;
+        letter-spacing: 0.13em;
+        color: var(--c5);
+        margin-bottom: 13px;
+      }
+      .rig .cap span:last-child {
+        color: var(--faint);
+      }
+
+      /* ── dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c5);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul,
+      .dive ol {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c4);
+      }
+      .dive table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0 0 16px;
+      }
+      .dive table td {
+        border-top: 1px solid var(--border);
+        padding: 11px 0;
+        font-size: 15px;
+        line-height: 1.55;
+        vertical-align: top;
+        color: var(--text);
+      }
+      .dive table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.05em;
+        padding-right: 16px;
+      }
+      .fig {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        margin: 0 0 18px;
+      }
+      .fig figcaption {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+        letter-spacing: 0.06em;
+        margin-top: 12px;
+        line-height: 1.5;
+      }
+      .pre {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 12px 14px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--muted);
+        overflow-x: auto;
+        margin: 0 0 16px;
+      }
+      .pre b {
+        color: var(--c5);
+        font-weight: 400;
+      }
+      .pre em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 14px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 19px;
+      }
+      .step .k {
+        flex: 0 0 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+      }
+      .step.you .k {
+        background: var(--c4);
+        color: #0d1117;
+      }
+      .step.bot .k {
+        background: var(--accent);
+        color: #0d1117;
+      }
+      .step .v b {
+        color: var(--text);
+      }
+      .step .v {
+        color: var(--muted);
+      }
+      .say {
+        font-family: var(--mono, monospace);
+        color: var(--c5);
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="ringside"
+        data-viz-id="poster-card"
+        data-label="ringside poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED TOOL · SESSION-VIEWER</div>
+          <h1 class="hook">
+            Not a spinner.<br /><em>What Claude is doing,<br />and what came of it.</em>
+          </h1>
+          <p class="sub">
+            A live seat at a Claude Code session, for a room. <b>Mob programming</b> works when
+            everyone can see the work, so ringside draws every action as it happens, and replays any
+            past session.
+          </p>
+          <p class="not">
+            Read-only. ringside never writes a transcript and never talks to Claude; it only
+            <b>reads the session file</b> and asks a local model for wording.
+          </p>
+          <div class="chip">~/.claude/projects → api.ts → model.ts → timeline in your browser</div>
+        </div>
+        <div class="rig" data-viz-id="the-timeline" data-label="a miniature ringside timeline">
+          <div class="cap"><span>ONE ROUND</span><span>A ROW PER KIND OF WORK</span></div>
+          <svg
+            viewBox="0 0 520 250"
+            width="100%"
+            role="img"
+            aria-label="Bars on rows for Look, Run, Verify, Change, and a You row"
+          >
+            <g font-family="var(--mono)" font-size="12" fill="#8b949e">
+              <text x="0" y="31">Look</text>
+              <text x="0" y="67">Run</text>
+              <text x="0" y="103">Verify</text>
+              <text x="0" y="139">Change</text>
+              <text x="0" y="175">Delegate</text>
+              <text x="0" y="211">You</text>
+            </g>
+            <g stroke="#263040">
+              <path
+                d="M70 14 H520 M70 50 H520 M70 86 H520 M70 122 H520 M70 158 H520 M70 194 H520 M70 230 H520"
+              />
+            </g>
+            <rect x="74" y="20" width="48" height="16" rx="3" fill="var(--c1)" />
+            <rect x="126" y="20" width="30" height="16" rx="3" fill="var(--c1)" />
+            <rect x="160" y="56" width="90" height="16" rx="3" fill="var(--c5)" />
+            <rect x="254" y="92" width="110" height="16" rx="3" fill="var(--c7)" />
+            <rect
+              x="254"
+              y="92"
+              width="64"
+              height="16"
+              rx="3"
+              fill="none"
+              stroke="var(--danger)"
+              stroke-width="2"
+            />
+            <rect x="370" y="128" width="40" height="16" rx="3" fill="var(--c3)" />
+            <rect x="150" y="164" width="150" height="16" rx="3" fill="var(--c8)" />
+            <rect
+              x="416"
+              y="200"
+              width="100"
+              height="16"
+              rx="3"
+              fill="var(--muted)"
+              opacity="0.7"
+            />
+            <path d="M516 6 V236" stroke="var(--good)" stroke-dasharray="3 3" />
+            <text x="470" y="246" font-family="var(--mono)" font-size="10.5" fill="var(--good)">
+              now
+            </text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install ringside">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <p class="why">
+        the full setup, run in a clone of
+        <a href="https://github.com/RascalTwo/ai-setup">RascalTwo/ai-setup</a>
+      </p>
+      <pre><span class="l"><span class="c">bun</span> install.ts</span></pre>
+      <p class="needs">needs <code>bun</code> <code>ollama</code></p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓ scroll</div>
+
+    <article class="dive">
+      <h2 data-beat="why">A spinner tells a room nothing</h2>
+      <p>
+        When one person drives Claude Code and a group watches, the terminal gives them a spinner
+        and a wall of scrolling tool output. Nobody can say what Claude is on right now, why it took
+        four minutes, or whether the last command worked, without reading over the driver's
+        shoulder. Afterwards the only record is a transcript file nobody opens.
+      </p>
+      <p class="m">
+        ringside reads that transcript file as it grows and turns it into something a room can
+        follow: the current action, a timeline of everything done, and a retelling in plain English.
+        The same page replays any earlier session.
+      </p>
+
+      <h2 data-beat="using">Open the page, follow or pick</h2>
+      <ul>
+        <li>
+          <b>Open it</b> on the viz server at
+          <code>http://127.0.0.1:5180/&lt;$REPO relative to $HOME&gt;/viz-pages/ringside/</code>.
+        </li>
+        <li>
+          <b>Follow newest</b> jumps to the most recently written session and switches when a newer
+          one starts. Or choose one of the recent sessions from the list to replay it.
+        </li>
+        <li>
+          <b>Right now, Round, Timeline.</b> Step through rounds with <code>‹ ›</code>; zoom, pan or
+          brush the overview; choose <i>This round</i>, <i>Last N min</i> or <i>Whole session</i>.
+          Click a bar to pin its details, click again or press <code>Esc</code> to follow the
+          latest.
+        </li>
+        <li>
+          <b>Story and Conversation.</b> The session retold in chapters, and your prompts and
+          Claude's replies with the work between them folded into strips.
+        </li>
+        <li>
+          <b>Share the view.</b> The window, round, selection and session live in the URL hash, so a
+          link opens the same view.
+        </li>
+      </ul>
+
+      <h2 data-beat="limits">What it won't do</h2>
+      <ul>
+        <li>
+          <b>It only watches.</b> It reads transcripts under <code>~/.claude/projects</code> and
+          never writes them, and it cannot steer or stop Claude.
+        </li>
+        <li>
+          <b>The list holds the 15 newest sessions.</b> Older ones are not offered, even though the
+          files still exist.
+        </li>
+        <li>
+          <b>It polls, it doesn't stream.</b> The page asks for new transcript lines every 1.5
+          seconds, so it trails the real session by about that much.
+        </li>
+        <li>
+          <b>The model's wording can be wrong.</b> Anything marked ✦ is written by a small local
+          model; the bars, times and counts come from the transcript itself, not the model.
+        </li>
+        <li>
+          <b>Without Ollama it still works,</b> just plainer: rule-written labels stay, and the ✦
+          labels, outcomes, strip summaries and story simply never appear.
+        </li>
+        <li>
+          <b>Its tests don't touch real data.</b> They use fixtures and a faked backend, so a green
+          run says nothing about your own transcripts.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>Integrates with</td>
+            <td>
+              <b>Claude Code</b>: reads session transcripts in <code>~/.claude/projects</code>, and
+              each session's <code>subagents/</code> folder, never writing them. <b>Ollama</b>:
+              <code>gemma4:e4b</code> at <code>127.0.0.1:11434</code> writes the labels, outcomes,
+              rows for scripts, strip summaries and the story. <b>viz</b>: the viz server serves the
+              page and its API routes.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              The <code>viz</code> skill, plus <code>bun</code> and <code>ollama</code> on the
+              machine.
+            </td>
+          </tr>
+          <tr>
+            <td>The app</td>
+            <td>
+              <code>viz-pages/ringside/</code>: <code>api.ts</code> (server routes),
+              <code>model.ts</code> (the parser), <code>contract.ts</code> (route types),
+              <code>app.ts</code> (the page) and <code>tests/</code>. This poster is a separate
+              folder.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <code>~/.agents/state/ringside/</code>: five JSON caches of the model's answers,
+              <code>labels.json</code>, <code>outcomes.json</code>, <code>lanes.json</code>,
+              <code>beats.json</code> and <code>stories.json</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>
+              <b>Yes</b>, <code>deletion-policy: delete</code>. They are only memoised answers; the
+              next load asks the model again, so you lose some seconds of waiting, not data.
+            </td>
+          </tr>
+          <tr>
+            <td>Not its state</td>
+            <td>
+              The transcripts. They belong to Claude Code, and ringside's page position is only the
+              URL hash.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One tool call, from the transcript to the screen</h2>
+      <p class="m">
+        No database and no push channel. The page pulls, the server reads a file from a byte offset,
+        and a pure parser shared with the tests turns lines into bars.
+      </p>
+      <figure class="fig">
+        <svg
+          viewBox="0 0 760 300"
+          width="100%"
+          role="img"
+          aria-label="Transcript to api.ts to model.ts to the page, with Ollama and its cache on the side"
+        >
+          <defs>
+            <marker
+              id="ah"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="#58a6ff" />
+            </marker>
+          </defs>
+          <g data-viz-id="node-transcript" data-label="session transcript">
+            <rect
+              x="10"
+              y="20"
+              width="170"
+              height="80"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="95" y="55" text-anchor="middle" fill="#e6edf3" font-size="15">
+              transcript .jsonl
+            </text>
+            <text x="95" y="77" text-anchor="middle" fill="#8b949e" font-size="12">
+              + subagents/agent-*.jsonl
+            </text>
+          </g>
+          <g data-viz-id="node-api" data-label="api.ts /events">
+            <rect
+              x="295"
+              y="20"
+              width="170"
+              height="80"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="380" y="55" text-anchor="middle" fill="#e6edf3" font-size="15">
+              api.ts /events
+            </text>
+            <text x="380" y="77" text-anchor="middle" fill="#8b949e" font-size="12">
+              from a byte offset
+            </text>
+          </g>
+          <g data-viz-id="node-model" data-label="model.ts parseLines">
+            <rect
+              x="580"
+              y="20"
+              width="170"
+              height="80"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="665" y="55" text-anchor="middle" fill="#e6edf3" font-size="15">model.ts</text>
+            <text x="665" y="77" text-anchor="middle" fill="#8b949e" font-size="12">
+              parseLines · laneOf
+            </text>
+          </g>
+          <g data-viz-id="node-page" data-label="app.ts the page">
+            <rect
+              x="580"
+              y="200"
+              width="170"
+              height="80"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="665" y="235" text-anchor="middle" fill="#e6edf3" font-size="15">
+              app.ts (the page)
+            </text>
+            <text x="665" y="257" text-anchor="middle" fill="#8b949e" font-size="12">
+              pull every 1.5 s
+            </text>
+          </g>
+          <g data-viz-id="node-ollama" data-label="Ollama and the cache">
+            <rect
+              x="295"
+              y="200"
+              width="170"
+              height="80"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="380" y="235" text-anchor="middle" fill="#e6edf3" font-size="15">
+              Ollama gemma4:e4b
+            </text>
+            <text x="380" y="257" text-anchor="middle" fill="#8b949e" font-size="12">
+              + state/ringside/*.json
+            </text>
+          </g>
+          <path
+            d="M180 60 L295 60"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <text x="196" y="52" fill="#8b949e" font-size="12">whole lines</text>
+          <path
+            d="M465 60 L580 60"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <text x="488" y="52" fill="#8b949e" font-size="12">Chunk</text>
+          <path
+            d="M665 100 L665 200"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <text x="676" y="156" fill="#8b949e" font-size="12">calls · results</text>
+          <path
+            d="M580 240 L465 240"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <text x="480" y="232" fill="#8b949e" font-size="12">/label /outcome</text>
+        </svg>
+        <figcaption>
+          Read clockwise from the transcript. The model loop is a side trip: the page asks for
+          wording for what is in view, and the answer comes back to the same call.
+        </figcaption>
+      </figure>
+      <ol>
+        <li>
+          <b>Find.</b> <code>findSession()</code> checks the session id is a UUID, then looks for
+          <code>&lt;id&gt;.jsonl</code> in every folder under <code>~/.claude/projects</code>.
+          Helpers are the files in <code>&lt;id&gt;/subagents/</code>, each described by its
+          <code>.meta.json</code>.
+        </li>
+        <li>
+          <b>Read.</b> <code>/events</code> calls <code>readFrom()</code> for the main file and each
+          helper at the byte offsets the page sent. It returns up to 4 MB, cut back to the last
+          complete line, plus the new offsets. If a file still has more, <code>more</code> is true
+          and the page asks again straight away (up to 20 rounds a poll).
+        </li>
+        <li>
+          <b>Parse.</b> <code>parseLines()</code> in <code>model.ts</code> turns lines into
+          <code>calls</code>, <code>results</code>, <code>prompts</code> and <code>says</code>. A
+          call pairs a tool use with its result by id; a result that arrives first waits as an
+          orphan until its call turns up.
+        </li>
+        <li>
+          <b>Sort.</b> <code>laneOf()</code> gives the row from the tool name. For a shell command,
+          <code>shellSteps()</code> splits it into steps and the strongest one wins: Change over
+          Verify over Run over Look. A step that runs an interpreter on a script is marked
+          <code>needsLane</code>, and counts as at least Run until the model decides.
+        </li>
+        <li>
+          <b>Draw.</b> <code>app.ts</code> keeps calls in order and redraws every 500 ms so running
+          bars grow. The <b>You</b> row comes from <code>waitingSpans()</code>: from each of
+          Claude's final replies to the next prompt, wherever no call is in flight.
+        </li>
+        <li>
+          <b>Word.</b> For calls in view, two at a time, newest first, the page posts to
+          <code>/label</code>, <code>/outcome</code> (the result is re-read from the transcript at
+          the call's <code>pos</code>), <code>/lane</code>, then <code>/beat</code> and
+          <code>/story</code>. <code>askOllama()</code> sends text through <code>redact()</code> to
+          <code>gemma4:e4b</code> at temperature 0, and a failure returns <code>null</code>. Each
+          answer is written to its JSON cache first-come, so the second viewer reads it for free.
+        </li>
+      </ol>
+      <p class="m">
+        Under <code>viz verify</code> every model route sees the
+        <code>VizAutomation</code> user-agent and answers <code>null</code> at once, so verifying
+        ringside never calls Ollama.
+      </p>
+    </article>
+    <script type="module" src="/_kit/poster.js"></script>
+  </body>
+</html>

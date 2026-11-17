@@ -1,0 +1,48 @@
+import { describe, it, test } from "bun:test";
+
+describe("The badge", () => {
+  it("should say it scans", async () => {
+    const page = await viz.given("a plain code", () => viz.open());
+    await viz.when("the user types text", () => page.type("#t", "hi"));
+    await viz.then("the badge says it scans", async () => {
+      expect(await page.$eval("#b", (e) => e.textContent)).toBe("scans");
+    });
+  });
+
+  describe("on a bad link", () => {
+    test.concurrent("should fall back", async () => {
+      await viz.given("a crafted link", () => 1);
+      await viz.when("it opens");
+      await viz.then("it falls back", () => 1);
+      await viz.then(
+        "and it says why",
+        () => 1,
+      );
+    });
+  });
+});
+
+describe("Styles", () => {
+  for (const id of ["a", "b"]) {
+    it(`should scan: ${id}`, async () => {
+      await viz.given(`style ${id}`, () => 1);
+      await viz.when("it is drawn", () => 1);
+      await viz.then(`style ${id} scans`, () => 1);
+    });
+  }
+
+  it.each([
+    ["wide", 2],
+    ["tall", 3],
+  ] as const)("should fit %s", async (shape, n) => {
+    await viz.given("a shape", () => shape);
+    await viz.when("it is laid out", () => n);
+    await viz.then("it fits", () => 1);
+  });
+
+  it("has nothing written", () => {
+    expect(1).toBe(1);
+  });
+
+  it.skip("is parked", () => {});
+});

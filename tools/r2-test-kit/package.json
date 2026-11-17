@@ -1,0 +1,34 @@
+{
+  "name": "@rascaltwo/r2-test-kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Istanbul coverage in vitest and Playwright, per-test coverage both ways, one merged report with a floor, one Allure list",
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "files": ["src", "!src/**/*.test.*"],
+  "bin": { "r2-test-kit": "src/cli.mjs" },
+  "exports": {
+    "./vite": { "types": "./src/vite.d.mts", "default": "./src/vite.mjs" },
+    "./vitest": "./src/vitest-setup.mjs",
+    "./playwright": { "types": "./src/playwright.d.mts", "default": "./src/playwright.mjs" },
+    "./allurerc": { "types": "./src/allurerc.d.mts", "default": "./src/allurerc.mjs" }
+  },
+  "scripts": { "test": "vitest run --coverage" },
+  "dependencies": {
+    "istanbul-lib-coverage": "^3.2.2",
+    "istanbul-lib-instrument": "^6.0.3",
+    "istanbul-lib-report": "^3.0.1",
+    "istanbul-reports": "^3.2.0"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.50",
+    "allure": ">=3",
+    "vite": ">=6",
+    "vitest": ">=4"
+  },
+  "peerDependenciesMeta": { "@playwright/test": { "optional": true }, "allure": { "optional": true } },
+  "devDependencies": {
+    "@vitest/coverage-istanbul": "5.1.0",
+    "vitest": "5.1.0"
+  }
+}

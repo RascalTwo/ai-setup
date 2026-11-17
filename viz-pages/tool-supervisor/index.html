@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>supervisor — bad tool calls stop before they run</title>
+    <meta name="viz:uid" content="v-bc51d4fafdcd" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="supervisor" />
+    <meta
+      name="viz:description"
+      content="supervisor is a Claude Code PreToolUse hook: five local rules read every tool call before it runs and refuse the few that are wrong whoever asked, such as your own address in a User-Agent or a token sent to a host that didn't issue it."
+    />
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* Card + dive. transform:scale() does not shrink the layout box, so poster.css
+     collapses #fit's height off the same --s. */
+      :root {
+        --s: 1;
+        --gone: #5a6474;
+        --kept: var(--c5);
+        --ask: var(--c4);
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -12%,
+            color-mix(in srgb, var(--c5) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 112%,
+            color-mix(in srgb, var(--c4) 13%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 560px;
+        gap: 32px;
+        align-items: center;
+        padding: 46px 48px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        letter-spacing: 0.14em;
+        color: var(--c5);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c5);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c5) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 46px;
+        line-height: 1.06;
+        margin: 0 0 16px;
+        letter-spacing: -1.3px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      p.sub {
+        font-size: 17px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 14px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 16px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c5);
+        border-radius: 9px;
+        padding: 9px 13px;
+        color: var(--text);
+      }
+
+      /* ── the proof slot: a week's tank, and the part nobody can account for ── */
+      .rig {
+        background: color-mix(in srgb, var(--panel) 88%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px 17px;
+        font-family: var(--mono);
+      }
+      .rig .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10.5px;
+        letter-spacing: 0.13em;
+        color: var(--c5);
+        margin-bottom: 13px;
+      }
+      .rig .cap span:last-child {
+        color: var(--faint);
+      }
+
+      /* ── dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c5);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul,
+      .dive ol {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c4);
+      }
+      .dive table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0 0 16px;
+      }
+      .dive table td {
+        border-top: 1px solid var(--border);
+        padding: 11px 0;
+        font-size: 15px;
+        line-height: 1.55;
+        vertical-align: top;
+        color: var(--text);
+      }
+      .dive table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.05em;
+        padding-right: 16px;
+      }
+      .fig {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        margin: 0 0 18px;
+      }
+      .fig figcaption {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+        letter-spacing: 0.06em;
+        margin-top: 12px;
+        line-height: 1.5;
+      }
+      .pre {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 12px 14px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--muted);
+        overflow-x: auto;
+        margin: 0 0 16px;
+      }
+      .pre b {
+        color: var(--c5);
+        font-weight: 400;
+      }
+      .pre em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 14px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 19px;
+      }
+      .step .k {
+        flex: 0 0 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+      }
+      .step.you .k {
+        background: var(--c4);
+        color: #0d1117;
+      }
+      .step.bot .k {
+        background: var(--accent);
+        color: #0d1117;
+      }
+      .step .v b {
+        color: var(--text);
+      }
+      .step .v {
+        color: var(--muted);
+      }
+      .say {
+        font-family: var(--mono, monospace);
+        color: var(--c5);
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="supervisor"
+        data-viz-id="poster-card"
+        data-label="supervisor poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED TOOL · CLAUDE CODE HOOK</div>
+          <h1 class="hook">
+            The bad call<br /><em>never<br />leaves.</em>
+          </h1>
+          <p class="sub">
+            Before every tool call, the supervisor reads what it would do and refuses the few things
+            that are wrong <b>whoever asked</b>. Five rules, no model, no network, about
+            <b>36 ms</b> a call.
+          </p>
+          <p class="not">
+            It holds under <b>--dangerously-skip-permissions</b>. A crash lets the call through.
+          </p>
+          <div class="chip">PreToolUse → supervisor.py → deny</div>
+        </div>
+        <div class="rig" data-viz-id="the-loop" data-label="one tool call through the supervisor">
+          <div class="cap"><span>ONE FETCH SCRIPT</span><span>WHAT HAPPENS</span></div>
+          <div class="steps">
+            <div class="step bot">
+              <span class="k">1</span><span class="v"><b>Subagent</b> writes a fetch script</span>
+            </div>
+            <div class="step you">
+              <span class="k">!</span
+              ><span class="v"><b>my-email</b>: your address in its User-Agent</span>
+            </div>
+            <div class="step bot">
+              <span class="k">2</span><span class="v"><b>Write</b> refused, nothing on disk</span>
+            </div>
+            <div class="step you">
+              <span class="k">✓</span
+              ><span class="v"
+                ><b>Claude is told why</b>, <span class="say">don't retry</span></span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install supervisor">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <p class="why">
+        the full setup, run in a clone of
+        <a href="https://github.com/RascalTwo/ai-setup">RascalTwo/ai-setup</a>
+      </p>
+      <pre><span class="l"><span class="c">bun</span> install.ts</span></pre>
+      <p class="needs">needs <code>python3</code></p>
+    </section>
+    <!-- install:end -->
+
+    <div class="scroll-cue">↓ scroll</div>
+
+    <article class="dive">
+      <h2 data-beat="why">The built-in guard caught one shape of the leak</h2>
+      <p>
+        Claude Code was putting the account's email address into User-Agent headers
+        (<code>anthropics/claude-code#107757</code>). The built-in
+        <code>cc-plugin-privacy</code> mod (2.1.317) refuses a shell call that holds the
+        <i>logged-in</i> address and names a User-Agent. That's one address, one tool, one shape.
+      </p>
+      <p>
+        A past session here got straight past it. A subagent wrote a script whose User-Agent named a
+        different personal address, then ran the script by name against Wikimedia. No shell text
+        held the address, so nothing matched. With Kelpie running sessions under
+        <code>--dangerously-skip-permissions</code>, there's no permission prompt left to catch it
+        either.
+      </p>
+      <p class="m">
+        veil guards what comes in (tool outputs). The supervisor guards what goes out (tool calls):
+        well-meaning mistakes, prompt injection, and actions nobody approved.
+      </p>
+
+      <h2 data-beat="using">Nothing to run: it's already watching</h2>
+      <ul>
+        <li>
+          <b>Every call, every session.</b> The supervisor is a <code>PreToolUse</code> hook on
+          <code>.*</code>, so it sees subagents and Kelpie runs too. A deny holds in bypass mode,
+          and Kelpie's own <code>--settings</code> hooks add to the user hooks rather than replacing
+          them (both tested on 2.1.319).
+        </li>
+        <li>
+          <b>A refusal</b> reaches Claude as the deny reason: which rule, why, and "don't retry it
+          in another form; if the user asked for exactly this, tell them". You can still run the
+          command yourself.
+        </li>
+        <li>
+          <b>Your addresses</b> are collected fresh on every call from the google skill's
+          <code>accounts.json</code>, <code>~/.gitconfig</code>, the Claude login, and
+          <code>~/.config/supervisor/emails.txt</code> for any others.
+        </li>
+        <li>
+          <b>After changing a rule</b>, run
+          <code>python3 tools/supervisor/supervisor.test.py</code> (44 cases, under a second) and
+          <code>python3 tools/supervisor/replay.py [days]</code>, which runs the rules over your
+          real transcripts and lists what they'd have refused.
+        </li>
+      </ul>
+
+      <h2 data-beat="limits">Only calls that are wrong whoever asked</h2>
+      <ul>
+        <li>
+          <b>No intent calls.</b> <code>pkill</code>, <code>git branch -D</code>, cloud deletes and
+          <code>npm publish</code> are only wrong if you didn't ask. Over 30 days every one of their
+          391 hits was intended work, so the supervisor leaves them alone. They need a local judge
+          that reads your prompt, which is the follow-up task <code>supervisor-local-judge</code>.
+        </li>
+        <li>
+          <b>A script run by name is opaque.</b> The command rules read the text the shell runs. A
+          heredoc written to a file or a string inside Python is data. The address rule is the one
+          exception: an address beside a User-Agent is refused anywhere, including a file being
+          written, which is what catches the Wikimedia leak.
+        </li>
+        <li>
+          <b>Fails open.</b> A crash or a timeout lets the call through. One unchecked call is
+          better than every call in every session stopped.
+        </li>
+        <li>
+          <b>Claude Code only.</b> Codex has no supervisor yet (task <code>supervisor-codex</code>).
+        </li>
+        <li>
+          <b>Replay, 2026-11-08:</b> about 102,600 calls over 30 days, 12 refused: the Wikimedia
+          leak, one fake token in test code, and the rest the deliberate probes and write-ups from
+          the session that built it.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>Integrates with</td>
+            <td>
+              <b>Claude Code hooks</b>: a <code>PreToolUse</code> hook on <code>.*</code> in
+              <code>settings/claude-code/settings.json</code> (timeout 10 s) running
+              <code>python3 -I tools/supervisor/supervisor.py</code>, and a
+              <b>statusline</b> widget, <code>tools/statusline/statusline-supervisor.sh</code>,
+              which shows a yellow 🛡⚠ while the supervisor has crashed in the last hour.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td><code>python3</code>. Nothing else: no model, no network, no packages.</td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <code>~/.agents/state/supervisor/</code>: <code>log</code> (one line per refusal),
+              <code>errors.log</code> (crashes, read by the statusline), and
+              <code>replay-hits.jsonl</code> from the last replay.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>
+              <b>Keep it</b>, <code>deletion-policy: retain</code>: the refusal log is the only
+              record of what the supervisor stopped. Nothing breaks without it; the folder is
+              recreated on the next refusal or crash.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One tool call, end to end</h2>
+      <p>
+        Claude Code fires <code>PreToolUse</code> before a tool runs and starts
+        <code>supervisor.py</code> with the call as JSON on stdin. <code>main()</code> collects your
+        addresses with <code>my_emails()</code> and hands the tool name and input to
+        <code>check()</code>. If <code>check()</code> names a rule, <code>main()</code> prints a
+        <code>permissionDecision: "deny"</code> and the tool never runs; if not, it prints nothing
+        and the call goes ahead.
+      </p>
+      <figure class="fig" data-viz-id="supervisor-flow" data-label="supervisor flow">
+        <svg
+          viewBox="0 0 900 330"
+          width="100%"
+          role="img"
+          aria-label="A tool call enters supervisor.py, outbound() finds what leaves the machine, check() runs five rules, and a hit prints a deny; any crash logs and lets the call through"
+          font-family="ui-monospace, monospace"
+        >
+          <g data-viz-id="n-call" data-label="tool call">
+            <rect
+              x="10"
+              y="30"
+              width="150"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="85" y="62" text-anchor="middle" fill="#e6edf3" font-size="14">PreToolUse</text>
+            <text x="85" y="82" text-anchor="middle" fill="#8b949e" font-size="12">
+              supervisor.py (stdin)
+            </text>
+          </g>
+          <g data-viz-id="n-out" data-label="outbound">
+            <rect
+              x="200"
+              y="30"
+              width="170"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="285" y="62" text-anchor="middle" fill="#e6edf3" font-size="14">
+              outbound()
+            </text>
+            <text x="285" y="82" text-anchor="middle" fill="#8b949e" font-size="12">
+              what leaves, to where
+            </text>
+          </g>
+          <g data-viz-id="n-check" data-label="check">
+            <rect
+              x="410"
+              y="30"
+              width="200"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="510" y="62" text-anchor="middle" fill="#e6edf3" font-size="14">check()</text>
+            <text x="510" y="82" text-anchor="middle" fill="#8b949e" font-size="12">
+              five rules, first hit wins
+            </text>
+          </g>
+          <g data-viz-id="n-deny" data-label="deny">
+            <rect
+              x="650"
+              y="30"
+              width="240"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#f85149"
+              stroke-width="2"
+            />
+            <text x="770" y="62" text-anchor="middle" fill="#e6edf3" font-size="14">
+              deny + reason
+            </text>
+            <text x="770" y="82" text-anchor="middle" fill="#8b949e" font-size="12">
+              appended to state/supervisor/log
+            </text>
+          </g>
+          <path
+            d="M160 65 H200 M370 65 H410 M610 65 H650"
+            stroke="#8b949e"
+            stroke-width="2"
+            fill="none"
+          />
+          <text x="285" y="128" text-anchor="middle" fill="#8b949e" font-size="12">
+            shell net commands, web,
+          </text>
+          <text x="285" y="145" text-anchor="middle" fill="#8b949e" font-size="12">
+            browser input, remote MCP
+          </text>
+          <text x="510" y="128" text-anchor="middle" fill="#8b949e" font-size="12">
+            my-email · secret-out
+          </text>
+          <text x="510" y="145" text-anchor="middle" fill="#8b949e" font-size="12">
+            remote-code · destroy · history
+          </text>
+          <text x="770" y="128" text-anchor="middle" fill="#8b949e" font-size="12">
+            holds in bypass mode
+          </text>
+          <path d="M510 160 V190" stroke="#3fb950" stroke-width="2" fill="none" />
+          <g data-viz-id="n-pass" data-label="no rule">
+            <rect
+              x="410"
+              y="190"
+              width="200"
+              height="50"
+              rx="8"
+              fill="none"
+              stroke="#3fb950"
+              stroke-width="2"
+            />
+            <text x="510" y="220" text-anchor="middle" fill="#e6edf3" font-size="14">
+              no rule: print nothing
+            </text>
+          </g>
+          <g data-viz-id="n-crash" data-label="fail open">
+            <rect
+              x="10"
+              y="270"
+              width="600"
+              height="50"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+              stroke-dasharray="6 4"
+            />
+            <text x="310" y="291" text-anchor="middle" fill="#e6edf3" font-size="14">
+              any exception: log to errors.log, let the call through
+            </text>
+            <text x="310" y="309" text-anchor="middle" fill="#8b949e" font-size="12">
+              statusline-supervisor.sh shows 🛡⚠ for an hour
+            </text>
+          </g>
+          <path
+            d="M85 100 V270 M285 100 V270"
+            stroke="#d29922"
+            stroke-width="1.5"
+            stroke-dasharray="4 4"
+            fill="none"
+          />
+        </svg>
+        <figcaption>
+          Solid path: normal. Dashed yellow: a crash never blocks; it is logged and shown on the
+          statusline instead.
+        </figcaption>
+      </figure>
+      <ol>
+        <li>
+          <b>Skip prose.</b> <code>Skill</code>, <code>Agent</code>, <code>SendMessage</code> and
+          <code>TodoWrite</code> carry words to a model, never run, so <code>check()</code> returns
+          at once.
+        </li>
+        <li>
+          <b>Address anywhere.</b> The whole input, raw and once percent-decoded, is searched for
+          one of your addresses within 160 characters after a User-Agent, <code>curl -A</code> or
+          <code>wget -U</code>. This runs for every tool, so a <code>Write</code> of a script is
+          refused before the script exists.
+        </li>
+        <li>
+          <b>What leaves.</b> <code>outbound()</code> returns the part of the call that reaches the
+          network, or nothing: a <code>Bash</code> command only if it matches <code>NET</code>
+          (curl, ssh, git push, requests, fetch and so on) and isn't all-localhost; a
+          <code>WebFetch</code> URL; browser input except find queries and summaries; any MCP tool
+          except the local ones. <code>as_run()</code> first drops heredoc bodies no interpreter
+          reads.
+        </li>
+        <li>
+          <b>Own service or not.</b> Hosts in <code>IDENTITY_HOSTS</code> (Google, GitHub,
+          Atlassian, AWS, Microsoft, Slack, Anthropic and the rest) hold your accounts, so your
+          address may go there. Anywhere else, <b>my-email</b> refuses. Each token shape in
+          <code>TOKENS</code> is bound to its issuer: a GitHub token to github.com, an
+          <code>sk-ant-</code> key to anthropic.com; any other host gets <b>secret-out</b>, as does
+          uploading <code>~/.ssh</code>, <code>.env</code> or a <code>.pem</code>.
+        </li>
+        <li>
+          <b>Shell rules.</b> On <code>shell_only()</code> text (no heredocs, no quoted strings):
+          <b>remote-code</b> for <code>curl … | sh</code>; <b>destroy</b> for <code>rm -r</code> of
+          home, a top-level home folder or a system folder, or <code>mkfs</code>,
+          <code>diskutil erase</code>, <code>dd of=/dev/</code>; <b>history</b> for a force-push to
+          main, master or trunk.
+        </li>
+        <li>
+          <b>Answer.</b> A hit appends the rule, tool, session and mode to
+          <code>~/.agents/state/supervisor/log</code> and prints the deny. An exception anywhere
+          appends to <code>errors.log</code> and prints nothing, so the call runs.
+        </li>
+      </ol>
+      <p class="m">
+        The two lessons from tuning live in the code on purpose: an address or token going to its
+        own service is normal (Atlassian basic auth, gws, the Timeline Studio token), and data is
+        not a command. The first draft refused 900 calls over 30 days; tuning around these two cut
+        it to 12.
+      </p>
+    </article>
+
+    <script type="module" src="/_kit/poster.js"></script>
+  </body>
+</html>

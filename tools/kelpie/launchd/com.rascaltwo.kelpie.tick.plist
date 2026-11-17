@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  kelpie: one tick every 5 minutes. A tick that does nothing costs one bun
+  startup and two HTTP reads, and never any model tokens.
+
+  TCC: the script lives under ~/Desktop, a protected folder, and a LaunchAgent's program is
+  its own responsible process. bun needs the grant, as python3 does for ai-tidemark's poller.
+  If the log shows "Operation not permitted", grant bun access under Full Disk Access (or
+  Files and Folders → Desktop).
+
+  Install: opt-in, see ../README.md#install.
+-->
+<plist version="1.0">
+<!-- Paths are checked in as /Users/YOUR-USER/... — launchd does not expand $HOME. Substitute before installing. -->
+<dict>
+    <key>Label</key>
+    <string>com.rascaltwo.kelpie.tick</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/YOUR-USER/.bun/bin/bun</string>
+        <string>/Users/YOUR-USER/.agents/ai-setup/tools/kelpie/kelpie.ts</string>
+        <string>tick</string>
+    </array>
+
+    <key>StartInterval</key>
+    <integer>300</integer>
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- launchd's PATH is minimal: herdr, claude and git must be findable. -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/YOUR-USER/.local/bin:/Users/YOUR-USER/.bun/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR-USER/.agents/state/kelpie/launchd.err</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

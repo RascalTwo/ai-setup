@@ -1,0 +1,11 @@
+
+# auto-handoff's herdr keybinding. Merged into ~/.config/herdr/config.toml by install.ts, which expands `~`.
+# A popup, not a shell: it shows the new state for a moment, where the statusline widget lags up to 30 s.
+# Custom commands get HERDR_ACTIVE_PANE_ID (the focused pane), which `toggle` reads.
+[[keys.command]]
+key = "prefix+shift+a"
+type = "popup"
+command = "~/.agents/ai-setup/tools/auto-handoff/auto-handoff toggle; sleep 1.5"
+description = "auto handoff on/off for this pane"
+width = 50
+height = 3

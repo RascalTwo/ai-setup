@@ -1,0 +1,15 @@
+# claude-tab's herdr keybinding. Merged into ~/.config/herdr/config.toml by
+# install.ts (guarded on the command path, so re-running is a no-op).
+#
+# type = "popup": the script asks for a prompt, model and effort, so it needs a terminal;
+# a popup doesn't disturb the layout. The tab it creates is the visible result.
+#
+# `~` is expanded by install.ts — herdr does not expand it in this field.
+
+[[keys.command]]
+key = "prefix+a"
+type = "popup"
+command = "~/.agents/ai-setup/tools/claude-tab/claude-tab"
+description = "new tab running claude: prompt, model, effort"
+width = "70%"
+height = 5

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kelpie board</title>
+    <!-- Publish posture — the SOLE source of truth for viz publish. Default "local" = stays
+     on this machine, never published. Change to "public" (open web) or "private"
+     (magic-link sealed) ONLY when you intend to share this viz. -->
+    <meta name="viz:uid" content="v-55bd072e6a4b" />
+    <meta
+      name="viz:tests"
+      content="smoke: a thin render of kelpie status --json; what each button may do (blocker, start, pause) and who is on the Needs you list are tested in kelpie.test.ts"
+    />
+    <meta name="viz:posture" content="local" />
+    <meta name="viz:listed" content="unlisted" />
+    <meta name="viz:title" content="Kelpie board" />
+    <meta
+      name="viz:description"
+      content="Every Kelpie project at a glance: what is refining, building, waiting on you, queued or blocked, with buttons that run the kelpie CLI."
+    />
+    <!-- Spoilers — opt-in. Uncomment to blur this viz's hero image AND blurb on the public
+     index until a viewer clicks the card to reveal (the title stays visible). Lets you write
+     an honest, spoiler-full hero/description without spoiling anyone browsing the lobby.
+     (Does NOT affect the OG unfurl — a shared link still previews the full hero.) -->
+    <!-- <meta name="viz:spoiler" content="true"> -->
+    <!-- Safe defaults on BOTH axes: local = never published; unlisted = off the index even once
+     published (still reachable by direct URL). When you publish, set posture to public/private,
+     and set listed to "listed" to advertise it on the public index. -->
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="board.css" />
+  </head>
+  <body>
+    <header class="top">
+      <h1>Kelpie</h1>
+      <span id="gate" class="gate" data-viz-id="gate" data-label="Usage gate"></span>
+      <span class="grp"
+        >active <b id="active"></b> <button data-verb="less" title="kelpie less">−</button
+        ><button data-verb="more" title="kelpie more">+</button></span
+      >
+      <button id="pauseAll"></button>
+      <button id="projects">Projects</button>
+      <button id="expandAll"></button>
+      <button id="outside"></button>
+      <span id="ship" class="muted"></span>
+      <span id="fresh" class="muted right"></span>
+    </header>
+    <p class="what muted">
+      Each row is a project, highest priority first. A task moves left to right:
+      <span class="k refine"></span>refine, <span class="k build"></span>build,
+      <span class="k you"></span>waiting on you. Click a task to start it, jump to its pane or open
+      its page. Everything that needs you is in the first box, oldest first. Refreshes every 15
+      seconds.
+    </p>
+
+    <section id="needs" class="strip empty" aria-label="Needs you">Reading kelpie status…</section>
+
+    <div id="lanes" class="lanes" role="table" aria-label="Projects"></div>
+
+    <div id="menu" class="menu" hidden></div>
+    <div id="map" class="map" hidden></div>
+    <div id="editor" class="editor" hidden></div>
+    <div id="toast" class="toast" hidden></div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

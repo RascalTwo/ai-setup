@@ -1,0 +1,43 @@
+{
+  "name": "r2-test-kit-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "run-s --continue-on-error clean format lint types test:unit test:e2e coverage cov-map results",
+    "clean": "node -e \"fs.rmSync('out', { recursive: true, force: true })\"",
+    "format": "oxfmt --check",
+    "lint": "oxlint --deny-warnings",
+    "types": "tsc --noEmit -p .",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "coverage": "r2-test-kit merge",
+    "cov-map": "r2-test-kit cov-map --build",
+    "results": "allure generate out/results",
+    "dev": "vite"
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "@rascaltwo/r2-test-kit": "file:..",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "26.6.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "allure": "3.33.0",
+    "jsdom": "31.0.1",
+    "npm-run-all2": "9.0.4",
+    "oxfmt": "0.78.0",
+    "oxlint": "1.93.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.8",
+    "vitest": "5.1.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
