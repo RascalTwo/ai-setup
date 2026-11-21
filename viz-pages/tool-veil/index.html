@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>veil — private things never reach Claude</title>
+    <meta name="viz:uid" content="v-9c41e7d2b6a3" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="veil" />
+    <meta
+      name="viz:description"
+      content="veil is a Claude Code PostToolUse hook: a local Ollama model reads every tool output in pieces, and anything on your private list becomes [veil: withheld] before Claude sees it."
+    />
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* Card + dive. transform:scale() does not shrink the layout box, so poster.css
+     collapses #fit's height off the same --s. */
+      :root {
+        --s: 1;
+        --gone: #5a6474;
+        --kept: var(--c5);
+        --ask: var(--c4);
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -12%,
+            color-mix(in srgb, var(--c5) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 112%,
+            color-mix(in srgb, var(--c4) 13%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 560px;
+        gap: 32px;
+        align-items: center;
+        padding: 46px 48px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        letter-spacing: 0.14em;
+        color: var(--c5);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c5);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c5) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 46px;
+        line-height: 1.06;
+        margin: 0 0 16px;
+        letter-spacing: -1.3px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      p.sub {
+        font-size: 17px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 14px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 16px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c5);
+        border-radius: 9px;
+        padding: 9px 13px;
+        color: var(--text);
+      }
+
+      /* ── the proof slot: a week's tank, and the part nobody can account for ── */
+      .rig {
+        background: color-mix(in srgb, var(--panel) 88%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px 17px;
+        font-family: var(--mono);
+      }
+      .rig .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10.5px;
+        letter-spacing: 0.13em;
+        color: var(--c5);
+        margin-bottom: 13px;
+      }
+      .rig .cap span:last-child {
+        color: var(--faint);
+      }
+
+      /* ── dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c5);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul,
+      .dive ol {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c4);
+      }
+      .dive table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0 0 16px;
+      }
+      .dive table td {
+        border-top: 1px solid var(--border);
+        padding: 11px 0;
+        font-size: 15px;
+        line-height: 1.55;
+        vertical-align: top;
+        color: var(--text);
+      }
+      .dive table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.05em;
+        padding-right: 16px;
+      }
+      .fig {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        margin: 0 0 18px;
+      }
+      .fig figcaption {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+        letter-spacing: 0.06em;
+        margin-top: 12px;
+        line-height: 1.5;
+      }
+      .pre {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 12px 14px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--muted);
+        overflow-x: auto;
+        margin: 0 0 16px;
+      }
+      .pre b {
+        color: var(--c5);
+        font-weight: 400;
+      }
+      .pre em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 14px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 19px;
+      }
+      .step .k {
+        flex: 0 0 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+      }
+      .step.you .k {
+        background: var(--c4);
+        color: #0d1117;
+      }
+      .step.bot .k {
+        background: var(--accent);
+        color: #0d1117;
+      }
+      .step .v b {
+        color: var(--text);
+      }
+      .step .v {
+        color: var(--muted);
+      }
+      .say {
+        font-family: var(--mono, monospace);
+        color: var(--c5);
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div class="og-card" data-atom="veil" data-viz-id="poster-card" data-label="veil poster card">
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED TOOL · CLAUDE CODE HOOK</div>
+          <h1 class="hook">
+            Claude never<br /><em>sees the<br />private bits.</em>
+          </h1>
+          <p class="sub">
+            After every tool call, a <b>local</b> model reads the output in pieces and votes on each
+            against a list you wrote in plain English. Blocked pieces become
+            <b>[veil: withheld]</b>.
+          </p>
+          <p class="not">
+            A strong filter, not a guarantee. Any error and it withholds everything.
+          </p>
+          <div class="chip">PostToolUse → veil hook → updatedToolOutput</div>
+        </div>
+        <div class="rig" data-viz-id="the-loop" data-label="one tool output through veil">
+          <div class="cap"><span>ONE INBOX LISTING</span><span>WHAT CLAUDE SEES</span></div>
+          <div class="steps">
+            <div class="step bot">
+              <span class="k">1</span><span class="v"><b>Tool</b> returns 3 emails</span>
+            </div>
+            <div class="step you">
+              <span class="k">!</span
+              ><span class="v"><b>BLOCK</b>: the one from Dana Whitfield</span>
+            </div>
+            <div class="step bot">
+              <span class="k">2</span><span class="v"><b>PASS</b>: the two newsletters</span>
+            </div>
+            <div class="step you">
+              <span class="k">✓</span
+              ><span class="v"
+                ><b>Same shape</b>, one <span class="say">[veil: withheld]</span></span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install veil">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <p class="why">
+        the full setup, run in a clone of
+        <a href="https://github.com/RascalTwo/ai-setup">RascalTwo/ai-setup</a>
+      </p>
+      <pre><span class="l"><span class="c">bun</span> install.ts</span></pre>
+      <p class="needs">needs <code>python3</code> <code>ollama</code></p>
+    </section>
+    <!-- install:end -->
+
+    <div class="scroll-cue">↓ scroll</div>
+
+    <article class="dive">
+      <h2 data-beat="why">Claude reads everything the tools return</h2>
+      <p>
+        Give an agent your mail, your files and a browser and it reads all of it: the doctor's
+        reminder next to the build log, a gift order next to the receipts. Nothing in a tool result
+        is labelled private, and the transcript keeps whatever it saw. Telling the agent "don't look
+        at that" fails the moment a <code>grep</code> or a search result puts it in front of the
+        agent anyway.
+      </p>
+      <p class="m">
+        veil filters at the one place everything passes through: the tool output, before Claude
+        reads it. The judge is a local model, so the private list and the content never leave the
+        machine.
+      </p>
+
+      <h2 data-beat="using">You write a list, then forget it</h2>
+      <ul>
+        <li>
+          <b>The list</b> is <code>~/.config/veil/private.md</code>, plain English, one thing per
+          line, such as "Anything to, from, or about Dana Whitfield" or "Gifts I'm buying for Sam".
+          Be concrete: name people, products and kinds of documents.
+        </li>
+        <li>
+          <b>Off by default</b> until it's fast enough for everyday use: a big output can hit the 60
+          s deadline and be withheld whole. A statusline widget shows the state: 👁 watching, grey 🙈
+          off, yellow 👁⚠ failing closed.
+        </li>
+        <li>
+          <b>Switch it</b> with <code>veil on</code> / <code>veil off</code> for this herdr pane,
+          <code>veil on --all</code> for everywhere, <code>VEIL=on claude</code> for one session,
+          and <code>veil status</code> to ask (on, off or down). Claude may switch it only when you
+          ask in chat.
+        </li>
+        <li>
+          <b>Check a model</b> with <code>python3 eval/run_eval.py [model:think ...]</code>: about
+          120 fake chunks scored for leaks and over-blocking.
+        </li>
+      </ul>
+
+      <h2 data-beat="limits">A strong filter, not a guarantee</h2>
+      <ul>
+        <li>
+          <b>It knows what a 9B model knows.</b> <code>qwen3.5:9b</code> passed "Cracking the Coding
+          Interview" under "interview prep" because it did not recognise the title; spelled out in
+          the list, it blocks it.
+        </li>
+        <li>
+          <b>Wording matters.</b> "statements, balances and debts" let a payroll-deposit row of a
+          bank CSV through; "statements and transactions (any deposit, payment or charge)" blocked
+          it.
+        </li>
+        <li>
+          <b>The queue can fail it closed.</b> Ollama here runs one request at a time and finishes
+          requests from killed clients, so other local-model work can push veil past 60 s. It then
+          withholds everything until the queue drains.
+        </li>
+        <li>
+          <b>Counts are not rewritten.</b> A <code>resultSizeEstimate</code> still says how many
+          emails there were. Images are withheld whole, never cropped.
+        </li>
+        <li>
+          <b>Eval, 36 GB Mac, 2026-10-30:</b> one chunk per call leaks 3 of about 120 (2 with the
+          specific list) and over-blocks 2 to 8% in about 115 s. Eight chunks per call leaks 18.
+          <code>gemma4:12b</code> leaks 3 but takes 2113 s. Thinking on is minutes per page, so it
+          is off.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>Integrates with</td>
+            <td>
+              <b>Claude Code</b>: a <code>PostToolUse</code> hook (matcher <code>.*</code>, every
+              tool, subagents too, timeout 90 s) running <code>veil hook</code>, and a
+              <b>statusline</b> widget, <code>tools/statusline/statusline-veil.sh</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <code>python3</code> and <code>ollama</code> (with <code>qwen3.5:9b</code> pulled).
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <code>~/.agents/state/veil/</code>: the <code>down</code> marker while failing closed,
+              per-pane on/off switches, and the eval reports. The private list itself lives outside
+              the repo and outside this folder, in <code>~/.config/veil/</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>
+              <b>Yes</b>, <code>deletion-policy: delete</code>: it only holds the failure marker,
+              switches and reports, all rebuilt on use. Your private list is not part of this state.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One tool output, end to end</h2>
+      <p>
+        Claude Code fires <code>PostToolUse</code> after a tool returns, and runs
+        <code>veil hook</code> with the call as JSON on stdin. <code>main</code> hands it to
+        <code>hook</code>, which calls <code>scrub</code>; whatever it prints as
+        <code>updatedToolOutput</code> replaces the output Claude sees, and the transcript on disk
+        stores that cleaned version.
+      </p>
+      <figure class="fig" data-viz-id="veil-flow" data-label="veil flow">
+        <svg
+          viewBox="0 0 900 330"
+          width="100%"
+          role="img"
+          aria-label="Tool output is cut into units, each voted PASS or BLOCK by Ollama, rebuilt with markers, and returned as updatedToolOutput; any error blanks everything"
+          font-family="ui-monospace, monospace"
+        >
+          <g data-viz-id="n-tool" data-label="tool output">
+            <rect
+              x="10"
+              y="30"
+              width="150"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="85" y="62" text-anchor="middle" fill="#e6edf3" font-size="14">
+              PostToolUse
+            </text>
+            <text x="85" y="82" text-anchor="middle" fill="#8b949e" font-size="12">
+              veil hook (stdin)
+            </text>
+          </g>
+          <g data-viz-id="n-walk" data-label="walk">
+            <rect
+              x="200"
+              y="30"
+              width="170"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="285" y="62" text-anchor="middle" fill="#e6edf3" font-size="14">walk()</text>
+            <text x="285" y="82" text-anchor="middle" fill="#8b949e" font-size="12">
+              cut into units
+            </text>
+          </g>
+          <g data-viz-id="n-judge" data-label="judge">
+            <rect
+              x="410"
+              y="30"
+              width="200"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="510" y="62" text-anchor="middle" fill="#e6edf3" font-size="14">judge()</text>
+            <text x="510" y="82" text-anchor="middle" fill="#8b949e" font-size="12">
+              Ollama qwen3.5:9b, 4 workers
+            </text>
+          </g>
+          <g data-viz-id="n-scrub" data-label="rebuild">
+            <rect
+              x="650"
+              y="30"
+              width="240"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#3fb950"
+              stroke-width="2"
+            />
+            <text x="770" y="62" text-anchor="middle" fill="#e6edf3" font-size="14">
+              scrub() rebuilds
+            </text>
+            <text x="770" y="82" text-anchor="middle" fill="#8b949e" font-size="12">
+              same shape, markers in place
+            </text>
+          </g>
+          <path
+            d="M160 65 H200 M370 65 H410 M610 65 H650"
+            stroke="#8b949e"
+            stroke-width="2"
+            fill="none"
+          />
+          <text x="285" y="128" text-anchor="middle" fill="#8b949e" font-size="12">
+            JSON record / list item, paragraph,
+          </text>
+          <text x="285" y="145" text-anchor="middle" fill="#8b949e" font-size="12">
+            line (long text or 8+ lines), image
+          </text>
+          <text x="510" y="128" text-anchor="middle" fill="#8b949e" font-size="12">
+            PASS or BLOCK per unit vs private.md
+          </text>
+          <text x="770" y="128" text-anchor="middle" fill="#8b949e" font-size="12">
+            BLOCK: [veil: withheld] / withheld.png
+          </text>
+          <text x="770" y="145" text-anchor="middle" fill="#8b949e" font-size="12">
+            type, mimeType never touched
+          </text>
+          <path d="M770 160 V190" stroke="#3fb950" stroke-width="2" fill="none" />
+          <g data-viz-id="n-out" data-label="updatedToolOutput">
+            <rect
+              x="650"
+              y="190"
+              width="240"
+              height="50"
+              rx="8"
+              fill="none"
+              stroke="#3fb950"
+              stroke-width="2"
+            />
+            <text x="770" y="220" text-anchor="middle" fill="#e6edf3" font-size="14">
+              updatedToolOutput to Claude
+            </text>
+          </g>
+          <g data-viz-id="n-fail" data-label="fail closed">
+            <rect
+              x="200"
+              y="270"
+              width="500"
+              height="50"
+              rx="8"
+              fill="none"
+              stroke="#f85149"
+              stroke-width="2"
+              stroke-dasharray="6 4"
+            />
+            <text x="450" y="291" text-anchor="middle" fill="#e6edf3" font-size="14">
+              any error, or the 60 s watchdog: blank() everything
+            </text>
+            <text x="450" y="309" text-anchor="middle" fill="#8b949e" font-size="12">
+              writes ~/.agents/state/veil/down, macOS notification
+            </text>
+          </g>
+          <path
+            d="M510 100 V270 M285 100 V270"
+            stroke="#f85149"
+            stroke-width="1.5"
+            stroke-dasharray="4 4"
+            fill="none"
+          />
+          <path
+            d="M700 295 H770 V240"
+            stroke="#f85149"
+            stroke-width="1.5"
+            stroke-dasharray="4 4"
+            fill="none"
+          />
+        </svg>
+        <figcaption>
+          Solid path: normal. Dashed red: every failure ends at the same place, an output with
+          everything withheld.
+        </figcaption>
+      </figure>
+      <ol>
+        <li>
+          <b>Switch check.</b> <code>veil hook</code> returns at once if <code>VEIL=off</code> or
+          the pane or global switch is off. Otherwise it starts a 60 s watchdog
+          (<code>DEADLINE</code>).
+        </li>
+        <li>
+          <b>Self-protection.</b> If the call mentions <code>config/veil</code>, the whole output is
+          withheld. A chunk that contains a line of the private list is withheld without asking the
+          model.
+        </li>
+        <li>
+          <b>Cut.</b> <code>walk()</code> traverses the output and keeps its shape. A record small
+          enough to judge whole (an email, an order) gets one vote, so a sender and its subject are
+          judged together; text goes by paragraph; a long paragraph or one of 8+ lines (CSV,
+          <code>ls</code>, logs) goes line by line; each image gets one vote. Units are capped at
+          <code>MAX_CHUNK</code> = 2000 characters.
+        </li>
+        <li>
+          <b>Vote.</b> <code>judge()</code> sends each unit to Ollama's
+          <code>qwen3.5:9b</code> (thinking off, schema-constrained to PASS or BLOCK), 4 requests at
+          a time, with the private list in the prompt. One chunk per call: batching 8 per call
+          leaked 18.
+        </li>
+        <li>
+          <b>Rebuild.</b> <code>scrub()</code> swaps each BLOCK for
+          <code>[veil: withheld]</code> (images get <code>withheld.png</code>). The fields
+          <code>type</code>, <code>mimeType</code>, <code>media_type</code> and
+          <code>mime_type</code> (the STRUCTURAL set) are never touched, because Claude Code drops a
+          replacement of the wrong shape.
+        </li>
+        <li>
+          <b>Fail closed.</b> Claude Code passes the <i>original</i> output through if a hook
+          crashes, times out, prints bad JSON, returns the wrong shape or exits 2 (tested on
+          2.1.314), so veil does not rely on it. An Ollama failure or bad reply makes
+          <code>blank()</code> withhold every string and image, keeping the exact shape. It writes
+          <code>down</code> and shows a notification at most every 5 minutes, and the statusline
+          turns yellow 👁⚠. The watchdog answers at 60 s, before Claude Code's 90 s timeout.
+        </li>
+      </ol>
+      <p class="m">
+        Example from the fake eval fixtures: in an inbox listing, "re: dinner friday?" from Dana
+        Whitfield is withheld as one record while the newsletters pass, and the screenshot of Dana's
+        thread comes back as the withheld picture.
+      </p>
+    </article>
+
+    <script type="module" src="/_kit/poster.js"></script>
+  </body>
+</html>

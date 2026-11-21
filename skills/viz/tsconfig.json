@@ -1,0 +1,15 @@
+{
+  "//": "The skill's OWN TypeScript (cli, lib, commands, maintainer, tests). Bun strips types and never checks them, so this file is what makes them mean something: `bun run typecheck`, and tests/skill-types.test.ts holds it in the suite. Flags match STRICT in lib/verify/types.ts (a test keeps them in step) except the backend's one deviation. The kit (kit/src) is checked by sync:kit with browser settings; vizzes by `viz verify`.",
+  "compilerOptions": {
+    "strict": true, "noUncheckedIndexedAccess": true, "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true, "noImplicitReturns": true, "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "noUnusedLocals": true, "noUnusedParameters": true,
+    "allowUnreachableCode": false, "allowUnusedLabels": false,
+    "isolatedModules": true, "verbatimModuleSyntax": true, "skipLibCheck": true,
+    "moduleDetection": "force", "target": "ES2022", "module": "ESNext", "moduleResolution": "Bundler",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"], "types": ["bun"], "allowImportingTsExtensions": true, "noEmit": true
+  },
+  "include": ["*.ts", "lib/**/*.ts", "commands/**/*.ts", "maintainer/**/*.ts", "tests/**/*.ts", "types/*.d.ts"],
+  "exclude": ["node_modules", "viz-pages", ".mcpb-dist", ".verify", "kit", "tests/fixtures", "tests/.tmp-*"]
+}

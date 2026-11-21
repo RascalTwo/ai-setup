@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>r2-test-kit — one coverage report, and which test ran which line</title>
+    <meta name="viz:uid" content="v-a64535b7089d" />
+    <meta name="viz:posture" content="local" />
+    <meta name="viz:listed" content="unlisted" />
+    <meta name="viz:title" content="r2-test-kit" />
+    <meta
+      name="viz:description"
+      content="r2-test-kit counts Istanbul coverage in vitest and Playwright, records it per test, and merges it into one report, one floor and a test-to-line map."
+    />
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* Card + dive. transform:scale() does not shrink the layout box, so poster.css
+     collapses #fit's height off the same --s. */
+      :root {
+        --s: 1;
+        --gone: #5a6474;
+        --kept: var(--c5);
+        --ask: var(--c4);
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -12%,
+            color-mix(in srgb, var(--c5) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 112%,
+            color-mix(in srgb, var(--c4) 13%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 560px;
+        gap: 32px;
+        align-items: center;
+        padding: 46px 48px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        letter-spacing: 0.14em;
+        color: var(--c5);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c5);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c5) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 46px;
+        line-height: 1.06;
+        margin: 0 0 16px;
+        letter-spacing: -1.3px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      p.sub {
+        font-size: 17px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 14px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 16px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c5);
+        border-radius: 9px;
+        padding: 9px 13px;
+        color: var(--text);
+      }
+
+      /* ── the proof slot: a week's tank, and the part nobody can account for ── */
+      .rig {
+        background: color-mix(in srgb, var(--panel) 88%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px 17px;
+        font-family: var(--mono);
+      }
+      .rig .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10.5px;
+        letter-spacing: 0.13em;
+        color: var(--c5);
+        margin-bottom: 13px;
+      }
+      .rig .cap span:last-child {
+        color: var(--faint);
+      }
+
+      /* ── dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c5);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul,
+      .dive ol {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c4);
+      }
+      .dive table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0 0 16px;
+      }
+      .dive table td {
+        border-top: 1px solid var(--border);
+        padding: 11px 0;
+        font-size: 15px;
+        line-height: 1.55;
+        vertical-align: top;
+        color: var(--text);
+      }
+      .dive table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.05em;
+        padding-right: 16px;
+      }
+      .fig {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        margin: 0 0 18px;
+      }
+      .fig figcaption {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+        letter-spacing: 0.06em;
+        margin-top: 12px;
+        line-height: 1.5;
+      }
+      .pre {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 12px 14px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--muted);
+        overflow-x: auto;
+        margin: 0 0 16px;
+      }
+      .pre b {
+        color: var(--c5);
+        font-weight: 400;
+      }
+      .pre em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 14px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 19px;
+      }
+      .step .k {
+        flex: 0 0 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+      }
+      .step.you .k {
+        background: var(--c4);
+        color: #0d1117;
+      }
+      .step.bot .k {
+        background: var(--accent);
+        color: #0d1117;
+      }
+      .step .v b {
+        color: var(--text);
+      }
+      .step .v {
+        color: var(--muted);
+      }
+      .say {
+        font-family: var(--mono, monospace);
+        color: var(--c5);
+      }
+    </style>
+    <style>
+      .rig .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        font-size: 13px;
+        line-height: 1.5;
+        padding: 9px 0;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .rig .row:first-of-type {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .rig .row b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .rig .row .bad {
+        color: var(--c4);
+        white-space: nowrap;
+      }
+      .rig .row .ok {
+        color: var(--c5);
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="r2-test-kit"
+        data-viz-id="poster-card"
+        data-label="r2-test-kit poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED TOOL · R2-TEST-KIT</div>
+          <h1 class="hook">
+            Three kinds of test.<br /><em>One report, and which test ran which line.</em>
+          </h1>
+          <p class="sub">
+            <b>r2-test-kit</b> counts Istanbul coverage in vitest and Playwright, records it per
+            test, and merges it into one report, one floor and one exit code.
+          </p>
+          <p class="not">
+            Vite apps only. Not a test runner and not a bundler plugin for anything else.
+          </p>
+          <div class="chip">src/*.tsx → istanbul() → per-test records → merge + cov-map</div>
+        </div>
+        <div class="rig" data-viz-id="the-query" data-label="a line asked which tests ran it">
+          <div class="cap"><span>COV-MAP --LINE</span><span>example/src/App.tsx:21</span></div>
+          <div class="row">
+            <span
+              ><b>.b0.0</b> the check <code>amount &gt; 50</code><br />journeys/checkout.ts,
+              App.test.tsx</span
+            ><span class="ok">2 tests</span>
+          </div>
+          <div class="row">
+            <span><b>.b0.1</b> “Free shipping” shown<br />journeys/checkout.ts</span
+            ><span class="ok">1 test</span>
+          </div>
+          <div class="row">
+            <span><b>A line no test ran</b><br />says so, not nothing</span
+            ><span class="bad">(no test ran it)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install r2-test-kit">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <p class="why">
+        the full setup, run in a clone of
+        <a href="https://github.com/RascalTwo/ai-setup">RascalTwo/ai-setup</a>
+      </p>
+      <pre><span class="l"><span class="c">bun</span> install.ts</span></pre>
+      <p class="needs">needs <code>node</code> <code>npm</code></p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓ scroll</div>
+
+    <article class="dive">
+      <h2 data-beat="why">
+        Each runner measured coverage alone, and none could say which test did it
+      </h2>
+      <p>
+        A Vite app with component tests in vitest and journeys in Playwright has two coverage
+        numbers that cannot be added, and no single list of every test. Each runner also reports a
+        total, so you cannot ask the two questions that matter when a test changes: what did this
+        one test run, and which tests would notice if I changed this line or this side of an
+        <code>if</code>.
+      </p>
+      <p>
+        No package did this for Vite, JSX and two runners together, so the glue is written once
+        here. <code>r2-test-kit</code> is what
+        <code>r2-app-stack</code> (<code>reference/test-stack.md</code>) calls for: one check
+        command that ends in one list of every test, one coverage report across logic, component and
+        browser tests, and one exit code.
+      </p>
+      <p class="m">
+        <code>example/</code> is a working app wired with it, and its <code>npm run check</code> is
+        the kit's end-to-end test.
+      </p>
+
+      <h2 data-beat="using">Four lines in the app, one script</h2>
+      <p>Install from the folder, since the kit is not published yet:</p>
+      <div class="pre">
+        npm install -D <b>--install-links</b> ~/path/to/ai-setup/tools/r2-test-kit<br />
+        npx playwright install chromium --only-shell
+      </div>
+      <ul>
+        <li>
+          <b>vite.config.ts:</b> <code>mode === "test" &amp;&amp; istanbul()</code> in
+          <code>plugins</code>, and <code>setupFiles: ["@rascaltwo/r2-test-kit/vitest"]</code> in
+          <code>test</code>.
+        </li>
+        <li>
+          <b>journeys:</b> import <code>test</code> and <code>expect</code> from
+          <code>@rascaltwo/r2-test-kit/playwright</code>, and have Playwright's web server build
+          with <code>vite build --mode test</code> so the page is instrumented.
+        </li>
+        <li>
+          <b>allurerc.mjs:</b>
+          <code>export default allure({ name: "my app", minTestsCount: 5 })</code>.
+        </li>
+        <li>
+          <b>package.json:</b> <code>check</code> is
+          <code
+            >run-s --continue-on-error clean format lint types test:unit test:e2e coverage cov-map
+            results</code
+          >, with <code>coverage</code> = <code>r2-test-kit merge</code> and <code>cov-map</code> =
+          <code>r2-test-kit cov-map --build</code>.
+        </li>
+      </ul>
+      <div class="pre">
+        <b>npx r2-test-kit cov-map --test</b> "adding a mug" what one test ran, per file<br />
+        <b>npx r2-test-kit cov-map --line</b> src/App.tsx:21 which tests ran that line
+      </div>
+      <p class="m">
+        Copy <code>example/vite.config.ts</code> and <code>example/playwright.config.ts</code>.
+        <code>clean</code> comes first so a renamed test's old record is not counted again, and
+        <code>--continue-on-error</code> means one failing step does not hide the rest.
+      </p>
+
+      <h2 data-beat="limits">What it won't do</h2>
+      <ul>
+        <li>
+          <b>Vite only.</b> Another bundler needs its own Istanbul plugin
+          (<code>babel-plugin-istanbul</code>) feeding the same records. Not built.
+        </li>
+        <li>
+          <b>No <code>test.concurrent</code>.</b> Tests in one vitest file must run one at a time,
+          or their counters mix.
+        </li>
+        <li>
+          <b>Playwright reads the <code>page</code> fixture only.</b> A page a test opens itself is
+          not counted, and a page left for another origin keeps its stash there.
+        </li>
+        <li>
+          <b>About 5 MB per page.</b> A page's counters must fit in <code>sessionStorage</code>. If
+          not, the test fails with
+          <code>r2-test-kit: a page's coverage did not fit in sessionStorage…</code> rather than
+          reporting less.
+        </li>
+        <li>
+          <b>A browser test has no load record.</b> Each test loads the page fresh, so start-up code
+          is credited to every browser test, because each one really ran it.
+        </li>
+        <li>
+          <b>Unloaded files are found only under <code>src/</code>.</b> Code elsewhere that nothing
+          loaded is not added at 0%.
+        </li>
+        <li>
+          <b>Not published.</b> You install it from this folder, with <code>--install-links</code>:
+          a symlinked kit imports its own vitest, not yours, and its hooks never run.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>Integrates with</td>
+            <td>
+              <b>vite</b>: the <code>istanbul()</code> plugin. <b>vitest</b>: a setup file.
+              <b>playwright</b>: a test fixture. <b>allure</b>: the <code>allurerc</code> preset.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <code>node</code> and <code>npm</code>. Vitest and Playwright are the app's own peer
+              dependencies; <code>example/package.json</code> pins what was tested (vitest 5.1.0,
+              Vite 8.3.8, Playwright 1.65.1, Allure 3.33.0).
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>None.</b> It keeps no state folder of its own. Everything it writes goes into the
+              app it is installed in, under <code>out/</code>, plus
+              <code>coverage-floor.json</code> at the app root.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>
+              <code>out/</code> yes, <code>clean</code> removes it on every run. Keep
+              <code>coverage-floor.json</code>: it is the floor, and you commit it.
+            </td>
+          </tr>
+          <tr>
+            <td>Settings</td>
+            <td>
+              Optional <code>r2-test-kit.config.mjs</code> at the app root: <code>include</code>,
+              <code>inputs</code>, <code>floorFile</code>, <code>reportDir</code>. Filters are
+              functions, not globs: a glob matches nothing under a dot-folder, without telling you.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One test's coverage, from source to a floor</h2>
+      <p class="m">
+        Everything is plain Node ESM in <code>tools/r2-test-kit/src/</code>: <code>vite.mjs</code>,
+        <code>vitest-setup.mjs</code>, <code>playwright.mjs</code>, <code>record.mjs</code>,
+        <code>merge.mjs</code>, <code>floor.mjs</code>, <code>cov-map.mjs</code>.
+      </p>
+      <figure class="fig">
+        <svg
+          viewBox="0 0 760 450"
+          width="100%"
+          role="img"
+          aria-label="r2-test-kit: istanbul() instruments source; vitest's setup file and Playwright's fixture write one record per test under out/coverage; merge makes one report and a floor, cov-map makes the test to line map"
+        >
+          <defs>
+            <marker
+              id="ah"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="#58a6ff" />
+            </marker>
+          </defs>
+          <g data-viz-id="node-source" data-label="source files">
+            <rect
+              x="10"
+              y="10"
+              width="190"
+              height="56"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="105" y="34" text-anchor="middle" fill="#e6edf3" font-size="14">
+              src/*.ts, *.tsx
+            </text>
+            <text x="105" y="54" text-anchor="middle" fill="#8b949e" font-size="12">
+              original, uncompiled
+            </text>
+          </g>
+          <g data-viz-id="node-istanbul" data-label="istanbul plugin">
+            <rect
+              x="290"
+              y="10"
+              width="300"
+              height="56"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="440" y="34" text-anchor="middle" fill="#e6edf3" font-size="14">
+              istanbul() pre-transform
+            </text>
+            <text x="440" y="54" text-anchor="middle" fill="#8b949e" font-size="12">
+              enforce: pre, so counters are in source lines
+            </text>
+          </g>
+          <g data-viz-id="node-vitest" data-label="vitest setup file">
+            <rect
+              x="10"
+              y="130"
+              width="350"
+              height="92"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="185" y="154" text-anchor="middle" fill="#e6edf3" font-size="14">
+              vitest setup file (SSR transform)
+            </text>
+            <text x="185" y="178" text-anchor="middle" fill="#8b949e" font-size="12">
+              beforeEach: snapshot globalThis.__coverage__
+            </text>
+            <text x="185" y="196" text-anchor="middle" fill="#8b949e" font-size="12">
+              afterEach: diff = this test's record
+            </text>
+            <text x="185" y="214" text-anchor="middle" fill="#8b949e" font-size="12">
+              between tests: one "(load) file" record
+            </text>
+          </g>
+          <g data-viz-id="node-playwright" data-label="Playwright fixture">
+            <rect
+              x="400"
+              y="130"
+              width="350"
+              height="92"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="575" y="154" text-anchor="middle" fill="#e6edf3" font-size="14">
+              Playwright fixture (vite build --mode test)
+            </text>
+            <text x="575" y="178" text-anchor="middle" fill="#8b949e" font-size="12">
+              pagehide: page writes counters to sessionStorage
+            </text>
+            <text x="575" y="196" text-anchor="middle" fill="#8b949e" font-size="12">
+              test end: last page + every stash, summed
+            </text>
+            <text x="575" y="214" text-anchor="middle" fill="#8b949e" font-size="12">
+              too big for 5 MB: the test fails
+            </text>
+          </g>
+          <g data-viz-id="node-records" data-label="records on disk">
+            <rect
+              x="140"
+              y="270"
+              width="480"
+              height="62"
+              rx="8"
+              fill="none"
+              stroke="#3fb950"
+              stroke-width="2"
+            />
+            <text x="380" y="294" text-anchor="middle" fill="#e6edf3" font-size="14">
+              out/coverage/ unit · e2e · meta
+            </text>
+            <text x="380" y="314" text-anchor="middle" fill="#8b949e" font-size="12">
+              one JSON per test, moved counters only; meta/ keeps each file's static map once
+            </text>
+          </g>
+          <g data-viz-id="node-merge" data-label="merge">
+            <rect
+              x="10"
+              y="372"
+              width="350"
+              height="68"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="185" y="396" text-anchor="middle" fill="#e6edf3" font-size="14">
+              r2-test-kit merge
+            </text>
+            <text x="185" y="416" text-anchor="middle" fill="#8b949e" font-size="12">
+              out/coverage/merged: lcov, HTML, text
+            </text>
+            <text x="185" y="432" text-anchor="middle" fill="#8b949e" font-size="12">
+              then coverage-floor.json: below fails
+            </text>
+          </g>
+          <g data-viz-id="node-covmap" data-label="cov-map">
+            <rect
+              x="400"
+              y="372"
+              width="350"
+              height="68"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="575" y="396" text-anchor="middle" fill="#e6edf3" font-size="14">
+              r2-test-kit cov-map
+            </text>
+            <text x="575" y="416" text-anchor="middle" fill="#8b949e" font-size="12">
+              out/pertest/map.json
+            </text>
+            <text x="575" y="432" text-anchor="middle" fill="#8b949e" font-size="12">
+              test ↔ line, function and branch arm
+            </text>
+          </g>
+          <path
+            d="M200 38 L290 38"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M380 66 L240 130"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M500 66 L520 130"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M185 222 L300 270"
+            stroke="#3fb950"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M575 222 L460 270"
+            stroke="#3fb950"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M300 332 L185 372"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M460 332 L575 372"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+        </svg>
+        <figcaption>
+          Blue: code and commands. Amber: where counters are taken. Green: what lands on disk. The
+          two runners never share a process; the files in <code>out/coverage/</code> are the only
+          meeting point.
+        </figcaption>
+      </figure>
+      <ol>
+        <li>
+          <b>Instrument the original source.</b> <code>istanbul()</code> (a Vite plugin,
+          <code>enforce: "pre"</code>) runs <code>istanbul-lib-instrument</code> on each
+          <code>.ts</code>/<code>.tsx</code> before TypeScript and JSX are compiled, so counters sit
+          in source coordinates with no source-map step, and a JSX <code>&amp;&amp;</code> arm is a
+          real branch. It runs for SSR transforms too, which is how vitest loads modules. It skips
+          <code>node_modules</code> and anything the <code>include</code> filter rejects (default:
+          <code>src/**</code> minus tests, <code>.d.ts</code> and <code>main.*</code>). Counters
+          accumulate in <code>globalThis.__coverage__</code>.
+        </li>
+        <li>
+          <b>Vitest: diff around each test.</b> <code>vitest-setup.mjs</code> keeps a
+          <code>snapshot()</code> of the counters. <code>afterEach</code> calls
+          <code>diff(mark, cov)</code> and writes the difference as that test's record to
+          <code>out/coverage/unit</code>. Whatever ran between tests (imports, hooks around the
+          file) is added up and written once at <code>afterAll</code> as
+          <code>(load) &lt;test file&gt;</code>, which counts in the report and is credited to no
+          test.
+        </li>
+        <li>
+          <b>Playwright: carry counters across navigations.</b> A full navigation throws the page's
+          <code>window</code> away. So an init script listens for <code>pagehide</code> and writes
+          <code>__coverage__</code> into <code>sessionStorage</code> as <code>__r2cov:N</code>,
+          which is synchronous and survives a same-origin navigation. When the test ends, the auto
+          fixture evaluates in the last page, takes its own counters plus every stash, sums them,
+          and writes the record to <code>out/coverage/e2e</code>. A call from the page back to
+          Playwright on <code>pagehide</code> never arrives, and reading the page while its
+          navigation request is held hangs; both were tried and measured.
+        </li>
+        <li>
+          <b>One record format.</b> <code>writeRecord()</code> stores
+          <code>{ runner, name, load, files }</code> per test: only counters that moved, plus
+          <code>m</code>, a hash that points at the file's static map (statements, functions,
+          branches) written once to <code>out/coverage/meta/&lt;m&gt;.json</code>. The record's file
+          name comes from the test name, so a rerun replaces its own record.
+        </li>
+        <li>
+          <b>Merge into one report.</b> <code>r2-test-kit merge</code> checks every input folder
+          (<code>coverage input missing</code> if absent, <code>coverage input empty</code> if no
+          test saved coverage, usually a build without <code>--mode test</code>), rebuilds full
+          Istanbul file coverage from each record and its static map with <code>hydrate()</code>,
+          and adds every included <code>src/</code> file nothing loaded, at 0%. It writes
+          <code>lcov.info</code>, HTML and <code>coverage-final.json</code> to
+          <code>out/coverage/merged</code> and prints a text table.
+        </li>
+        <li>
+          <b>Check the floor.</b> <code>coverage-floor.json</code> holds totals for lines,
+          statements, functions and branches. Below it, merge prints
+          <code>COVERAGE FLOOR: lines 80% &lt; 90%</code> and exits 1. Above it, the file is
+          rewritten with the new totals (commit that). Equal leaves it alone. It is checked on
+          totals, not per file.
+        </li>
+        <li>
+          <b>Map tests to lines.</b> <code>cov-map --build</code> turns each record's non-zero
+          counters into keys per file: a line <code>N</code>, a function <code>N#name</code>, a
+          branch arm <code>N.bBLOCK.ARM</code>, and writes <code>out/pertest/map.json</code>.
+          <code>--test</code> and <code>--line</code> read it back. A function no test called has a
+          zero counter in every record, so nobody is credited for it. V8 coverage over-credits that
+          case, which is why it was ruled out.
+        </li>
+      </ol>
+      <p class="m">
+        The kit's own tests hold 100% lines, branches, functions and statements:
+        <code>npm install &amp;&amp; npx vitest run --coverage</code> in the kit, and
+        <code>cd example &amp;&amp; npm ci &amp;&amp; npm run check</code> end to end.
+      </p>
+    </article>
+    <script type="module" src="/_kit/poster.js"></script>
+  </body>
+</html>

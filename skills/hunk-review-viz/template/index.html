@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hunk review</title>
+    <!-- A review of someone's code stays on this machine. -->
+    <meta name="viz:posture" content="local" />
+    <meta name="viz:listed" content="unlisted" />
+    <meta name="viz:title" content="Hunk review" />
+    <meta
+      name="viz:description"
+      content="Review commits file by file and hunk by hunk; approvals and flags survive rewrites. Made by hunk-review-viz."
+    />
+    <meta
+      name="viz:tests"
+      content="smoke: a review of git commits; inputs are mark buttons, notes, the commit rail and j/k/a/c/q keys"
+    />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="review.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="title">
+        <h1 id="name">Loading review…</h1>
+        <div class="sub" id="repos"></div>
+      </div>
+      <div class="progress-wrap">
+        <div
+          class="progress"
+          id="progress"
+          data-viz-id="progress"
+          data-label="review progress"
+        ></div>
+        <div class="totals" id="totals"></div>
+      </div>
+      <div class="actions">
+        <button id="refresh" title="Re-read git (after you pushed)">↻ Refresh</button>
+        <button id="send" class="primary" title="Tell the agent you're done with this pass">
+          Send review
+        </button>
+      </div>
+    </header>
+    <div class="legend" id="legend"></div>
+    <div class="layout">
+      <nav class="rail" id="rail" aria-label="Commits"></nav>
+      <main id="main"></main>
+    </div>
+    <div class="keys">
+      <b>j</b>/<b>k</b> hunk · <b>J</b>/<b>K</b> file · <b>n</b>/<b>p</b> commit · <b>a</b> approve
+      · <b>c</b> change this · <b>q</b> question · <b>o</b> fold · <b>[</b>/<b>]</b> more lines ·
+      <b>?</b> all keys · Alt-click or 🎙 to comment
+    </div>
+    <div id="help" class="help" hidden></div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

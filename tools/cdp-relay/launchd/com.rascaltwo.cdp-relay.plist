@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  cdp-relay: focus-safe CDP relay between agent-browser and the user's Chrome. Always on. See ../README.md.
+  It runs an installed COPY (with its node_modules): launchd may not read ~/Desktop (TCC), where the repo lives.
+  Paths are checked in as /Users/YOUR-USER/... — launchd does not expand $HOME. Substitute before installing.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.rascaltwo.cdp-relay</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/node</string>
+        <string>/Users/YOUR-USER/.agents/state/cdp-relay/cdp-relay.js</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR-USER/.agents/state/cdp-relay/relay.log</string>
+</dict>
+</plist>

@@ -1,0 +1,14 @@
+{
+  "name": "app-panel",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/client": "^2.4.0",
+    "@modelcontextprotocol/ext-apps": "2.0.3",
+    "@modelcontextprotocol/server": "^2.4.0",
+    "zod": "^4.2.0"
+  }
+}

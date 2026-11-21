@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "module": "esnext",
+    "target": "esnext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "types": ["bun"],
+    "paths": { "@viz/kit": ["../viz/kit/viz.js"], "@viz/kit/*": ["../viz/kit/*"] }
+  }
+}

@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>agent-skill-to-gemini-skill — any Agent Skill, loadable in the Gemini app</title>
+    <meta name="viz:uid" content="v-8d2f38289a1d" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="agent-skill-to-gemini-skill" />
+    <meta
+      name="viz:description"
+      content="agent-skill-to-gemini-skill converts any Agent Skill folder into one the Gemini app accepts and loads: text inlined into SKILL.md, images kept, Gemini's upload rules checked, a byte-stable zip out."
+    />
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* Card + dive. transform:scale() does not shrink the layout box, so poster.css
+     collapses #fit's height off the same --s. */
+      :root {
+        --s: 1;
+        --gone: #5a6474;
+        --kept: var(--c5);
+        --ask: var(--c4);
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -12%,
+            color-mix(in srgb, var(--c5) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 112%,
+            color-mix(in srgb, var(--c4) 13%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 560px;
+        gap: 32px;
+        align-items: center;
+        padding: 46px 48px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        letter-spacing: 0.14em;
+        color: var(--c5);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c5);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c5) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 46px;
+        line-height: 1.06;
+        margin: 0 0 16px;
+        letter-spacing: -1.3px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      p.sub {
+        font-size: 17px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 14px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 16px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c5);
+        border-radius: 9px;
+        padding: 9px 13px;
+        color: var(--text);
+      }
+
+      /* ── the proof slot: a week's tank, and the part nobody can account for ── */
+      .rig {
+        background: color-mix(in srgb, var(--panel) 88%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px 17px;
+        font-family: var(--mono);
+      }
+      .rig .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10.5px;
+        letter-spacing: 0.13em;
+        color: var(--c5);
+        margin-bottom: 13px;
+      }
+      .rig .cap span:last-child {
+        color: var(--faint);
+      }
+
+      /* ── dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c5);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul,
+      .dive ol {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c4);
+      }
+      .dive table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0 0 16px;
+      }
+      .dive table td {
+        border-top: 1px solid var(--border);
+        padding: 11px 0;
+        font-size: 15px;
+        line-height: 1.55;
+        vertical-align: top;
+        color: var(--text);
+      }
+      .dive table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.05em;
+        padding-right: 16px;
+      }
+      .fig {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        margin: 0 0 18px;
+      }
+      .fig figcaption {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+        letter-spacing: 0.06em;
+        margin-top: 12px;
+        line-height: 1.5;
+      }
+      .pre {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 12px 14px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--muted);
+        overflow-x: auto;
+        margin: 0 0 16px;
+      }
+      .pre b {
+        color: var(--c5);
+        font-weight: 400;
+      }
+      .pre em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 14px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 19px;
+      }
+      .step .k {
+        flex: 0 0 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+      }
+      .step.you .k {
+        background: var(--c4);
+        color: #0d1117;
+      }
+      .step.bot .k {
+        background: var(--accent);
+        color: #0d1117;
+      }
+      .step .v b {
+        color: var(--text);
+      }
+      .step .v {
+        color: var(--muted);
+      }
+      .say {
+        font-family: var(--mono, monospace);
+        color: var(--c5);
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="agent-skill-to-gemini-skill"
+        data-viz-id="poster-card"
+        data-label="agent-skill-to-gemini-skill poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED TOOL · PYTHON SCRIPT</div>
+          <h1 class="hook">
+            Gems are gone.<br /><em>Your skill<br />still loads.</em>
+          </h1>
+          <p class="sub">
+            The Gemini app loads only <b>SKILL.md</b> and images. This folds every other text file
+            into SKILL.md, checks Gemini's upload rules, and zips it.
+          </p>
+          <p class="not">One command, any skill folder, nothing to install beyond python3.</p>
+          <div class="chip">agent-skill-to-gemini-skill.py my-skill → dist/gemini/my-skill.zip</div>
+        </div>
+        <div
+          class="rig"
+          data-viz-id="the-loop"
+          data-label="one skill through agent-skill-to-gemini-skill"
+        >
+          <div class="cap"><span>ONE SKILL</span><span>WHAT HAPPENS</span></div>
+          <div class="steps">
+            <div class="step bot">
+              <span class="k">1</span
+              ><span class="v"
+                ><b>references/</b>, scripts, CSS: <span class="say">inlined</span></span
+              >
+            </div>
+            <div class="step you">
+              <span class="k">2</span><span class="v"><b>Images</b> kept as files</span>
+            </div>
+            <div class="step bot">
+              <span class="k">3</span
+              ><span class="v"><b>Fonts, wasm</b> dropped, with a warning</span>
+            </div>
+            <div class="step you">
+              <span class="k">✓</span><span class="v"><b>≤ 100 files</b>, 47 types, zip out</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section
+      class="install"
+      data-viz-id="install-strip"
+      data-label="how to install agent-skill-to-gemini-skill"
+    >
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <p class="why">
+        the full setup, run in a clone of
+        <a href="https://github.com/RascalTwo/ai-setup">RascalTwo/ai-setup</a>
+      </p>
+      <pre><span class="l"><span class="c">bun</span> install.ts</span></pre>
+      <p class="needs">needs <code>python3</code></p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓ scroll</div>
+
+    <article class="dive">
+      <h2 data-beat="why">Gemini said yes to the upload, then couldn't load it</h2>
+      <p>
+        Gems are being retired: personal accounts lose them on 2026-12-17, Workspace accounts in
+        2027. Gemini skills take the same <code>SKILL.md</code> folders as every other AI, so the
+        obvious move is to upload the skill. On 2026-10-23 that broke two ways. A skill with fonts
+        was refused outright ("unsupported file type"), and a skill whose upload succeeded failed in
+        chat ("the skill failed to load") because it held a Markdown file in
+        <code>references/</code>.
+      </p>
+      <p class="m">
+        Seven test skills settled it: Gemini loads <code>SKILL.md</code> and images, nothing else.
+        This tool reshapes any skill to fit.
+      </p>
+
+      <h2 data-beat="using">Point it at a folder</h2>
+      <ul>
+        <li>
+          <code
+            >python3 tools/agent-skill-to-gemini-skill/agent-skill-to-gemini-skill.py path/to/skill
+            --out dist/gemini</code
+          >
+          writes <code>dist/gemini/&lt;name&gt;/</code> and <code>&lt;name&gt;.zip</code>. Upload
+          the zip in Gemini under <b>Customize → Skills → Upload</b>, then call it with
+          <code>@name</code>.
+        </li>
+        <li>
+          <b>Too many files?</b> Add a <code>.geminiignore</code> to the skill (gitignore-style
+          globs, <code>!</code> re-includes) or pass <code>--exclude GLOB</code>.
+        </li>
+        <li><b>Exit 1</b> means a rule is broken; each one is printed with a ✗.</li>
+        <li>
+          Test:
+          <code>sh tools/agent-skill-to-gemini-skill/agent-skill-to-gemini-skill.test.sh</code>.
+        </li>
+      </ul>
+
+      <h2 data-beat="limits">What it won't do</h2>
+      <ul>
+        <li>
+          <b>It doesn't rewrite instructions.</b> "Run <code>scripts/x.sh</code>" still says so, and
+          Gemini's sandbox has no network.
+        </li>
+        <li><b>It doesn't host images.</b> More than 99 need ignoring or a home on the web.</li>
+        <li><b>It doesn't upload.</b> Gemini has no skill API; you upload the zip.</li>
+        <li><b>PDFs</b> are kept as files but weren't tested at load time.</li>
+        <li>
+          <b>The rules are a snapshot</b> of Gemini build 20261022.15. A real upload is the final
+          test.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>Integrates with</td>
+            <td><b>The Gemini app</b>: its output is uploaded by hand as a skill.</td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <code>python3</code> (standard library only), and <code>git</code> when the skill is
+              in a repo.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>None. It writes only the <code>--out</code> folder you give it.</td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>Yes: the output is rebuilt from the skill on every run.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One skill folder, end to end</h2>
+      <p class="m">
+        <code>convert(src, out, excludes)</code> in <code>agent-skill-to-gemini-skill.py</code> does
+        it in one pass.
+      </p>
+      <figure class="fig">
+        <svg
+          viewBox="0 0 760 230"
+          width="100%"
+          role="img"
+          aria-label="agent-skill-to-gemini-skill pipeline from file list to zip"
+        >
+          <defs>
+            <marker
+              id="ah"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="#58a6ff" />
+            </marker>
+          </defs>
+          <g data-viz-id="n-list" data-label="list files">
+            <rect
+              x="10"
+              y="80"
+              width="160"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="90" y="110" text-anchor="middle" fill="#e6edf3" font-size="14">
+              git ls-files
+            </text>
+            <text x="90" y="130" text-anchor="middle" fill="#8b949e" font-size="12">
+              minus junk + ignore
+            </text>
+          </g>
+          <g data-viz-id="n-sort" data-label="sort files">
+            <rect
+              x="205"
+              y="80"
+              width="160"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#58a6ff"
+              stroke-width="2"
+            />
+            <text x="285" y="110" text-anchor="middle" fill="#e6edf3" font-size="14">
+              image / text / binary
+            </text>
+            <text x="285" y="130" text-anchor="middle" fill="#8b949e" font-size="12">
+              keep / inline / drop
+            </text>
+          </g>
+          <g data-viz-id="n-check" data-label="check rules">
+            <rect
+              x="400"
+              y="80"
+              width="160"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="480" y="110" text-anchor="middle" fill="#e6edf3" font-size="14">rules</text>
+            <text x="480" y="130" text-anchor="middle" fill="#8b949e" font-size="12">
+              name · 100 · 100 MiB · 47
+            </text>
+          </g>
+          <g data-viz-id="n-zip" data-label="write zip">
+            <rect
+              x="595"
+              y="80"
+              width="155"
+              height="70"
+              rx="8"
+              fill="none"
+              stroke="#3fb950"
+              stroke-width="2"
+            />
+            <text x="672" y="110" text-anchor="middle" fill="#e6edf3" font-size="14">
+              folder + zip
+            </text>
+            <text x="672" y="130" text-anchor="middle" fill="#8b949e" font-size="12">
+              fixed timestamps
+            </text>
+          </g>
+          <path
+            d="M170 115 L205 115"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M365 115 L400 115"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M560 115 L595 115"
+            stroke="#58a6ff"
+            stroke-width="2"
+            fill="none"
+            marker-end="url(#ah)"
+          />
+          <text x="400" y="190" fill="#8b949e" font-size="12">any ✗ → still written, exit 1</text>
+        </svg>
+        <figcaption>
+          The output is written even when a rule fails, so you can see what Gemini would get.
+        </figcaption>
+      </figure>
+      <ol>
+        <li>
+          <b>List.</b> <code>source_files()</code> runs <code>git ls-files -z</code> in the skill;
+          outside a repo it walks the folder. <code>is_junk()</code> drops <code>.DS_Store</code>,
+          <code>Thumbs.db</code>, <code>desktop.ini</code>, <code>._*</code> and
+          <code>__MACOSX/</code>; <code>ignored()</code> applies <code>.geminiignore</code> then
+          <code>--exclude</code>, last match wins.
+        </li>
+        <li>
+          <b>Sort.</b> Extensions in <code>KEEP</code> (images, PDF) stay files. Anything else that
+          decodes as UTF-8 is inlined; the rest is dropped and named on stderr.
+        </li>
+        <li>
+          <b>Inline.</b> Each text file becomes <code>## FILE: &lt;path&gt;</code> plus a fenced
+          block, the fence one backtick longer than any run inside it. A one-line note above the
+          body tells the model to read those sections where it names a path.
+        </li>
+        <li>
+          <b>Check.</b> <code>NAME_RE</code> on the name, then the file count against 100, total
+          bytes against 104857600, and each remaining extension against <code>ALLOWED</code>, the 47
+          read from Gemini's upload code.
+        </li>
+        <li>
+          <b>Write.</b> <code>&lt;out&gt;/&lt;name&gt;/</code> is replaced, and the zip gets the
+          folder at the top with every entry stamped 2026-01-01, so the same skill always yields the
+          same bytes.
+        </li>
+      </ol>
+    </article>
+    <script type="module" src="/_kit/poster.js"></script>
+  </body>
+</html>

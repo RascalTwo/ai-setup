@@ -1,0 +1,897 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>r2-adr — the decision gets written down in the same commit</title>
+    <meta name="viz:uid" content="v-3530909cd613" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="r2-adr" />
+    <meta
+      name="viz:description"
+      content="Architecture Decision Records the house way: Vercel's format, our rules on top. The agent writes the ADR in the same change as the decision, without asking."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      :root {
+        --s: 1;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -8%,
+            color-mix(in srgb, var(--c4) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 110%,
+            color-mix(in srgb, var(--c5) 13%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 500px;
+        gap: 36px;
+        align-items: center;
+        padding: 50px 58px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--c4);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c4);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c4) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 50px;
+        line-height: 1.05;
+        margin: 0 0 18px;
+        letter-spacing: -1.4px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c5);
+      }
+      p.sub {
+        font-size: 18px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 16px;
+        max-width: 470px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 14.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 18px;
+        max-width: 470px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 14px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c4);
+        border-radius: 9px;
+        padding: 9px 14px;
+        color: var(--text);
+      }
+
+      /* the card's proof: one real ADR file, its parts labelled with who owns them */
+      .adr {
+        background: color-mix(in srgb, var(--panel) 86%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px 15px;
+        font-family: var(--mono);
+      }
+      .adr .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        letter-spacing: 0.13em;
+        color: var(--c4);
+        margin-bottom: 12px;
+      }
+      .adr .cap span:last-child {
+        color: var(--faint);
+      }
+      .adr .file {
+        font-size: 12.5px;
+        color: var(--text);
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+      }
+      .adr .row {
+        display: grid;
+        grid-template-columns: 1fr 112px;
+        gap: 12px;
+        align-items: center;
+        padding: 7px 10px;
+        margin-bottom: 6px;
+        border-radius: 6px;
+        font-size: 12.5px;
+        border-left: 3px solid var(--c4);
+        background: color-mix(in srgb, var(--c4) 9%, transparent);
+      }
+      .adr .row.up {
+        border-left-color: var(--c5);
+        background: color-mix(in srgb, var(--c5) 10%, transparent);
+      }
+      .adr .row .own {
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-align: right;
+        color: var(--c4);
+      }
+      .adr .row.up .own {
+        color: var(--c5);
+      }
+      .adr .row b {
+        color: #fff;
+        font-weight: 600;
+      }
+      .adr .row.h {
+        font-size: 14px;
+        background: none;
+        border-left-color: transparent;
+        padding-left: 0;
+      }
+      .adr .stat {
+        margin-top: 12px;
+        padding-top: 11px;
+        border-top: 1px solid var(--border);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        font-size: 11.5px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+      .adr .stat b {
+        display: block;
+        font-size: 12px;
+        margin-bottom: 2px;
+        color: var(--good);
+      }
+      .adr .stat .ts b {
+        color: var(--warn);
+      }
+
+      /* dive */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c4);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c5);
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+      table.lint td:first-child {
+        width: 200px;
+        color: var(--text);
+        font-size: 12.5px;
+      }
+      table.lint td:last-child {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        min-height: 190px;
+      }
+      .fig svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 46px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--c5);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="skill-r2-adr"
+        data-viz-id="poster-card"
+        data-label="the r2-adr card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>SKILL · R2-ADR</div>
+          <h1 class="hook">
+            The decision gets<br />written down <em>in the<br />same commit.</em>
+          </h1>
+          <p class="sub">
+            Vercel's ADR format, our rules on top. <b>No asking, no index, no numbers</b> — the
+            agent writes it and names it in the handover.
+          </p>
+          <p class="not">
+            ai-setup had <b>1 ADR</b>. timeline-studio had <b>23</b>. The only trigger lived two
+            skills away from where the work happens.
+          </p>
+          <div class="chip">bun ~/.claude/skills/r2-adr/scripts/adr-lint.ts</div>
+        </div>
+
+        <div
+          class="adr"
+          data-viz-id="adr-anatomy"
+          data-label="one ADR file, each part tagged with whose rule it is"
+        >
+          <div class="cap">
+            <span>ONE ADR, WHOSE RULE IS WHOSE</span><span>FILE · docs/adr/</span>
+          </div>
+          <div class="file">2026-11-13-run-builds-in-worktrees.md</div>
+          <div class="row">
+            <span><b>filename</b> dated the day written</span><span class="own">OURS</span>
+          </div>
+          <div class="row h"><span># Run builds in worktrees</span><span></span></div>
+          <div class="row">
+            <span><b>Status:</b> Accepted, 2026-11-13</span><span class="own">OURS</span>
+          </div>
+          <div class="row up">
+            <span><b>## Context and Problem Statement</b></span
+            ><span class="own">VERCEL'S</span>
+          </div>
+          <div class="row up">
+            <span><b>## Decision</b></span
+            ><span class="own">VERCEL'S</span>
+          </div>
+          <div class="row up">
+            <span><b>## Alternatives Considered</b></span
+            ><span class="own">VERCEL'S</span>
+          </div>
+          <div class="stat">
+            <div class="ts"><b>Fires on</b>a decision another developer would question</div>
+            <div><b>Never</b>asks first, and never blocks a review</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install r2-adr">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <pre><span class="l"><span class="c">npx</span> skills add <span class="r">RascalTwo/ai-setup</span> <span class="f">-g</span> <span class="f">-s</span> r2-adr</span></pre>
+      <p class="needs">needs <code>bun</code> <code>git</code></p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">One repo had 1 ADR, another had 23</h2>
+      <p>
+        ADRs got written unevenly, and the unevenness had a cause. <code>ai-setup</code> had
+        <b>one</b>. <code>timeline-studio</code> had <b>twenty-three</b>. Same author, same agents,
+        same habits otherwise.
+      </p>
+      <p>
+        The only trigger lived in Matt Pocock's <code>domain-modeling</code> skill: a three-part
+        test, <em>hard to reverse</em> and <em>surprising</em> and <em>a real trade-off</em>. It is
+        a good test. But it sat in a skill that loads when someone is already thinking about a
+        domain model, and it reached everything else <b>indirectly, through grill-me-viz</b>. A
+        change that made a questionable decision during ordinary building never walked past it.
+      </p>
+      <p>
+        The contrast case is Grey Lovelace's Decky repo: <b>35 ADRs in six days</b>. Its trigger was
+        shorter and blunter, <em>"a decision another developer would question"</em>, and it sat in
+        <code>CONTRIBUTING.md</code>, which Claude Code loads on every session. The record got
+        written because the rule was already in the room.
+      </p>
+      <p class="m">
+        <code>r2-adr</code> keeps Decky's trigger and puts it where the work happens, and borrows
+        the format from the one published ADR skill that matched what was wanted.
+      </p>
+
+      <h2 data-beat="using">It fires on four things, and none are a command</h2>
+      <ul>
+        <li>
+          <b>A change makes a decision another developer would question.</b> A dependency, a
+          pattern, a convention, a rejected obvious approach, a constraint the code can't show. The
+          agent writes the ADR <b>in the same change, without asking</b>, then names it in the
+          handover: <em>"Recorded <code>docs/adr/2026-11-13-run-builds-in-worktrees.md</code>"</em>.
+          You delete a wrong one in review.
+        </li>
+        <li>
+          <b>Before changing code an ADR governs.</b> List <code>docs/adr/</code>, read every ADR
+          whose title touches it, follow it.
+        </li>
+        <li><b>Superseding</b> an ADR when the decision itself changes.</li>
+        <li>
+          <b>Reviewing</b> a change for a missing ADR, and <b>migrating</b> old numbered ADRs to the
+          dated shape.
+        </li>
+      </ul>
+      <p>
+        The rule is not left to the skill alone. It is also written into <code>AGENTS.md</code> §3,
+        Kelpie's build prompt, <code>r2-pr</code>'s body template, <code>r2-gauntlet</code>'s review
+        pass and <code>grill-me-viz</code>, so it is met wherever the work starts.
+      </p>
+      <p class="m">
+        Work that follows an existing pattern or an existing ADR needs no new one. The trigger is
+        about <em>questionable</em> decisions, not every decision.
+      </p>
+
+      <h2 data-beat="limits">What r2-adr refuses to do</h2>
+      <ul>
+        <li>
+          <b>No index file.</b> No <code>README.md</code> listing, no <code>--update-index</code>.
+          An index is a second place to forget; the dated filenames sort themselves.
+        </li>
+        <li>
+          <b>It does not migrate a team's or client's repo on its own.</b> Numbered ADRs there are
+          migrated only after the team agrees. The lint will still flag them.
+        </li>
+        <li>
+          <b>A missing ADR is a warning, never a block.</b> The review pass names the decision and
+          the ADR it needs, and the change still ships.
+        </li>
+        <li>
+          <b>It does not invent a format.</b> Section headings, the template and the review
+          checklist come from upstream. Only the filename, the Status line and the trigger are ours.
+        </li>
+        <li>
+          <b>Migrated alternatives are reconstructed, and say so.</b> An old record that never
+          listed alternatives gets them rebuilt from code and history, with a line in More
+          Information labelling that.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/r2-adr/SKILL.md</code> holds our overrides and the step list.
+              <code>skills/r2-adr/upstream/</code> is Vercel's <code>adr-skill</code>, vendored
+              unedited under Apache-2.0 from <code>vercel/ai</code> at <code>7aae3c3</code>, with
+              <code>SKILL.md</code> renamed <code>UPSTREAM-SKILL.md</code> so no loader registers it
+              twice. <code>PROVENANCE.md</code> records the commit and the upgrade command.
+            </td>
+          </tr>
+          <tr>
+            <td>The lint</td>
+            <td>
+              <code>skills/r2-adr/scripts/adr-lint.ts</code> and its <code>adr-lint.test.ts</code>,
+              wired into the pre-commit and CI check table.
+            </td>
+          </tr>
+          <tr>
+            <td>Declared</td>
+            <td>
+              <code>kind: skill</code>, <code>state: false</code>, <code>requires.commands</code>:
+              bun, git.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>None.</b> It reads <code>docs/adr/</code> in whatever repo you are in and keeps
+              nothing between runs. Nothing to clean up.
+            </td>
+          </tr>
+          <tr>
+            <td>Kept fresh</td>
+            <td>
+              <code>upgrade-ai-setup</code> runs a <code>gh api</code> query for new commits under
+              <code>skills/adr-skill</code> in <code>vercel/ai</code> and proposes a re-copy when it
+              finds one. Vercel marks the skill <code>internal</code>, so
+              <code>npx skills update</code> never would.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">Two layers, six steps, one lint</h2>
+      <p class="m">
+        First what is whose, then what happens on a change that makes a decision, then what the
+        linter will refuse.
+      </p>
+
+      <h3>Our rules over their format</h3>
+      <div
+        class="fig"
+        data-viz-id="layers-figure"
+        data-label="diagram: r2-adr's SKILL.md overrides sit on top of the vendored upstream"
+      >
+        <div class="stage">
+          <svg
+            viewBox="0 0 630 330"
+            role="img"
+            aria-label="Two stacked layers. The top layer, r2-adr's SKILL.md, holds the folder, filename, Status line, trigger and no-asking rules and wins every conflict. The bottom layer, upstream, is Vercel's vendored adr-skill with the template, the review checklist, the conventions, and two scripts that are skipped."
+          >
+            <defs>
+              <marker
+                id="ra-a"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto"
+              >
+                <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)" />
+              </marker>
+            </defs>
+            <g font-family="var(--mono)" font-size="12">
+              <rect
+                x="10"
+                y="8"
+                width="610"
+                height="140"
+                rx="10"
+                fill="color-mix(in srgb, var(--c4) 10%, transparent)"
+                stroke="var(--c4)"
+                data-viz-id="layer-ours"
+                data-label="our layer: SKILL.md overrides"
+              />
+              <text x="26" y="30" fill="var(--c4)" letter-spacing="1.6" font-size="11">
+                OURS · skills/r2-adr/SKILL.md · WINS ON CONFLICT
+              </text>
+              <g fill="#0b0f16" stroke="var(--border)">
+                <rect x="26" y="44" width="136" height="42" rx="6" />
+                <rect x="172" y="44" width="136" height="42" rx="6" />
+                <rect x="318" y="44" width="136" height="42" rx="6" />
+                <rect x="464" y="44" width="142" height="42" rx="6" />
+                <rect x="26" y="94" width="136" height="42" rx="6" />
+                <rect x="172" y="94" width="136" height="42" rx="6" />
+                <rect x="318" y="94" width="136" height="42" rx="6" />
+                <rect x="464" y="94" width="142" height="42" rx="6" />
+              </g>
+              <g fill="var(--text)" text-anchor="middle">
+                <text x="94" y="62">folder</text>
+                <text x="240" y="62">filename</text>
+                <text x="386" y="62">Status line</text>
+                <text x="535" y="62">trigger</text>
+                <text x="94" y="112">no asking</text>
+                <text x="240" y="112">supersede</text>
+                <text x="386" y="112">review = warn</text>
+                <text x="535" y="112">migration</text>
+              </g>
+              <g fill="var(--muted)" text-anchor="middle" font-size="10.5">
+                <text x="94" y="77">docs/adr/</text>
+                <text x="240" y="77">YYYY-MM-DD-verb</text>
+                <text x="386" y="77">Accepted, date</text>
+                <text x="535" y="77">would be questioned</text>
+                <text x="94" y="127">same commit</text>
+                <text x="240" y="127">both link</text>
+                <text x="386" y="127">never a block</text>
+                <text x="535" y="127">team agrees first</text>
+              </g>
+
+              <path
+                d="M315 148 V 176"
+                stroke="var(--muted)"
+                stroke-width="1.5"
+                marker-end="url(#ra-a)"
+                fill="none"
+              />
+              <text x="328" y="166" fill="var(--muted)" font-size="11">
+                overrides from outside; an upgrade is a re-copy, never a merge
+              </text>
+
+              <rect
+                x="10"
+                y="182"
+                width="610"
+                height="140"
+                rx="10"
+                fill="color-mix(in srgb, var(--c5) 10%, transparent)"
+                stroke="var(--c5)"
+                data-viz-id="layer-upstream"
+                data-label="borrowed layer: vendored upstream adr-skill"
+              />
+              <text x="26" y="204" fill="var(--c5)" letter-spacing="1.6" font-size="11">
+                BORROWED · skills/r2-adr/upstream/ · VERCEL, APACHE-2.0, UNEDITED
+              </text>
+              <g fill="#0b0f16" stroke="var(--border)">
+                <rect x="26" y="218" width="178" height="42" rx="6" />
+                <rect x="214" y="218" width="178" height="42" rx="6" />
+                <rect x="402" y="218" width="204" height="42" rx="6" />
+                <rect x="26" y="268" width="178" height="42" rx="6" stroke-dasharray="4 3" />
+                <rect x="214" y="268" width="178" height="42" rx="6" stroke-dasharray="4 3" />
+                <rect x="402" y="268" width="204" height="42" rx="6" />
+              </g>
+              <g fill="var(--text)" text-anchor="middle">
+                <text x="115" y="236">template</text>
+                <text x="303" y="236">review checklist</text>
+                <text x="504" y="236">conventions, examples</text>
+                <text x="115" y="286" fill="var(--faint)">new_adr.js</text>
+                <text x="303" y="286" fill="var(--faint)">bootstrap_adr.js</text>
+                <text x="504" y="286">UPSTREAM-SKILL.md</text>
+              </g>
+              <g fill="var(--muted)" text-anchor="middle" font-size="10.5">
+                <text x="115" y="250">adr-simple.md</text>
+                <text x="303" y="250">what a good one is</text>
+                <text x="504" y="250">how and when to write</text>
+                <text x="115" y="300">skipped (dashed)</text>
+                <text x="303" y="300">skipped (dashed)</text>
+                <text x="504" y="300">renamed from SKILL.md</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+        <p class="lede">
+          <b>Violet is ours, teal is borrowed.</b> Where the two disagree,
+          <code>SKILL.md</code> wins by saying so. Upstream says merging the pull request accepts an
+          ADR; most work here is committed without one, so our Status line carries the record's own
+          status instead.
+        </p>
+      </div>
+
+      <h3>One change that makes a decision</h3>
+      <div
+        class="fig"
+        data-viz-id="flow-figure"
+        data-label="stepper: the six steps r2-adr follows from consult to handover"
+      >
+        <div class="stage" id="stage"></div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+
+      <h3>What adr-lint checks</h3>
+      <p>
+        <code>adr-lint.ts</code> takes no arguments and finds <code>docs/adr/</code> at the git
+        root, or takes folders and files. It prints <code>ok</code> and exits 0, or one line per
+        problem and exits 1. A repo with no <code>docs/adr/</code> prints
+        <code>ok (no docs/adr)</code>.
+      </p>
+      <table class="where lint">
+        <tbody>
+          <tr>
+            <td>Dated filename</td>
+            <td>
+              <code>YYYY-MM-DD-slug.md</code>, lowercase and dashes, and the date must be a real one
+              (<code>2026-02-31</code> fails).
+            </td>
+          </tr>
+          <tr>
+            <td>Numbered names rejected</td>
+            <td>
+              <code>0007-use-postgres.md</code> fails with a pointer to migrate it. This is the
+              check that surfaces old ADRs.
+            </td>
+          </tr>
+          <tr>
+            <td>H1, then Status</td>
+            <td>
+              Line 1 is <code># Title</code>, no YAML frontmatter, and the next non-blank line
+              matches the Status regex: <code>Accepted</code>, <code>Proposed</code>,
+              <code>Deprecated</code> or <code>Superseded by [file](file)</code>, then a comma and a
+              real date.
+            </td>
+          </tr>
+          <tr>
+            <td>Three sections, in order</td>
+            <td>
+              <code>## Context and Problem Statement</code>, <code>## Decision</code>,
+              <code>## Alternatives Considered</code>. Missing or out of order both fail.
+            </td>
+          </tr>
+          <tr>
+            <td>No placeholders</td>
+            <td>
+              A leftover <code>{TITLE}</code> or template brace fails. Judged outside code fences
+              and inline code, so an ADR may quote markdown.
+            </td>
+          </tr>
+          <tr>
+            <td>Links resolve</td>
+            <td>
+              Every relative <code>.md</code> link must exist next to the file, which is what keeps
+              a <code>Superseded by</code> pointing at something real.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <b>Lint is the floor, not the judge.</b> It checks shape. Whether the decision is worth
+        recording, or the alternatives are honest, is a review job, and a missing ADR only ever
+        earns a warning.
+      </div>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · format by Vercel's
+        adr-skill, rules by us.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

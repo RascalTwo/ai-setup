@@ -1,0 +1,11 @@
+# herdr preferences owned by this repo. Merged into ~/.config/herdr/config.toml
+# by install.ts — NOT symlinked. See settings-map.md for why.
+#
+# Only settings that belong to herdr itself live here. Anything a specific tool
+# needs from herdr (e.g. ttyimgspool's keybinding) ships with that tool.
+
+# Render kitty graphics for attached local clients. Off by default in herdr;
+# without it images are accepted and silently never drawn.
+# REQUIRES A FULL SERVER RESTART — `herdr server reload-config` will not apply it.
+[experimental]
+kitty_graphics = true

@@ -1,0 +1,18 @@
+# The interject key's herdr binding. Merged into ~/.config/herdr/config.toml by
+# install.ts (guarded on the script path, so re-running is a no-op).
+#
+# The counterpart to prefix+m, which runs `voicemode control skip-forward` and
+# ends the turn outright. This one only holds it: press to pause and open the
+# mic, press again to close the mic and carry on from the same word.
+#
+# It runs under voice-mode's own interpreter rather than the system python3,
+# because the capture needs sounddevice and numpy and that venv is the one place
+# they are guaranteed to be — voicemode records with them.
+#
+# `~` is expanded by install.ts — herdr does not expand it in this field.
+
+[[keys.command]]
+key = "prefix+j"
+type = "shell"
+command = "~/.local/share/uv/tools/voice-mode/bin/python ~/.agents/ai-setup/tools/voicemode-hold/interject.py toggle"
+description = "interject without ending the turn"

@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "changes": [],
+  "task": {
+    "project": "",
+    "id": "",
+    "title": "Task title",
+    "folder": ""
+  },
+  "ask": "The impact summary, 2 or 3 plain sentences: who is affected, their life before, their life after, why it matters. No commands, paths or data shapes.",
+  "demo": {
+    "scope": "What it is, then what it isn't, in one plain sentence.",
+    "page": "http://127.0.0.1:5180/<path>/demo-<task-id>/",
+    "personas": [
+      {
+        "id": "P1",
+        "who": "A role, not a name: someone whose experience this change alters",
+        "before": {
+          "text": "What they do today, in one plain sentence.",
+          "capture": "real",
+          "visual": "Replace with the real capture of today (a screenshot, terminal output or transcript saved in this folder, as <img src=\"before/P1.png\">). Brand-new work with nothing to capture: set capture to \"described\" and delete this field."
+        },
+        "after": { "text": "What they will do after, in one plain sentence." }
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "Q1",
+      "text": "Something you are genuinely unsure of, or that is the user's preference. Delete this list if nothing is.",
+      "options": [
+        { "id": "A", "label": "A real option, in plain words" },
+        { "id": "B", "label": "Another real option" }
+      ]
+    }
+  ],
+  "assumptions": [
+    {
+      "id": "A1",
+      "text": "Something you decided without being told.",
+      "visual": "Replace with a picture of this case (inline SVG or HTML), or delete this field if it is not visual."
+    }
+  ],
+  "examples": [
+    {
+      "id": "E1",
+      "kind": "should",
+      "persona": "P1",
+      "text": "A concrete case: a real input and the exact result, in plain words.",
+      "detail": "Optional: the technical side (names, files, mechanics) for anyone who wants it. Delete if not needed.",
+      "visual": "Replace with a picture of this case (inline SVG or HTML), or delete this field if it is not visual."
+    },
+    {
+      "id": "E2",
+      "kind": "should",
+      "persona": "P1",
+      "text": "Another concrete case.",
+      "visual": "Replace with a picture of this case (inline SVG or HTML), or delete this field if it is not visual."
+    },
+    {
+      "id": "E3",
+      "kind": "should",
+      "persona": "P1",
+      "text": "A third.",
+      "visual": "Replace with a picture of this case (inline SVG or HTML), or delete this field if it is not visual."
+    },
+    {
+      "id": "E4",
+      "kind": "shouldnt",
+      "text": "The misreading a sensible person might make.",
+      "visual": "Replace with a picture of this case (inline SVG or HTML), or delete this field if it is not visual."
+    },
+    {
+      "id": "E5",
+      "kind": "shouldnt",
+      "text": "Another thing that must not happen.",
+      "visual": "Replace with a picture of this case (inline SVG or HTML), or delete this field if it is not visual."
+    }
+  ],
+  "visuals": [],
+  "plan": [
+    {
+      "id": "S1",
+      "step": "The first step you expect to take"
+    }
+  ],
+  "signedOffAt": null
+}
