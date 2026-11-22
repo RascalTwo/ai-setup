@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>r2-tts — the voice follows who is listening</title>
+    <meta name="viz:uid" content="v-b72f82298634" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="r2-tts" />
+    <meta
+      name="viz:description"
+      content="r2-tts speaks text to an audio file or serves voicemode's speech endpoint, picking the voice by who will hear it: Joseph hears Harper, everyone else hears Joseph's cloned voice."
+    />
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* Card + dive. transform:scale() does not shrink the layout box, so poster.css
+     collapses #fit's height off the same --s. */
+      :root {
+        --s: 1;
+        --gone: #5a6474;
+        --kept: var(--c5);
+        --ask: var(--c4);
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -12%,
+            color-mix(in srgb, var(--c5) 16%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 112%,
+            color-mix(in srgb, var(--c4) 13%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 560px;
+        gap: 32px;
+        align-items: center;
+        padding: 46px 48px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        letter-spacing: 0.14em;
+        color: var(--c5);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c5);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c5) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 46px;
+        line-height: 1.06;
+        margin: 0 0 16px;
+        letter-spacing: -1.3px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      p.sub {
+        font-size: 17px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 14px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 16px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--c5);
+        border-radius: 9px;
+        padding: 9px 13px;
+        color: var(--text);
+      }
+
+      /* ── the proof slot: a week's tank, and the part nobody can account for ── */
+      .rig {
+        background: color-mix(in srgb, var(--panel) 88%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px 17px;
+        font-family: var(--mono);
+      }
+      .rig .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10.5px;
+        letter-spacing: 0.13em;
+        color: var(--c5);
+        margin-bottom: 13px;
+      }
+      .rig .cap span:last-child {
+        color: var(--faint);
+      }
+
+      /* ── dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c5);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul,
+      .dive ol {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c4);
+      }
+      .dive table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0 0 16px;
+      }
+      .dive table td {
+        border-top: 1px solid var(--border);
+        padding: 11px 0;
+        font-size: 15px;
+        line-height: 1.55;
+        vertical-align: top;
+        color: var(--text);
+      }
+      .dive table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.05em;
+        padding-right: 16px;
+      }
+      .fig {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        margin: 0 0 18px;
+      }
+      .fig figcaption {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+        letter-spacing: 0.06em;
+        margin-top: 12px;
+        line-height: 1.5;
+      }
+      .pre {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 12px 14px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--muted);
+        overflow-x: auto;
+        margin: 0 0 16px;
+      }
+      .pre b {
+        color: var(--c5);
+        font-weight: 400;
+      }
+      .pre em {
+        font-style: normal;
+        color: var(--c4);
+      }
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 14px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 19px;
+      }
+      .step .k {
+        flex: 0 0 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+      }
+      .step.you .k {
+        background: var(--c4);
+        color: #0d1117;
+      }
+      .step.bot .k {
+        background: var(--accent);
+        color: #0d1117;
+      }
+      .step .v b {
+        color: var(--text);
+      }
+      .step .v {
+        color: var(--muted);
+      }
+      .say {
+        font-family: var(--mono, monospace);
+        color: var(--c5);
+      }
+
+      .dive table.nums td:not(:first-child) {
+        font-family: var(--mono);
+        font-size: 13.5px;
+        white-space: nowrap;
+        padding-left: 14px;
+      }
+      .dive table.nums td:first-child {
+        color: var(--muted);
+      }
+      .rig .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        font-size: 15px;
+        padding: 7px 0;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .rig .row b {
+        color: var(--text);
+      }
+      .rig .row .n {
+        color: var(--c5);
+      }
+      .dive table.chains td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        padding-right: 16px;
+      }
+      .dive table.chains td:not(:first-child) {
+        font-size: 14.5px;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="r2-tts"
+        data-viz-id="poster-card"
+        data-label="r2-tts poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · TEXT TO SPEECH</div>
+          <h1 class="hook">Who is listening<br /><em>picks the voice.</em></h1>
+          <p class="sub">
+            Any tool that needs speech says <b>who will hear it</b>. r2-tts gives Joseph a voice
+            that is not his, <b>Harper</b>, and everyone else Joseph's own cloned voice.
+          </p>
+          <p class="not">
+            Not a voice model: one small script that tries speech engines in order until one
+            answers.
+          </p>
+          <div class="chip">r2_tts.py say · serve on 127.0.0.1:8895</div>
+        </div>
+        <div class="rig" data-viz-id="the-rules" data-label="which voice each audience hears">
+          <div class="cap"><span>--audience</span><span>VOICE</span></div>
+          <div class="row"><span>me: Joseph hears it</span><b class="n">Harper</b></div>
+          <div class="row"><span>others: anyone else</span><b class="n">Joseph's clone</b></div>
+          <div class="row"><span>both</span><b>two files</b></div>
+          <div class="row"><span>every clip, any engine</span><b class="n">-16 LUFS</b></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install r2-tts">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <pre><span class="l"><span class="c">npx</span> skills add <span class="r">RascalTwo/ai-setup</span> <span class="f">-g</span> <span class="f">-s</span> r2-tts</span></pre>
+      <p class="needs">
+        needs <code>python3</code> <code>ffmpeg</code> <code>uv</code>
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle"
+          >Zonos3-Mini in ~/.agents/state/r2-tts/zonos3</a
+        >
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle">Qwen3-TTS via mlx-audio</a>
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle"
+          >Ming-3.0-tts on the home PC (ming/README.md)</a
+        >
+      </p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓ scroll</div>
+
+    <article class="dive">
+      <h2 data-beat="why">Four tools each picked their own voice</h2>
+      <p>
+        Text to speech (TTS) is a program that reads written words aloud. Before r2-tts, speech came
+        from four separate places that each chose their own voice and their own engine (an engine is
+        the program that actually makes the sound). voicemode, which lets Joseph talk to the agent,
+        went through a small router that tried a GPU on the home PC and then the Mac. The viz and
+        pr-viz films carried their own copy of the Mac engines. demo-viz read its cards with the
+        browser's built-in voice. anidoodle had a narration tool of its own.
+      </p>
+      <p class="m">
+        Nothing said whose voice a tool should use, and a fix to one engine never reached the
+        others. In blind listening tests (nobody told which clip was which), Joseph's own cloned
+        voice beat every stock voice. But hearing your own voice answer you in a conversation is
+        odd, while a demo for someone else sounds best in your voice. So the choice stopped being
+        "which engine" and became "who is listening".
+      </p>
+
+      <h2 data-beat="using">Say who is listening</h2>
+      <p>
+        A tool runs <code>r2_tts.py say</code> with an audience, some text and an output file. It
+        prints one line of JSON per file written, naming the voice and the engine that made it.
+      </p>
+      <div class="pre">
+        R2TTS=~/.claude/skills/r2-tts/r2_tts.py<br />
+        python3 $R2TTS say <b>--audience others</b> --text "…" --out clip.mp3<br />
+        python3 $R2TTS say <b>--audience both --lean me</b> --text-file s.txt --out clip.wav
+        <em># clip.me.wav (the default) and clip.others.wav</em>
+      </div>
+      <table class="chains">
+        <tbody>
+          <tr>
+            <td>voicemode</td>
+            <td><code>me</code>: its replies come back in Harper.</td>
+          </tr>
+          <tr>
+            <td>grill and spec films</td>
+            <td><code>me</code>: they are for Joseph.</td>
+          </tr>
+          <tr>
+            <td>demo-viz</td>
+            <td>
+              <code>both --lean me</code>: <code>voice.ts</code> pre-renders every story line in
+              both voices, and the 🗣 toggle swaps between them.
+            </td>
+          </tr>
+          <tr>
+            <td>pr-viz</td>
+            <td>
+              <code>both --lean others</code>: through the engine <code>"r2-tts"</code> in
+              <code>~/.config/viz/voices.json</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>anidoodle</td>
+            <td><code>others</code>: films go to other people (provider <code>r2tts</code>).</td>
+          </tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>
+          <b>Emotion</b> (<code>--emotion happy|sad|angry|fear|disgust|surprise</code>): the chain
+          starts at Ming for either voice: in an A/B, Ming's happy beat Zonos's emotion steering. If
+          Ming is away, the rest of the chain speaks the line plainly.
+        </li>
+        <li>
+          <b>Speed</b> (<code>--speed</code>): Qwen3 and Ming speak at it natively; the other
+          engines are retimed with ffmpeg's <code>atempo</code>.
+        </li>
+        <li>
+          <b>Pronunciations</b>: the <code>TTS &lt;regex&gt; &lt;replacement&gt;</code> lines in
+          <code>~/.voicemode/voicemode.env</code> apply to every request and are re-read each time
+          (<code>kubectl</code> becomes "kube control").
+        </li>
+        <li>
+          <b>Check</b>: <code>python3 -B test_r2_tts.py</code> in <code>skills/r2-tts/</code>.
+        </li>
+      </ul>
+
+      <h2 data-beat="limits">What it won't do</h2>
+      <ul>
+        <li>
+          <b>Joseph's voice can be slow to start.</b> The first engine, Zonos3-Mini, takes about 50
+          seconds to load cold, then about 1.5 seconds for each 11 seconds of speech. It needs about
+          6.7 GB of the Mac's memory while loaded and is stopped after 5 idle minutes.
+        </li>
+        <li><b>It doesn't stream.</b> The whole clip is made first, then returned in one piece.</li>
+        <li>
+          <b>Only Ming does tags, pitch and volume.</b> Inline tags such as <code>[Laughter]</code>,
+          plus pitch and volume, start the chain at Ming on the home PC. Every other engine gets the
+          text with the tags stripped out. Emotion above 2.0 broke Zonos takes in testing, so it
+          stays at 2.0.
+        </li>
+        <li>
+          <b>Question tags are slow on Ming.</b> <code>[Question-ei]</code> and its siblings often
+          run on past the end of the sentence. They needed 2 to 3 re-rolls in testing, which is 15
+          to 25 seconds.
+        </li>
+        <li>
+          <b>The laugh isn't his.</b> Joseph's reference clip contains no laugh, so Ming's
+          <code>[Laughter]</code> doesn't sound like him.
+        </li>
+        <li>
+          <b>A home PC that failed stays "down" for up to 30 seconds</b> before it is tried again,
+          so a powered-off PC costs about one second, not a hang.
+        </li>
+        <li>
+          <b>Ming ignores the shared GPU lock.</b> Take <code>gpu.lock</code> yourself before heavy
+          GPU work on the PC.
+        </li>
+        <li>
+          <b>No licence gating.</b> r2-tts does not check whose voice you are asking for; Joseph
+          picks voices himself.
+        </li>
+        <li>
+          <b>The anidoodle hook sits in a third-party skill.</b> An update of that skill may
+          overwrite it.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>Integrates with</td>
+            <td>
+              <b>voicemode</b> (<code>VOICEMODE_TTS_BASE_URLS=http://127.0.0.1:8895/v1</code>),
+              <b>launchd</b> (the job <code>com.rascaltwo.r2-tts</code>), <b>Ollama</b> (phonon,
+              which speaks Harper), <b>viz</b> (the engine <code>"r2-tts"</code> in
+              <code>~/.config/viz/voices.json</code>) and <b>Windows Task Scheduler</b> (<code
+                >ming-tts-server</code
+              >
+              on the home PC, at logon). demo-viz and anidoodle call <code>say</code> directly.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <code>python3</code>, <code>ffmpeg</code> and <code>uv</code>; by hand, Zonos3-Mini in
+              <code>~/.agents/state/r2-tts/zonos3</code>, Qwen3-TTS through mlx-audio, and
+              Ming-3.0-tts on the home PC (its setup is <code>skills/r2-tts/ming/README.md</code>).
+              The Mac side is macOS; the Ming server runs on Windows 10 with WSL2 and an NVIDIA GPU.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <code>~/.agents/state/r2-tts/</code>: <code>serve/</code> (the copy of
+              <code>r2_tts.py</code> that launchd actually runs, because launchd can't read
+              <code>~/Desktop</code>), <code>serve.log</code>, <code>zonos3/</code> (the Zonos
+              server) and the <code>blind*/</code> listening-test clips behind the ranking. On the
+              PC, a folder such as <code>ai-eval\ming-server\</code> holds the Ming server, the
+              reference clip with its transcript, and <code>server.log</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>
+              <b>Not <code>serve/</code> or <code>zonos3/</code></b
+              >, <code>deletion-policy: retain</code>: removing <code>serve/</code> makes the
+              launchd job fail until the script is copied back, and <code>zonos3/</code> is the
+              engine itself. The log and the <code>blind*/</code> clips can go; the clips are only
+              the evidence for the ranking.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One request, end to end</h2>
+      <p class="m">
+        A tool runs <code>r2_tts.py say --audience others --text "…" --out clip.mp3</code>. Joseph's
+        voice has the longest chain, so it is the one to follow.
+      </p>
+      <figure class="fig">
+        <svg
+          viewBox="0 0 760 290"
+          width="100%"
+          role="img"
+          aria-label="The two engine chains: Joseph's voice tries five engines in order, Harper tries three"
+        >
+          <defs>
+            <marker
+              id="ah"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="#d29922" />
+            </marker>
+          </defs>
+          <text x="20" y="26" fill="#8b949e" font-size="12">
+            others hear Joseph's voice: first engine that gives a good take wins
+          </text>
+          <g data-viz-id="n-zonos" data-label="Zonos3-Mini">
+            <rect
+              x="20"
+              y="38"
+              width="124"
+              height="62"
+              rx="8"
+              fill="none"
+              stroke="#3fb950"
+              stroke-width="2"
+            />
+            <text x="82" y="64" text-anchor="middle" fill="#e6edf3" font-size="14">
+              Zonos3-Mini
+            </text>
+            <text x="82" y="84" text-anchor="middle" fill="#8b949e" font-size="11.5">
+              Mac, port 1919
+            </text>
+          </g>
+          <g data-viz-id="n-qwen" data-label="Qwen3-TTS">
+            <rect
+              x="166"
+              y="38"
+              width="124"
+              height="62"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="228" y="64" text-anchor="middle" fill="#e6edf3" font-size="14">Qwen3-TTS</text>
+            <text x="228" y="84" text-anchor="middle" fill="#8b949e" font-size="11.5">
+              Mac, port 8892
+            </text>
+          </g>
+          <g data-viz-id="n-ming" data-label="Ming on the PC">
+            <rect
+              x="312"
+              y="38"
+              width="124"
+              height="62"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="374" y="64" text-anchor="middle" fill="#e6edf3" font-size="14">Ming</text>
+            <text x="374" y="84" text-anchor="middle" fill="#8b949e" font-size="11.5">
+              home PC GPU
+            </text>
+          </g>
+          <g data-viz-id="n-phonon-j" data-label="phonon Harper as Joseph's fallback">
+            <rect
+              x="458"
+              y="38"
+              width="124"
+              height="62"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="520" y="64" text-anchor="middle" fill="#e6edf3" font-size="14">phonon</text>
+            <text x="520" y="84" text-anchor="middle" fill="#8b949e" font-size="11.5">
+              Harper, via Ollama
+            </text>
+          </g>
+          <g data-viz-id="n-say-j" data-label="macOS say as Joseph's last resort">
+            <rect
+              x="604"
+              y="38"
+              width="124"
+              height="62"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="666" y="64" text-anchor="middle" fill="#e6edf3" font-size="14">macOS say</text>
+            <text x="666" y="84" text-anchor="middle" fill="#8b949e" font-size="11.5">
+              always there
+            </text>
+          </g>
+          <path
+            d="M144 69 L166 69"
+            stroke="#d29922"
+            stroke-width="1.5"
+            fill="none"
+            stroke-dasharray="4 3"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M290 69 L312 69"
+            stroke="#d29922"
+            stroke-width="1.5"
+            fill="none"
+            stroke-dasharray="4 3"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M436 69 L458 69"
+            stroke="#d29922"
+            stroke-width="1.5"
+            fill="none"
+            stroke-dasharray="4 3"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M582 69 L604 69"
+            stroke="#d29922"
+            stroke-width="1.5"
+            fill="none"
+            stroke-dasharray="4 3"
+            marker-end="url(#ah)"
+          />
+
+          <text x="20" y="146" fill="#8b949e" font-size="12">
+            Joseph hears Harper: three engines
+          </text>
+          <g data-viz-id="n-phonon-h" data-label="phonon Harper">
+            <rect
+              x="20"
+              y="158"
+              width="124"
+              height="62"
+              rx="8"
+              fill="none"
+              stroke="#3fb950"
+              stroke-width="2"
+            />
+            <text x="82" y="184" text-anchor="middle" fill="#e6edf3" font-size="14">phonon</text>
+            <text x="82" y="204" text-anchor="middle" fill="#8b949e" font-size="11.5">
+              Harper, via Ollama
+            </text>
+          </g>
+          <g data-viz-id="n-ming-h" data-label="Ming US_Emma">
+            <rect
+              x="166"
+              y="158"
+              width="124"
+              height="62"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="228" y="184" text-anchor="middle" fill="#e6edf3" font-size="14">Ming</text>
+            <text x="228" y="204" text-anchor="middle" fill="#8b949e" font-size="11.5">
+              built-in US_Emma
+            </text>
+          </g>
+          <g data-viz-id="n-say-h" data-label="macOS say as Harper's last resort">
+            <rect
+              x="312"
+              y="158"
+              width="124"
+              height="62"
+              rx="8"
+              fill="none"
+              stroke="#d29922"
+              stroke-width="2"
+            />
+            <text x="374" y="184" text-anchor="middle" fill="#e6edf3" font-size="14">
+              macOS say
+            </text>
+            <text x="374" y="204" text-anchor="middle" fill="#8b949e" font-size="11.5">
+              always there
+            </text>
+          </g>
+          <path
+            d="M144 189 L166 189"
+            stroke="#d29922"
+            stroke-width="1.5"
+            fill="none"
+            stroke-dasharray="4 3"
+            marker-end="url(#ah)"
+          />
+          <path
+            d="M290 189 L312 189"
+            stroke="#d29922"
+            stroke-width="1.5"
+            fill="none"
+            stroke-dasharray="4 3"
+            marker-end="url(#ah)"
+          />
+
+          <text x="20" y="262" fill="#8b949e" font-size="12">
+            Green is the first choice. Dashed amber arrows are taken when an engine is away, errors,
+            or gives a bad take.
+          </text>
+        </svg>
+        <figcaption>
+          The chains are the <code>CHAINS</code> table in <code>r2_tts.py</code>.
+          <code>Req.chain()</code> moves Ming to the front when the text has an inline tag, a pitch,
+          a volume, a built-in voice name, or an emotion.
+        </figcaption>
+      </figure>
+      <ol>
+        <li>
+          <b>Find the daemon.</b> <code>speak_one()</code> checks <code>GET /health</code> on
+          127.0.0.1:8895. If <code>serve</code> answers, it posts the request to it, so Zonos and
+          Qwen3 stay loaded between calls. If not, or if <code>R2TTS_LOCAL=1</code>, it runs the
+          engines in its own process and stops any model server it started when it exits.
+        </li>
+        <li>
+          <b>Read the request.</b> <code>do_POST</code> takes <code>POST /v1/audio/speech</code>.
+          <code>request_from_json()</code> turns <code>audience</code> into a voice (<code>me</code>
+          is Harper, <code>others</code> is Joseph). With no <code>audience</code>, as from
+          voicemode, the voice name decides: <code>joseph</code>, or a body carrying
+          <code>ref_audio</code>, is Joseph; a Ming built-in such as <code>US_James</code> is that
+          voice; anything else, such as <code>af_sky</code>, is Harper.
+        </li>
+        <li>
+          <b>Rewrite the text.</b> <code>synthesize()</code> applies the pronunciation rules from
+          <code>voicemode.env</code>, then refuses if nothing is left to say once tags are removed.
+        </li>
+        <li>
+          <b>Walk the chain.</b> For each engine in <code>Req.chain()</code>, in order, it hands
+          over the text (tags stripped for everyone but Ming). The first engine to return audio
+          wins; an exception is logged to <code>Req.tries</code> and the next engine runs. If every
+          engine fails the request ends in a <code>502</code>.
+        </li>
+        <li>
+          <b>Zonos and the re-roll guard.</b> <code>zonos()</code> starts the Zonos server from
+          <code>~/.agents/state/r2-tts/zonos3</code> if it isn't up, and sends the text with the
+          reference clip <code>~/.config/viz/voice-references/joseph-animated.wav</code> at
+          <code>delivery.tempo</code> 2. Then <code>good_take()</code> measures the audio: a length
+          outside 0.4 to 2.5 times the expected (about 19 characters a second) or any pause over 1
+          second is a bad take. It re-rolls the seed (7, 11, 23, 42, so up to 4 tries) before the
+          chain moves on to Qwen3.
+        </li>
+        <li>
+          <b>Ming's own guard.</b> <code>ming()</code> first asks <code>PcHealth</code>, a
+          one-second probe cached for 30 seconds. On the PC <code>ming_server.py</code> loads the
+          model on the first request (about 12 seconds cold, 2 warm) and checks its own takes, with
+          up to 5 re-rolls before it answers <code>502</code> and the chain moves on. It unloads
+          after 10 idle minutes, freeing about 3 GB of video memory.
+        </li>
+        <li>
+          <b>Level and encode.</b> <code>finish()</code> runs ffmpeg once: <code>atempo</code> if
+          the engine couldn't honour the speed, then <code>loudnorm=I=-16</code>, so a quiet Zonos
+          take (about 6 dB below the rest) and a louder Ming take land at the same loudness, then
+          the file format. <code>say</code> writes the file by its extension and prints
+          <code>{"file", "audience", "voice", "engine"}</code>; the daemon returns the same audio
+          with <code>X-Voice-Backend</code> naming the engine.
+        </li>
+        <li>
+          <b>Stay warm, then let go.</b> A reaper thread in <code>serve</code> wakes every 30
+          seconds and stops any model server it started once it has sat idle for 5 minutes.
+        </li>
+        <li>
+          <b>Keep the daemon running.</b> launchd runs the job
+          <code>com.rascaltwo.r2-tts</code> from the installed copy. After editing
+          <code>r2_tts.py</code>, copy it to <code>~/.agents/state/r2-tts/serve/</code> and run
+          <code>launchctl kickstart -k gui/$(id -u)/com.rascaltwo.r2-tts</code>.
+        </li>
+      </ol>
+
+      <h2 data-beat="how">The measured numbers</h2>
+      <p class="m">
+        These come from the Ming evaluation, run before r2-tts: the same six sentences rendered from
+        Joseph's reference clip by Ming on the home PC and by Qwen3 on a heavily loaded Mac, so
+        Qwen3's times are not a clean benchmark. Joseph picked Ming on every sentence.
+      </p>
+      <table class="nums">
+        <tbody>
+          <tr>
+            <td>Short casual line</td>
+            <td>Ming 3.7 s</td>
+            <td>Qwen3 22.1 s</td>
+          </tr>
+          <tr>
+            <td>Technical sentence</td>
+            <td>Ming 8.6 s</td>
+            <td>Qwen3 28.7 s</td>
+          </tr>
+          <tr>
+            <td>Line with a laugh tag</td>
+            <td>Ming 4.7 s</td>
+            <td>Qwen3 31.7 s</td>
+          </tr>
+          <tr>
+            <td>20 second paragraph</td>
+            <td>Ming 30.8 s</td>
+            <td>Qwen3 78.4 s</td>
+          </tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>
+          <b>Ming's model:</b> about 3 GB of video memory after load, a peak of 3.4 GB reserved.
+        </li>
+        <li>
+          <b>Ming's retries:</b> of 28 tag, emotion and speed demos, 11 needed a re-roll. The four
+          <code>[Question-*]</code> tags needed 3 each; most failures were runaways to the 20 second
+          ceiling, one was a 0.3 second early stop.
+        </li>
+        <li>
+          <b>Zonos against Qwen3:</b> in the third blind test Zonos won 3 to 1 (Qwen3 had won the
+          second), and again in the labelled rematch once the gap guard was in. That is why Zonos is
+          first for Joseph's voice. The ranking and the clips are in
+          <code>docs/adr/2026-11-20-pick-the-voice-by-who-hears-it.md</code>.
+        </li>
+      </ul>
+    </article>
+    <script type="module" src="/_kit/poster.js"></script>
+  </body>
+</html>

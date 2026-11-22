@@ -1,0 +1,31 @@
+#!/bin/zsh
+# prefix+c in herdr: ask for a command, open a new tab running it.
+# Empty input = a plain new tab; Ctrl-C = cancel. `--close` (prefix+shift+c)
+# closes the tab as soon as the command exits and returns you to the tab you
+# came from — herdr on its own would land you on whichever tab was last.
+# Runs in a herdr popup; the new tab always opens in the "~" workspace at $HOME, same as claude-tab.
+focused() { herdr tab list | jq -r 'first(.result.tabs[] | select(.focused)) | .tab_id'; }
+
+# `--back <tab>`: typed after the command by --close. Only jump back if you are
+# still looking at this tab — a long command shouldn't yank you from elsewhere.
+if [[ $1 == --back ]]; then
+  [[ $(focused) == $HERDR_TAB_ID ]] && herdr tab focus "$2" >/dev/null
+  exit 0
+fi
+
+cmd=''
+vared -p "${1:+[close on exit] }run> " cmd || exit
+origin=$(focused)
+# Always the "~" workspace (herdr labels a workspace made at $HOME "~"), never whichever one has
+# focus. Gone (its last pane closed)? Recreate it; its first tab is the new tab. Same as claude-tab.
+ws=$(herdr workspace list | jq -r 'first(.result.workspaces[] | select(.label == "~")) | .workspace_id // empty')
+if [[ -n $ws ]]; then
+  pane=$(herdr tab create --workspace "$ws" --cwd ~ --focus | jq -r .result.root_pane.pane_id)
+else
+  out=$(herdr workspace create --cwd ~ --focus)
+  ws=$(jq -r .result.workspace.workspace_id <<<$out); pane=$(jq -r .result.root_pane.pane_id <<<$out)
+fi
+herdr workspace focus "$ws" >/dev/null
+[[ -z $cmd ]] && exit
+[[ $1 == --close ]] && cmd="$cmd; ${0:A} --back $origin; exit"
+exec herdr pane run "$pane" "$cmd"

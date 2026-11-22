@@ -1,0 +1,123 @@
+{
+  "numTotalTests": 8,
+  "numPendingTests": 1,
+  "testResults": [
+    {
+      "name": "/viz/tests/sample.test.ts",
+      "status": "failed",
+      "message": "",
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "The badge"
+          ],
+          "title": "should say it scans",
+          "status": "failed",
+          "failureMessages": [
+            "Error: THEN the badge says it scans — expect(received).toBe(expected)\n    at /viz/tests/sample.test.ts:7:5"
+          ],
+          "location": {
+            "line": 4,
+            "column": 3
+          },
+          "duration": 1200
+        },
+        {
+          "ancestorTitles": [
+            "The badge",
+            "on a bad link"
+          ],
+          "title": "should fall back",
+          "status": "passed",
+          "failureMessages": [],
+          "location": {
+            "line": 13,
+            "column": 3
+          },
+          "duration": 900
+        },
+        {
+          "ancestorTitles": [
+            "Styles"
+          ],
+          "title": "should scan: a",
+          "status": "passed",
+          "failureMessages": [],
+          "location": {
+            "line": 27,
+            "column": 3
+          },
+          "duration": 5600
+        },
+        {
+          "ancestorTitles": [
+            "Styles"
+          ],
+          "title": "should scan: b",
+          "status": "failed",
+          "failureMessages": [
+            "Error: GIVEN style b — no such style\n    at /viz/tests/sample.test.ts:28:5"
+          ],
+          "location": {
+            "line": 27,
+            "column": 3
+          },
+          "duration": 2100
+        },
+        {
+          "ancestorTitles": [
+            "Styles"
+          ],
+          "title": "should fit wide",
+          "status": "passed",
+          "failureMessages": [],
+          "location": {
+            "line": 37,
+            "column": 3
+          },
+          "duration": 300
+        },
+        {
+          "ancestorTitles": [
+            "Styles"
+          ],
+          "title": "should fit tall",
+          "status": "passed",
+          "failureMessages": [],
+          "location": {
+            "line": 37,
+            "column": 3
+          },
+          "duration": 310
+        },
+        {
+          "ancestorTitles": [
+            "Styles"
+          ],
+          "title": "has nothing written",
+          "status": "passed",
+          "failureMessages": [],
+          "location": {
+            "line": 43,
+            "column": 3
+          },
+          "duration": 2
+        },
+        {
+          "ancestorTitles": [
+            "Styles"
+          ],
+          "title": "is parked",
+          "status": "skipped",
+          "failureMessages": [],
+          "location": {
+            "line": 47,
+            "column": 3
+          }
+        }
+      ],
+      "startTime": 1000000,
+      "endTime": 1008000
+    }
+  ]
+}

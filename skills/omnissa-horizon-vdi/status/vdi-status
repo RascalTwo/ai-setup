@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Show what the agent is doing in a one-line strip over the Horizon window's toolbar.
+#   vdi-status "Reading QA logs"     set the message (starts the strip if needed)
+#   vdi-status --idle "Handed back"  green dot: nothing running in the VDI
+#   vdi-status --stop                remove the strip
+set -euo pipefail
+here=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
+state=~/.agents/state/vdi-status; mkdir -p "$state"
+idfile="$state/overlay-id-${CLAUDE_CODE_SESSION_ID:-default}"
+app="${VDI_STATUS_APP:-Omnissa Horizon Client}"
+
+id=$(cat "$idfile" 2>/dev/null || true)
+alive() { [ -n "$id" ] && viz-overlay list --json | jq -e --argjson i "$id" 'any(.[]; .id == $i)' >/dev/null; }
+
+if [ "${1:-}" = "--stop" ]; then
+  alive && viz-overlay stop "$id" >/dev/null; rm -f "$idfile"; exit 0
+fi
+idle=false; [ "${1:-}" = "--idle" ] && { idle=true; shift; }
+msg="${*:-working}"
+
+if ! alive; then
+  id=$(viz-overlay show "$here/strip.html" --target "$app" --when target --no-raise --no-close \
+        --title "VDI status" --json | jq -r '.id')
+  echo "$id" > "$idfile"
+fi
+jq -n --arg t "$msg" --argjson s "$(date +%s)" --argjson idle "$idle" '{text:$t, since:$s, idle:$idle}' \
+  | viz-overlay update "$id" - >/dev/null

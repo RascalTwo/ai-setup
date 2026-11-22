@@ -1,0 +1,1157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>pr-viz — one picture says what a PR is about</title>
+    <meta name="viz:uid" content="v-df03b296cdf3" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="pr-viz" />
+    <meta
+      name="viz:description"
+      content="Draws a PR's hero: one picture of the change's idea in a fixed frame (title, subtitle, repo#PR badge), as a 1920×1080 still and a GIF of at most 6 seconds, made on every PR. The story, a sentence per hunk, lives in the hunk review."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta
+      name="viz:tests"
+      content="smoke: a teaching stepper over the hero pipeline, and a scrubber that seeks a pure draw(t)"
+    />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      /* pr-viz's palette: the hero. A violet accent, and the amber of the one thing the
+         picture points at. */
+      :root {
+        --s: 1;
+        --accent: #bc8cff;
+        --hl: #f2c14e;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            700px 400px at 96% -6%,
+            color-mix(in srgb, var(--accent) 19%, transparent),
+            transparent 62%
+          ),
+          radial-gradient(
+            560px 360px at -4% 112%,
+            color-mix(in srgb, var(--hl) 9%, transparent),
+            transparent 62%
+          ),
+          linear-gradient(165deg, #0a0c12, #0d1117 62%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 456px;
+        grid-template-rows: 1fr auto;
+        gap: 0 44px;
+        padding: 46px 70px 38px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .copy {
+        align-self: center;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 45px;
+        line-height: 1.07;
+        margin: 0 0 18px;
+        letter-spacing: -1.2px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--accent);
+      }
+      p.sub {
+        font-size: 17.5px;
+        line-height: 1.46;
+        color: var(--muted);
+        margin: 0 0 16px;
+        max-width: 560px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 14.5px;
+        color: var(--muted);
+        margin: 0 0 18px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+        line-height: 1.5;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 15px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 9px;
+        padding: 10px 15px;
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the proof slot: a miniature of the hero's fixed frame */
+      .right {
+        align-self: center;
+      }
+      .hero {
+        background: #05070b;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+      }
+      .hero svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .hero text {
+        font-family: var(--sans);
+      }
+      .hero .m {
+        font-family: var(--mono);
+      }
+      .modes {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+      }
+      .modes span {
+        flex: 1;
+        text-align: center;
+        padding: 8px 4px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        background: color-mix(in srgb, var(--panel) 80%, transparent);
+      }
+      .modes span.on {
+        color: #fff;
+        border-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 16%, var(--panel));
+      }
+      .gate {
+        margin-top: 10px;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 9%, transparent);
+        border: 1px solid color-mix(in srgb, var(--good) 38%, transparent);
+        border-radius: 8px;
+        padding: 7px 4px;
+      }
+      /* the hero's own clock: 4 s of build, 2 s of hold */
+      .chapters {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: 4fr 2fr;
+        gap: 4px;
+        margin-top: 18px;
+      }
+      .chapters div {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        padding: 8px 8px 7px;
+        color: var(--muted);
+        border-top: 4px solid color-mix(in srgb, var(--accent) 45%, #1f2530);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .chapters div.hold {
+        color: #fff;
+        border-top-color: var(--accent);
+      }
+
+      .ctrl input[type="range"] {
+        flex: 1;
+        min-width: 200px;
+        accent-color: var(--accent);
+      }
+      #scrubfig .lede {
+        min-height: 52px;
+      }
+
+      /* ── the dive ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      /* a heading is a playhead on a five-beat timeline: why · using · limits · where · how */
+      .dive h2 {
+        --p: 20%;
+        display: flex;
+        flex-direction: column;
+        font-size: 26px;
+        line-height: 1.2;
+        letter-spacing: -0.4px;
+        color: #fff;
+        margin: 56px 0 14px;
+        font-weight: 700;
+      }
+      .dive h2::before {
+        order: -1;
+        content: "";
+        height: 4px;
+        border-radius: 3px;
+        margin-bottom: 14px;
+        background: linear-gradient(90deg, var(--accent) 0 var(--p), #20262f var(--p) 100%);
+      }
+      .dive h2::after {
+        order: -2;
+        content: "beat · " attr(data-beat);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 7px;
+        font-weight: 500;
+      }
+      .dive h2[data-beat="why"] {
+        --p: 20%;
+        margin-top: 18px;
+      }
+      .dive h2[data-beat="using"] {
+        --p: 40%;
+      }
+      .dive h2[data-beat="limits"] {
+        --p: 60%;
+      }
+      .dive h2[data-beat="where"] {
+        --p: 80%;
+      }
+      .dive h2[data-beat="how"] {
+        --p: 100%;
+      }
+      .dive h3 {
+        font-size: 17.5px;
+        color: #fff;
+        margin: 32px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.66;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive a {
+        color: var(--accent);
+      }
+      code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: #e0d2fa;
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 15px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      pre .g {
+        color: var(--good);
+      }
+      pre .r {
+        color: var(--danger);
+      }
+      .callout {
+        border-left: 3px solid var(--hl);
+        background: color-mix(in srgb, var(--hl) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--hl);
+      }
+      table.t {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 14.5px;
+      }
+      table.t th {
+        text-align: left;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        font-weight: 500;
+        padding: 0 10px 8px 0;
+        text-transform: uppercase;
+      }
+      table.t td {
+        border-top: 1px solid var(--border);
+        padding: 9px 12px 9px 0;
+        vertical-align: top;
+        line-height: 1.5;
+      }
+      table.modes-t td:first-child {
+        white-space: nowrap;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: #fff;
+      }
+      table.where td:first-child {
+        width: 138px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+
+      /* ── figures ── */
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 18px;
+        outline: none;
+      }
+      .fig:focus-visible {
+        border-color: var(--accent);
+      }
+      .fig .stage {
+        background: #0b0e15;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 14px 14px 8px;
+      }
+      .fig svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .el {
+        opacity: 0.09;
+        transition: opacity 0.35s;
+      }
+      .el.on {
+        opacity: 0.5;
+      }
+      .el.hot {
+        opacity: 1;
+      }
+      .el.hot rect {
+        stroke: var(--accent);
+        stroke-width: 1.6;
+      }
+      .vsvg-label.l {
+        justify-content: flex-start;
+        text-align: left;
+      }
+      .nl {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .nl b {
+        font-family: var(--mono);
+        color: var(--accent);
+        font-size: 11.5px;
+        letter-spacing: 0.02em;
+        font-weight: 600;
+      }
+      .nl span {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.3;
+      }
+      .fig .detail {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 22px;
+        margin-top: 14px;
+      }
+      .fig .detail h4 {
+        margin: 0 0 6px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        font-weight: 500;
+      }
+      .fig .detail h4.mk {
+        color: var(--good);
+      }
+      .fig .detail h4.rf {
+        color: var(--danger);
+      }
+      .fig .detail p,
+      .fig .detail ul {
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .fig .detail li {
+        font-size: 14px;
+        line-height: 1.45;
+        margin: 0 0 5px;
+      }
+      .fig .detail li::before {
+        content: "✗ ";
+        color: var(--danger);
+      }
+      pre.snip {
+        margin: 14px 0 0;
+        font-size: 11.8px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: #0b0e15;
+      }
+      pre.snip .ln {
+        display: inline-block;
+        min-width: 11.5ch;
+        margin-right: 1.3ch;
+        color: var(--faint);
+        text-align: right;
+      }
+      .fig .lede {
+        font-size: 15px;
+        line-height: 1.58;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 96px;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      .ctrl button,
+      .pushes button {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--text);
+        background: #0b0e15;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 12px;
+        cursor: pointer;
+      }
+      .ctrl button:hover,
+      .pushes button:hover {
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+
+      .foot {
+        margin-top: 54px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+      @media (max-width: 760px) {
+        .dive pre {
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .fig .detail {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="pr-viz"
+        data-viz-id="poster-card"
+        data-label="pr-viz poster card"
+      >
+        <div class="copy">
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · PR-VIZ</div>
+          <h1 class="hook">What is this PR about?<br />Look at<br /><em>one picture.</em></h1>
+          <p class="sub">
+            <b>pr-viz</b> draws the PR's <b>hero</b>: its idea, in one fixed frame, as a
+            <b>1920×1080 still</b> and a <b>GIF of at most 6 s</b>. r2-pr makes one on every PR and
+            puts the GIF right under Why.
+          </p>
+          <p class="not">The hero shows the idea. <b>The hunk review tells the story.</b></p>
+          <div class="trigger"><span>say</span>&nbsp;"pr viz" · "hero for this PR"</div>
+        </div>
+        <div class="right">
+          <div
+            class="hero"
+            data-viz-id="card-hero"
+            data-label="a miniature hero: title, subtitle and badge in the fixed frame, a request retried three times in the drawing area"
+          >
+            <svg
+              viewBox="0 0 456 256"
+              role="img"
+              aria-label="An illustrative hero: Sync retries a flaky fetch"
+            >
+              <rect width="456" height="256" fill="#05070b" />
+              <text x="16" y="34" font-size="18" font-weight="700" fill="#fff">
+                Sync retries a flaky fetch
+              </text>
+              <text x="16" y="55" font-size="11.5" fill="#8b95a7">
+                A flaky API no longer fails the nightly run
+              </text>
+              <rect
+                x="306"
+                y="16"
+                width="134"
+                height="24"
+                rx="12"
+                fill="#10141c"
+                stroke="#2a3140"
+              />
+              <text class="m" x="373" y="32" font-size="10.5" text-anchor="middle" fill="#8b95a7">
+                acme/sync #214
+              </text>
+
+              <g stroke="#2a3140" fill="#0d1017">
+                <rect x="16" y="86" width="104" height="44" rx="7" />
+                <rect x="176" y="86" width="104" height="44" rx="7" />
+                <rect x="336" y="86" width="104" height="44" rx="7" />
+              </g>
+              <g class="m" font-size="11" text-anchor="middle" fill="#bc8cff">
+                <text x="68" y="113">sync()</text>
+                <text x="228" y="113">retrying(…, 6)</text>
+                <text x="388" y="113">GET /items</text>
+              </g>
+              <g stroke="#8b95a7" stroke-width="1.5" fill="none">
+                <path d="M120 108 L174 108" />
+                <path d="M280 108 L334 108" />
+              </g>
+              <g fill="#8b95a7">
+                <path d="M174 108 l-7 -4 v8 z" />
+                <path d="M334 108 l-7 -4 v8 z" />
+              </g>
+
+              <g font-size="11.5" fill="#aab3c2">
+                <text x="176" y="156">attempts</text>
+                <text x="336" y="156">503 · 503 · 200</text>
+              </g>
+              <g class="m" font-size="11" text-anchor="middle">
+                <rect
+                  x="176"
+                  y="164"
+                  width="24"
+                  height="22"
+                  rx="5"
+                  fill="#2a1316"
+                  stroke="#ff7b72"
+                />
+                <rect
+                  x="204"
+                  y="164"
+                  width="24"
+                  height="22"
+                  rx="5"
+                  fill="#2a1316"
+                  stroke="#ff7b72"
+                />
+                <rect
+                  x="232"
+                  y="164"
+                  width="24"
+                  height="22"
+                  rx="5"
+                  fill="#0f2a18"
+                  stroke="#3fb950"
+                />
+                <rect
+                  x="260"
+                  y="164"
+                  width="24"
+                  height="22"
+                  rx="5"
+                  fill="none"
+                  stroke="#2a3140"
+                  stroke-dasharray="3 3"
+                />
+                <text x="188" y="179" fill="#ff7b72">✕</text>
+                <text x="216" y="179" fill="#ff7b72">✕</text>
+                <text x="244" y="179" fill="#3fb950">✓</text>
+              </g>
+
+              <rect x="16" y="204" width="424" height="36" rx="8" fill="none" stroke="#f2c14e" />
+              <text x="30" y="227" font-size="13" fill="#f2c14e">
+                Result: the nightly run finishes
+              </text>
+            </svg>
+          </div>
+          <div class="modes" data-viz-id="card-files" data-label="the two files a hero comes as">
+            <span class="on">HERO.PNG · 1920×1080</span><span>HERO.GIF · ≤ 6 S</span>
+          </div>
+          <div class="gate">✓ the GIF's last frame is the still</div>
+        </div>
+        <div
+          class="chapters"
+          data-viz-id="card-clock"
+          data-label="the hero's clock: 4 seconds of build, then a 2 second hold"
+        >
+          <div>0 – 4 s · BUILD · the drawing draws itself</div>
+          <div class="hold">4 – 6 s · HOLD · the finished still</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section class="install" data-viz-id="install-strip" data-label="how to install pr-viz">
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <pre><span class="l"><span class="c">npx</span> skills add <span class="r">RascalTwo/ai-setup</span> <span class="f">-g</span> <span class="f">-s</span> pr-viz <span class="f">-s</span> viz</span></pre>
+      <p class="needs">needs <code>node</code> <code>ffmpeg</code> <code>npm</code></p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">A picture explains a change quicker than a giant diff.</h2>
+      <p>
+        A PR body is text, and "Files changed" lists files by path. The idea behind the change, what
+        it makes possible or prevents, is the one thing neither shows at a glance. <b>pr-viz</b>
+        draws it: one picture of the idea, in a frame every PR shares.
+      </p>
+      <p>
+        It used to do far more. pr-viz was a narrated film: a tour of every changed line, a review
+        page, a poster and a hero still, all from one <code>plan.json</code>. A full run for one
+        small PR took a 12-minute agent session and 172 tool calls before anything rendered, and the
+        user had not watched one of the films in a long time. The story it told was also being told
+        a second time, because the page the user actually reviews code in, the hunk review, carried
+        only a line per commit and per file.
+      </p>
+      <p>
+        So the skill kept its name and its original point, and gave the other jobs to the tool that
+        serves each reader. What is left is small enough to run on every PR, which is the design: a
+        hero nobody has to ask for.
+      </p>
+
+      <h2 data-beat="using">Say "pr viz". Get a still and a GIF.</h2>
+      <p>
+        Triggers: <code>hero for this PR</code>, <code>pr viz</code>,
+        <code>picture of this change</code>. It also fires without being asked:
+        <b>r2-pr step 5</b> makes the hunk review, the walkthrough and the hero on every PR,
+        hand-opened or Kelpie's. Every hero shares one frame, and only the drawing changes:
+      </p>
+      <table
+        class="t modes-t"
+        data-viz-id="outputs-table"
+        data-label="what a hero is made of and what it comes as"
+      >
+        <thead>
+          <tr>
+            <th>Part</th>
+            <th>What it is</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>the frame</td>
+            <td>
+              Fixed: the title top-left, one subtitle line under it, a repo#PR badge top-right, and
+              a large drawing area below (1760×770 CSS px on a 1920×1080 stage). Never edited per
+              PR.
+            </td>
+          </tr>
+          <tr>
+            <td>hero.png</td>
+            <td>The still: the page's last frame, with no controls, at 1920×1080.</td>
+          </tr>
+          <tr>
+            <td>hero.gif</td>
+            <td>
+              4 s of the drawing building up, then a 2 s hold on the finished picture; it loops; 960
+              px wide, under 5 MB, no sound. Its last frame is the still.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <pre><span class="c"># the whole skill, as commands</span>
+viz create pr-&lt;n&gt;-&lt;slug&gt; --from "$PRVIZ/template"
+<span class="c"># edit hero.json, then drawing.ts</span>
+viz verify .agents/state/viz/&lt;viz&gt;        <span class="c"># until 0 errors</span>
+node "$PRVIZ/scripts/hero.ts" &lt;viz-dir&gt; [--out &lt;prefix&gt;]</pre>
+
+      <h2 data-beat="limits">It draws the idea. It cannot check the idea is true.</h2>
+      <div class="callout">
+        <b>What verify can and cannot see.</b> <code>viz verify</code> passes a drawing that lints,
+        formats and renders without a console error. It cannot tell that the picture says something
+        true, or that a reader can follow it. That is a person reading <code>chapters.png</code>
+        and the full-size PNG, which is a habit, not code.
+      </div>
+      <ul>
+        <li>
+          <b>It makes only the picture.</b> There is no narration, no review page and no
+          <code>plan.json</code> any more. The code tour is
+          <a href="../skill-hunk-review-viz/">hunk-review-viz</a>'s and the PR text is
+          <code>r2-pr</code>'s.
+        </li>
+        <li>
+          <b>It stops at the hand-over.</b> Putting the GIF on a PR is r2-pr's job, and uploading
+          the media is <code>github-attach-media</code>'s.
+        </li>
+        <li>
+          <b>The drawing must be a pure function of t.</b> The page is seeked, not played, so
+          timers, CSS transitions and requestAnimationFrame do not render.
+        </li>
+        <li>
+          <b>The GIF halves everything.</b> It is 960 px wide, so no text under 14 px at 1920, and
+          22 px and up for any label a reader needs. One idea, not every detail.
+        </li>
+        <li>
+          <b>The GIF has a ceiling.</b> Over 5 MB it retries with fewer frames, then fewer colours,
+          and fails naming the size: simplify the drawing, with fewer gradients and less motion.
+        </li>
+        <li>
+          <b>It is local by default.</b> The template ships <code>viz:posture</code> =
+          <code>local</code>, <code>unlisted</code>: a hero of someone's PR is not for the open web
+          unless you decide it is.
+        </li>
+        <li>
+          <b>It costs a render on every PR.</b> That was accepted, in the ADR, over making it only
+          on request. The ADR says to revisit if the hero on every PR proves to be work nobody looks
+          at, which is what ended the film.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">What it leaves behind, and where</h2>
+      <table class="t where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/pr-viz/</code>: <code>SKILL.md</code>; <code>scripts/hero.ts</code>; and
+              <code>template/</code> with <code>index.html</code>, <code>frame.ts</code>,
+              <code>ramp.ts</code>, <code>hero.json</code> and <code>drawing.ts</code>, about 250
+              lines in all.
+            </td>
+          </tr>
+          <tr>
+            <td>Declared</td>
+            <td>
+              <code>kind: skill</code>, <code>state: true</code>,
+              <code>requires.skills: [viz]</code> and <code>commands: [node, ffmpeg]</code>. No
+              <code>integrates</code> block and no <code>deletion-policy</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <b>Real, but not in a folder of its own.</b> A run leaves (1) a viz in the viz
+              library, <code>~/.agents/state/viz/pr-&lt;n&gt;-&lt;slug&gt;/</code>, holding
+              <code>hero.json</code> and <code>drawing.ts</code> beside a
+              <code>.verify/</code> cache; and (2) the two files at <code>--out</code>, by default
+              <code>~/Desktop/pr-&lt;n&gt;.hero.png</code> and <code>.hero.gif</code>. r2-pr passes
+              <code>--out &lt;state dir&gt;/pr</code>, so a PR's pair lands beside its draft.
+            </td>
+          </tr>
+          <tr>
+            <td>Deleting it</td>
+            <td>
+              The manifest declares no <code>deletion-policy</code>, so this is a reading of the
+              source: the PNG and GIF regenerate from <code>hero.ts</code>.
+              <code>hero.json</code> and <code>drawing.ts</code>, which are the picture, do not.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <code>viz</code> (the page's server and kit, <code>verify</code>, <code>render</code>,
+              and the puppeteer and Chrome lookup <code>hero.ts</code> borrows),
+              <code>node</code> and <code>ffmpeg</code> (the palette-optimised GIF).
+            </td>
+          </tr>
+          <tr>
+            <td>Called from</td>
+            <td>
+              <b>r2-pr</b>, step 5, on every PR. Its sibling
+              <a href="../skill-pr-shape/">pr-shape</a> no longer imports anything from here: its
+              production-versus-test check is now <code>classify.ts</code>, which lives in
+              hunk-review-viz.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One hero, eight steps</h2>
+      <p>
+        The steps below are SKILL.md's, in order, walked over the pipeline they build. The text on
+        the frame is one small JSON file and the picture is one TypeScript file; everything else is
+        the fixed frame and two scripts.
+      </p>
+
+      <div
+        class="fig"
+        id="pipefig"
+        tabindex="0"
+        data-viz-id="pipeline-figure"
+        data-label="stepper: the eight steps of a pr-viz run over its pipeline"
+      >
+        <div class="stage"><div id="pipesvg"></div></div>
+        <div class="detail">
+          <div>
+            <h4 class="mk">PRODUCES</h4>
+            <p id="makes"></p>
+          </div>
+          <div>
+            <h4 class="rf">REFUSES</h4>
+            <ul id="refuses"></ul>
+          </div>
+        </div>
+        <pre class="snip" id="snip"></pre>
+        <p class="lede" id="pipelede"></p>
+        <div class="ctrl">
+          <button id="pipeprev" aria-label="previous step">‹ back</button>
+          <button id="pipeplay">▶ play</button>
+          <button id="pipenext" aria-label="next step">next ›</button>
+          <span class="pos" id="pipepos"></span>
+          <span class="hint">← → when focused</span>
+        </div>
+      </div>
+
+      <h3>A drawing is a function of time</h3>
+      <p>
+        The frame owns the clock. It seeks the page to a time, passes <code>draw</code> the time
+        clamped to 4 s, and that is all a drawing gets. Drag the slider: the picture below is
+        recomputed from <code>t</code> alone each time, so going backwards and forwards gives the
+        same picture, and the last 2 s of the 6 are <code>draw(4)</code> held.
+      </p>
+      <div
+        class="fig"
+        id="scrubfig"
+        tabindex="0"
+        data-viz-id="scrub-figure"
+        data-label="scrubber: a tiny draw(t) seeked to any moment of the six seconds"
+      >
+        <div class="stage"><div id="scrubsvg"></div></div>
+        <div class="ctrl">
+          <input
+            id="scrub"
+            type="range"
+            min="0"
+            max="6"
+            step="0.1"
+            value="2.4"
+            aria-label="seconds into the hero"
+          />
+          <span class="pos" id="scrubpos"></span>
+        </div>
+        <p class="lede" id="scrubnote"></p>
+      </div>
+      <pre><span class="c">// drawing.ts: the one file you write per PR</span>
+export default function mount(area: HTMLElement): (t: number) =&gt; void {
+  <span class="c">// build the SVG or HTML once, keep the nodes you will move</span>
+  return (t) =&gt; {
+    <span class="c">// t is 0 to 4 s; set every attribute and style from t, with ramp(t, from, to)</span>
+  };
+}</pre>
+
+      <h3>What makes a good drawing</h3>
+      <ul>
+        <li>
+          <b>The idea, not the file list.</b> Show what the change makes possible or prevents, as a
+          mechanism a stranger can follow: a request flowing through checks, before and after, a gap
+          closing. File and function names are noise unless they are the idea.
+        </li>
+        <li>
+          <b>Meaning in position, size and colour.</b> Point at any mark and say what its place,
+          length or colour encodes. A box with words in it is a document.
+        </li>
+        <li>
+          <b>Motion tells the order.</b> Build in the order the idea reads, cause then effect, so
+          the 4 s is a sentence. Everything is on screen and still for the last 2 s.
+        </li>
+      </ul>
+
+      <h2 data-beat="how">Where the film's other jobs went</h2>
+      <p>
+        The redesign split pr-viz's three jobs and gave each to the tool that serves its reader. The
+        decision is recorded in
+        <code>docs/adr/2026-11-21-tour-prs-in-the-hunk-review-and-draw-one-hero.md</code>.
+      </p>
+      <table
+        class="t where"
+        data-viz-id="moved-table"
+        data-label="where each of the old film's jobs lives now"
+      >
+        <tbody>
+          <tr>
+            <td>Reviewing the code</td>
+            <td>
+              The hunk review. Its <code>order.json</code> gained <code>tour</code> (one sentence
+              per step, over hunks named by their spoken IDs), <code>lookHere</code> and
+              <code>pr</code>, and the page shows each step's sentence above its hunk.
+            </td>
+          </tr>
+          <tr>
+            <td>Walking other reviewers through it</td>
+            <td>
+              <code>walkthrough.ts</code> (once pr-viz's <code>review-order.ts</code>) prints that
+              same tour as the PR body's folded "Changes walkthrough". It sits in the body, not in
+              numbered review comments: Files changed lists files by path, so the story order would
+              jump, and comments on lines a push changes go stale.
+            </td>
+          </tr>
+          <tr>
+            <td>Telling production from tests</td>
+            <td>
+              <code>classify.ts</code>, now in hunk-review-viz. The walkthrough refuses while a
+              production hunk is missing from the tour, which is where the film's old refusal went.
+            </td>
+          </tr>
+          <tr>
+            <td>Kelpie's spec check</td>
+            <td>
+              Into r2-pr's text: signed examples become the Proven line word for word, "plan vs what
+              happened" becomes a table in Evidence, and the spec version goes in Why.
+            </td>
+          </tr>
+          <tr>
+            <td>Deleted</td>
+            <td>
+              The film engine, the scene kinds, the poster, the short cut, the 3D tour,
+              <code>plan.json</code> and <code>build.ts</code>, and the call-graph and PDF-fixture
+              add-ons. The 3D lessons moved to viz's <code>reference/3d-when.md</code>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        In the PR body that adds up to this order, top down. The hero is the part this skill makes;
+        the rest is r2-pr's text and the hunk review's tour:
+      </p>
+      <pre>Why
+<span class="g">the hero GIF</span>                          <span class="c"># pr-viz, right under Why</span>
+the idea picture                      <span class="c"># mermaid or pseudocode, r2-pr's</span>
+Where to look  +  the size line
+Proven
+In depth: Changes walkthrough (folded) <span class="c"># walkthrough.ts, from the tour</span>
+How · Evidence · Rollout · Not in this PR</pre>
+
+      <h2 data-beat="how">Small hacks around GitHub</h2>
+      <ul>
+        <li>
+          <b>It is a GIF, not a video.</b> A GIF plays without a click and an mp4 needs one. The GIF
+          ends on the still, so the body shows the GIF alone: showing both would say the same thing
+          twice.
+        </li>
+        <li>
+          <b>The GIF is shrunk by a ladder.</b> <code>hero.ts</code> tries 20 fps with 256 colours,
+          then 10 fps with 256, 128 and 64 colours, and stops at the first that is at most 5 MB
+          (l.21 to 23). Only 10 and 20 fps are tried because they give whole-centisecond GIF frame
+          delays. GitHub refuses images over 10 MB, so 5 MB leaves room.
+        </li>
+        <li>
+          <b>The still hides the controls first.</b> Before the screenshot,
+          <code>hero.ts</code> injects <code>display: none</code> for the frame's play and scrub
+          bar, so the PNG is the drawing and nothing else (l.46).
+        </li>
+        <li>
+          <b>The title is the PR's title.</b> <code>code</code> spans in it render mono. If the
+          title changes after the hero was made, edit <code>hero.json</code>, run
+          <code>hero.ts</code> again, and upload the new GIF.
+        </li>
+      </ul>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its
+        own existence.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+#!/bin/sh
+# Every check the staged files touch, from the one table in scripts/check.ts.
+# git runs this because install.ts sets core.hooksPath to .githooks.
+# Deliberate override: git commit --no-verify
+NODE="$(command -v node || echo /opt/homebrew/bin/node)" # GUI git clients run hooks without a login PATH, where nvm's node is absent.
+exec "$NODE" "$(git rev-parse --show-toplevel)/scripts/check.ts" --staged

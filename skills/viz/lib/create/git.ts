@@ -1,0 +1,60 @@
+// lib/create/git.ts — Git against the central viz repo, plus session-id detection for commit trailers.
+//
+// Extracted from the since-deleted bootstrap.ts.
+
+import { die } from "../../cli.ts";
+import path from "node:path";
+import { existsSync, readdirSync, statSync } from "node:fs";
+import { CENTRAL, HOME } from "../../discovery.ts";
+import { run } from "../proc.ts";
+
+const VIZ_ROOT = CENTRAL;
+
+export async function gitOut(args: string[], cwd: string): Promise<string | null> {
+  try {
+    const r = await run(["git", ...args], { cwd, stdio: ["ignore", "pipe", "ignore"] });
+    return r.code === 0 ? r.stdout.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function gitCentral(args: string[]): Promise<void> {
+  try {
+    await run(["git", ...args], { cwd: VIZ_ROOT, stdio: "ignore" });
+  } catch {
+    die("ERROR: git not found on PATH. Install git and retry.");
+  }
+}
+
+export function detectSessionId(): string {
+  const envId = process.env.CLAUDE_CODE_SESSION_ID;
+  if (envId) return envId;
+  const projSlug = process.cwd().replaceAll(/[/\\:]/gu, "-");
+  const projDir = path.join(HOME, ".claude", "projects", projSlug);
+  try {
+    if (existsSync(projDir)) {
+      const latest = readdirSync(projDir)
+        .filter((f) => f.endsWith(".jsonl"))
+        .map((f) => ({ f, m: statSync(path.join(projDir, f)).mtimeMs }))
+        .toSorted((a, b) => b.m - a.m)[0];
+      if (latest) return path.basename(latest.f, ".jsonl");
+    }
+  } catch {
+    // best-effort — fall through to timestamp
+  }
+  return (
+    "ts-" +
+    new Date()
+      .toISOString()
+      .replaceAll(/[-:]/gu, "")
+      .replace(/\.\d+Z$/u, "Z")
+  );
+}
+
+// Keep transient/generated per-viz files out of git in every viz container — central and
+// repo-local alike: `comments.json` (review scratch) and `og.auto.png` (the auto-rendered OG
+// card, regenerated from hero.html / the live page on every build — an artifact, not source), and
+// `.viz-data/` (what a page saved through the _log route — user input, ADR 0019).
+// Idempotent: appends only the entries that are missing. A .gitignore takes effect on disk
+// whether or not it's itself committed.

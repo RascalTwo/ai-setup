@@ -1,0 +1,128 @@
+[
+  {
+    "test": "/viz/tests/sample.test.ts:4 The badge > should say it scans",
+    "kind": "GIVEN",
+    "text": "a plain code",
+    "ms": 700,
+    "ok": true
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:4 The badge > should say it scans",
+    "kind": "WHEN",
+    "text": "the user types text",
+    "ms": 100,
+    "ok": true
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:4 The badge > should say it scans",
+    "kind": "THEN",
+    "text": "the badge says it scans",
+    "ms": 300,
+    "ok": false
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:13 The badge > on a bad link > should fall back",
+    "kind": "GIVEN",
+    "text": "a crafted link",
+    "ms": 400,
+    "ok": true
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:13 The badge > on a bad link > should fall back",
+    "kind": "WHEN",
+    "text": "it opens",
+    "ms": 0,
+    "ok": true
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:13 The badge > on a bad link > should fall back",
+    "kind": "THEN",
+    "text": "it falls back",
+    "ms": 200,
+    "ok": true
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:13 The badge > on a bad link > should fall back",
+    "kind": "THEN",
+    "text": "and it says why",
+    "ms": 100,
+    "ok": true
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:27 Styles > should scan: b",
+    "kind": "GIVEN",
+    "text": "style b",
+    "ms": 1900,
+    "ok": false
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:27 Styles > should scan: a",
+    "kind": "GIVEN",
+    "text": "style a",
+    "ms": 5200,
+    "ok": true
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:27 Styles > should scan: a",
+    "kind": "WHEN",
+    "text": "it is drawn",
+    "ms": 100,
+    "ok": true
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:27 Styles > should scan: a",
+    "kind": "THEN",
+    "text": "style a scans",
+    "ms": 200,
+    "ok": true
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:37 Styles > should fit wide",
+    "kind": "GIVEN",
+    "text": "a shape",
+    "ms": 100,
+    "ok": true
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:37 Styles > should fit wide",
+    "kind": "WHEN",
+    "text": "it is laid out",
+    "ms": 100,
+    "ok": true
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:37 Styles > should fit wide",
+    "kind": "THEN",
+    "text": "it fits",
+    "ms": 50,
+    "ok": true
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:37 Styles > should fit tall",
+    "kind": "GIVEN",
+    "text": "a shape",
+    "ms": 120,
+    "ok": true
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:37 Styles > should fit tall",
+    "kind": "WHEN",
+    "text": "it is laid out",
+    "ms": 100,
+    "ok": true
+  },
+  {
+    "test": "/viz/tests/sample.test.ts:37 Styles > should fit tall",
+    "kind": "THEN",
+    "text": "it fits",
+    "ms": 50,
+    "ok": true
+  },
+  {
+    "test": null,
+    "kind": "GIVEN",
+    "text": "a shape made in a beforeAll",
+    "ms": 9000,
+    "ok": true
+  }
+]

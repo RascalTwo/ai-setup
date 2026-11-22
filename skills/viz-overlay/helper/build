@@ -1,0 +1,8 @@
+#!/bin/sh
+# Builds the overlay host. macOS only; needs the Xcode command line tools.
+set -e
+cd "$(dirname "$0")"
+# An outdated Xcode selected with xcode-select breaks swiftc; the command line tools still work.
+[ -d /Library/Developer/CommandLineTools ] && export DEVELOPER_DIR="${DEVELOPER_DIR:-/Library/Developer/CommandLineTools}"
+swiftc -O -swift-version 5 main.swift Logic.swift System.swift Tracker.swift Host.swift Registry.swift -o viz-overlay
+echo "built $(pwd)/viz-overlay"

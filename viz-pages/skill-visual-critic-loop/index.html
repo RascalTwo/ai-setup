@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>visual-critic-loop — your AI says it looks fine. It built it.</title>
+    <!-- posture/listing — flip to public + listed when you mean to share this card (SKILL.md Step 4) -->
+    <meta name="viz:uid" content="v-a85b8431ce86" />
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:title" content="visual-critic-loop" />
+    <meta
+      name="viz:description"
+      content="A critic that sees only screenshots scores visual work and points at what is wrong, round after round, until nothing serious is left. The critic is proved; the loop is not yet."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      :root {
+        --s: 1;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+      /* poster.css centres the 1200px card in an auto-width grid track, which grows to 1200px,
+         so on a phone the scaled card lands off-screen to the right. A track capped at the
+         viewport makes the centring overflow equally on both sides, which the scale then folds in. */
+      #fit {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      /* ── the card ── */
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -8%,
+            color-mix(in srgb, var(--good) 15%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 110%,
+            color-mix(in srgb, var(--warn) 12%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 470px;
+        gap: 40px;
+        align-items: center;
+        padding: 56px 66px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 18px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 54px;
+        line-height: 1.05;
+        margin: 0 0 20px;
+        letter-spacing: -1.5px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--warn);
+      }
+      p.sub {
+        font-size: 19px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 20px;
+        max-width: 520px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 15px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 22px;
+        max-width: 520px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 15px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 9px;
+        padding: 10px 15px;
+        color: var(--text);
+      }
+      .trigger span {
+        color: var(--muted);
+      }
+
+      /* the proof panel on the card: every number beside its baseline */
+      .proof {
+        background: color-mix(in srgb, var(--panel) 78%, transparent);
+        border: 1px solid var(--border);
+        border-top: 2px solid var(--good);
+        border-radius: 14px;
+        padding: 16px 18px 14px;
+      }
+      .proof .lbl {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.12em;
+        color: var(--good);
+        margin-bottom: 12px;
+      }
+      .stat {
+        padding: 9px 0 11px;
+        border-top: 1px solid var(--border);
+      }
+      .stat .q {
+        font-size: 14px;
+        color: var(--text);
+        margin-bottom: 7px;
+      }
+      .stat .q i {
+        font-style: normal;
+        color: var(--muted);
+        font-size: 12.5px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 104px 1fr 48px;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 12px;
+        margin-bottom: 4px;
+      }
+      .row .who {
+        color: var(--muted);
+      }
+      .row .track {
+        height: 9px;
+        border-radius: 99px;
+        background: color-mix(in srgb, var(--border) 70%, transparent);
+        overflow: hidden;
+      }
+      .row .fill {
+        height: 100%;
+        border-radius: 99px;
+      }
+      .row.me .fill {
+        background: var(--good);
+      }
+      .row.me .val {
+        color: var(--good);
+        font-weight: 700;
+      }
+      .row.base .fill {
+        background: var(--faint);
+      }
+      .row .val {
+        text-align: right;
+        color: var(--muted);
+      }
+
+      /* ── the dive (below the fold) ── */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul,
+      .dive ol {
+        margin: 0 0 14px;
+        padding-left: 22px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        overflow-wrap: anywhere;
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      /* ── poster standard: beat-4 table, beat-5 figure ── */
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+      .scroll-x {
+        overflow-x: auto;
+        margin: 0 0 16px;
+      }
+      table.nums {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 15px;
+      }
+      table.nums th {
+        text-align: left;
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 400;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        padding: 0 12px 8px 0;
+      }
+      table.nums td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.5;
+      }
+      table.nums td.r {
+        font-family: var(--mono);
+        color: var(--good);
+        white-space: nowrap;
+      }
+      table.nums td.r .b {
+        display: block;
+        color: var(--muted);
+      }
+      table.nums td.r {
+        width: 210px;
+      }
+      @media (max-width: 600px) {
+        table.where td:first-child {
+          width: 84px;
+          padding-right: 12px;
+        }
+        table.nums td.r {
+          width: 150px;
+        }
+      }
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        min-height: 190px;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 46px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .ctrl {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="visual-critic-loop"
+        data-viz-id="poster-card"
+        data-label="visual-critic-loop poster card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>OWNED SKILL · VISUAL-CRITIC-LOOP</div>
+          <h1 class="hook">Your AI says it<br />looks fine.<br /><em>It built it.</em></h1>
+          <p class="sub">
+            A second AI that has <b>never seen your code</b> looks only at screenshots, scores them
+            and points at what is wrong. You fix it, and it looks again.
+          </p>
+          <p class="not">
+            Runs before visual work is handed over.<br /><b
+              >The critic and the loop are both tested blind.</b
+            >
+          </p>
+          <div class="trigger"><span>say</span>&nbsp;"critic loop"</div>
+        </div>
+        <div
+          class="proof"
+          data-viz-id="card-proof"
+          data-label="the critic's proof, beside baselines"
+        >
+          <div class="lbl">TESTED AGAINST NO JUDGEMENT</div>
+          <div class="stat">
+            <div class="q">Planted faults it finds</div>
+            <div class="row me">
+              <span class="who">critic</span
+              ><span class="track"
+                ><span class="fill" style="width: 90%; display: block"></span></span
+              ><span class="val">90%</span>
+            </div>
+            <div class="row base">
+              <span class="who">random boxes</span
+              ><span class="track"
+                ><span class="fill" style="width: 17%; display: block"></span></span
+              ><span class="val">17%</span>
+            </div>
+          </div>
+          <div class="stat">
+            <div class="q">
+              Same screen, scored 5 times <i>(spread in points, lower is better)</i>
+            </div>
+            <div class="row me">
+              <span class="who">critic</span
+              ><span class="track"
+                ><span class="fill" style="width: 4%; display: block"></span></span
+              ><span class="val">0.4</span>
+            </div>
+            <div class="row base">
+              <span class="who">random scorer</span
+              ><span class="track"
+                ><span class="fill" style="width: 67%; display: block"></span></span
+              ><span class="val">6.7</span>
+            </div>
+          </div>
+          <div class="stat">
+            <div class="q">Agrees with a person's blind pick <i>(p = 0.003)</i></div>
+            <div class="row me">
+              <span class="who">critic</span
+              ><span class="track"
+                ><span class="fill" style="width: 78%; display: block"></span></span
+              ><span class="val">78%</span>
+            </div>
+            <div class="row base">
+              <span class="who">coin flip</span
+              ><span class="track"
+                ><span class="fill" style="width: 50%; display: block"></span></span
+              ><span class="val">50%</span>
+            </div>
+          </div>
+          <div class="stat" id="loop-proof-card">
+            <div class="q">Loop build picked blind <i>(6 of 6, p = 0.016)</i></div>
+            <div class="row me">
+              <span class="who">with loop</span
+              ><span class="track"
+                ><span class="fill" style="width: 100%; display: block"></span></span
+              ><span class="val">100%</span>
+            </div>
+            <div class="row base">
+              <span class="who">coin flip</span
+              ><span class="track"
+                ><span class="fill" style="width: 50%; display: block"></span></span
+              ><span class="val">50%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section
+      class="install"
+      data-viz-id="install-strip"
+      data-label="how to install visual-critic-loop"
+    >
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <pre><span class="l"><span class="c">npx</span> skills add <span class="r">RascalTwo/ai-setup</span> <span class="f">-g</span> <span class="f">-s</span> visual-critic-loop</span></pre>
+      <p class="needs">
+        needs <code>node</code> <code>claude</code>
+        <a class="man" href="../rascal-ai-setup-tour/#manualTitle">Chrome</a>
+      </p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">Nobody grades a screen but the one who made it</h2>
+      <p>
+        Code has tests. A page, a demo or a 3D render has none: the builder looks at its own work,
+        says it looks right, and stops. It built the thing, so it also fills in what it meant to
+        show, and misses the label that is cut off or the grey text nobody can read.
+      </p>
+      <p>
+        The obvious fix is a second AI to critique the first. The risk is that a critic which
+        invents problems, scores the same screen differently each time, or disagrees with a real
+        person steers the builder towards its own noise, and every round still looks like progress.
+        So this skill's critic was <b>tested before the loop existed</b>, with every result shown
+        next to what a critic with no judgement would score.
+      </p>
+
+      <h2 data-beat="using">Before visual work is handed over</h2>
+      <p>
+        The agent runs it on its own before handing over visual work it built or changed: a UI, a
+        viz page, a demo, a 3D render, an animation frame. A tweak too small to change how a screen
+        reads skips it. You can also ask for a <b>critic loop</b>, a <b>visual critic</b> or an
+        <b>art-director pass</b>. The agent then goes round like this:
+      </p>
+      <ol>
+        <li>
+          <b>Writes a brief</b>: one paragraph on what the screens are for and every choice that
+          looks like a bug but is not. Plus up to five task checks, such as "the before and after
+          sit side by side".
+        </li>
+        <li><b>Takes screenshots</b>, at 1280 and 390 px wide for a web page.</li>
+        <li>
+          <b>Asks the critic</b>, which scores them and lists issues, worst first, each with a box
+          on the screenshot.
+        </li>
+        <li><b>Fixes</b> the blockers and majors, then takes new screenshots and asks again.</li>
+        <li>
+          <b>Stops</b> when the stop rule fires and hands over the score trend and anything still
+          open.
+        </li>
+      </ol>
+      <pre><span class="c"># one round, from the skill's folder</span>
+node shoot.ts &lt;url&gt; $RUN/shots-1
+node round.ts $RUN --brief brief.md --checks checks.md $RUN/shots-1
+<span class="c"># prints the trend, ranked issues and boxes, then CONTINUE or STOP</span></pre>
+
+      <h2 data-beat="limits">What is not proved, and what it will not do</h2>
+      <div class="callout">
+        <b>The loop is tested on 10 one-page tasks, not beyond.</b> An Opus builder made each page
+        alone, then the same build went through the loop. On 3 tasks the critic found nothing
+        serious, so the loop changed nothing. On the other 7, a person picked blind and preferred
+        the loop's build on 6 and could not tell on 1 (p = 0.016); an Opus judge, sides swapped,
+        preferred it on all 7. It cost about $1 more per task. Not tested: a builder that checks its
+        own screenshots without a critic, or work bigger than one page.
+      </div>
+      <ul>
+        <li>
+          <b>It will invent problems if you skip the brief.</b> On clean screens it raised 0.7
+          blocker or major issues each, and a person judged all 7 sampled to be made up. With a
+          brief that fell to 0.3, and fault detection did not drop.
+        </li>
+        <li>
+          <b>It is stricter than a person about small grey text</b>, and on one page it caught a
+          slight misalignment or a half-clipped label in only 2 or 3 of 5 runs.
+        </li>
+        <li>
+          <b>It has not been shown to judge subtle differences.</b> The pairs a person could decide
+          mostly had an obvious gap, such as one side empty or still loading. Eight of the ten fault
+          pages were skill posters in one house style.
+        </li>
+        <li>
+          <b>It cannot say "good enough" for you.</b> It scores and ranks; it does not know where
+          your bar sits. Only a run that ends <code>STOP clean</code> means nothing serious is left
+          by its reading. After a <code>plateau</code> or <code>cap</code> the agent lists every
+          serious item still open.
+        </li>
+        <li>
+          <b>It writes no code and checks no behaviour.</b> It sees pictures, so a button that looks
+          right and does nothing passes. It takes PNG screenshots only.
+        </li>
+        <li>
+          <b>It is a different critic after any edit.</b> Changing the prompt, schema, model, effort
+          or the brief wording sends it back to be re-proved before it is trusted again.
+        </li>
+      </ul>
+
+      <h2 data-beat="where">What it needs, and what it keeps</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/visual-critic-loop/</code>: <code>SKILL.md</code>,
+              <code>critic.ts</code>, <code>round.ts</code>, <code>shoot.ts</code>,
+              <code>prompt.md</code>, <code>schema.json</code>, and <code>proof/</code> (the test
+              harness and <code>PROOF.md</code>).
+            </td>
+          </tr>
+          <tr>
+            <td>Declared</td>
+            <td>
+              <code>kind: skill</code>, <code>state: true</code>,
+              <code>deletion-policy: retain</code>. No <code>integrates</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <code>node</code> and <code>claude</code> on the PATH, and Chrome:
+              <code>shoot.ts</code> drives it headless through the <code>viz</code> skill's
+              installed <code>puppeteer-core</code>. Nothing else; there is no server and no daemon.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <code>~/.agents/state/visual-critic-loop/</code>.
+              <code>runs/&lt;slug&gt;-&lt;date&gt;/</code>
+              holds one run: the frozen brief and checks, each round's screenshots and
+              <code>round-N.json</code>. Safe to delete once a run is handed over.
+              <code>proof/</code> holds the planted-fault pages, the before/after pairs and the
+              person's blind picks; delete it and the proof cannot be re-checked, which is why the
+              policy is <b>retain</b>.
+            </td>
+          </tr>
+          <tr>
+            <td>Called from</td>
+            <td>
+              Nothing calls it. A person asks for it, and the agent follows <code>SKILL.md</code>.
+              The decision to prove the critic first is
+              <code>docs/adr/2026-11-15-prove-the-visual-critic-before-the-loop-trusts-it.md</code>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One round, from screenshot to verdict</h2>
+      <p>
+        The critic is one script, <code>critic.ts</code>, that both the proof harness and the loop
+        call, so the critic that was tested is the one that runs. It is a separate
+        <code>claude -p</code> process started with no tools, no settings, no CLAUDE.md, no skills
+        and no MCP, in an empty temporary folder. It gets the PNGs, the brief and the checks, and
+        nothing else.
+      </p>
+
+      <div class="fig" data-viz-id="flow-figure" data-label="stepper: one round of the critic loop">
+        <div class="stage" id="stage"></div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys</span>
+        </div>
+      </div>
+
+      <h3>The stop rule</h3>
+      <p>
+        <code>decide()</code> in <code>round.ts</code> checks these in order, after every round. Its
+        numbers come from the proof, not from a demo: the critic's own wobble on a repeated screen
+        is about 0.2 points, so a rise under 0.5 is noise.
+      </p>
+      <ul>
+        <li><b>clean</b>: no blocker or major issue left, and every task check passes.</li>
+        <li>
+          <b>plateau</b>: from round 3, the better of the last two scores is less than 0.5 above the
+          score before them.
+        </li>
+        <li><b>cap</b>: 4 rounds done.</li>
+      </ul>
+
+      <h2 data-beat="how">The critic, tested before the loop was built</h2>
+      <p>
+        Three questions, each answered beside a critic with no judgement, so a result reads against
+        chance rather than against a bar picked after the fact. No pass mark was fixed in advance:
+        the person who owns this setup judged the results. The 90% is with a brief, which is how the
+        loop runs it; the full table is in
+        <code>skills/visual-critic-loop/proof/PROOF.md</code>.
+      </p>
+      <div class="scroll-x">
+        <table class="nums">
+          <thead>
+            <tr>
+              <th>TEST</th>
+              <th>CRITIC, AND THE BASELINE BESIDE IT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                Planted faults caught: 50 faults on 10 pages, and its box must overlap the fault
+              </td>
+              <td class="r">90%<span class="b">random boxes 17%</span></td>
+            </tr>
+            <tr>
+              <td>Spread of the overall score, same screen run 5 times (20 screens)</td>
+              <td class="r">0.4 pts<span class="b">random scorer 6.7 pts</span></td>
+            </tr>
+            <tr>
+              <td>
+                Agrees with one person's blind pick of the better screen (25 decided pairs of 38)
+              </td>
+              <td class="r">78%, p = 0.003<span class="b">coin flip 50%</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="m">
+        Without a brief the same critic caught 84% of faults against 23% for random boxes. It runs
+        on Sonnet 5.5, which was kept over Opus 5.5: level on faults and on agreeing with itself,
+        closer to the person, and about 2.8 times cheaper. A round costs roughly $0.01 to $0.03 and
+        takes 6 to 10 seconds.
+      </p>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · one atom, justifying its
+        own existence.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

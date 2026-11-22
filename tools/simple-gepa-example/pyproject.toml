@@ -1,0 +1,14 @@
+[project]
+name = "simple_gepa_example"
+version = "0.1.0"
+description = "A minimal DSPy GEPA run: optimize a deliberately bad prompt, traced in Phoenix"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "arize-phoenix-otel>=0.13.1",
+    "boto3>=1.40.60",
+    "dspy==3.0.3",
+    "openinference-instrumentation>=0.1.41",
+    "openinference-instrumentation-dspy>=0.1.30",
+    "openinference-instrumentation-litellm>=0.1.27",
+]

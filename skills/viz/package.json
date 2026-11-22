@@ -1,0 +1,62 @@
+{
+  "name": "viz",
+  "version": "11.0.0",
+  "description": "Ad-hoc HTML visualizations for AI agents — CLI, MCP server and skill.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "coverage": "node -e \"fs.rmSync('out', { recursive: true, force: true })\" && vitest run && r2-test-kit merge",
+    "sync:kit": "node maintainer/sync-kit.ts",
+    "format": "node maintainer/format-self.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@bcoe/v8-coverage": "^1.0.2",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@types/node": "^24.19.2",
+    "commander": "^15.0.0",
+    "esbuild": "^0.28.2",
+    "oxfmt": "0.71.0",
+    "oxlint": "1.86.0",
+    "oxlint-tsgolint": "7.0.2003",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0",
+    "puppeteer-core": "^25.2.1",
+    "staticrypt": "3.5.4",
+    "typescript": "^7.0.2",
+    "v8-to-istanbul": "^9.3.0"
+  },
+  "gemId": "4d9a73950849",
+  "gemChromeProfile": "Profile 4",
+  "devDependencies": {
+    "@rascaltwo/pairwise-sorter": "github:RascalTwo/pairwise-sorter#667e96ce5db66e690f9c5361b93eaf6bc3372f3f",
+    "@rascaltwo/r2-test-kit": "file:../../tools/r2-test-kit",
+    "@types/d3": "7",
+    "@types/d3-geo": "3",
+    "@types/dagre": "^0.7.54",
+    "@types/diff": "5",
+    "@types/js-yaml": "4",
+    "@types/pngjs": "^6.0.5",
+    "@types/three": "0.160.0",
+    "elkjs": "0.9.3",
+    "highlight.js": "11.9.0",
+    "marked": "12",
+    "mermaid": "11",
+    "modern-screenshot": "4.7.0",
+    "three": "0.160.0",
+    "trystero": "0.26.0",
+    "ts-fsrs": "5.4.1",
+    "vitest": "^5.1.0",
+    "zod": "3.25.76"
+  },
+  "kitBundles": {
+    "pairwise-element.js": "@rascaltwo/pairwise-sorter/element",
+    "pairwise.js": "@rascaltwo/pairwise-sorter",
+    "screenshot.js": "modern-screenshot",
+    "trystero.js": "trystero",
+    "zod.js": "zod"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

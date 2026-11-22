@@ -1,0 +1,962 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>hunk-review-viz — approve a hunk once, and it stays approved</title>
+    <meta name="viz:posture" content="public" />
+    <meta name="viz:listed" content="listed" />
+    <meta name="viz:uid" content="v-48133a11d37f" />
+    <meta name="viz:title" content="hunk-review-viz" />
+    <meta
+      name="viz:description"
+      content="Review a branch commit by commit, hunk by hunk, by two-word IDs you can say out loud. Your approvals and flags follow the content through a rewrite and a force-push."
+    />
+    <!-- viz:card=self — THIS page IS its own 1200×630 OG card; viz verify --og clips .og-card straight to og.auto.png. -->
+    <meta name="viz:card" content="self" />
+    <meta name="viz:page-kind" content="poster-dive" />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <link rel="stylesheet" href="/_kit/poster.css" />
+    <style>
+      :root {
+        --s: 1;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+      body {
+        overflow-x: hidden;
+      }
+
+      .og-card {
+        background:
+          radial-gradient(
+            820px 480px at 92% -8%,
+            color-mix(in srgb, var(--c5) 15%, transparent),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 460px at -6% 110%,
+            color-mix(in srgb, var(--good) 11%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #0b0f16, #0d1117 60%);
+        color: var(--text);
+        font-family: var(--sans);
+        display: grid;
+        grid-template-columns: 1fr 520px;
+        gap: 34px;
+        align-items: center;
+        padding: 50px 56px;
+      }
+      .og-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+        pointer-events: none;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        color: var(--c4);
+        margin-bottom: 16px;
+      }
+      .eyebrow .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--c4);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--c4) 22%, transparent);
+      }
+      h1.hook {
+        font-size: 48px;
+        line-height: 1.06;
+        margin: 0 0 18px;
+        letter-spacing: -1.4px;
+        font-weight: 700;
+      }
+      h1.hook em {
+        font-style: normal;
+        color: var(--good);
+      }
+      p.sub {
+        font-size: 18px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 16px;
+        max-width: 470px;
+      }
+      p.sub b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .not {
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin: 0 0 18px;
+        max-width: 470px;
+        font-family: var(--mono);
+        border-left: 2px solid var(--border);
+        padding-left: 12px;
+      }
+      .not b {
+        color: var(--text);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 14px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--good);
+        border-radius: 9px;
+        padding: 9px 14px;
+        color: var(--text);
+      }
+
+      /* the card's figure: one row per mark, left = what you marked, right = what you see after the force-push */
+      .fate {
+        background: color-mix(in srgb, var(--panel) 86%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px 14px;
+        font-family: var(--mono);
+      }
+      .fate .cap {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        letter-spacing: 0.13em;
+        color: var(--c5);
+        margin-bottom: 12px;
+      }
+      .fate .cap span:last-child {
+        color: var(--faint);
+      }
+      .fate .cols {
+        display: grid;
+        grid-template-columns: 140px 1fr 176px;
+        gap: 8px;
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        color: var(--faint);
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--border);
+      }
+      .fate .row {
+        display: grid;
+        grid-template-columns: 140px 1fr 176px;
+        gap: 8px;
+        align-items: center;
+        padding: 11px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .fate .was b {
+        display: block;
+        font-size: 14px;
+        color: var(--text);
+        font-weight: 600;
+      }
+      .fate .was i {
+        font-style: normal;
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      .fate .edit {
+        position: relative;
+        text-align: center;
+        font-size: 11px;
+        line-height: 1.3;
+        color: var(--muted);
+        padding: 0 4px 6px;
+      }
+      .fate .edit::after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        right: 8px;
+        bottom: 0;
+        border-bottom: 1.5px solid var(--faint);
+      }
+      .fate .edit::before {
+        content: "";
+        position: absolute;
+        right: 3px;
+        bottom: -3px;
+        width: 6px;
+        height: 6px;
+        border-top: 1.5px solid var(--faint);
+        border-right: 1.5px solid var(--faint);
+        transform: rotate(45deg);
+      }
+      .fate .res {
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.25;
+        padding: 6px 9px;
+        border-radius: 7px;
+        border: 1px solid;
+      }
+      .fate .res.kept {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 11%, transparent);
+        border-color: color-mix(in srgb, var(--good) 45%, transparent);
+      }
+      .fate .res.changed {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 11%, transparent);
+        border-color: color-mix(in srgb, var(--warn) 45%, transparent);
+      }
+      .fate .res.addressed {
+        color: var(--c5);
+        background: color-mix(in srgb, var(--c5) 12%, transparent);
+        border-color: color-mix(in srgb, var(--c5) 45%, transparent);
+      }
+      .fate .res.orphan {
+        color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 10%, transparent);
+        border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+      }
+      .fate .foot2 {
+        margin-top: 11px;
+        font-size: 11.5px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+      .fate .foot2 b {
+        color: var(--text);
+      }
+
+      /* dive */
+      .scroll-cue {
+        text-align: center;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        padding-top: 30px;
+      }
+      .dive {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 26px 28px 90px;
+      }
+      .dive h2 {
+        font-size: 12.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--c4);
+        margin: 40px 0 12px;
+        font-family: var(--mono);
+      }
+      .dive h2:first-of-type {
+        margin-top: 18px;
+      }
+      .dive h3 {
+        font-size: 17px;
+        color: #fff;
+        margin: 26px 0 10px;
+        font-weight: 600;
+      }
+      .dive p {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--text);
+        margin: 0 0 14px;
+      }
+      .dive p.m {
+        color: var(--muted);
+      }
+      .dive ul {
+        margin: 0 0 14px;
+        padding-left: 20px;
+      }
+      .dive li {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 9px;
+      }
+      .dive b {
+        color: #fff;
+      }
+      .dive code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--c5);
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+        margin: 0 0 16px;
+      }
+      .callout {
+        border-left: 3px solid var(--warn);
+        background: color-mix(in srgb, var(--warn) 8%, transparent);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 0 0 16px;
+        font-size: 15.5px;
+        line-height: 1.6;
+      }
+      .callout b {
+        color: var(--warn);
+      }
+      table.where {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      table.where td {
+        border-top: 1px solid var(--border);
+        padding: 10px 12px 10px 0;
+        vertical-align: top;
+        line-height: 1.55;
+      }
+      table.where td:first-child {
+        width: 150px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+        padding-right: 18px;
+      }
+      table.keys td:first-child {
+        width: 110px;
+        color: var(--c5);
+        font-size: 13px;
+      }
+
+      .fig {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 18px 20px 16px;
+        margin: 0 0 16px;
+      }
+      .fig .stage {
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 14px 16px;
+        min-height: 190px;
+      }
+      .fig .lane-svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        margin-bottom: 12px;
+      }
+      .fig .lede {
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--text);
+        margin: 14px 0 0;
+        min-height: 92px;
+      }
+      .fig .lede b {
+        color: #fff;
+      }
+      .fig .lede code {
+        font-size: 0.88em;
+      }
+      .ctrl {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 13px;
+        flex-wrap: wrap;
+      }
+      .ctrl button {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        background: #0b0f16;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 13px;
+        cursor: pointer;
+      }
+      .ctrl button:hover {
+        border-color: var(--c5);
+        color: #fff;
+      }
+      .ctrl .pos {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .ctrl .hint {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+      }
+      .dive p.legend {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        margin: 0 0 14px;
+        line-height: 1.5;
+      }
+      .foot {
+        margin-top: 50px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13.5px;
+        font-family: var(--mono);
+      }
+      .foot a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .foot a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="og-poster og-poster-dive">
+    <div id="fit">
+      <div
+        class="og-card"
+        data-atom="hunk-review-viz"
+        data-viz-id="poster-card"
+        data-label="the hunk-review-viz card"
+      >
+        <div>
+          <div class="eyebrow"><span class="dot"></span>HUNK-REVIEW-VIZ · A SKILL</div>
+          <h1 class="hook">Approve a hunk once.<br /><em>It stays approved.</em></h1>
+          <p class="sub">
+            Review a branch <b>commit by commit, hunk by hunk</b>, each with a two-word ID you can
+            say out loud. Your marks follow the content through a rewrite and a force-push.
+          </p>
+          <p class="not">
+            GitHub forgets what you read the moment the author force-pushes.
+            <b>This one remembers, and tells you what moved.</b>
+          </p>
+          <div class="chip">“amber falcon: rename it”</div>
+        </div>
+
+        <div
+          class="fate"
+          data-viz-id="fate-panel"
+          data-label="four marks and what each becomes after the author force-pushes"
+        >
+          <div class="cap"><span>AFTER THE FORCE-PUSH</span><span>EXAMPLE IDS, MADE UP</span></div>
+          <div class="cols">
+            <span>YOU MARKED</span><span style="text-align: center">THE HUNK&rsquo;S LINES</span
+            ><span>YOU SEE</span>
+          </div>
+          <div class="row" data-viz-id="fate-kept" data-label="approved hunk, same lines: kept">
+            <div class="was"><b>dainty ocean</b><i>✓ approved</i></div>
+            <div class="edit">same + and − lines</div>
+            <div class="res kept">kept ✓ approved</div>
+          </div>
+          <div
+            class="row"
+            data-viz-id="fate-changed"
+            data-label="approved hunk, lines edited: changed since you approved"
+          >
+            <div class="was"><b>lunar biscuit</b><i>✓ approved</i></div>
+            <div class="edit">a line was edited</div>
+            <div class="res changed">changed since you approved</div>
+          </div>
+          <div
+            class="row"
+            data-viz-id="fate-addressed"
+            data-label="flagged hunk, lines edited: addressed, re-review"
+          >
+            <div class="was"><b>rainy marble</b><i>✎ change this</i></div>
+            <div class="edit">a line was edited</div>
+            <div class="res addressed">addressed: re-review</div>
+          </div>
+          <div
+            class="row"
+            data-viz-id="fate-orphan"
+            data-label="question on a hunk with nowhere to go: orphan"
+            style="border-bottom: 0"
+          >
+            <div class="was"><b>fancy cookie</b><i>? question</i></div>
+            <div class="edit">file has no hunk left to carry it</div>
+            <div class="res orphan">orphan, listed by status</div>
+          </div>
+          <div class="foot2">
+            <b>Marks follow the content, not the commit.</b> The ID is made from the content too, so
+            it stays the same as long as the changed lines do.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- install:start -->
+    <section
+      class="install"
+      data-viz-id="install-strip"
+      data-label="how to install hunk-review-viz"
+    >
+      <style>
+        .install {
+          max-width: 820px;
+          margin: 26px auto 0;
+          padding: 12px 16px;
+          border: 1px solid #263040;
+          border-left: 3px solid var(--accent);
+          border-radius: 8px;
+          background: #0f141b;
+          font-family: var(--mono);
+        }
+        .install header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          color: var(--accent);
+        }
+        .install button {
+          font: 12px var(--mono);
+          color: #9aa4b2;
+          background: none;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          padding: 1px 8px;
+          cursor: pointer;
+        }
+        .install pre {
+          margin: 8px 0 0;
+          font: 13px/1.6 var(--mono);
+          color: #d7dde6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        .install .l::before {
+          content: "$ ";
+          color: #5b6573;
+        }
+        .install .c {
+          color: #7ee787;
+        }
+        .install .f {
+          color: #d2a8ff;
+        }
+        .install .r {
+          color: #79c0ff;
+        }
+        .install p {
+          margin: 8px 0 0;
+          font-size: 12.5px;
+          color: #9aa4b2;
+        }
+        .install .why {
+          color: var(--warn);
+        }
+        .install .needs code,
+        .install .needs a {
+          display: inline-block;
+          padding: 0 7px;
+          border: 1px solid #2f3846;
+          border-radius: 5px;
+          color: #cfd6df;
+          text-decoration: none;
+        }
+        .install .needs a.man {
+          border-style: dashed;
+          color: var(--warn);
+        }
+      </style>
+      <header>
+        INSTALL<button
+          type="button"
+          onclick="
+            navigator.clipboard.writeText(this.closest('.install').querySelector('pre').innerText)
+          "
+        >
+          copy
+        </button>
+      </header>
+      <pre><span class="l"><span class="c">npx</span> skills add <span class="r">RascalTwo/ai-setup</span> <span class="f">-g</span> <span class="f">-s</span> hunk-review-viz <span class="f">-s</span> viz</span></pre>
+      <p class="needs">needs <code>git</code> <code>node</code> <code>npm</code></p>
+    </section>
+    <!-- install:end -->
+    <div class="scroll-cue">↓&nbsp;&nbsp;WHY IT EXISTS</div>
+
+    <div class="dive">
+      <h2 data-beat="why">GitHub forgets what you already read</h2>
+      <p>
+        A careful reviewer reads a pull request <b>one commit at a time</b>, because that is how the
+        author built it and how it makes sense. GitHub does not help with that in three specific
+        ways.
+      </p>
+      <ul>
+        <li>
+          <b>The files come in an order that has nothing to do with the story.</b> The commit that
+          changes the API and the commit that calls it are read in whatever order the page lists
+          files.
+        </li>
+        <li>
+          <b>There is no way to approve one hunk.</b> You can leave a comment on a line, but you
+          cannot say <em>this piece is fine</em> and move on.
+        </li>
+        <li>
+          <b>A force-push wipes the reviewer's place.</b> The author rewrites the branch to address
+          comments. Now every commit has a new SHA, and you cannot tell which hunks you already
+          approved, or which of your comments the new version answered.
+        </li>
+      </ul>
+      <p>
+        There is a fourth problem, specific to talking to an agent by speech-to-text: a hunk's name
+        has to be something the reviewer can <b>say out loud and have heard correctly</b>. A SHA, a
+        line number, or <code>src/cart.ts:42</code> will not survive dictation.
+        <b>“Amber falcon”</b> will.
+      </p>
+
+      <h2 data-beat="using">Using it</h2>
+      <p>
+        The skill fires when the user asks to review a branch, a PR or a commit range commit by
+        commit, or says “hunk review”, “review viz” or “let me review the commits”, or right after
+        <code>pr-shape</code> reshapes a branch they are about to read. The agent runs six steps;
+        the reviewer's part is step 3.
+      </p>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>1 · open</td>
+            <td>
+              <code>review.ts open &lt;name&gt; --repo &lt;path&gt; --range base...head</code>.
+              Several <code>--repo</code> pairs make one review across repos. It prints the page's
+              URL.
+            </td>
+          </tr>
+          <tr>
+            <td>2 · order</td>
+            <td>
+              The agent writes <code>order.json</code>: for each commit, a one-line “why read this
+              now” and the files in the order it would explain them.
+            </td>
+          </tr>
+          <tr>
+            <td>3 · read</td>
+            <td>
+              The reviewer marks hunks and files, then presses <b>Send review</b>. Or just says it
+              in the terminal: “amber falcon: rename it”.
+            </td>
+          </tr>
+          <tr>
+            <td>4 · status</td>
+            <td>
+              <code>review.ts status &lt;name&gt;</code> lists every flag, question, addressed and
+              changed item by ID, with notes and replies.
+            </td>
+          </tr>
+          <tr>
+            <td>5 · reply</td>
+            <td>
+              <code>review.ts reply &lt;name&gt; &lt;id&gt; &lt;text&gt;</code> answers on the hunk.
+              The agent fixes, rewrites and force-pushes as the work needs.
+            </td>
+          </tr>
+          <tr>
+            <td>6 · refresh</td>
+            <td>
+              <code>review.ts refresh &lt;name&gt;</code>. The page reloads where the reviewer was.
+              Back to step 3.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="m">The keys on the page:</p>
+      <table class="where keys">
+        <tbody>
+          <tr>
+            <td>j / k</td>
+            <td>Next and previous hunk. Past the last hunk of a commit, on to the next commit.</td>
+          </tr>
+          <tr>
+            <td>a</td>
+            <td>
+              Approve the focused hunk, and step to the next one. Pressing it again clears it.
+            </td>
+          </tr>
+          <tr>
+            <td>c / q</td>
+            <td>Mark “change this” or “question”, and put the cursor in the note field.</td>
+          </tr>
+          <tr>
+            <td>J / K</td>
+            <td>Next and previous file.</td>
+          </tr>
+          <tr>
+            <td>n / p, g / G</td>
+            <td>Next and previous commit; first and last hunk of the commit.</td>
+          </tr>
+          <tr>
+            <td>A</td>
+            <td>Approve every hunk in the focused hunk's file.</td>
+          </tr>
+          <tr>
+            <td>o / O</td>
+            <td>Fold the hunk, or the whole file down to its hunk bars.</td>
+          </tr>
+          <tr>
+            <td>[ / ]</td>
+            <td>More lines above the hunk, or after the file's last hunk.</td>
+          </tr>
+          <tr>
+            <td>v</td>
+            <td>On a changed hunk: only what changed since you saw it, or the whole hunk.</td>
+          </tr>
+          <tr>
+            <td>i, r, s, ?</td>
+            <td>Edit the note; refresh from git; send the review; list every key.</td>
+          </tr>
+          <tr>
+            <td>Alt-click, 🎙</td>
+            <td>
+              Comment on anything through the viz feedback widget. It lands in
+              <code>.viz-data/feedback.jsonl</code> anchored to the hunk or file ID.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Each file also has <b>✓ all</b>, which approves every hunk in it, and its own ✓ ✎ ? for a
+        mark on the file as a whole. Every hunk, file, commit and the whole review shows its lines
+        added, changed and removed. Only approved hunks and fully approved files start folded; a
+        folded file still lists its hunks' bars. A hunk that changed since you marked it shows only
+        what changed since you saw it, with the agent's reply under the first change; <b>v</b>
+        switches to the whole hunk.
+      </p>
+
+      <h2 data-beat="limits">What it does not do</h2>
+      <ul>
+        <li>
+          <b>Local only.</b> The review is a viz page served from <code>127.0.0.1</code>. Nobody
+          else can open it, and it is created with <code>viz:posture</code> “local”.
+        </li>
+        <li>
+          <b>No GitHub sync.</b> Nothing is posted to the pull request. Marks, notes and replies
+          live in this page's folder and nowhere else.
+        </li>
+        <li>
+          <b>It does not watch.</b> A range is followed <em>by branch name</em> and re-read when you
+          press ↻ Refresh or the agent runs <code>refresh</code>. Push, and nothing happens until
+          one of those.
+        </li>
+        <li>
+          <b>Editing a hunk's changed lines makes it a different hunk.</b> Even for a one-character
+          change. You get a re-review, not a silent pass. That is the point, and it costs a second
+          look at tiny edits.
+        </li>
+        <li>
+          <b>Context-only changes do not reset a tick.</b> If only the unchanged lines around a hunk
+          move or change, your approval stands. The fingerprint never sees them.
+        </li>
+        <li>
+          <b>A mark can end up with nowhere to go.</b> If its content is gone and no unmarked hunk
+          in its file shares a changed line with it, it becomes an <b>orphan</b>, which
+          <code>status</code> and the page list. Raise it with the reviewer; it is not dropped. If a
+          hunk moves to a different path, its mark still looks for a home only at the old path, so
+          it becomes an orphan.
+        </li>
+        <li>
+          <b>A carried mark needs one shared line.</b> A gone mark moves only to an unmarked hunk
+          that shares at least one changed line with it, the most similar one. A hunk rewritten from
+          scratch therefore comes back as an orphan plus a fresh unreviewed hunk. A carried mark
+          always arrives as <i>changed</i> or <i>addressed</i>, never as a plain tick, so you
+          re-read it.
+        </li>
+        <li>
+          <b>Merge commits are not shown</b> (the range is read with <code>--no-merges</code>).
+        </li>
+        <li>
+          <b>pr-viz's own review mode has not been switched over to it yet.</b>
+        </li>
+      </ul>
+
+      <h2 data-beat="where">Where it lives</h2>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>The skill</td>
+            <td>
+              <code>skills/hunk-review-viz/</code>: <code>SKILL.md</code>;
+              <code>lib/review.ts</code> (git, parsing, fingerprints, ordering, marks);
+              <code>lib/words.ts</code> (the IDs); <code>scripts/review.ts</code> (the CLI);
+              <code>template/</code> (<code>index.html</code>, <code>app.ts</code>,
+              <code>api.ts</code>, <code>contract.ts</code>, <code>review.css</code>), the page each
+              review is made from.
+            </td>
+          </tr>
+          <tr>
+            <td>Declared</td>
+            <td>
+              <code>kind: skill</code>, <code>state: true</code>,
+              <code>requires.skills: [viz, pr-viz]</code> and <code>commands: [git, node]</code>. No
+              <code>integrates</code> block and no <code>deletion-policy</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Requires</td>
+            <td>
+              <b>viz</b>: every review is a viz page, made with <code>viz create --from</code> the
+              template, served on <code>127.0.0.1:5180</code>, with the feedback widget for Send.
+              <b>pr-viz</b>: <code>lib/review.ts</code> imports its <code>kindOf</code> to tell code
+              from tests, docs, lockfiles and binaries. <b>git</b> reads the commits.
+              <b>node</b> runs everything.
+            </td>
+          </tr>
+          <tr>
+            <td>Its state</td>
+            <td>
+              <code>~/.agents/state/hunk-review-viz/reviews.json</code>: review name to page folder
+              and URL, and nothing else. The marks are not here.
+            </td>
+          </tr>
+          <tr>
+            <td>Per review</td>
+            <td>
+              A page folder called <code>hunk-review-&lt;name&gt;</code>, in the viz library (<code
+                >review.ts dir &lt;name&gt;</code
+              >
+              prints it): <code>review.json</code> (repos and ranges, written by <code>open</code>),
+              <code>order.json</code> (the agent's), <code>.viz-data/state.json</code> (marks and
+              replies), <code>.viz-data/feedback.jsonl</code> (Send and spoken comments),
+              <code>refreshed.txt</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>Safe to delete?</td>
+            <td>
+              <b>The index, yes: it is only names.</b> Delete it and the marks survive in their
+              folders, but the name no longer resolves, and <code>open</code> would ask viz to
+              create a page that still exists. <b>A page's <code>state.json</code>, no.</b> That is
+              every mark the reviewer made and nothing else holds a copy.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 data-beat="how">One hunk, end to end</h2>
+      <p class="m">
+        Follow a single hunk from <code>git show</code> to a mark that survives a force-push. The
+        lane is who does the work; the arrows are the order.
+      </p>
+
+      <div
+        class="fig"
+        data-viz-id="hunk-figure"
+        data-label="stepper: one hunk's life, from git show to a mark carried through a force-push"
+      >
+        <div class="stage" id="stage"></div>
+        <p class="lede" id="lede"></p>
+        <div class="ctrl">
+          <button id="prev" aria-label="previous step">‹ back</button>
+          <button id="play">▶ play</button>
+          <button id="next" aria-label="next step">next ›</button>
+          <span class="pos" id="pos"></span>
+          <span class="hint">← → arrow keys · click a box</span>
+        </div>
+      </div>
+
+      <h3>What applyMarks does with a mark</h3>
+      <p class="legend">
+        similarity = changed lines both hunks share ÷ changed lines in either, whitespace trimmed, 0
+        to 1
+      </p>
+      <table class="where">
+        <tbody>
+          <tr>
+            <td>kept</td>
+            <td>
+              The mark's fingerprint is still in the review. It applies as it was (✓ approve, ✎
+              change this, ? question; a replied question shows as <b>answered</b>). It can now sit
+              in a different commit.
+            </td>
+          </tr>
+          <tr>
+            <td>changed</td>
+            <td>
+              Fingerprint gone, it was ✓. Moves to the most similar unmarked hunk in the same repo
+              and path that shares at least one changed line. Shown as
+              <b>changed since you approved</b>, with what you approved underneath.
+            </td>
+          </tr>
+          <tr>
+            <td>addressed</td>
+            <td>
+              Fingerprint gone, it was ✎ or ?. Same move. Shown as
+              <b>addressed: re-review</b>, with your note, the agent's reply and what you marked.
+            </td>
+          </tr>
+          <tr>
+            <td>orphan</td>
+            <td>
+              Fingerprint gone and no unmarked hunk left in that file. Reported by
+              <code>status</code> as content gone, with nowhere to carry it.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Why the fingerprint hashes only the changed lines</h3>
+      <p>
+        A rebase renumbers every line, and a force-push gives every commit a new SHA, so neither can
+        be part of the identity. What survives a rewrite is <i>what the hunk adds and removes</i> in
+        a given file. So the fingerprint is <code>sha256(repo, path, the + and − lines)</code>. The
+        <code>@@</code> header, the context lines and the commit are left out. That is why moving a
+        hunk to another commit keeps its mark, and why a context-only change does not reset a tick.
+      </p>
+
+      <h3>Why the ID is a function of the fingerprint</h3>
+      <p>
+        <code>words()</code> takes the first eight hex digits of the fingerprint and maps them onto
+        126 adjectives and 120 nouns, so the same content always has the same two words: about
+        15,000 pairs, all common words that speech-to-text spells right. If two different
+        fingerprints in one review land on the same pair, the second gets a third word in front.
+        What you say is normalised the same way (<code>normalizeId</code>: lowercase, anything that
+        is not a letter becomes a space), so “Amber-Falcon” and “amber falcon” are the same ID.
+        <code>reply</code> even answers an ID whose hunk has since been rewritten away, because the
+        old mark still knows it.
+      </p>
+
+      <h3>Where the page gets its data</h3>
+      <p>
+        The page folder holds a thin <code>api.ts</code> that imports the skill's
+        <code>lib/review.ts</code> by the path <code>open</code> wrote into
+        <code>review.json</code>. Two routes: <code>GET /review</code> returns
+        <code>buildReview(dir)</code> (git is read fresh on every call), and
+        <code>POST /mark</code> calls <code>setMark</code>. <code>state.json</code> is written to a
+        <code>.tmp</code> file and renamed, so a reader never sees half a file, and the page sends ✓
+        all one mark at a time because each mark reads, changes and rewrites the whole file.
+      </p>
+
+      <div class="foot">
+        Part of <a href="../rascal-ai-setup-tour/">Rascal's AI setup</a> · built on the
+        <a href="../skill-viz/">viz</a> and <a href="../skill-pr-viz/">pr-viz</a> skills.
+      </div>
+    </div>
+
+    <script type="module" src="/_kit/poster.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

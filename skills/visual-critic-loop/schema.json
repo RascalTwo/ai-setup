@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "properties": {
+    "dims": {
+      "type": "object",
+      "properties": {
+        "legibility": { "type": "number", "minimum": 0, "maximum": 10 },
+        "layout": { "type": "number", "minimum": 0, "maximum": 10 },
+        "hierarchy": { "type": "number", "minimum": 0, "maximum": 10 },
+        "polish": { "type": "number", "minimum": 0, "maximum": 10 }
+      },
+      "required": ["legibility", "layout", "hierarchy", "polish"]
+    },
+    "overall": { "type": "number", "minimum": 0, "maximum": 10 },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "severity": { "type": "string", "enum": ["blocker", "major", "minor"] },
+          "dimension": { "type": "string", "enum": ["legibility", "layout", "hierarchy", "polish"] },
+          "shot": { "type": "integer", "minimum": 1 },
+          "box": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 },
+          "what": { "type": "string" }
+        },
+        "required": ["severity", "dimension", "shot", "box", "what"]
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "check": { "type": "string" },
+          "pass": { "type": "boolean" },
+          "note": { "type": "string" }
+        },
+        "required": ["check", "pass", "note"]
+      }
+    }
+  },
+  "required": ["dims", "overall", "issues", "checks"]
+}

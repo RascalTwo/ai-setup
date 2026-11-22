@@ -1,0 +1,58 @@
+--- a/engine/tools/narrate/providers/r2tts.mjs
++++ b/engine/tools/narrate/providers/r2tts.mjs
+@@ -0,0 +1,21 @@
++// r2-tts (Joseph's ai-setup skill): local and offline; picks the voice by who will hear it.
++// "others" (the default) is Joseph's cloned voice, "me" a not-Joseph voice (Harper).
++// voice: { audience: "others", speed: 1, emotion: "happy" }
++// Local edit outside the upstream skill: kept in ai-setup's patches/anidoodle.patch, reapplied by `node install.ts --externals`.
++import { execFileSync } from "node:child_process";
++import { existsSync } from "node:fs";
++import { homedir } from "node:os";
++import { join } from "node:path";
++
++export const id = "r2tts", cloud = false;
++export const about = "r2-tts (local; Joseph's voice for others, Harper for him)";
++const script = () => process.env.R2TTS ?? join(homedir(), ".agents/skills/r2-tts/r2_tts.py");
++export const available = () => (existsSync(script()) ? { ok: true } : { ok: false, why: `no r2-tts at ${script()} (the r2-tts skill, or set R2TTS)` });
++export const synth = async ({ text, voice = {}, raw }) => {
++  const out = raw + ".wav";
++  const args = ["-B", script(), "say", "--audience", String(voice.audience ?? "others"), "--text", text, "--out", out];
++  if (voice.speed) args.push("--speed", String(voice.speed));
++  if (voice.emotion) args.push("--emotion", String(voice.emotion));
++  execFileSync("python3", args, { stdio: ["ignore", "ignore", "pipe"] });
++  return out;
++};
+--- a/engine/tools/narrate.mjs
++++ b/engine/tools/narrate.mjs
+@@ -38,10 +38,11 @@
+ import * as openai from "./narrate/providers/openai.mjs";
+ import * as elevenlabs from "./narrate/providers/elevenlabs.mjs";
+ import * as kokoro from "./narrate/providers/kokoro.mjs";
++import * as r2tts from "./narrate/providers/r2tts.mjs";
+ import * as files from "./narrate/providers/files.mjs";
+ import { which } from "./narrate/providers/util.mjs";
+ 
+-export const PROVIDERS = { say, gemini, openai, elevenlabs, kokoro, files };
++export const PROVIDERS = { say, gemini, openai, elevenlabs, kokoro, r2tts, files };
+ const SR = 24000, CACHE = resolve(".cache/voice"), POST = "trim45-pad40-80-lufs20-pk3-v1"; // POST names the take processing: change it and every take is made again
+ const USAGE = "node tools/narrate.mjs say|time|check|bake|all <narration.json> [--out DIR] [--module FILE] [--model FILE] [--shape 16x9|9x16|1x1] [--max-wer 0.03] [--mix out/<film>.mp4] [--force]\n       node tools/narrate.mjs providers";
+ const die = (m, code = 2) => { console.error(`narrate: ${m}`); process.exit(code); };
+@@ -54,7 +55,7 @@
+   let s; try { s = JSON.parse(readFileSync(path, "utf8")); } catch (e) { die(`${path} is not valid JSON: ${e.message}`); }
+   const p = scriptProblems(s);
+   if (p.length) die(`${path}:\n  ${p.join("\n  ")}`);
+-  if (!PROVIDERS[s.provider]) die(`${path}: unknown provider '${s.provider}' (say, gemini, openai, elevenlabs, kokoro, files)`);
++  if (!PROVIDERS[s.provider]) die(`${path}: unknown provider '${s.provider}' (say, gemini, openai, elevenlabs, kokoro, r2tts, files)`);
+   return { ...s, path: resolve(path), dir: dirname(resolve(path)), name: basename(path).replace(/\.json$/, "").replace(/[^A-Za-z0-9_]/g, "_") };
+ };
+ const voiceOf = (s, ln) => ({ ...(s.voice ?? {}), ...(ln.voice ?? {}) });
+--- a/references/workflows/narration.md
++++ b/references/workflows/narration.md
+@@ -60,6 +60,7 @@
+ |---|---|---|---|
+ | `say` | this Mac, offline | Free. Apple licenses the system voices for personal, non-commercial use, so **drafts only**: re-voice before publishing, and never commit a `say` take or a module baked from one | macOS only. `voice: { name, rate }` |
+ | `kokoro` | this machine, offline | Free; code and weights Apache-2.0, so a clean choice for a film that ships | `pipx install kokoro-tts`. `voice: { name, speed, lang }` |
++| `r2tts` | this machine, offline | Joseph's r2-tts skill: his cloned voice for `audience: "others"` (the default), Harper for `"me"`. On his machines, prefer it over `say` and kokoro (a local addition, see `tools/narrate/providers/r2tts.mjs`) | the r2-tts skill. `voice: { audience, speed, emotion }` |
+ | `files` | your own recordings | Yours | one `<id>.wav` (or aiff, flac, mp3, m4a) per line in `voice.dir` (default `takes/` beside the script) |
+ | `gemini` | Google's servers | Paid per use; the text goes to Google; their terms govern the audio | `GEMINI_API_KEY` or `GOOGLE_API_KEY`. `voice: { name, style, model }` |
+ | `openai` | OpenAI's servers | Paid per use; the text goes to OpenAI | `OPENAI_API_KEY`. `voice: { name, model, instructions, speed }` |

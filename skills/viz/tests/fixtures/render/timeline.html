@@ -1,0 +1,9 @@
+<!doctype html><meta charset=utf-8>
+<style>body{margin:0;background:#111;color:#eee;font:48px monospace}#box{position:absolute;top:40%;width:80px;height:80px;background:#3fb950}</style>
+<div id=box></div><div id=t></div>
+<script>
+let cur = 0;
+function seek(t) { cur = t; box.style.left = (t / 3) * 90 + "%"; document.getElementById("t").textContent = t.toFixed(2); }
+window.__viz = { timeline: { total: 3, seek, pause() {}, play() {}, at: () => cur, chapters: [{ n: 1, title: "only", t0: 0, dur: 3 }] } };
+seek(0);
+</script>

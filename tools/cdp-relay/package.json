@@ -1,0 +1,7 @@
+{
+  "name": "cdp-relay",
+  "private": true,
+  "description": "Focus-safe CDP relay between agent-browser and the user's real Chrome",
+  "scripts": { "test": "node --test cdp-relay.test.js" },
+  "dependencies": { "ws": "^8.23.0" }
+}

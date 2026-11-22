@@ -1,0 +1,52 @@
+[
+ {
+  "id": "viz-latency", "kind": "viz page", "screens": 1,
+  "task": "A dashboard page showing API latency over the last 24 hours for 4 services (auth, search, payments, media): a row of summary stats, one chart with p95 latency per service over time, and a table of the 5 slowest endpoints with their p50, p95 and p99.",
+  "checks": ["Each of the 4 services has its own visibly distinct series in the chart, named in a legend or label", "The table lists 5 endpoints with p50, p95 and p99 values readable as numbers"]
+ },
+ {
+  "id": "viz-order-states", "kind": "viz page", "screens": 1,
+  "task": "An explainer diagram of an online order's lifecycle as a state machine: placed, paid, packed, shipped, delivered, plus cancelled and refunded branches. Every transition arrow is labelled with what triggers it, and a short legend explains the colours.",
+  "checks": ["All 7 states are visible and named", "Every arrow between states carries a readable trigger label"]
+ },
+ {
+  "id": "viz-db-compare", "kind": "viz page", "screens": 1,
+  "task": "A side-by-side comparison of three databases (Postgres, SQLite, DynamoDB) across 8 criteria such as cost, scaling, ops burden and query power, as a table with a rating per cell and a one-line verdict under each option.",
+  "checks": ["All three databases and all 8 criteria are visible", "Each database has a one-line verdict"]
+ },
+ {
+  "id": "viz-release-timeline", "kind": "viz page", "screens": 2,
+  "task": "A timeline of a product's 2025 releases: 12 milestones, each with a date, a name and one sentence, with the 3 major releases visibly emphasised. It is read by scrolling, so content continuing below the window is intended.",
+  "checks": ["Milestones appear in date order with their dates", "The 3 major releases stand out from the other 9"]
+ },
+ {
+  "id": "app-settings", "kind": "app screen", "screens": 1,
+  "task": "The account settings screen of a SaaS web app: a sidebar or tab navigation, a profile form (name, email, avatar, time zone), a group of notification toggles, and a danger zone for deleting the account.",
+  "checks": ["The danger zone is visually set apart from the rest of the settings", "Each toggle shows its on or off state clearly"]
+ },
+ {
+  "id": "app-ticket-inbox", "kind": "app screen", "screens": 1,
+  "task": "A support-ticket inbox: a list of 15 tickets showing subject, customer, status, priority and assignee, with one ticket selected and open in a reading pane beside the list (on a phone, the list alone is fine).",
+  "checks": ["Status and priority are distinguishable at a glance in the list", "The selected ticket is marked in the list and its content shows in the reading pane at desktop width"]
+ },
+ {
+  "id": "app-checkout", "kind": "app screen", "screens": 1,
+  "task": "The checkout step of an online store: a shipping address form, an order summary with 3 items and thumbnails, a promo code field, the total, and a pay button. The postcode field is deliberately shown in its validation-error state, with an error message.",
+  "checks": ["The postcode field shows an error state with a readable message", "The total and the pay button are easy to find"]
+ },
+ {
+  "id": "demo-search-change", "kind": "demo page", "screens": 1,
+  "task": "A demo card explaining a change to an app's search to someone who knows nothing about it: who it's for, the problem, a before and an after mock of the results list, and why it matters. At desktop width the before and after sit side by side.",
+  "checks": ["The before and after mocks sit side by side at desktop width and are labelled", "Who it's for, the problem and why it matters are each stated"]
+ },
+ {
+  "id": "demo-cli-landing", "kind": "demo page", "screens": 2,
+  "task": "A one-page landing for a command-line tool that tidies stale git branches: a hero with a headline and a copyable install command, three feature blurbs, a terminal-style example session, and a footer. It is read by scrolling, so content continuing below the window is intended.",
+  "checks": ["The install command is visible in the first screen", "The terminal example reads as terminal output (monospace, prompt and output distinguishable)"]
+ },
+ {
+  "id": "three-lighthouse", "kind": "three.js scene", "screens": 1,
+  "task": "A three.js scene of a small low-poly island with a lighthouse at dusk, the camera slowly orbiting, with a title overlay and a small caption card about the lighthouse. The scene fills the window behind the overlay.",
+  "checks": ["The island and lighthouse are recognisable in the render", "The title and caption read clearly over the scene"]
+ }
+]

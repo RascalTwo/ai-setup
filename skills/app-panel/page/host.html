@@ -1,0 +1,164 @@
+<!doctype html>
+<!-- The panel's page: this session's views in a list, the chosen one in a sandbox frame, relayed to its AppBridge in host.ts. -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
+  <title>app-panel</title>
+  <style>
+    html, body { margin: 0; background: Canvas; color: CanvasText; font: 13px -apple-system, system-ui, sans-serif; }
+    header { padding: 18px 58px 4px 8px; } /* the top 18px is the native drag strip (helper/Panel.swift Grip), so the list sits below it; the right 58px holds its ↗ and – buttons */
+    select { max-width: 100%; font: 600 12px -apple-system, system-ui, sans-serif; color: inherit; background: transparent; border: 0; opacity: .75; }
+    iframe { display: block; width: 100%; height: 320px; border: 0; }
+    /* Windows only (?win=1): the panel is a bare browser window, so the page draws what Panel.swift draws natively. */
+    #bar, #notch, #pill { display: none; }
+    .win #bar { display: block; position: fixed; top: 0; left: 0; right: 54px; height: 18px; cursor: grab; touch-action: none; }
+    .win #notch { display: flex; position: fixed; top: 0; right: 4px; }
+    #notch button { all: unset; width: 24px; height: 24px; text-align: center; line-height: 24px; font-size: 16px; opacity: .6; cursor: pointer; }
+    #notch button:hover { opacity: 1; }
+    .win.folded #pill { display: block; position: fixed; inset: 0; width: 100%; height: 32px; border: 0; border-radius: 16px; background: Canvas; color: CanvasText; font: 600 12px system-ui, sans-serif; cursor: pointer; }
+    .win.folded header, .win.folded iframe, .win.folded #bar, .win.folded #notch { display: none; }
+    /* macOS under viz-overlay (window.overlay): the page covers the screen and draws the card itself, at Ghostty's top-right corner.
+       backdrop-filter also makes the card the box its fixed children (#bar, #notch, #pill) are placed in. */
+    .ov #card { position: fixed; top: 44px; right: 16px; width: 480px; overflow: auto; border-radius: 12px;
+      background: color-mix(in srgb, Canvas 90%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, .35), 0 0 0 1px color-mix(in srgb, CanvasText 18%, transparent); }
+    .ov.folded #card { width: max-content !important; border-radius: 16px; }
+    .ov.folded #pill { position: static; width: auto; padding: 0 16px; white-space: nowrap; background: transparent; }
+    #drag { position: fixed; inset: 0; }
+  </style>
+</head>
+<body>
+  <div id="card" data-overlay-hit>
+  <header><select id="list" aria-label="Views in this session"></select></header>
+  <div id="bar"></div>
+  <div id="notch"><button id="pop" title="Open this in your browser">↗</button><button id="fold" title="Fold to a pill; click the pill to open it again">–</button></div>
+  <button id="pill"></button>
+  <iframe id="f" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+  </div>
+  <div id="drag" data-overlay-hit hidden></div><!-- shown while dragging, so the pointer stays on the page when it leaves the card -->
+  <script type="module">
+    const f = document.getElementById("f"), list = document.getElementById("list");
+    const win = new URLSearchParams(location.search).has("win"); // helper/panel.ps1's browser window, not Panel.swift
+    const ov = !win && Boolean(window.overlay); // viz-overlay's page on macOS, not Panel.swift
+    const native = (m) => win || ov ? (m === "fold") !== folded && toggle() : window.webkit?.messageHandlers?.panel?.postMessage(m); // helper/Panel.swift folds and unfolds
+    let items = [], shown, view, sandboxOrigin, folded = false, shownTitle = "";
+    if (win || ov) document.documentElement.classList.add("win"); // the page draws the grip, ↗, – and the pill
+    if (ov) document.documentElement.classList.add("ov");
+    const card = document.getElementById("card");
+
+    // Windows: the window follows the page like Panel.swift does: content height (never past the screen), the asked width,
+    // top-right corner fixed. panel.ps1 crops the browser's own frame off, and the pill when the title starts with ◉.
+    let anchor; // the top-right corner to keep across a fold: where the window's right edge and top were
+    const fit = () => {
+      if (ov) return void (card.style.width = `${window.panelWidth ?? 480}px`);
+      if (!win || folded) return;
+      const h = Math.ceil(document.body.getBoundingClientRect().height);
+      if (!h) return; // nothing drawn yet
+      const W = Math.round((window.panelWidth ?? 480) + outerWidth - innerWidth), H = Math.round(Math.min(h, screen.availHeight - 80) + outerHeight - innerHeight);
+      if (W === outerWidth && H === outerHeight && !anchor) return;
+      const { right, top } = anchor ?? { right: screenX + outerWidth, top: screenY };
+      anchor = undefined;
+      resizeTo(W, H);
+      moveTo(right - W, top);
+    };
+    function toggle() {
+      folded = !folded;
+      document.documentElement.classList.toggle("folded", folded);
+      document.title = folded ? "◉ " + shownTitle : shownTitle;
+      pill.textContent = "◉ " + shownTitle.slice(0, 40);
+      if (ov) return;
+      if (!folded) return fit();
+      anchor = { right: screenX + outerWidth, top: screenY };
+      resizeTo(1, 1); // the browser's smallest: the pill is cropped out of its top
+      setTimeout(() => moveTo(anchor.right - outerWidth, anchor.top), 150); // once the new width is known
+    }
+    if (win || ov) {
+      document.getElementById("fold").onclick = document.getElementById("pill").onclick = toggle;
+      document.getElementById("pop").onclick = () => host.send(JSON.stringify({ panel: "open", url: window.panelBrowserUrl }));
+    }
+    // viz-overlay: the card follows Ghostty's window at an offset you can drag, which the host keeps for the next session.
+    let at = { dx: 16, dy: 44 }, ghostty; // Panel.swift's margin and title bar
+    const place = () => {
+      if (!ghostty) return;
+      card.style.right = `${innerWidth - (ghostty.x + ghostty.width) + at.dx}px`;
+      card.style.top = `${ghostty.y + at.dy}px`;
+      card.style.maxHeight = `${overlay.visible.height - 80}px`;
+    };
+    if (ov) {
+      overlay.on("target", (s) => { if (s.rect) (ghostty = s.rect), place(); });
+      const bar = document.getElementById("bar"), drag = document.getElementById("drag");
+      bar.onpointerdown = (e) => {
+        bar.setPointerCapture(e.pointerId);
+        drag.hidden = false;
+        let x = e.clientX, y = e.clientY;
+        bar.onpointermove = (m) => ((at = { dx: at.dx - (m.clientX - x), dy: at.dy + (m.clientY - y) }), (x = m.clientX), (y = m.clientY), place());
+        bar.onpointerup = () => ((bar.onpointermove = null), (drag.hidden = true), host.send(JSON.stringify({ panel: "place", ...at })));
+      };
+    }
+    if (win) {
+      new ResizeObserver(fit).observe(document.body);
+      // Nothing to drag by but the page: move the window by the pointer's travel, which the capture keeps coming outside the strip.
+      const bar = document.getElementById("bar");
+      bar.onpointerdown = (e) => {
+        bar.setPointerCapture(e.pointerId);
+        let x = e.screenX, y = e.screenY;
+        bar.onpointermove = (m) => (moveBy(m.screenX - x, m.screenY - y), (x = m.screenX), (y = m.screenY));
+        bar.onpointerup = () => (bar.onpointermove = null);
+      };
+    }
+
+    // One view at a time: a fresh sandbox and socket each, so a view opened again from the list starts clean.
+    function open(id) {
+      const it = items.find((i) => i.id === id);
+      if (!it || id === shown) return;
+      view?.close();
+      view = undefined;
+      shown = id;
+      list.value = id;
+      document.title = folded ? "◉ " + it.title : it.title;
+      shownTitle = it.title;
+      f.style.height = `${it.height ?? 320}px`;
+      window.panelWidth = it.width ?? 760; // the panel reads this and fits its width to it
+      // The panel's ↗ opens this in the browser: a shown URL as itself, anything else as this page on this view.
+      window.panelBrowserUrl = it.href ?? `${location.origin}${location.pathname}${location.search.replace(/&win=1/, "")}#${id}`;
+      fit();
+      sandboxOrigin = new URL(it.sandbox).origin;
+      f.src = it.sandbox;
+    }
+
+    addEventListener("message", (e) => {
+      if (e.source !== f.contentWindow || e.origin !== sandboxOrigin) return;
+      if (e.data?.method === "ui/notifications/sandbox-proxy-ready") {
+        // Only now is there somewhere to put the view, so only now start its bridge.
+        const ws = (view = new WebSocket(`ws://${location.host}/ws?view=${shown}`));
+        ws.onmessage = (m) => {
+          const d = JSON.parse(m.data);
+          if (d.panel === "size") {
+            if (d.height) f.style.height = `${d.height}px`;
+            if (d.width) (window.panelWidth = Math.min(Math.max(d.width, 240), 760)), fit();
+          } else if (d.panel === "close") native("fold");
+          else f.contentWindow.postMessage(d, sandboxOrigin);
+        };
+      } else if (view?.readyState === WebSocket.OPEN) view.send(JSON.stringify(e.data));
+    });
+
+    list.onchange = () => open(list.value);
+
+    // The host's socket: the history, and which view is newest. The host going away closes the panel.
+    const host = new WebSocket(`ws://${location.host}/ws${location.search}`);
+    host.onmessage = (m) => {
+      const d = JSON.parse(m.data);
+      if (d.place) (at = d.place), place();
+      const asked = !items.length && d.items.some((i) => i.id === location.hash.slice(1)) && location.hash.slice(1); // opened from the panel's ↗
+      const fresh = d.current !== items.at(-1)?.id;
+      items = d.items;
+      list.replaceChildren(...items.map((i) => new Option(i.title, i.id)).reverse());
+      if (asked) open(asked);
+      else if (fresh) (open(d.current), native("unfold"));
+      else list.value = shown;
+    };
+    host.onclose = () => (ov ? overlay.close() : window.close());
+  </script>
+</body>
+</html>

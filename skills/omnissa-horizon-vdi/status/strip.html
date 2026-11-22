@@ -1,0 +1,46 @@
+<!doctype html>
+<!-- One-line status strip in the Horizon window's top toolbar. Shown by vdi-status; click-through (no data-overlay-hit). -->
+<meta charset="utf-8">
+<style>
+  #strip { position: fixed; display: none; align-items: center; gap: 10px; box-sizing: border-box;
+    padding: 0 12px; height: 24px; border-radius: 6px; overflow: hidden; white-space: nowrap;
+    font: 12px/1 -apple-system, system-ui, sans-serif; color: #f4f4f5;
+    background: rgba(24, 24, 27, .92); border: 1px solid #3f3f46; }
+  #dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; flex: none; }
+  #strip.idle #dot { background: #22c55e; }
+  #text { overflow: hidden; text-overflow: ellipsis; }
+  #age { color: #a1a1aa; flex: none; margin-left: auto; font-variant-numeric: tabular-nums; }
+</style>
+<div id="strip"><span id="dot"></span><span id="text">Claude: waiting</span><span id="age"></span></div>
+<script>
+  const strip = document.getElementById("strip"), text = document.getElementById("text"), age = document.getElementById("age");
+  // Toolbar geometry inside the Horizon window: skip the traffic lights and toolbar icons on the left.
+  const LEFT = 240, TOP = 14, RIGHT = 12;
+  let since = null;
+
+  function place(state) {
+    const w = state && state.window;
+    if (!w) { strip.style.display = "none"; return; }
+    strip.style.display = "flex";
+    strip.style.left = w.x + LEFT + "px";
+    strip.style.top = w.y + TOP + "px";
+    strip.style.width = Math.max(200, w.width - LEFT - RIGHT) + "px";
+  }
+
+  function tick() {
+    if (since == null) { age.textContent = ""; return; }
+    const s = Math.max(0, Math.round(Date.now() / 1000 - since));
+    const at = new Date(since * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
+    age.textContent = `since ${at} · ${s < 60 ? s + "s" : Math.floor(s / 60) + "m " + (s % 60) + "s"}`;
+  }
+
+  overlay.on("target", place);
+  overlay.on("data", (d) => {
+    if (!d) return;
+    text.textContent = "Claude: " + d.text;
+    since = d.since ?? null;
+    strip.classList.toggle("idle", !!d.idle);
+    tick();
+  });
+  setInterval(tick, 1000);
+</script>

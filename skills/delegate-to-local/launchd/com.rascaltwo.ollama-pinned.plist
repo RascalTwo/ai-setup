@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  A second, pinned Ollama (0.40.16) on port 11435 that only delegate-to-local uses.
+  0.40.17 re-reads Claude Code's whole prompt every turn (~4x slower); see
+  docs/adr/2026-11-22-serve-delegate-to-local-from-a-pinned-ollama.md. Own models dir,
+  so this older server never prunes the main one's blobs.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.rascaltwo.ollama-pinned</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/YOUR-USER/.agents/ollama-pinned/Ollama-0.40.16.app/Contents/Resources/ollama</string>
+        <string>serve</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>OLLAMA_HOST</key>
+        <string>127.0.0.1:11435</string>
+        <key>OLLAMA_MODELS</key>
+        <string>/Users/YOUR-USER/.agents/ollama-pinned/models</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/YOUR-USER/.agents/state/ollama-pinned/serve.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR-USER/.agents/state/ollama-pinned/serve.log</string>
+</dict>
+</plist>

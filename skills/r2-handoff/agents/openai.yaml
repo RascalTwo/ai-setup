@@ -1,0 +1,5 @@
+interface:
+  display_name: "R2 Handoff"
+  short_description: "Compact a conversation into a handoff, or one per parallel stream; rescue mode is Claude Code only"
+policy:
+  allow_implicit_invocation: false

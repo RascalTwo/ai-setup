@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>PR hero</title>
+    <!-- Never edit this file. The PR's title/subtitle/badge are hero.json; the picture is drawing.ts. -->
+    <meta name="viz:posture" content="local" />
+    <meta name="viz:listed" content="unlisted" />
+    <meta name="viz:film" />
+    <meta
+      name="viz:tests"
+      content="smoke: one picture on a timeline; its only input is the scrubber"
+    />
+    <meta name="viz:title" content="PR hero (pr-viz)" />
+    <meta
+      name="viz:description"
+      content="The one picture that explains a PR's idea, in a fixed frame; exported as a still and a GIF by pr-viz."
+    />
+    <link rel="stylesheet" href="/_kit/viz-kit.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #05070a;
+        overflow: hidden;
+      }
+      #stage {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1920px;
+        height: 1080px;
+        transform-origin: 0 0;
+        overflow: hidden;
+        background: radial-gradient(1400px 700px at 70% -10%, #13233a 0%, var(--bg) 60%);
+        color: var(--text);
+        font: 30px/1.35 var(--sans);
+      }
+      header {
+        position: absolute;
+        left: 80px;
+        right: 80px;
+        top: 56px;
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 40px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 64px;
+        line-height: 1.1;
+        font-weight: 700;
+      }
+      h1 code {
+        font: 600 58px var(--mono);
+        color: var(--accent);
+      }
+      #subtitle {
+        margin: 12px 0 0;
+        font-size: 34px;
+        color: var(--muted);
+      }
+      #badge {
+        flex: none;
+        margin-top: 8px;
+        padding: 8px 22px;
+        border: 2px solid var(--border);
+        border-radius: 999px;
+        background: var(--panel);
+        font: 600 30px var(--mono);
+        color: var(--muted);
+      }
+      #area {
+        position: absolute;
+        left: 80px;
+        top: 230px;
+        width: 1760px;
+        height: 770px;
+      }
+      #controls {
+        position: fixed;
+        left: 14px;
+        bottom: 14px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        background: rgba(22, 27, 34, 0.92);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 8px 12px;
+        z-index: 10;
+        font: 13px var(--mono);
+        color: var(--muted);
+      }
+      #controls input {
+        width: 360px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <header>
+        <div class="row">
+          <h1 id="title"></h1>
+          <div id="badge"></div>
+        </div>
+        <p id="subtitle"></p>
+      </header>
+      <main id="area"></main>
+    </div>
+    <div id="controls" data-viz-chrome>
+      <button id="play">pause</button
+      ><input id="scrub" type="range" min="0" max="6" step="0.05" value="0" /><span
+        id="clock"
+      ></span>
+    </div>
+    <script type="module" src="./frame.js"></script>
+  </body>
+</html>
